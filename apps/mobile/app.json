@@ -1,0 +1,9 @@
+{
+  "expo": {
+    "name": "PataSpace",
+    "slug": "pataspace",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light"
+  }
+}

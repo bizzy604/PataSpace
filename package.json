@@ -1,0 +1,19 @@
+{
+  "name": "pataspace",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev:api": "pnpm --filter @pataspace/api start:dev",
+    "dev:web": "pnpm --filter @pataspace/web dev",
+    "dev:admin": "pnpm --filter @pataspace/admin dev",
+    "dev:mobile": "pnpm --filter @pataspace/mobile start",
+    "build": "pnpm -r --if-present build",
+    "lint": "pnpm -r --if-present lint",
+    "test": "pnpm -r --if-present test"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.15.4"
+  }
+}
