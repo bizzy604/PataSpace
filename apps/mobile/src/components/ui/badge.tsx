@@ -6,9 +6,9 @@ import { cn } from '@/lib/cn';
 const badgeVariants = cva('rounded-full px-3 py-1.5', {
   variants: {
     variant: {
-      default: 'bg-amber-400',
-      secondary: 'bg-stone-800',
-      outline: 'border border-stone-700 bg-transparent',
+      default: 'bg-primary shadow-card',
+      secondary: 'bg-secondary',
+      outline: 'border border-border bg-card',
     },
   },
   defaultVariants: {
@@ -19,9 +19,9 @@ const badgeVariants = cva('rounded-full px-3 py-1.5', {
 const badgeTextVariants = cva('text-xs font-bold uppercase tracking-[2px]', {
   variants: {
     variant: {
-      default: 'text-stone-950',
-      secondary: 'text-stone-100',
-      outline: 'text-stone-300',
+      default: 'text-primary-foreground',
+      secondary: 'text-foreground',
+      outline: 'text-muted-foreground',
     },
   },
   defaultVariants: {

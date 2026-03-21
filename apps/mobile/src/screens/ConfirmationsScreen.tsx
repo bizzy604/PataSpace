@@ -29,16 +29,18 @@ export function ConfirmationsScreen() {
 
       <View className="gap-3">
         <Card className="p-5">
-          <Text className="text-sm uppercase tracking-[2px] text-stone-400">Step 1</Text>
-          <Text className="mt-2 text-lg font-bold text-stone-50">Incoming tenant confirms</Text>
+          <Text className="text-xs uppercase tracking-[1.8px] text-tertiary-foreground">Step 1</Text>
+          <Text className="mt-2 text-lg font-semibold text-foreground">Incoming tenant confirms</Text>
         </Card>
         <Card className="p-5">
-          <Text className="text-sm uppercase tracking-[2px] text-stone-400">Step 2</Text>
-          <Text className="mt-2 text-lg font-bold text-stone-50">Outgoing tenant confirms</Text>
+          <Text className="text-xs uppercase tracking-[1.8px] text-tertiary-foreground">Step 2</Text>
+          <Text className="mt-2 text-lg font-semibold text-foreground">Outgoing tenant confirms</Text>
         </Card>
         <Card className="p-5">
-          <Text className="text-sm uppercase tracking-[2px] text-stone-400">Step 3</Text>
-          <Text className="mt-2 text-lg font-bold text-stone-50">Commission becomes payable after the hold period</Text>
+          <Text className="text-xs uppercase tracking-[1.8px] text-tertiary-foreground">Step 3</Text>
+          <Text className="mt-2 text-lg font-semibold text-foreground">
+            Commission becomes payable after the hold period
+          </Text>
         </Card>
       </View>
 

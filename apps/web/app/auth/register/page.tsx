@@ -9,13 +9,16 @@ export default function RegisterPage() {
     <section className="mx-auto grid min-h-[calc(100vh-73px)] max-w-6xl gap-10 px-6 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
       <div>
         <Badge variant="secondary">Registration flow</Badge>
-        <h1 className="mt-4 text-5xl font-black tracking-tight text-stone-950">Create your PataSpace account.</h1>
-        <p className="mt-6 max-w-2xl text-lg leading-8 text-stone-700">
-          This form matches the documented MVP flow: phone number, password, names, then OTP verification.
+        <h1 className="mt-4 font-display text-5xl font-semibold tracking-[-0.05em] text-foreground">
+          Create your PataSpace account.
+        </h1>
+        <p className="mt-6 max-w-2xl text-lg leading-8 text-foreground-secondary">
+          This form matches the documented MVP flow: phone number, password, names,
+          then OTP verification.
         </p>
       </div>
 
-      <Card className="border-stone-300/80 bg-white/90 shadow-lg backdrop-blur">
+      <Card className="bg-surface-elevated shadow-soft-md">
         <CardHeader>
           <CardTitle>Register</CardTitle>
           <CardDescription>OTP verification will follow after the account is created.</CardDescription>
@@ -30,7 +33,7 @@ export default function RegisterPage() {
           <Button className="w-full">Create account</Button>
           <p className="text-sm text-muted-foreground">
             Already registered?{' '}
-            <Link href="/auth/sign-in" className="font-medium text-stone-950 underline underline-offset-4">
+            <Link href="/auth/sign-in" className="font-semibold text-foreground underline underline-offset-4">
               Sign in
             </Link>
           </p>

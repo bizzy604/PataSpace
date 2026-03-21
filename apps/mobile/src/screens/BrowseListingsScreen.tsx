@@ -1,5 +1,5 @@
 import { Link } from 'expo-router';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
@@ -46,7 +46,9 @@ export function BrowseListingsScreen() {
             <Badge variant="secondary">{listing.unlock}</Badge>
           </View>
           <CardTitle className="mt-4 text-2xl">{listing.title}</CardTitle>
-          <CardDescription>{listing.rent} • Photos, video, and GPS verification available.</CardDescription>
+          <CardDescription>
+            {listing.rent}. Photos, video, and GPS verification available.
+          </CardDescription>
           <Link href="/unlock" asChild>
             <Button className="mt-6" label="Unlock this listing" />
           </Link>

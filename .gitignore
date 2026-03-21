@@ -14,3 +14,7 @@ ios/
 .DS_Store
 Thumbs.db
 .github/skills/*
+Docs
+.claude
+.claude/*
+.codex/*

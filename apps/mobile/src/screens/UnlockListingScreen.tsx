@@ -25,12 +25,12 @@ export function UnlockListingScreen() {
 
       <View className="gap-3">
         <Card className="p-5">
-          <Text className="text-sm uppercase tracking-[2px] text-stone-400">Credits required</Text>
-          <Text className="mt-2 text-2xl font-black text-stone-50">2,500</Text>
+          <Text className="text-xs uppercase tracking-[1.8px] text-tertiary-foreground">Credits required</Text>
+          <Text className="mt-2 text-2xl font-semibold tracking-[-0.5px] text-foreground">2,500</Text>
         </Card>
         <Card className="p-5">
-          <Text className="text-sm uppercase tracking-[2px] text-stone-400">Current balance</Text>
-          <Text className="mt-2 text-2xl font-black text-stone-50">5,000</Text>
+          <Text className="text-xs uppercase tracking-[1.8px] text-tertiary-foreground">Current balance</Text>
+          <Text className="mt-2 text-2xl font-semibold tracking-[-0.5px] text-foreground">5,000</Text>
         </Card>
       </View>
 

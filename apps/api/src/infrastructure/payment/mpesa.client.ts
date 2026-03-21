@@ -1,9 +1,23 @@
+import { Inject, Injectable } from '@nestjs/common';
+import { MPESA_PROVIDER } from './mpesa.constants';
+import { MpesaB2CRequest, MpesaProvider, MpesaStkPushRequest } from './mpesa.types';
+
+@Injectable()
 export class MpesaClient {
-  async stkPush() {
-    throw new Error('MpesaClient.stkPush is not implemented yet.');
+  constructor(
+    @Inject(MPESA_PROVIDER)
+    private readonly provider: MpesaProvider,
+  ) {}
+
+  async stkPush(payload: MpesaStkPushRequest) {
+    return this.provider.stkPush(payload);
   }
 
-  async b2c() {
-    throw new Error('MpesaClient.b2c is not implemented yet.');
+  async b2c(payload: MpesaB2CRequest) {
+    return this.provider.b2c(payload);
+  }
+
+  async healthCheck() {
+    return this.provider.healthCheck();
   }
 }

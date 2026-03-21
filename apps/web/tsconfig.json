@@ -24,6 +24,12 @@
       "@/*": [
         "./*"
       ],
+      "@pataspace/design-tokens": [
+        "../../packages/design-tokens/src/index.ts"
+      ],
+      "@pataspace/design-tokens/*": [
+        "../../packages/design-tokens/src/*"
+      ],
       "@pataspace/contracts": [
         "../../packages/contracts/src/index.ts"
       ],

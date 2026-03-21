@@ -1,11 +1,16 @@
 import { TextInput, type TextInputProps } from 'react-native';
+import { appleHIGTokens } from '@pataspace/design-tokens';
 import { cn } from '@/lib/cn';
 
-export function Input({ className, placeholderTextColor = '#78716c', ...props }: TextInputProps & { className?: string }) {
+export function Input({
+  className,
+  placeholderTextColor = appleHIGTokens.color.text.secondary,
+  ...props
+}: TextInputProps & { className?: string }) {
   return (
     <TextInput
       className={cn(
-        'min-h-12 rounded-2xl border border-stone-700 bg-stone-900 px-4 py-3 text-base text-stone-50',
+        'min-h-12 rounded-[22px] border border-border bg-surface px-4 py-3 text-base text-foreground',
         className,
       )}
       placeholderTextColor={placeholderTextColor}

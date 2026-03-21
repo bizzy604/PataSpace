@@ -8,16 +8,17 @@ import { Screen } from '@/components/ui/screen';
 export function HomeScreen() {
   return (
     <Screen contentContainerStyle={{ justifyContent: 'center', flexGrow: 1 }}>
-      <Card className="rounded-[32px]">
-        <Badge>Mobile app</Badge>
-        <CardTitle className="mt-4 text-4xl">PataSpace</CardTitle>
+      <Card className="rounded-[36px] bg-surface-elevated">
+        <Badge variant="secondary">Mobile app</Badge>
+        <CardTitle className="mt-4 text-[38px]">PataSpace</CardTitle>
         <CardDescription>
-          Listing capture, GPS verification, uploads, unlocks, and confirmations start here.
+          Listing capture, GPS verification, uploads, unlocks, and confirmations all
+          share the same Apple-inspired token system as web and admin.
         </CardDescription>
 
         <View className="mt-8 gap-3">
           <Link href="/browse" asChild>
-            <Button variant="secondary" label="Browse listings" />
+            <Button variant="outline" label="Browse listings" />
           </Link>
           <Link href="/create-listing" asChild>
             <Button label="Create listing" />
@@ -33,11 +34,11 @@ export function HomeScreen() {
 
       <View className="mt-2 flex-row flex-wrap gap-3">
         <Badge variant="outline">Expo Router ready</Badge>
-        <Badge variant="secondary">NativeWindUI-style layer</Badge>
+        <Badge variant="secondary">Shared semantic tokens</Badge>
       </View>
 
-      <Text className="text-center text-sm text-stone-500">
-        Core mobile primitives are now scaffolded for listings, unlocks, and payout flows.
+      <Text className="text-center text-sm text-muted-foreground">
+        Core mobile primitives now match the web and admin visual system.
       </Text>
     </Screen>
   );

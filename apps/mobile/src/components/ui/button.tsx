@@ -3,17 +3,17 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/cn';
 
 const buttonVariants = cva(
-  'items-center justify-center rounded-2xl px-4 py-3 active:opacity-90',
+  'items-center justify-center rounded-full border px-5 py-3 active:opacity-90',
   {
     variants: {
       variant: {
-        default: 'bg-amber-400',
-        secondary: 'bg-stone-800',
-        outline: 'border border-stone-700 bg-transparent',
+        default: 'border-transparent bg-primary shadow-card',
+        secondary: 'border-border bg-secondary',
+        outline: 'border-border bg-card',
       },
       size: {
         default: 'min-h-12',
-        sm: 'min-h-10 px-3 py-2.5',
+        sm: 'min-h-10 px-4 py-2.5',
       },
     },
     defaultVariants: {
@@ -23,16 +23,16 @@ const buttonVariants = cva(
   },
 );
 
-const buttonTextVariants = cva('text-center font-bold tracking-[1px]', {
+const buttonTextVariants = cva('text-center font-semibold tracking-[-0.2px]', {
   variants: {
     variant: {
-      default: 'text-stone-950',
-      secondary: 'text-stone-50',
-      outline: 'text-stone-100',
+      default: 'text-primary-foreground',
+      secondary: 'text-foreground',
+      outline: 'text-foreground',
     },
     size: {
-      default: 'text-sm uppercase',
-      sm: 'text-xs uppercase',
+      default: 'text-[15px]',
+      sm: 'text-sm',
     },
   },
   defaultVariants: {
