@@ -5,9 +5,11 @@ import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 import { AllExceptionsFilter } from '../filters/all-exceptions.filter';
 import { LoggingInterceptor } from '../interceptors/logging.interceptor';
+import { RequestContextService } from '../request-context/request-context.service';
 
 export function configureApp(app: INestApplication) {
   const configService = app.get(ConfigService);
+  const requestContext = app.get(RequestContextService);
   const globalPrefix = configService.get<string>('http.globalPrefix') ?? 'api/v1';
   const requestIdHeader = configService.get<string>('http.requestIdHeader') ?? 'x-request-id';
   const allowedOrigins = configService.get<string[]>('http.allowedOrigins') ?? [];
@@ -28,7 +30,16 @@ export function configureApp(app: INestApplication) {
 
       request.requestId = requestId;
       response.setHeader(requestIdHeader, requestId);
-      next();
+      requestContext.run(
+        {
+          requestId,
+          method: (request as { method?: string }).method,
+          path:
+            (request as { originalUrl?: string }).originalUrl ??
+            (request as { url?: string }).url,
+        },
+        next,
+      );
     },
   );
   app.enableCors({
@@ -37,8 +48,8 @@ export function configureApp(app: INestApplication) {
   });
   app.use(helmet());
   app.use(compression());
-  app.useGlobalFilters(new AllExceptionsFilter());
-  app.useGlobalInterceptors(new LoggingInterceptor());
+  app.useGlobalFilters(new AllExceptionsFilter(requestIdHeader, requestContext));
+  app.useGlobalInterceptors(new LoggingInterceptor(requestContext));
 
   return {
     globalPrefix,

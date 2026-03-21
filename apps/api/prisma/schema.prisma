@@ -7,5 +7,328 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Replace this scaffold with the full schema from:
-// Docs/02_Database_Schema.md
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ListingStatus {
+  PENDING
+  ACTIVE
+  UNLOCKED
+  CONFIRMED
+  COMPLETED
+  DELETED
+  REJECTED
+}
+
+enum TransactionType {
+  PURCHASE
+  SPEND
+  REFUND
+  BONUS
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum CommissionStatus {
+  PENDING
+  DUE
+  PROCESSING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+enum ConfirmationSide {
+  OUTGOING_TENANT
+  INCOMING_TENANT
+}
+
+enum DisputeStatus {
+  OPEN
+  INVESTIGATING
+  RESOLVED
+  CLOSED
+}
+
+model User {
+  id                   String              @id @default(cuid())
+  phoneNumberHash      String              @unique
+  phoneNumberEncrypted String
+  phoneVerified        Boolean             @default(false)
+  email                String?             @unique
+  passwordHash         String
+  firstName            String
+  lastName             String
+  role                 Role                @default(USER)
+  isActive             Boolean             @default(true)
+  isBanned             Boolean             @default(false)
+  banReason            String?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  lastLoginAt          DateTime?
+  credit               Credit?
+  creditTransactions   CreditTransaction[]
+  listings             Listing[]
+  unlocks              Unlock[]
+  confirmations        Confirmation[]
+  disputes             Dispute[]
+  refreshTokens        RefreshToken[]
+  auditLogs            AuditLog[]
+
+  @@index([phoneNumberHash])
+  @@index([email])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+model OTPCode {
+  id              String   @id @default(cuid())
+  phoneNumberHash String
+  codeHash        String
+  expiresAt       DateTime
+  attempts        Int      @default(0)
+  verified        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  @@index([phoneNumberHash, codeHash])
+  @@index([expiresAt])
+  @@map("otp_codes")
+}
+
+model Credit {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  balance        Int      @default(0)
+  lifetimeEarned Int      @default(0)
+  lifetimeSpent  Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("credits")
+}
+
+model CreditTransaction {
+  id                 String            @id @default(cuid())
+  userId             String
+  type               TransactionType
+  amount             Int
+  balanceBefore      Int
+  balanceAfter       Int
+  status             TransactionStatus @default(PENDING)
+  mpesaReceiptNumber String?           @unique
+  mpesaTransactionId String?           @unique
+  phoneNumberHash    String?
+  unlockId           String?           @unique
+  metadata           Json?
+  description        String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unlock             Unlock?           @relation(fields: [unlockId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([status])
+  @@index([mpesaTransactionId])
+  @@index([phoneNumberHash])
+  @@map("credit_transactions")
+}
+
+model Listing {
+  id                String         @id @default(cuid())
+  userId            String
+  county            String
+  neighborhood      String
+  addressEncrypted  String
+  latitude          Float
+  longitude         Float
+  monthlyRent       Int
+  bedrooms          Int
+  bathrooms         Int
+  propertyType      String
+  furnished         Boolean        @default(false)
+  description       String         @db.Text
+  amenities         String[]
+  propertyNotes     String?        @db.Text
+  availableFrom     DateTime
+  availableTo       DateTime?
+  unlockCostCredits Int
+  commission        Int
+  videoUrl          String?
+  thumbnailUrl      String?
+  status            ListingStatus  @default(PENDING)
+  isApproved        Boolean        @default(false)
+  approvedAt        DateTime?
+  approvedBy        String?
+  rejectionReason   String?
+  viewCount         Int            @default(0)
+  unlockCount       Int            @default(0)
+  isDeleted         Boolean        @default(false)
+  deletedAt         DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  photos            ListingPhoto[]
+  unlocks           Unlock[]
+
+  @@index([userId])
+  @@index([status, isApproved, isDeleted])
+  @@index([county, neighborhood])
+  @@index([monthlyRent])
+  @@index([availableFrom])
+  @@index([createdAt])
+  @@index([latitude, longitude])
+  @@map("listings")
+}
+
+model ListingPhoto {
+  id        String    @id @default(cuid())
+  listingId String
+  url       String
+  s3Key     String
+  order     Int
+  width     Int?
+  height    Int?
+  latitude  Float?
+  longitude Float?
+  takenAt   DateTime?
+  createdAt DateTime  @default(now())
+  listing   Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId, order])
+  @@map("listing_photos")
+}
+
+model Unlock {
+  id                       String             @id @default(cuid())
+  listingId                String
+  buyerId                  String
+  creditsSpent             Int
+  revealedPhoneEncrypted   String
+  revealedAddressEncrypted String
+  revealedGPS              String
+  isRefunded               Boolean            @default(false)
+  refundReason             String?
+  refundedAt               DateTime?
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+  listing                  Listing            @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyer                    User               @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  creditTransaction        CreditTransaction?
+  confirmations            Confirmation[]
+  commission               Commission?
+  dispute                  Dispute?
+
+  @@unique([listingId, buyerId])
+  @@index([buyerId, createdAt])
+  @@index([listingId])
+  @@map("unlocks")
+}
+
+model Confirmation {
+  id          String           @id @default(cuid())
+  unlockId    String
+  userId      String
+  side        ConfirmationSide
+  confirmedAt DateTime         @default(now())
+  unlock      Unlock           @relation(fields: [unlockId], references: [id], onDelete: Cascade)
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([unlockId, side])
+  @@index([unlockId])
+  @@index([userId])
+  @@map("confirmations")
+}
+
+model Commission {
+  id                 String           @id @default(cuid())
+  unlockId           String           @unique
+  outgoingTenantId   String
+  amountKES          Int
+  status             CommissionStatus @default(PENDING)
+  mpesaTransactionId String?          @unique
+  mpesaReceiptNumber String?          @unique
+  eligibleAt         DateTime
+  paidAt             DateTime?
+  paymentAttempts    Int              @default(0)
+  lastAttemptAt      DateTime?
+  lastAttemptError   String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  unlock             Unlock           @relation(fields: [unlockId], references: [id], onDelete: Cascade)
+
+  @@index([status, eligibleAt])
+  @@index([outgoingTenantId])
+  @@map("commissions")
+}
+
+model Dispute {
+  id         String        @id @default(cuid())
+  unlockId   String        @unique
+  reportedBy String
+  reason     String        @db.Text
+  evidence   String[]
+  status     DisputeStatus @default(OPEN)
+  resolution String?       @db.Text
+  resolvedBy String?
+  resolvedAt DateTime?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  unlock     Unlock        @relation(fields: [unlockId], references: [id], onDelete: Cascade)
+  user       User          @relation(fields: [reportedBy], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([reportedBy])
+  @@map("disputes")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  entityType String
+  entityId   String
+  oldValue   Json?
+  newValue   Json?
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([entityType, entityId])
+  @@index([action])
+  @@map("audit_logs")
+}
+
+model SystemConfig {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("system_config")
+}

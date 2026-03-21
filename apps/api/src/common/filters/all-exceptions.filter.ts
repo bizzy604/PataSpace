@@ -6,14 +6,23 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
+import { RequestContextService } from '../request-context/request-context.service';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
+  constructor(
+    private readonly requestIdHeader = 'x-request-id',
+    private readonly requestContext?: RequestContextService,
+  ) {}
+
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
     const request = ctx.getRequest();
-    const requestId = request.requestId ?? request.headers['x-request-id'];
+    const requestId =
+      request.requestId ??
+      request.headers[this.requestIdHeader] ??
+      this.requestContext?.getRequestId();
 
     const status =
       exception instanceof HttpException
@@ -21,6 +30,15 @@ export class AllExceptionsFilter implements ExceptionFilter {
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
     const payload = this.normalizePayload(exception, status);
+    const retryAfter = payload.retryAfter ?? this.extractRetryAfter(payload.details);
+
+    if (requestId) {
+      response.setHeader(this.requestIdHeader, requestId);
+    }
+
+    if (retryAfter !== null) {
+      response.setHeader('Retry-After', String(retryAfter));
+    }
 
     response.status(status).json({
       error: {
@@ -48,6 +66,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
           code: this.asString(typedPayload.code) ?? 'VALIDATION_ERROR',
           message: this.asMessage(typedPayload.message) ?? 'Validation failed',
           details: typedPayload.details ?? typedPayload,
+          retryAfter: this.asNumber(typedPayload.retryAfter),
         };
       }
     }
@@ -60,6 +79,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
           code: this.defaultCode(status),
           message: payload,
           details: null,
+          retryAfter: null,
         };
       }
 
@@ -70,6 +90,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
           code: this.asString(typedPayload.code) ?? this.defaultCode(status),
           message: this.asMessage(typedPayload.message) ?? 'Request failed',
           details: typedPayload.details ?? null,
+          retryAfter: this.asNumber(typedPayload.retryAfter),
         };
       }
     }
@@ -78,6 +99,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       code: this.defaultCode(status),
       message: 'Internal server error',
       details: null,
+      retryAfter: null,
     };
   }
 
@@ -97,6 +119,18 @@ export class AllExceptionsFilter implements ExceptionFilter {
     return typeof value === 'string' ? value : null;
   }
 
+  private asNumber(value: unknown) {
+    return typeof value === 'number' && Number.isFinite(value) ? value : null;
+  }
+
+  private extractRetryAfter(value: unknown) {
+    if (typeof value !== 'object' || value === null) {
+      return null;
+    }
+
+    return this.asNumber((value as Record<string, unknown>).retryAfter);
+  }
+
   private defaultCode(status: number) {
     switch (status) {
       case HttpStatus.BAD_REQUEST:
@@ -110,7 +144,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       case HttpStatus.CONFLICT:
         return 'CONFLICT';
       case HttpStatus.TOO_MANY_REQUESTS:
-        return 'RATE_LIMITED';
+        return 'RATE_LIMIT_EXCEEDED';
       default:
         return 'INTERNAL_SERVER_ERROR';
     }

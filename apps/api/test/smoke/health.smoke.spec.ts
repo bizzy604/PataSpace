@@ -31,6 +31,8 @@ describe('API smoke checks', () => {
       service: 'pataspace-api',
       components: {
         database: { status: 'up' },
+        cache: { status: 'up', provider: 'redis' },
+        queue: { status: 'up', provider: 'bullmq' },
         sms: { status: 'up', provider: 'sandbox' },
         storage: { status: 'up', provider: 'sandbox' },
         mpesa: { status: 'up', provider: 'sandbox' },

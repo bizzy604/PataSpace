@@ -30,6 +30,12 @@ describe('API readiness edge cases', () => {
         database: {
           status: 'down',
         },
+        cache: {
+          status: 'up',
+        },
+        queue: {
+          status: 'up',
+        },
         sms: {
           status: 'degraded',
           provider: 'africastalking',

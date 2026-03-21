@@ -1,7 +1,9 @@
 import { ConfigService } from '@nestjs/config';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from './common/database/prisma.service';
+import { CacheService } from './infrastructure/cache/cache.service';
 import { MpesaClient } from './infrastructure/payment/mpesa.client';
+import { QueueService } from './infrastructure/queue/queue.service';
 import { SmsService } from './infrastructure/sms/sms.service';
 import { StorageService } from './infrastructure/storage/storage.service';
 
@@ -10,6 +12,8 @@ export class AppService {
   constructor(
     private readonly configService: ConfigService,
     private readonly prismaService: PrismaService,
+    private readonly cacheService: CacheService,
+    private readonly queueService: QueueService,
     private readonly smsService: SmsService,
     private readonly storageService: StorageService,
     private readonly mpesaClient: MpesaClient,
@@ -25,8 +29,10 @@ export class AppService {
   }
 
   async getReadiness() {
-    const [database, sms, storage, mpesa] = await Promise.all([
+    const [database, cache, queue, sms, storage, mpesa] = await Promise.all([
       this.checkDatabase(),
+      this.cacheService.healthCheck(),
+      this.queueService.healthCheck(),
       this.smsService.healthCheck(),
       this.storageService.healthCheck(),
       this.mpesaClient.healthCheck(),
@@ -34,6 +40,8 @@ export class AppService {
 
     const status =
       database.status === 'up' &&
+      cache.status !== 'down' &&
+      queue.status !== 'down' &&
       sms.status !== 'down' &&
       storage.status !== 'down' &&
       mpesa.status !== 'down'
@@ -46,6 +54,8 @@ export class AppService {
       timestamp: new Date().toISOString(),
       components: {
         database,
+        cache,
+        queue,
         sms,
         storage,
         mpesa,

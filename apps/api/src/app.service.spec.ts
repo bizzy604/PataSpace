@@ -28,6 +28,12 @@ describe('AppService', () => {
       {
         healthCheck: jest.fn(),
       } as never,
+      {
+        healthCheck: jest.fn(),
+      } as never,
+      {
+        healthCheck: jest.fn(),
+      } as never,
     );
 
     expect(service.getHealth()).toMatchObject({

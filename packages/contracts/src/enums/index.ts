@@ -21,6 +21,13 @@ export enum TransactionStatus {
   REFUNDED = 'REFUNDED',
 }
 
+export enum TransactionType {
+  PURCHASE = 'PURCHASE',
+  SPEND = 'SPEND',
+  REFUND = 'REFUND',
+  BONUS = 'BONUS',
+}
+
 export enum CommissionStatus {
   PENDING = 'PENDING',
   DUE = 'DUE',
@@ -28,6 +35,11 @@ export enum CommissionStatus {
   PAID = 'PAID',
   FAILED = 'FAILED',
   CANCELLED = 'CANCELLED',
+}
+
+export enum ConfirmationSide {
+  OUTGOING_TENANT = 'OUTGOING_TENANT',
+  INCOMING_TENANT = 'INCOMING_TENANT',
 }
 
 export enum DisputeStatus {
