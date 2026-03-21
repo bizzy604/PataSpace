@@ -14,17 +14,27 @@ import { StorageService } from './storage.service';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         const provider = configService.get<string>('infrastructure.storage.provider') ?? 'sandbox';
+        const publicBaseUrl =
+          configService.get<string>('infrastructure.storage.publicBaseUrl') ??
+          'http://localhost:3000/sandbox-storage';
+        const cdnBaseUrl =
+          configService.get<string>('infrastructure.storage.cdnBaseUrl') ?? publicBaseUrl;
 
         if (provider === 'sandbox') {
-          return new SandboxStorageProvider();
+          return new SandboxStorageProvider({
+            cdnBaseUrl,
+            publicBaseUrl,
+          });
         }
 
         if (provider === 's3') {
           return new S3StorageProvider({
             accessKeyId: configService.get<string>('infrastructure.storage.accessKeyId') ?? '',
             bucket: configService.get<string>('infrastructure.storage.bucket') ?? '',
+            cdnBaseUrl,
             presignTtlSeconds:
               configService.get<number>('infrastructure.storage.presignTtlSeconds') ?? 900,
+            publicBaseUrl,
             region: configService.get<string>('infrastructure.storage.region') ?? 'eu-west-1',
             secretAccessKey:
               configService.get<string>('infrastructure.storage.secretAccessKey') ?? '',

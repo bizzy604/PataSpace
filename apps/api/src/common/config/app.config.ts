@@ -31,8 +31,13 @@ export default () => ({
   security: {
     jwtSecret: process.env.JWT_SECRET,
     jwtRefreshSecret: process.env.JWT_REFRESH_SECRET,
+    accessTokenTtl: process.env.ACCESS_TOKEN_TTL ?? '15m',
+    refreshTokenTtlDays: Number(process.env.REFRESH_TOKEN_TTL_DAYS ?? 30),
     refreshTokenTransport: process.env.REFRESH_TOKEN_TRANSPORT ?? 'json',
     encryptionKey: process.env.APP_ENCRYPTION_KEY,
+    otpTtlSeconds: Number(process.env.OTP_TTL_SECONDS ?? 300),
+    otpMaxAttempts: Number(process.env.OTP_MAX_ATTEMPTS ?? 3),
+    sandboxOtpCode: process.env.OTP_SANDBOX_CODE ?? '123456',
   },
   idempotency: {
     ttlSeconds: Number(process.env.IDEMPOTENCY_TTL_SECONDS ?? 86_400),
@@ -67,6 +72,21 @@ export default () => ({
       accessKeyId: process.env.AWS_ACCESS_KEY_ID,
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
       presignTtlSeconds: Number(process.env.AWS_S3_PRESIGN_TTL_SECONDS ?? 900),
+      publicBaseUrl:
+        process.env.STORAGE_PUBLIC_BASE_URL ??
+        (process.env.STORAGE_PROVIDER === 's3' &&
+        process.env.AWS_S3_BUCKET &&
+        process.env.AWS_REGION
+          ? `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com`
+          : `${process.env.APP_BASE_URL ?? `http://localhost:${process.env.PORT ?? 3000}`}/sandbox-storage`),
+      cdnBaseUrl:
+        process.env.STORAGE_CDN_BASE_URL ??
+        process.env.STORAGE_PUBLIC_BASE_URL ??
+        (process.env.STORAGE_PROVIDER === 's3' &&
+        process.env.AWS_S3_BUCKET &&
+        process.env.AWS_REGION
+          ? `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com`
+          : `${process.env.APP_BASE_URL ?? `http://localhost:${process.env.PORT ?? 3000}`}/sandbox-storage`),
     },
     mpesa: {
       mode: process.env.MPESA_MODE ?? 'sandbox',

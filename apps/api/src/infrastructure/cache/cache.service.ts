@@ -56,6 +56,10 @@ export class CacheService {
     await this.redisService.getClient().del(key);
   }
 
+  async increment(key: string) {
+    return this.redisService.getClient().incr(key);
+  }
+
   async healthCheck() {
     try {
       await this.redisService.getClient().ping();

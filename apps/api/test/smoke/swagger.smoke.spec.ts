@@ -24,7 +24,8 @@ describe('Swagger smoke checks', () => {
         version: '0.1.0',
       },
     });
-    expect(response.body.paths['/health']).toBeDefined();
-    expect(response.body.paths['/ready']).toBeDefined();
+    expect(Object.keys(response.body.paths)).toEqual(
+      expect.arrayContaining(['/api/v1/health', '/api/v1/ready']),
+    );
   });
 });

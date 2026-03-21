@@ -14,6 +14,12 @@ export type AuthTokens = {
   refreshToken: string;
 };
 
+export type RegisterResponse = {
+  userId: string;
+  message: string;
+  expiresIn: number;
+};
+
 export type RegisterRequest = {
   phoneNumber: string;
   password: string;
@@ -40,7 +46,10 @@ export type LogoutRequest = {
   refreshToken: string;
 };
 
-export type AuthResponse = {
+export type AuthSessionResponse = {
+  accessToken: string;
+  refreshToken: string;
   user: AuthUser;
-  tokens: AuthTokens;
 };
+
+export type RefreshResponse = AuthTokens;

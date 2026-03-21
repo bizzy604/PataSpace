@@ -1,8 +1,8 @@
 import { PrismaClient, Role, ListingStatus, TransactionStatus, TransactionType } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 import {
   encryptField,
   hashLookupValue,
-  hashSecretValue,
   normalizePhoneNumber,
 } from '../src/common/security/encryption.util';
 
@@ -19,7 +19,7 @@ type SeedUser = {
   email?: string;
 };
 
-function buildUserData(user: SeedUser) {
+async function buildUserData(user: SeedUser) {
   const normalizedPhone = normalizePhoneNumber(user.phoneNumber);
 
   return {
@@ -27,7 +27,7 @@ function buildUserData(user: SeedUser) {
     phoneNumberEncrypted: encryptField(normalizedPhone, encryptionKey),
     phoneVerified: true,
     email: user.email,
-    passwordHash: hashSecretValue(user.password),
+    passwordHash: await bcrypt.hash(user.password, 12),
     firstName: user.firstName,
     lastName: user.lastName,
     role: user.role ?? Role.USER,
@@ -52,7 +52,7 @@ async function main() {
   await prisma.user.deleteMany();
 
   const admin = await prisma.user.create({
-    data: buildUserData({
+    data: await buildUserData({
       phoneNumber: '+254700000001',
       firstName: 'Admin',
       lastName: 'User',
@@ -63,7 +63,7 @@ async function main() {
   });
 
   const outgoingTenant = await prisma.user.create({
-    data: buildUserData({
+    data: await buildUserData({
       phoneNumber: '+254700000002',
       firstName: 'Amina',
       lastName: 'Njoroge',
@@ -73,7 +73,7 @@ async function main() {
   });
 
   const incomingTenant = await prisma.user.create({
-    data: buildUserData({
+    data: await buildUserData({
       phoneNumber: '+254700000003',
       firstName: 'Brian',
       lastName: 'Otieno',

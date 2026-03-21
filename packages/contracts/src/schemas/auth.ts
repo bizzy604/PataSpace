@@ -2,12 +2,25 @@ import { z } from 'zod';
 import { Role } from '../enums';
 import { phoneNumberSchema } from './common';
 
+export const passwordSchema = z
+  .string()
+  .min(8)
+  .regex(/[A-Z]/, 'Must include at least one uppercase letter')
+  .regex(/[0-9]/, 'Must include at least one number')
+  .regex(/[^A-Za-z0-9]/, 'Must include at least one special character');
+
 export const registerSchema = z.object({
   phoneNumber: phoneNumberSchema,
-  password: z.string().min(8),
+  password: passwordSchema,
   firstName: z.string().min(2),
   lastName: z.string().min(2),
   email: z.string().email().optional(),
+});
+
+export const registerResponseSchema = z.object({
+  userId: z.string().min(1),
+  message: z.string().min(1),
+  expiresIn: z.number().int().positive(),
 });
 
 export const verifyOtpSchema = z.object({
@@ -17,7 +30,7 @@ export const verifyOtpSchema = z.object({
 
 export const loginSchema = z.object({
   phoneNumber: phoneNumberSchema,
-  password: z.string().min(8),
+  password: passwordSchema,
 });
 
 export const refreshSchema = z.object({
@@ -42,7 +55,10 @@ export const authTokensSchema = z.object({
   refreshToken: z.string().min(1),
 });
 
-export const authResponseSchema = z.object({
+export const authSessionSchema = z.object({
+  accessToken: z.string().min(1),
+  refreshToken: z.string().min(1),
   user: authUserSchema,
-  tokens: authTokensSchema,
 });
+
+export const refreshResponseSchema = authTokensSchema;

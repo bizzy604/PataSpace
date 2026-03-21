@@ -10,7 +10,9 @@ import { ConfirmUploadInput, CreateUploadUrlInput, StorageProvider } from '../st
 type S3StorageConfig = {
   accessKeyId: string;
   bucket: string;
+  cdnBaseUrl: string;
   presignTtlSeconds: number;
+  publicBaseUrl: string;
   region: string;
   secretAccessKey: string;
 };
@@ -55,6 +57,9 @@ export class S3StorageProvider implements StorageProvider {
   }
 
   async confirmUpload(input: ConfirmUploadInput) {
+    const url = this.buildUrl(this.config.publicBaseUrl, input.key);
+    const cdnUrl = this.buildUrl(this.config.cdnBaseUrl, input.key);
+
     try {
       const object = await this.client.send(
         new HeadObjectCommand({
@@ -69,12 +74,16 @@ export class S3StorageProvider implements StorageProvider {
         confirmed:
           (object.ContentLength === undefined || object.ContentLength === input.size) &&
           (object.ContentType === undefined || object.ContentType === input.contentType),
+        url,
+        cdnUrl,
       };
     } catch {
       return {
         provider: 's3',
         key: input.key,
         confirmed: false,
+        url,
+        cdnUrl,
       };
     }
   }
@@ -98,5 +107,9 @@ export class S3StorageProvider implements StorageProvider {
         message: error instanceof Error ? error.message : 'S3 health check failed',
       };
     }
+  }
+
+  private buildUrl(baseUrl: string, key: string) {
+    return `${baseUrl.replace(/\/$/, '')}/${key.split('/').map(encodeURIComponent).join('/')}`;
   }
 }

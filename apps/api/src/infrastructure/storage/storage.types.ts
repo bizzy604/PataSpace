@@ -26,6 +26,8 @@ export type ConfirmUploadResult = {
   provider: string;
   key: string;
   confirmed: boolean;
+  url: string;
+  cdnUrl: string;
 };
 
 export interface StorageProvider {

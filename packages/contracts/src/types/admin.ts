@@ -1,17 +1,38 @@
 import { ListingStatus } from '../enums';
 
-export type ModerateListingRequest = {
-  listingId: string;
-  action: 'approve' | 'reject';
-  rejectionReason?: string;
+export type RejectListingRequest = {
+  reason: string;
 };
 
-export type AdminListingReview = {
+export type AdminListingTenant = {
   id: string;
-  userId: string;
+  firstName: string;
+  phoneNumber: string;
+  listingsPosted: number;
+};
+
+export type AdminPendingListing = {
+  id: string;
+  tenant: AdminListingTenant;
   county: string;
   neighborhood: string;
   monthlyRent: number;
-  status: ListingStatus;
+  photos: Array<{
+    url: string;
+    order: number;
+    width?: number;
+    height?: number;
+  }>;
   createdAt: string;
+  daysWaiting: number;
+};
+
+export type AdminPendingListingsResponse = {
+  data: AdminPendingListing[];
+};
+
+export type ModerateListingResponse = {
+  id: string;
+  status: ListingStatus;
+  message: string;
 };
