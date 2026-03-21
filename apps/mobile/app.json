@@ -2,8 +2,18 @@
   "expo": {
     "name": "PataSpace",
     "slug": "pataspace",
+    "scheme": "pataspace",
     "version": "1.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "light"
+    "userInterfaceStyle": "light",
+    "experiments": {
+      "typedRoutes": true
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router"
+    ]
   }
 }

@@ -13,3 +13,4 @@ ios/
 .env.*.local
 .DS_Store
 Thumbs.db
+.github/skills/*

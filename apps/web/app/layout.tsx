@@ -13,7 +13,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body>
         <SiteHeader />
-        <main>{children}</main>
+        <main className="min-h-[calc(100vh-73px)]">{children}</main>
       </body>
     </html>
   );

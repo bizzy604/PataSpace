@@ -21,6 +21,9 @@
     "isolatedModules": true,
     "baseUrl": ".",
     "paths": {
+      "@/*": [
+        "./*"
+      ],
       "@pataspace/contracts": [
         "../../packages/contracts/src/index.ts"
       ],
