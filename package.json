@@ -10,7 +10,8 @@
     "dev:mobile": "pnpm --filter @pataspace/mobile start",
     "build": "pnpm -r --if-present build",
     "lint": "pnpm -r --if-present lint",
-    "test": "pnpm -r --if-present test"
+    "test": "pnpm -r --if-present test",
+    "standards:check": "node scripts/standards-check.mjs"
   },
   "engines": {
     "node": ">=20.0.0",

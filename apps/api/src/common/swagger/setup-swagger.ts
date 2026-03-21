@@ -41,6 +41,7 @@ export function setupSwagger(
       .build(),
     {
       deepScanRoutes: true,
+      ignoreGlobalPrefix: true,
     },
   );
 

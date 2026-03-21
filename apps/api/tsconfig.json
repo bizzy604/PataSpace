@@ -8,7 +8,16 @@
     "experimentalDecorators": true,
     "outDir": "./dist",
     "sourceMap": true,
-    "incremental": true
+    "incremental": true,
+    "baseUrl": ".",
+    "paths": {
+      "@pataspace/contracts": [
+        "../../packages/contracts/dist/index.d.ts"
+      ],
+      "@pataspace/contracts/*": [
+        "../../packages/contracts/dist/*"
+      ]
+    }
   },
   "include": [
     "src/**/*.ts",
