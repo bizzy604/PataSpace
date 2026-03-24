@@ -100,4 +100,28 @@ describe('NotificationJob', () => {
     expect(smsService.sendMessage).not.toHaveBeenCalled();
     expect(prismaService.auditLog.create).not.toHaveBeenCalled();
   });
+
+  it('skips alerts when there are no active admins to notify', async () => {
+    const { job, prismaService, smsService } = createJob();
+
+    prismaService.user.findMany.mockResolvedValue([]);
+    prismaService.auditLog.findMany.mockResolvedValue([
+      {
+        id: 'audit_1',
+        action: 'commission.dead_lettered',
+        entityType: 'Commission',
+        entityId: 'commission_1',
+        metadata: {
+          paymentAttempts: 3,
+        },
+      },
+    ]);
+    prismaService.auditLog.findFirst.mockResolvedValue(null);
+
+    const summary = await job.dispatchOperationalAlerts(new Date('2026-04-02T06:00:00.000Z'));
+
+    expect(summary.skippedNoAdmins).toBe(1);
+    expect(smsService.sendMessage).not.toHaveBeenCalled();
+    expect(prismaService.auditLog.create).not.toHaveBeenCalled();
+  });
 });

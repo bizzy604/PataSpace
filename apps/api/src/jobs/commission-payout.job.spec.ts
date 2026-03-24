@@ -258,4 +258,39 @@ describe('CommissionPayoutJob', () => {
     });
     expect(mpesaClient.b2c).not.toHaveBeenCalled();
   });
+
+  it('recovers stale processing commissions before scanning due payouts', async () => {
+    const { job, prismaService } = createJob();
+    const now = new Date('2026-04-02T06:00:00.000Z');
+
+    prismaService.commission.updateMany
+      .mockResolvedValueOnce({ count: 2 })
+      .mockResolvedValueOnce({ count: 0 });
+    prismaService.commission.findMany.mockResolvedValue([]);
+
+    const summary = await job.processCommissionPayouts(now);
+
+    expect(summary).toEqual({
+      recoveredProcessing: 2,
+      promotedToDue: 0,
+      candidates: 0,
+      paid: 0,
+      retried: 0,
+      deadLettered: 0,
+      blockedByDispute: 0,
+      skipped: 0,
+    });
+    expect(prismaService.commission.updateMany).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          lastAttemptError: 'Recovered from stale processing state',
+          status: CommissionStatus.DUE,
+        }),
+        where: expect.objectContaining({
+          status: CommissionStatus.PROCESSING,
+        }),
+      }),
+    );
+  });
 });

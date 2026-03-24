@@ -227,6 +227,37 @@ describe('AuthService', () => {
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
 
+  it('rejects login when the account is inactive', async () => {
+    const { service } = await createAuthService({
+      storedUser: await createStoredUser({
+        isActive: false,
+      }),
+    });
+
+    await expect(
+      service.login({
+        phoneNumber: '+254712345678',
+        password: 'SecurePassword123!',
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('rejects login when the account is banned', async () => {
+    const { service } = await createAuthService({
+      storedUser: await createStoredUser({
+        banReason: 'Fraud review',
+        isBanned: true,
+      }),
+    });
+
+    await expect(
+      service.login({
+        phoneNumber: '+254712345678',
+        password: 'SecurePassword123!',
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
   it('increments OTP attempts when verification fails', async () => {
     const { prismaService, service } = await createAuthService({
       latestOtp: {
@@ -272,6 +303,30 @@ describe('AuthService', () => {
     expect(prismaService.oTPCode.deleteMany).toHaveBeenCalled();
   });
 
+  it('rejects OTP verification when the max attempts are already exhausted', async () => {
+    const { prismaService, service } = await createAuthService({
+      latestOtp: {
+        id: 'otp_locked',
+        phoneNumberHash: 'phone_hash',
+        codeHash: 'hashed-code',
+        attempts: 3,
+        expiresAt: new Date(Date.now() + 60 * 1000),
+        createdAt: new Date(),
+        verified: false,
+      },
+    });
+
+    await expect(
+      service.verifyOtp({
+        phoneNumber: '+254712345678',
+        code: '123456',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(prismaService.oTPCode.deleteMany).toHaveBeenCalled();
+    expect(prismaService.oTPCode.update).not.toHaveBeenCalled();
+  });
+
   it('rotates refresh tokens on refresh', async () => {
     const storedUser = await createStoredUser();
     const { jwtService, service, transactionClient } = await createAuthService({
@@ -314,5 +369,20 @@ describe('AuthService', () => {
         refreshToken: 'expired-refresh-token',
       }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('invalidates the provided refresh token on logout', async () => {
+    const { prismaService, service } = await createAuthService();
+
+    await service.logout('user_1', {
+      refreshToken: 'refresh-token',
+    });
+
+    expect(prismaService.refreshToken.deleteMany).toHaveBeenCalledWith({
+      where: {
+        tokenHash: expect.any(String),
+        userId: 'user_1',
+      },
+    });
   });
 });

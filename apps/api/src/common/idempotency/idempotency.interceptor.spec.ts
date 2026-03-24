@@ -108,4 +108,47 @@ describe('IdempotencyInterceptor', () => {
       },
     });
   });
+
+  it('rejects reused idempotency keys when the payload fingerprint changes', async () => {
+    const originalBody = { listingId: 'listing_1' };
+    const newBody = { listingId: 'listing_2' };
+    const cacheService = {
+      get: jest.fn().mockResolvedValue({
+        body: { id: 'unlock_1' },
+        fingerprint: createHash('sha256').update(JSON.stringify(originalBody)).digest('hex'),
+        statusCode: 201,
+      }),
+      setIfNotExists: jest.fn(),
+      set: jest.fn(),
+      del: jest.fn(),
+    } as unknown as CacheService;
+    const reflector = {
+      getAllAndOverride: jest.fn().mockReturnValue({}),
+    } as unknown as Reflector;
+    const interceptor = new IdempotencyInterceptor(
+      reflector,
+      cacheService,
+      {
+        get: jest.fn().mockReturnValue(86400),
+      } as never,
+    );
+    const context = createExecutionContext({
+      body: newBody,
+      headers: { 'idempotency-key': 'unlock_3' },
+      ip: '127.0.0.1',
+      method: 'POST',
+      route: { path: '/unlocks' },
+      url: '/unlocks',
+    });
+
+    const result = interceptor.intercept(context, {
+      handle: () => of({ id: 'unlock_3' }),
+    } as CallHandler);
+
+    await expect(lastValueFrom(result)).rejects.toMatchObject({
+      response: {
+        code: 'IDEMPOTENCY_KEY_REUSED',
+      },
+    });
+  });
 });
