@@ -20,6 +20,8 @@ export type RegisterResponse = {
   expiresIn: number;
 };
 
+export type ResendOtpResponse = RegisterResponse;
+
 export type RegisterRequest = {
   phoneNumber: string;
   password: string;
@@ -31,6 +33,10 @@ export type RegisterRequest = {
 export type VerifyOtpRequest = {
   phoneNumber: string;
   code: string;
+};
+
+export type ResendOtpRequest = {
+  phoneNumber: string;
 };
 
 export type LoginRequest = {

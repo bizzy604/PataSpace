@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -13,6 +14,8 @@ import {
   Role as ContractRole,
   RefreshResponse,
   RefreshRequest,
+  ResendOtpRequest,
+  ResendOtpResponse,
   RegisterRequest,
   RegisterResponse,
   VerifyOtpRequest,
@@ -245,6 +248,57 @@ export class AuthService {
 
       return this.issueAuthSession(tx, verifiedUser);
     });
+  }
+
+  async resendOtp(input: ResendOtpRequest): Promise<ResendOtpResponse> {
+    const normalizedPhoneNumber = normalizePhoneNumber(input.phoneNumber);
+    const phoneNumberHash = hashLookupValue(normalizedPhoneNumber);
+    const user = await this.userService.findStoredByPhoneNumber(normalizedPhoneNumber);
+
+    if (!user) {
+      throw new NotFoundException({
+        code: 'PENDING_ACCOUNT_NOT_FOUND',
+        message: 'Pending account was not found for this phone number',
+      });
+    }
+
+    if (user.phoneVerified) {
+      throw new ConflictException({
+        code: 'PHONE_ALREADY_VERIFIED',
+        message: 'Phone number is already verified',
+      });
+    }
+
+    this.assertUserCanAuthenticate(user);
+
+    const otpCode = this.generateOtpCode();
+    const otpExpiresAt = new Date(Date.now() + this.otpTtlSeconds * 1000);
+
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.oTPCode.deleteMany({
+        where: {
+          phoneNumberHash,
+        },
+      });
+
+      await tx.oTPCode.create({
+        data: {
+          attempts: 0,
+          codeHash: hashSecretValue(otpCode),
+          expiresAt: otpExpiresAt,
+          phoneNumberHash,
+          verified: false,
+        },
+      });
+    });
+
+    await this.smsService.sendOtp(normalizedPhoneNumber, otpCode);
+
+    return {
+      userId: user.id,
+      message: `OTP resent to ${normalizedPhoneNumber}`,
+      expiresIn: this.otpTtlSeconds,
+    };
   }
 
   async login(input: LoginRequest): Promise<AuthSessionResponse> {

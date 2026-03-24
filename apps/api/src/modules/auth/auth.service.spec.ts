@@ -3,6 +3,7 @@ import {
   ConflictException,
   BadRequestException,
   ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
 import { AuthService } from './auth.service';
@@ -44,9 +45,11 @@ describe('AuthService', () => {
       verified: boolean;
     } | null;
   } = {}) => {
-    const storedUser = options.storedUser ?? (await createStoredUser());
+    const storedUser =
+      options.storedUser === undefined ? await createStoredUser() : options.storedUser;
     const latestOtp =
-      options.latestOtp ??
+      options.latestOtp === undefined
+        ?
       ({
         id: 'otp_1',
         phoneNumberHash: 'phone_hash',
@@ -55,7 +58,8 @@ describe('AuthService', () => {
         expiresAt: new Date(Date.now() + 5 * 60 * 1000),
         createdAt: new Date(),
         verified: false,
-      } as const);
+      } as const)
+        : options.latestOtp;
     const transactionClient = {
       user: {
         create: jest.fn().mockResolvedValue({ id: 'user_1' }),
@@ -153,6 +157,65 @@ describe('AuthService', () => {
         password: 'SecurePassword123!',
         firstName: 'John',
         lastName: 'Doe',
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('resends a fresh OTP for an existing unverified user', async () => {
+    const { service, smsService, transactionClient } = await createAuthService({
+      storedUser: await createStoredUser({
+        phoneVerified: false,
+      }),
+    });
+
+    const response = await service.resendOtp({
+      phoneNumber: '+254712345678',
+    });
+
+    expect(response).toEqual({
+      userId: 'user_1',
+      message: 'OTP resent to +254712345678',
+      expiresIn: 300,
+    });
+    expect(transactionClient.oTPCode.deleteMany).toHaveBeenCalledWith({
+      where: {
+        phoneNumberHash: expect.any(String),
+      },
+    });
+    expect(transactionClient.oTPCode.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        attempts: 0,
+        codeHash: expect.any(String),
+        expiresAt: expect.any(Date),
+        phoneNumberHash: expect.any(String),
+        verified: false,
+      }),
+    });
+    expect(smsService.sendOtp).toHaveBeenCalledWith('+254712345678', '123456');
+  });
+
+  it('rejects OTP resend when the pending account is missing', async () => {
+    const { service } = await createAuthService({
+      storedUser: null,
+    });
+
+    await expect(
+      service.resendOtp({
+        phoneNumber: '+254712345678',
+      }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('rejects OTP resend when the phone number is already verified', async () => {
+    const { service } = await createAuthService({
+      storedUser: await createStoredUser({
+        phoneVerified: true,
+      }),
+    });
+
+    await expect(
+      service.resendOtp({
+        phoneNumber: '+254712345678',
       }),
     ).rejects.toBeInstanceOf(ConflictException);
   });

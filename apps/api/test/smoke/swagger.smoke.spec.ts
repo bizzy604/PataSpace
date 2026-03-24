@@ -34,6 +34,7 @@ describe('Swagger smoke checks', () => {
       expect.arrayContaining([
         '/auth/register',
         '/auth/verify-otp',
+        '/auth/resend-otp',
         '/auth/login',
         '/auth/refresh',
         '/auth/logout',
@@ -43,6 +44,9 @@ describe('Swagger smoke checks', () => {
         '/confirmations',
         '/disputes',
         '/disputes/{id}',
+        '/disputes/{id}/investigate',
+        '/disputes/{id}/resolve',
+        '/disputes/{id}/close',
         '/users/me',
         '/listings',
         '/listings/my-listings',

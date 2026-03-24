@@ -19,6 +19,9 @@ import {
   LoginRequest,
   LogoutRequest,
   logoutSchema,
+  resendOtpSchema,
+  ResendOtpRequest,
+  ResendOtpResponse,
   refreshSchema,
   RefreshRequest,
   RegisterRequest,
@@ -40,6 +43,8 @@ import {
   RefreshResponseDto,
   RegisterRequestDto,
   RegisterResponseDto,
+  ResendOtpRequestDto,
+  ResendOtpResponseDto,
   VerifyOtpRequestDto,
 } from './auth.docs';
 import { AuthService } from './auth.service';
@@ -78,6 +83,22 @@ export class AuthController {
     @Body(new ZodValidationPipe(verifyOtpSchema)) input: VerifyOtpRequest,
   ): Promise<AuthSessionResponse> {
     return this.authService.verifyOtp(input);
+  }
+
+  @Public()
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Resend a fresh OTP for an existing pending phone verification' })
+  @ApiBody({ type: ResendOtpRequestDto })
+  @ApiOkResponse({
+    type: ResendOtpResponseDto,
+    description: 'A fresh OTP was issued for the pending account.',
+  })
+  @ApiRateLimit('authResendOtp')
+  @Post('resend-otp')
+  resendOtp(
+    @Body(new ZodValidationPipe(resendOtpSchema)) input: ResendOtpRequest,
+  ): Promise<ResendOtpResponse> {
+    return this.authService.resendOtp(input);
   }
 
   @Public()

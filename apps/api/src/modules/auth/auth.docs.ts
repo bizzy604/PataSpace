@@ -37,6 +37,22 @@ export class VerifyOtpRequestDto {
   code!: string;
 }
 
+export class ResendOtpRequestDto {
+  @ApiProperty({ example: '+254712345678' })
+  phoneNumber!: string;
+}
+
+export class ResendOtpResponseDto {
+  @ApiProperty({ example: 'cm8abc123' })
+  userId!: string;
+
+  @ApiProperty({ example: 'OTP resent to +254712345678' })
+  message!: string;
+
+  @ApiProperty({ example: 300 })
+  expiresIn!: number;
+}
+
 export class LoginRequestDto {
   @ApiProperty({ example: '+254712345678' })
   phoneNumber!: string;

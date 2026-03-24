@@ -28,6 +28,12 @@ export const verifyOtpSchema = z.object({
   code: z.string().regex(/^\d{4,6}$/),
 });
 
+export const resendOtpSchema = z.object({
+  phoneNumber: phoneNumberSchema,
+});
+
+export const resendOtpResponseSchema = registerResponseSchema;
+
 export const loginSchema = z.object({
   phoneNumber: phoneNumberSchema,
   password: passwordSchema,

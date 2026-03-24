@@ -12,6 +12,10 @@ const DEFAULT_TEST_DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432
 type CreateApiTestContextOptions = {
   databaseUrl?: string;
   ipRangePrefix?: number;
+  overrides?: Array<{
+    token: string | symbol | Function;
+    value: unknown;
+  }>;
 };
 
 export type ApiTestContext = {
@@ -30,9 +34,17 @@ export async function createApiTestContext(
   const previousDatabaseUrl = process.env.DATABASE_URL;
   process.env.DATABASE_URL = options.databaseUrl ?? DEFAULT_TEST_DATABASE_URL;
 
-  const moduleRef = await Test.createTestingModule({
+  let testingModuleBuilder = Test.createTestingModule({
     imports: [AppModule],
-  }).compile();
+  });
+
+  for (const override of options.overrides ?? []) {
+    testingModuleBuilder = testingModuleBuilder
+      .overrideProvider(override.token as never)
+      .useValue(override.value);
+  }
+
+  const moduleRef = await testingModuleBuilder.compile();
 
   const app = moduleRef.createNestApplication();
   const configService = app.get(ConfigService);
