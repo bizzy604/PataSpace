@@ -30,8 +30,15 @@ export type ConfirmUploadResult = {
   cdnUrl: string;
 };
 
+export type DeleteObjectResult = {
+  provider: string;
+  key: string;
+  deleted: boolean;
+};
+
 export interface StorageProvider {
   createUploadUrl(input: CreateUploadUrlInput): Promise<UploadUrlResult>;
   confirmUpload(input: ConfirmUploadInput): Promise<ConfirmUploadResult>;
+  deleteObject(key: string): Promise<DeleteObjectResult>;
   healthCheck(): Promise<ProviderHealth>;
 }

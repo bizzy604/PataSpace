@@ -2,6 +2,7 @@ import {
   ConfirmUploadInput,
   ConfirmUploadResult,
   CreateUploadUrlInput,
+  DeleteObjectResult,
   StorageProvider,
   UploadUrlResult,
 } from '../storage.types';
@@ -14,6 +15,10 @@ export class DisabledStorageProvider implements StorageProvider {
   }
 
   async confirmUpload(_input: ConfirmUploadInput): Promise<ConfirmUploadResult> {
+    throw new Error(`${this.provider} storage provider is not implemented yet.`);
+  }
+
+  async deleteObject(_key: string): Promise<DeleteObjectResult> {
     throw new Error(`${this.provider} storage provider is not implemented yet.`);
   }
 

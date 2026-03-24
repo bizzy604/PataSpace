@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
-import { from, Observable, of } from 'rxjs';
+import { from, Observable } from 'rxjs';
 import { lastValueFrom } from 'rxjs';
 import { CacheService } from '../../infrastructure/cache/cache.service';
 import { AuthenticatedRequest } from '../auth/authenticated-request.interface';

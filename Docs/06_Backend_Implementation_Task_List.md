@@ -193,36 +193,36 @@ Cross-checked against the current scaffold in `apps/api`, `packages/contracts`, 
 
 ## Phase 6: Confirmations, Disputes, And Admin
 
-- [ ] Implement confirmation module endpoints and state transitions.
-- [ ] Implement dispute creation and dispute lookup.
-- [ ] Harden admin moderation flows with authorization, audit logging, and operator diagnostics around listing review actions.
-- [ ] Encode the commission-trigger rules once both confirmation sides are complete.
-- [ ] Add tests for double-confirmation, unauthorized confirmation, dispute duplication, and admin review.
+- [x] Implement confirmation module endpoints and state transitions.
+- [x] Implement dispute creation and dispute lookup.
+- [x] Harden admin moderation flows with authorization, audit logging, and operator diagnostics around listing review actions.
+- [x] Encode the commission-trigger rules once both confirmation sides are complete.
+- [x] Add tests for double-confirmation, unauthorized confirmation, dispute duplication, and admin review.
 
 ## Phase 7: Jobs And Maintenance Flows
 
-- [ ] Replace job scaffolds with real scheduled tasks.
+- [x] Replace job scaffolds with real scheduled tasks.
   - commission payout job
   - listing cleanup job
   - notification job
-- [ ] Add cleanup tasks from the workflow doc:
+- [x] Add cleanup tasks from the workflow doc:
   - expired OTP cleanup
   - expired refresh-token cleanup
   - aged listing cleanup
-- [ ] Add retry and dead-letter behavior for failed background work where needed.
-- [ ] Make all jobs safe to rerun without duplicate side effects.
-- [ ] Add logging and operator-facing diagnostics for scheduled work.
+- [x] Add retry and dead-letter behavior for failed background work where needed.
+- [x] Make all jobs safe to rerun without duplicate side effects.
+- [x] Add logging and operator-facing diagnostics for scheduled work.
 
 ## Phase 8: Testing, Sandbox, And Release Hardening
 
-- [ ] Build test helpers and fixtures for users, listings, purchases, unlocks, confirmations, and disputes.
-- [ ] Add unit tests for domain services and guards.
-- [ ] Add integration tests for Prisma-backed flows.
-- [ ] Add e2e tests for the main public/admin API surface.
-- [ ] Expand sandbox and mock behavior so the full backend can be developed and verified without live provider credentials.
-- [ ] Add API smoke checks for local startup.
-- [ ] Add lint, test, and build checks to CI.
-- [ ] Add deployment notes for migrations, env setup, process manager, and reverse proxy.
+- [x] Build test helpers and fixtures for users, listings, purchases, unlocks, confirmations, and disputes.
+- [x] Add unit tests for domain services and guards.
+- [x] Add integration tests for Prisma-backed flows.
+- [x] Add e2e tests for the main public/admin API surface.
+- [x] Expand sandbox and mock behavior so the full backend can be developed and verified without live provider credentials.
+- [x] Add API smoke checks for local startup.
+- [x] Add lint, test, and build checks to CI.
+- [x] Add deployment notes for migrations, env setup, process manager, and reverse proxy.
 
 ## Fastest Vertical Slice To Build First
 

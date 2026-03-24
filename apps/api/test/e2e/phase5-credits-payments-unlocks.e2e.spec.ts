@@ -19,12 +19,13 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
   let previousDatabaseUrl: string | undefined;
   const createdPhoneNumbers: string[] = [];
   let forwardedForCounter = 0;
+  const forwardedForSeed = Math.floor(Math.random() * 180) + 1;
 
   const createForwardedFor = () => {
     const counter = forwardedForCounter;
     forwardedForCounter += 1;
 
-    return `198.52.${Math.floor(counter / 200) + 1}.${(counter % 200) + 1}`;
+    return `198.52.${((forwardedForSeed + Math.floor(counter / 200)) % 200) + 1}.${(counter % 200) + 1}`;
   };
 
   const createPhoneNumber = () => {

@@ -22,6 +22,24 @@ docker compose -f infra/docker/docker-compose.yml up -d
 
 1. Copy `apps/api/.env.example` to `apps/api/.env`.
 2. Adjust values only if your local ports or credentials differ.
+3. Leave `SMS_PROVIDER=sandbox`, `STORAGE_PROVIDER=sandbox`, and `MPESA_MODE=sandbox` for local work unless you are explicitly validating a live adapter.
+
+### Sandbox Failure Injection
+
+Use these optional flags when you need to verify failure paths locally without live credentials:
+
+```text
+SANDBOX_SMS_FAIL_OTP=true
+SANDBOX_SMS_FAIL_MESSAGE=true
+SANDBOX_STORAGE_FAIL_CREATE_UPLOAD_URL=true
+SANDBOX_STORAGE_FAIL_CONFIRM_UPLOAD=true
+SANDBOX_STORAGE_FAIL_DELETE_OBJECT=true
+SANDBOX_MPESA_FAIL_STK_PUSH=true
+SANDBOX_MPESA_FAIL_B2C=true
+```
+
+- Leave them as `false` for normal local development.
+- When any of them is enabled, `/api/v1/ready` will report the affected sandbox adapter as degraded.
 
 ## Run The API
 
@@ -92,8 +110,13 @@ POST /api/v1/admin/listings/:id/reject
 ## Validation Commands
 
 ```bash
+pnpm lint
+pnpm --filter @pataspace/contracts build
 pnpm --filter @pataspace/api build
 pnpm --filter @pataspace/api test
+pnpm --filter @pataspace/api test:integration
 pnpm --filter @pataspace/api test:smoke
 pnpm --filter @pataspace/api test:e2e
 ```
+
+Deployment notes for production-like environments are in `Docs/09_Backend_Deployment_Notes.md`.

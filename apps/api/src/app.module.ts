@@ -18,6 +18,7 @@ import { UploadModule } from './modules/upload/upload.module';
 import { ConfirmationModule } from './modules/confirmation/confirmation.module';
 import { DisputeModule } from './modules/dispute/dispute.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { JobsModule } from './jobs/jobs.module';
 import { DatabaseModule } from './common/database/database.module';
 import { RequestContextModule } from './common/request-context/request-context.module';
 import { CacheModule } from './infrastructure/cache/cache.module';
@@ -92,6 +93,7 @@ import { MpesaModule } from './infrastructure/payment/mpesa.module';
     ConfirmationModule,
     DisputeModule,
     AdminModule,
+    JobsModule,
   ],
   controllers: [AppController],
   providers: [

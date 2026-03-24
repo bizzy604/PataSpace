@@ -23,6 +23,16 @@ import { StorageService } from './storage.service';
         if (provider === 'sandbox') {
           return new SandboxStorageProvider({
             cdnBaseUrl,
+            failConfirmUpload:
+              configService.get<boolean>('infrastructure.storage.sandbox.failConfirmUpload') ??
+              false,
+            failCreateUploadUrl:
+              configService.get<boolean>(
+                'infrastructure.storage.sandbox.failCreateUploadUrl',
+              ) ?? false,
+            failDeleteObject:
+              configService.get<boolean>('infrastructure.storage.sandbox.failDeleteObject') ??
+              false,
             publicBaseUrl,
           });
         }

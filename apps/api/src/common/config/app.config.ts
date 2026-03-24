@@ -64,6 +64,10 @@ export default () => ({
       baseUrl: process.env.AT_BASE_URL ?? 'https://api.africastalking.com',
       username: process.env.AT_USERNAME ?? 'sandbox',
       apiKey: process.env.AT_API_KEY,
+      sandbox: {
+        failMessage: process.env.SANDBOX_SMS_FAIL_MESSAGE === 'true',
+        failOtp: process.env.SANDBOX_SMS_FAIL_OTP === 'true',
+      },
     },
     storage: {
       provider: process.env.STORAGE_PROVIDER ?? 'sandbox',
@@ -87,6 +91,11 @@ export default () => ({
         process.env.AWS_REGION
           ? `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com`
           : `${process.env.APP_BASE_URL ?? `http://localhost:${process.env.PORT ?? 3000}`}/sandbox-storage`),
+      sandbox: {
+        failConfirmUpload: process.env.SANDBOX_STORAGE_FAIL_CONFIRM_UPLOAD === 'true',
+        failCreateUploadUrl: process.env.SANDBOX_STORAGE_FAIL_CREATE_UPLOAD_URL === 'true',
+        failDeleteObject: process.env.SANDBOX_STORAGE_FAIL_DELETE_OBJECT === 'true',
+      },
     },
     mpesa: {
       mode: process.env.MPESA_MODE ?? 'sandbox',
@@ -102,6 +111,10 @@ export default () => ({
         process.env.MPESA_RESULT_URL ?? process.env.MPESA_CALLBACK_URL,
       timeoutUrl:
         process.env.MPESA_TIMEOUT_URL ?? process.env.MPESA_CALLBACK_URL,
+      sandbox: {
+        failB2c: process.env.SANDBOX_MPESA_FAIL_B2C === 'true',
+        failStkPush: process.env.SANDBOX_MPESA_FAIL_STK_PUSH === 'true',
+      },
     },
   },
 });

@@ -1,4 +1,5 @@
 import {
+  DeleteObjectCommand,
   HeadBucketCommand,
   HeadObjectCommand,
   PutObjectCommand,
@@ -86,6 +87,21 @@ export class S3StorageProvider implements StorageProvider {
         cdnUrl,
       };
     }
+  }
+
+  async deleteObject(key: string) {
+    await this.client.send(
+      new DeleteObjectCommand({
+        Bucket: this.config.bucket,
+        Key: key,
+      }),
+    );
+
+    return {
+      provider: 's3',
+      key,
+      deleted: true,
+    };
   }
 
   async healthCheck() {

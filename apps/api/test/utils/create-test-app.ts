@@ -35,10 +35,14 @@ type TestAppOptions = {
     status: 'up' | 'degraded' | 'down';
     provider: string;
   };
+  providerOverrides?: Array<{
+    token: Function | string | symbol;
+    value: unknown;
+  }>;
 };
 
 export async function createTestApp(options: TestAppOptions = {}): Promise<INestApplication> {
-  const moduleRef = await Test.createTestingModule({
+  let testingModuleBuilder = Test.createTestingModule({
     imports: [AppModule],
   })
     .overrideProvider(PrismaService)
@@ -85,8 +89,15 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<INest
         status: options.mpesaHealth?.status ?? 'up',
         provider: options.mpesaHealth?.provider ?? 'sandbox',
       }),
-    })
-    .compile();
+    });
+
+  for (const providerOverride of options.providerOverrides ?? []) {
+    testingModuleBuilder = testingModuleBuilder
+      .overrideProvider(providerOverride.token as never)
+      .useValue(providerOverride.value);
+  }
+
+  const moduleRef = await testingModuleBuilder.compile();
 
   const app = moduleRef.createNestApplication();
   const configService = app.get(ConfigService);

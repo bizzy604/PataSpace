@@ -1,4 +1,4 @@
-name: CI
+name: Backend CI
 
 on:
   push:
@@ -7,15 +7,103 @@ on:
   pull_request:
 
 jobs:
-  build:
+  backend:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: pataspace
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d pataspace"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      NODE_ENV: test
+      APP_NAME: pataspace-api
+      PORT: 3000
+      APP_BASE_URL: http://localhost:3000
+      SWAGGER_ENABLED: true
+      SWAGGER_PATH: docs
+      SWAGGER_TITLE: PataSpace API
+      SWAGGER_DESCRIPTION: OpenAPI documentation for the PataSpace backend service.
+      SWAGGER_VERSION: 0.1.0
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/pataspace
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ''
+      REDIS_DB: 0
+      JWT_SECRET: ci-jwt-secret-value-1234567890
+      JWT_REFRESH_SECRET: ci-refresh-secret-value-1234567890
+      ACCESS_TOKEN_TTL: 15m
+      REFRESH_TOKEN_TTL_DAYS: 30
+      REFRESH_TOKEN_TRANSPORT: json
+      REQUEST_ID_HEADER: x-request-id
+      APP_ENCRYPTION_KEY: 12345678901234567890123456789012
+      OTP_TTL_SECONDS: 300
+      OTP_MAX_ATTEMPTS: 3
+      OTP_SANDBOX_CODE: 123456
+      IDEMPOTENCY_TTL_SECONDS: 86400
+      IDEMPOTENCY_IN_PROGRESS_TTL_SECONDS: 120
+      RATE_LIMIT_DEFAULT_LIMIT: 100
+      RATE_LIMIT_DEFAULT_TTL_SECONDS: 60
+      QUEUE_PREFIX: pataspace
+      SMS_PROVIDER: sandbox
+      STORAGE_PROVIDER: sandbox
+      MPESA_MODE: sandbox
+      AT_BASE_URL: https://api.africastalking.com
+      AT_USERNAME: sandbox
+      AT_API_KEY: sandbox-api-key
+      AWS_S3_BUCKET: pataspace-media
+      AWS_REGION: eu-west-1
+      AWS_ACCESS_KEY_ID: local-dev-access-key
+      AWS_SECRET_ACCESS_KEY: local-dev-secret-key
+      AWS_S3_PRESIGN_TTL_SECONDS: 900
+      STORAGE_PUBLIC_BASE_URL: http://localhost:3000/sandbox-storage
+      STORAGE_CDN_BASE_URL: http://localhost:3000/sandbox-storage
+      MPESA_BASE_URL: https://sandbox.safaricom.co.ke
+      MPESA_CONSUMER_KEY: sandbox-consumer-key
+      MPESA_CONSUMER_SECRET: sandbox-consumer-secret
+      MPESA_SHORTCODE: 174379
+      MPESA_PASSKEY: sandbox-passkey
+      MPESA_CALLBACK_URL: http://localhost:3000/api/v1/payments/mpesa-callback
+      MPESA_INITIATOR_NAME: live-initiator-name
+      MPESA_SECURITY_CREDENTIAL: live-security-credential
+      MPESA_RESULT_URL: http://localhost:3000/api/v1/payments/mpesa-result
+      MPESA_TIMEOUT_URL: http://localhost:3000/api/v1/payments/mpesa-timeout
 
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: pnpm
 
-      - run: npm install
-      - run: npm run build
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @pataspace/contracts build
+      - run: pnpm --filter @pataspace/api prisma:migrate:deploy
+      - run: pnpm lint
+      - run: pnpm --filter @pataspace/api test:smoke
+      - run: pnpm --filter @pataspace/api test
+      - run: pnpm --filter @pataspace/api build

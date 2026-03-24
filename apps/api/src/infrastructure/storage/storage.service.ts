@@ -17,6 +17,10 @@ export class StorageService {
     return this.provider.confirmUpload(input);
   }
 
+  async deleteObject(key: string) {
+    return this.provider.deleteObject(key);
+  }
+
   async healthCheck() {
     return this.provider.healthCheck();
   }

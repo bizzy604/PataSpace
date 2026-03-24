@@ -17,12 +17,13 @@ describe('Upload, listing, and admin review flows', () => {
   let previousDatabaseUrl: string | undefined;
   const createdPhoneNumbers: string[] = [];
   let forwardedForCounter = 0;
+  const forwardedForSeed = Math.floor(Math.random() * 180) + 1;
 
   const createForwardedFor = () => {
     const counter = forwardedForCounter;
     forwardedForCounter += 1;
 
-    return `198.51.${Math.floor(counter / 200) + 1}.${(counter % 200) + 1}`;
+    return `198.51.${((forwardedForSeed + Math.floor(counter / 200)) % 200) + 1}.${(counter % 200) + 1}`;
   };
 
   const createPhoneNumber = () => {

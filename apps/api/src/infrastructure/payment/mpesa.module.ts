@@ -16,7 +16,11 @@ import { SandboxMpesaProvider } from './providers/sandbox-mpesa.provider';
         const mode = configService.get<string>('infrastructure.mpesa.mode') ?? 'sandbox';
 
         if (mode === 'sandbox') {
-          return new SandboxMpesaProvider();
+          return new SandboxMpesaProvider({
+            failB2c: configService.get<boolean>('infrastructure.mpesa.sandbox.failB2c') ?? false,
+            failStkPush:
+              configService.get<boolean>('infrastructure.mpesa.sandbox.failStkPush') ?? false,
+          });
         }
 
         if (mode === 'live') {

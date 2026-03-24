@@ -37,10 +37,19 @@ describe('Swagger smoke checks', () => {
         '/auth/login',
         '/auth/refresh',
         '/auth/logout',
+        '/credits/balance',
+        '/credits/purchase',
+        '/credits/transactions',
+        '/confirmations',
+        '/disputes',
+        '/disputes/{id}',
         '/users/me',
         '/listings',
         '/listings/my-listings',
         '/listings/{id}',
+        '/payments/mpesa-callback',
+        '/unlocks',
+        '/unlocks/my-unlocks',
         '/uploads/presigned-url',
         '/uploads/confirm',
         '/admin/listings/pending',
@@ -61,6 +70,18 @@ describe('Swagger smoke checks', () => {
     );
     expect(response.body.paths['/uploads/presigned-url'].post.tags).toEqual(
       expect.arrayContaining(['Uploads']),
+    );
+    expect(response.body.paths['/credits/balance'].get.tags).toEqual(
+      expect.arrayContaining(['Credits']),
+    );
+    expect(response.body.paths['/unlocks'].post.tags).toEqual(
+      expect.arrayContaining(['Unlocks']),
+    );
+    expect(response.body.paths['/confirmations'].post.tags).toEqual(
+      expect.arrayContaining(['Confirmations']),
+    );
+    expect(response.body.paths['/disputes/{id}'].get.tags).toEqual(
+      expect.arrayContaining(['Disputes']),
     );
     expect(response.body.paths['/admin/listings/pending'].get.tags).toEqual(
       expect.arrayContaining(['Admin']),

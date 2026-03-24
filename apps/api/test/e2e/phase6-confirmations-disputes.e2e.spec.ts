@@ -17,12 +17,13 @@ describe('Phase 6 confirmations, disputes, and admin review flows', () => {
   let previousDatabaseUrl: string | undefined;
   const createdPhoneNumbers: string[] = [];
   let forwardedForCounter = 0;
+  const forwardedForSeed = Math.floor(Math.random() * 180) + 1;
 
   const createForwardedFor = () => {
     const counter = forwardedForCounter;
     forwardedForCounter += 1;
 
-    return `198.53.${Math.floor(counter / 200) + 1}.${(counter % 200) + 1}`;
+    return `198.53.${((forwardedForSeed + Math.floor(counter / 200)) % 200) + 1}.${(counter % 200) + 1}`;
   };
 
   const createPhoneNumber = () => {

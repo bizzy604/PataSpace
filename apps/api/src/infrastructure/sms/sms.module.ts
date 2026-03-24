@@ -16,7 +16,11 @@ import { SmsService } from './sms.service';
         const provider = configService.get<string>('infrastructure.sms.provider') ?? 'sandbox';
 
         if (provider === 'sandbox') {
-          return new SandboxSmsProvider();
+          return new SandboxSmsProvider({
+            failMessage:
+              configService.get<boolean>('infrastructure.sms.sandbox.failMessage') ?? false,
+            failOtp: configService.get<boolean>('infrastructure.sms.sandbox.failOtp') ?? false,
+          });
         }
 
         if (provider === 'africastalking') {
