@@ -290,6 +290,7 @@ export class ListingService {
             },
             select: {
               id: true,
+              isRefunded: true,
             },
           })
         : null;
@@ -299,7 +300,7 @@ export class ListingService {
       },
     });
 
-    const canViewContactInfo = viewerCanSeeHiddenListing || Boolean(hasUnlock);
+    const canViewContactInfo = viewerCanSeeHiddenListing || Boolean(hasUnlock && !hasUnlock.isRefunded);
     const response: ListingDetails = {
       id: listing.id,
       county: listing.county,
@@ -625,7 +626,6 @@ export class ListingService {
       select: {
         id: true,
         userId: true,
-        unlockCount: true,
       },
     });
 
@@ -643,7 +643,14 @@ export class ListingService {
       });
     }
 
-    if (listing.unlockCount > 0) {
+    const activeUnlockCount = await this.prismaService.unlock.count({
+      where: {
+        listingId: listing.id,
+        isRefunded: false,
+      },
+    });
+
+    if (activeUnlockCount > 0) {
       throw new ConflictException({
         code: 'CANNOT_DELETE_LISTING_WITH_UNLOCKS',
         message: 'Cannot delete a listing that has already been unlocked',
@@ -787,6 +794,19 @@ export class ListingService {
           action: 'listing.approve',
           entityType: 'Listing',
           entityId: listing.id,
+          oldValue: this.buildModerationStateSnapshot(listing),
+          newValue: this.buildModerationStateSnapshot({
+            ...listing,
+            approvedAt: new Date(),
+            isApproved: true,
+            rejectionReason: null,
+            status: ListingStatus.ACTIVE,
+          }),
+          metadata: this.buildModerationAuditMetadata(
+            listing,
+            ListingStatus.ACTIVE,
+            'approved',
+          ),
         },
       });
 
@@ -863,9 +883,20 @@ export class ListingService {
           action: 'listing.reject',
           entityType: 'Listing',
           entityId: listing.id,
-          metadata: {
-            reason: input.reason.trim(),
-          },
+          oldValue: this.buildModerationStateSnapshot(listing),
+          newValue: this.buildModerationStateSnapshot({
+            ...listing,
+            approvedAt: null,
+            isApproved: false,
+            rejectionReason: input.reason.trim(),
+            status: ListingStatus.REJECTED,
+          }),
+          metadata: this.buildModerationAuditMetadata(
+            listing,
+            ListingStatus.REJECTED,
+            'rejected',
+            input.reason.trim(),
+          ),
         },
       });
 
@@ -1222,6 +1253,7 @@ export class ListingService {
     const unlocks = await this.prismaService.unlock.findMany({
       where: {
         buyerId: userId,
+        isRefunded: false,
         listingId: {
           in: listingIds,
         },
@@ -1244,6 +1276,48 @@ export class ListingService {
     }
 
     return viewer.id;
+  }
+
+  private buildModerationStateSnapshot(listing: {
+    status: ListingStatus;
+    isApproved: boolean;
+    approvedAt: Date | null;
+    rejectionReason: string | null;
+  }): Prisma.InputJsonObject {
+    return {
+      status: listing.status,
+      isApproved: listing.isApproved,
+      approvedAt: listing.approvedAt?.toISOString() ?? null,
+      rejectionReason: listing.rejectionReason ?? null,
+    };
+  }
+
+  private buildModerationAuditMetadata(
+    listing: {
+      userId: string;
+      county: string;
+      neighborhood: string;
+      monthlyRent: number;
+      unlockCostCredits: number;
+      commission: number;
+      status: ListingStatus;
+    },
+    nextStatus: ListingStatus,
+    reviewOutcome: 'approved' | 'rejected',
+    reason?: string,
+  ): Prisma.InputJsonObject {
+    return {
+      reviewOutcome,
+      listingOwnerId: listing.userId,
+      county: listing.county,
+      neighborhood: listing.neighborhood,
+      monthlyRent: listing.monthlyRent,
+      unlockCostCredits: listing.unlockCostCredits,
+      commission: listing.commission,
+      previousStatus: listing.status,
+      nextStatus,
+      reason: reason ?? null,
+    };
   }
 
   private async sendListingNotification(phoneNumberEncrypted: string, message: string) {

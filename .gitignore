@@ -15,7 +15,7 @@ ios/
 .DS_Store
 Thumbs.db
 .github/skills/*
-Docs/*
+
 !Docs/08_Engineering_Standards.md
 .claude/*
 !.claude/rules/

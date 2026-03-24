@@ -8,6 +8,13 @@ export const createDisputeSchema = z.object({
   evidence: z.array(z.string().url()).default([]),
 });
 
+export const createDisputeResponseSchema = z.object({
+  disputeId: z.string().min(1),
+  status: z.nativeEnum(DisputeStatus),
+  message: z.string().min(1),
+  estimatedResolution: z.string().min(1),
+});
+
 export const disputeRecordSchema = z.object({
   id: z.string().min(1),
   unlockId: z.string().min(1),
@@ -17,4 +24,5 @@ export const disputeRecordSchema = z.object({
   resolution: z.string().optional(),
   createdAt: isoDateStringSchema,
   resolvedAt: isoDateStringSchema.optional(),
+  refundAmount: z.number().int().nonnegative().optional(),
 });

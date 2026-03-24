@@ -1,4 +1,10 @@
 import { Module } from '@nestjs/common';
+import { DisputeController } from './dispute.controller';
+import { DisputeService } from './dispute.service';
 
-@Module({})
+@Module({
+  controllers: [DisputeController],
+  providers: [DisputeService],
+  exports: [DisputeService],
+})
 export class DisputeModule {}

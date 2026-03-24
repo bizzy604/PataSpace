@@ -453,6 +453,79 @@ describe('Upload, listing, and admin review flows', () => {
     expect(missingPhotosForGpsChange.body.error.code).toBe('PHOTOS_REQUIRED_FOR_GPS_CHANGE');
   });
 
+  it('hides pending listings, blocks non-admin moderation, and locks listings after unlock', async () => {
+    const owner = await createVerifiedUser(Role.USER);
+    const buyer = await createVerifiedUser(Role.USER);
+    const admin = await createVerifiedUser(Role.ADMIN);
+
+    const pendingListing = await createListing(owner.accessToken, 'phase4-d1', {
+      neighborhood: `Phase4-Hidden-${Date.now()}`,
+      monthlyRent: 25000,
+    });
+
+    expect(pendingListing.status).toBe(201);
+    expect(pendingListing.body.status).toBe('PENDING');
+
+    const hiddenDetailsResponse = await request(app.getHttpServer())
+      .get(`/api/v1/listings/${pendingListing.body.id}`)
+      .set('Authorization', `Bearer ${buyer.accessToken}`)
+      .expect(404);
+
+    expect(hiddenDetailsResponse.body.error.code).toBe('LISTING_NOT_FOUND');
+
+    const nonAdminPendingResponse = await request(app.getHttpServer())
+      .get('/api/v1/admin/listings/pending')
+      .set('Authorization', `Bearer ${owner.accessToken}`)
+      .expect(403);
+
+    expect(nonAdminPendingResponse.body.error.code).toBe('FORBIDDEN');
+
+    const nonAdminApproveResponse = await request(app.getHttpServer())
+      .post(`/api/v1/admin/listings/${pendingListing.body.id}/approve`)
+      .set('Authorization', `Bearer ${owner.accessToken}`)
+      .expect(403);
+
+    expect(nonAdminApproveResponse.body.error.code).toBe('FORBIDDEN');
+
+    await approveListing(admin.accessToken, pendingListing.body.id);
+
+    await prismaService.credit.update({
+      where: {
+        userId: buyer.userId,
+      },
+      data: {
+        balance: 6000,
+        lifetimeEarned: 6000,
+      },
+    });
+
+    await request(app.getHttpServer())
+      .post('/api/v1/unlocks')
+      .set('Authorization', `Bearer ${buyer.accessToken}`)
+      .set('X-Forwarded-For', createForwardedFor())
+      .send({
+        listingId: pendingListing.body.id,
+      })
+      .expect(201);
+
+    const lockedUpdateResponse = await request(app.getHttpServer())
+      .patch(`/api/v1/listings/${pendingListing.body.id}`)
+      .set('Authorization', `Bearer ${owner.accessToken}`)
+      .send({
+        monthlyRent: 26000,
+      })
+      .expect(403);
+
+    expect(lockedUpdateResponse.body.error.code).toBe('LISTING_LOCKED_AFTER_UNLOCK');
+
+    const lockedDeleteResponse = await request(app.getHttpServer())
+      .delete(`/api/v1/listings/${pendingListing.body.id}`)
+      .set('Authorization', `Bearer ${owner.accessToken}`)
+      .expect(409);
+
+    expect(lockedDeleteResponse.body.error.code).toBe('CANNOT_DELETE_LISTING_WITH_UNLOCKS');
+  });
+
   it('supports admin rejection, resubmission, and soft delete', async () => {
     const owner = await createVerifiedUser(Role.USER);
     const admin = await createVerifiedUser(Role.ADMIN);

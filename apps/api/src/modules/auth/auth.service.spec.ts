@@ -1,4 +1,9 @@
-import { UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  UnauthorizedException,
+  ConflictException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import bcrypt from 'bcryptjs';
 import { AuthService } from './auth.service';
 import { StoredUser } from '../user/user.service';
@@ -163,6 +168,65 @@ describe('AuthService', () => {
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
+  it('rejects registration when an unverified account is banned', async () => {
+    const { service } = await createAuthService({
+      storedUser: await createStoredUser({
+        phoneVerified: false,
+        isBanned: true,
+        banReason: 'Terms violation',
+      }),
+    });
+
+    await expect(
+      service.register({
+        phoneNumber: '+254712345678',
+        password: 'SecurePassword123!',
+        firstName: 'John',
+        lastName: 'Doe',
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('rejects registration when the email already belongs to another user', async () => {
+    const { service, userService } = await createAuthService({
+      storedUser: await createStoredUser({
+        id: 'user_pending',
+        phoneVerified: false,
+      }),
+    });
+
+    (userService.findStoredByEmail as jest.Mock).mockResolvedValue(
+      await createStoredUser({
+        id: 'user_other',
+      }),
+    );
+
+    await expect(
+      service.register({
+        phoneNumber: '+254712345678',
+        password: 'SecurePassword123!',
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'existing@example.com',
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('rejects login when the phone number is not verified', async () => {
+    const { service } = await createAuthService({
+      storedUser: await createStoredUser({
+        phoneVerified: false,
+      }),
+    });
+
+    await expect(
+      service.login({
+        phoneNumber: '+254712345678',
+        password: 'SecurePassword123!',
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
   it('increments OTP attempts when verification fails', async () => {
     const { prismaService, service } = await createAuthService({
       latestOtp: {
@@ -183,6 +247,29 @@ describe('AuthService', () => {
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(prismaService.oTPCode.update).toHaveBeenCalled();
+  });
+
+  it('rejects OTP verification when the latest code is expired and clears stale records', async () => {
+    const { prismaService, service } = await createAuthService({
+      latestOtp: {
+        id: 'otp_expired',
+        phoneNumberHash: 'phone_hash',
+        codeHash: 'hashed-code',
+        attempts: 0,
+        expiresAt: new Date(Date.now() - 60 * 1000),
+        createdAt: new Date(Date.now() - 2 * 60 * 1000),
+        verified: false,
+      },
+    });
+
+    await expect(
+      service.verifyOtp({
+        phoneNumber: '+254712345678',
+        code: '123456',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(prismaService.oTPCode.deleteMany).toHaveBeenCalled();
   });
 
   it('rotates refresh tokens on refresh', async () => {
@@ -209,5 +296,23 @@ describe('AuthService', () => {
     });
     expect(transactionClient.refreshToken.create).toHaveBeenCalled();
     expect(jwtService.signAsync).toHaveBeenCalled();
+  });
+
+  it('rejects refresh when the token is expired', async () => {
+    const storedUser = await createStoredUser();
+    const { service } = await createAuthService({
+      refreshRecord: {
+        id: 'refresh_expired',
+        expiresAt: new Date(Date.now() - 60 * 1000),
+        user: storedUser,
+      },
+      storedUser,
+    });
+
+    await expect(
+      service.refresh({
+        refreshToken: 'expired-refresh-token',
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 });

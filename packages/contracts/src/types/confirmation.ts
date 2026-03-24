@@ -1,13 +1,24 @@
-import { ConfirmationSide } from '../enums';
+import { CommissionStatus, ConfirmationSide } from '../enums';
 
 export type CreateConfirmationRequest = {
   unlockId: string;
   side: ConfirmationSide;
 };
 
-export type ConfirmationRecord = {
+export type ConfirmationCommission = {
+  amount: number;
+  status: CommissionStatus;
+  payableOn: string;
+};
+
+export type CreateConfirmationResponse = {
   confirmationId: string;
   unlockId: string;
   side: ConfirmationSide;
   confirmedAt: string;
+  bothConfirmed: boolean;
+  commission?: ConfirmationCommission;
+  message: string;
 };
+
+export type ConfirmationRecord = CreateConfirmationResponse;

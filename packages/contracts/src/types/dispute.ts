@@ -6,6 +6,13 @@ export type CreateDisputeRequest = {
   evidence?: string[];
 };
 
+export type CreateDisputeResponse = {
+  disputeId: string;
+  status: DisputeStatus;
+  message: string;
+  estimatedResolution: string;
+};
+
 export type DisputeRecord = {
   id: string;
   unlockId: string;
@@ -15,4 +22,5 @@ export type DisputeRecord = {
   resolution?: string;
   createdAt: string;
   resolvedAt?: string;
+  refundAmount?: number;
 };
