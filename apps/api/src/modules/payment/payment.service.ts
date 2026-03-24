@@ -106,7 +106,7 @@ export class PaymentService {
       });
     }
 
-    await this.expireStalePendingPurchases(userId);
+    await this.reconcilePendingPurchases(new Date(), userId);
 
     const existingPendingPurchase = await this.prismaService.creditTransaction.findFirst({
       where: {
@@ -225,6 +225,72 @@ export class PaymentService {
 
     await this.processFailedCallback(transaction.id, callback);
     return this.callbackAck();
+  }
+
+  async reconcilePendingPurchases(now = new Date(), userId?: string) {
+    const staleBefore = new Date(now.getTime() - PENDING_PURCHASE_TIMEOUT_MS);
+    const pendingTransactions = await this.prismaService.creditTransaction.findMany({
+      where: {
+        ...(userId ? { userId } : {}),
+        type: TransactionType.PURCHASE,
+        status: TransactionStatus.PENDING,
+        createdAt: {
+          lt: staleBefore,
+        },
+      },
+      select: {
+        id: true,
+        metadata: true,
+        mpesaTransactionId: true,
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+      take: userId ? undefined : 100,
+    });
+
+    let reconciledCount = 0;
+
+    for (const transaction of pendingTransactions) {
+      if (!transaction.mpesaTransactionId) {
+        continue;
+      }
+
+      try {
+        const query = await this.mpesaClient.queryStkPush({
+          checkoutRequestId: transaction.mpesaTransactionId,
+        });
+        const fallbackAmount = this.readNumberMetadata(transaction.metadata, 'paymentAmountKES');
+        const fallbackPhoneNumber =
+          this.readStringMetadata(transaction.metadata, 'callbackPhoneNumber') ??
+          this.readStringMetadata(transaction.metadata, 'requestedPhoneNumber');
+        const resolvedPhoneNumber = query.phoneNumber ?? fallbackPhoneNumber;
+        const callback: ParsedCallback = {
+          checkoutRequestId: query.checkoutRequestId,
+          merchantRequestId:
+            this.readStringMetadata(transaction.metadata, 'merchantRequestId') ?? query.checkoutRequestId,
+          resultCode: query.resultCode,
+          resultDesc: query.resultDesc,
+          amount: fallbackAmount,
+          mpesaReceiptNumber: query.mpesaReceiptNumber ?? null,
+          phoneNumber: resolvedPhoneNumber,
+          phoneNumberHash: resolvedPhoneNumber ? hashLookupValue(resolvedPhoneNumber) : null,
+        };
+
+        if (callback.resultCode === 0 && callback.amount !== null) {
+          await this.processSuccessfulCallback(transaction.id, callback);
+          reconciledCount += 1;
+          continue;
+        }
+
+        await this.processFailedCallback(transaction.id, callback);
+        reconciledCount += 1;
+      } catch {
+        continue;
+      }
+    }
+
+    return reconciledCount;
   }
 
   private async processSuccessfulCallback(transactionId: string, callback: ParsedCallback) {
@@ -451,22 +517,6 @@ export class PaymentService {
       phoneNumber: normalizedPhoneNumber,
       phoneNumberHash: normalizedPhoneNumber ? hashLookupValue(normalizedPhoneNumber) : null,
     };
-  }
-
-  private async expireStalePendingPurchases(userId: string) {
-    await this.prismaService.creditTransaction.updateMany({
-      where: {
-        userId,
-        type: TransactionType.PURCHASE,
-        status: TransactionStatus.PENDING,
-        createdAt: {
-          lt: new Date(Date.now() - PENDING_PURCHASE_TIMEOUT_MS),
-        },
-      },
-      data: {
-        status: TransactionStatus.FAILED,
-      },
-    });
   }
 
   private callbackAck(): MpesaCallbackAckResponse {

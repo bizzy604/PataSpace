@@ -8,6 +8,13 @@ export const createDisputeSchema = z.object({
   evidence: z.array(z.string().url()).default([]),
 });
 
+export const resolveDisputeActionSchema = z.enum(['NO_REFUND', 'FULL_REFUND']);
+
+export const resolveDisputeSchema = z.object({
+  resolution: z.string().min(10),
+  action: resolveDisputeActionSchema,
+});
+
 export const createDisputeResponseSchema = z.object({
   disputeId: z.string().min(1),
   status: z.nativeEnum(DisputeStatus),

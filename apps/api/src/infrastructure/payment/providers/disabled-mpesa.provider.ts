@@ -4,6 +4,8 @@ import {
   MpesaProvider,
   MpesaStkPushRequest,
   MpesaStkPushResponse,
+  MpesaStkQueryRequest,
+  MpesaStkQueryResponse,
 } from '../mpesa.types';
 
 export class DisabledMpesaProvider implements MpesaProvider {
@@ -15,6 +17,10 @@ export class DisabledMpesaProvider implements MpesaProvider {
 
   async b2c(_payload: MpesaB2CRequest): Promise<MpesaB2CResponse> {
     throw new Error(`${this.provider} M-Pesa provider is not implemented yet.`);
+  }
+
+  async queryStkPush(_payload: MpesaStkQueryRequest): Promise<MpesaStkQueryResponse> {
+    throw new Error(`${this.provider} M-Pesa provider cannot query STK status yet.`);
   }
 
   async healthCheck() {

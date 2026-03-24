@@ -16,6 +16,10 @@ export type MpesaB2CRequest = {
   remarks?: string;
 };
 
+export type MpesaStkQueryRequest = {
+  checkoutRequestId: string;
+};
+
 export type MpesaStkPushResponse = {
   checkoutRequestId: string;
   merchantRequestId: string;
@@ -30,8 +34,18 @@ export type MpesaB2CResponse = {
   responseDescription: string;
 };
 
+export type MpesaStkQueryResponse = {
+  checkoutRequestId: string;
+  responseCode: string;
+  resultCode: number;
+  resultDesc: string;
+  mpesaReceiptNumber?: string;
+  phoneNumber?: string;
+};
+
 export interface MpesaProvider {
   stkPush(payload: MpesaStkPushRequest): Promise<MpesaStkPushResponse>;
   b2c(payload: MpesaB2CRequest): Promise<MpesaB2CResponse>;
+  queryStkPush(payload: MpesaStkQueryRequest): Promise<MpesaStkQueryResponse>;
   healthCheck(): Promise<ProviderHealth>;
 }

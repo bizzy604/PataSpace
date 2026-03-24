@@ -1,5 +1,10 @@
 import { randomUUID } from 'crypto';
-import { MpesaB2CRequest, MpesaProvider, MpesaStkPushRequest } from '../mpesa.types';
+import {
+  MpesaB2CRequest,
+  MpesaProvider,
+  MpesaStkPushRequest,
+  MpesaStkQueryRequest,
+} from '../mpesa.types';
 
 export class SandboxMpesaProvider implements MpesaProvider {
   constructor(
@@ -32,6 +37,16 @@ export class SandboxMpesaProvider implements MpesaProvider {
       originatorConversationId: `b2c_OC_${randomUUID()}`,
       responseCode: '0',
       responseDescription: 'Sandbox B2C request accepted.',
+    };
+  }
+
+  async queryStkPush(payload: MpesaStkQueryRequest) {
+    return {
+      checkoutRequestId: payload.checkoutRequestId,
+      responseCode: '0',
+      resultCode: 0,
+      resultDesc: 'Sandbox STK query completed successfully.',
+      mpesaReceiptNumber: `SANDBOX${payload.checkoutRequestId.replace(/[^A-Za-z0-9]/g, '').slice(-8)}`,
     };
   }
 

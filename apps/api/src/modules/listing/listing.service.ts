@@ -8,6 +8,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 import {
   CommissionStatus,
+  ConfirmationSide,
+  DisputeStatus,
   ListingStatus,
   Prisma,
   Role,
@@ -618,57 +620,99 @@ export class ListingService {
   }
 
   async softDeleteListing(userId: string, listingId: string) {
-    const listing = await this.prismaService.listing.findFirst({
-      where: {
-        id: listingId,
-        isDeleted: false,
-      },
-      select: {
-        id: true,
-        userId: true,
-      },
+    await this.prismaService.$transaction(async (db) => {
+      const lockedListing = await this.lockListingRow(db, listingId);
+
+      if (!lockedListing) {
+        throw new NotFoundException({
+          code: 'LISTING_NOT_FOUND',
+          message: 'Listing was not found',
+        });
+      }
+
+      const listing = await db.listing.findFirst({
+        where: {
+          id: listingId,
+          isDeleted: false,
+        },
+        select: {
+          id: true,
+          userId: true,
+        },
+      });
+
+      if (!listing) {
+        throw new NotFoundException({
+          code: 'LISTING_NOT_FOUND',
+          message: 'Listing was not found',
+        });
+      }
+
+      if (listing.userId !== userId) {
+        throw new ForbiddenException({
+          code: 'FORBIDDEN',
+          message: 'You do not own this listing',
+        });
+      }
+
+      const blockingUnlockCount = await db.unlock.count({
+        where: {
+          listingId: listing.id,
+          isRefunded: false,
+          OR: [
+            {
+              dispute: {
+                is: {
+                  status: {
+                    in: [DisputeStatus.OPEN, DisputeStatus.INVESTIGATING],
+                  },
+                },
+              },
+            },
+            {
+              NOT: {
+                AND: [
+                  {
+                    confirmations: {
+                      some: {
+                        side: ConfirmationSide.INCOMING_TENANT,
+                      },
+                    },
+                  },
+                  {
+                    confirmations: {
+                      some: {
+                        side: ConfirmationSide.OUTGOING_TENANT,
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      });
+
+      if (blockingUnlockCount > 0) {
+        throw new ConflictException({
+          code: 'CANNOT_DELETE_LISTING_WITH_UNLOCKS',
+          message: 'Cannot delete a listing with unresolved unlock activity',
+        });
+      }
+
+      await db.listing.update({
+        where: {
+          id: listing.id,
+        },
+        data: {
+          deletedAt: new Date(),
+          isDeleted: true,
+          status: ListingStatus.DELETED,
+        },
+      });
     });
 
-    if (!listing) {
-      throw new NotFoundException({
-        code: 'LISTING_NOT_FOUND',
-        message: 'Listing was not found',
-      });
-    }
-
-    if (listing.userId !== userId) {
-      throw new ForbiddenException({
-        code: 'FORBIDDEN',
-        message: 'You do not own this listing',
-      });
-    }
-
-    const activeUnlockCount = await this.prismaService.unlock.count({
-      where: {
-        listingId: listing.id,
-        isRefunded: false,
-      },
-    });
-
-    if (activeUnlockCount > 0) {
-      throw new ConflictException({
-        code: 'CANNOT_DELETE_LISTING_WITH_UNLOCKS',
-        message: 'Cannot delete a listing that has already been unlocked',
-      });
-    }
-
-    await this.prismaService.listing.update({
-      where: {
-        id: listing.id,
-      },
-      data: {
-        deletedAt: new Date(),
-        isDeleted: true,
-        status: ListingStatus.DELETED,
-      },
-    });
-
-    await this.listingCacheService.invalidateListing(listing.id);
+    await this.listingCacheService.invalidateListing(listingId);
   }
 
   async getPendingListings(): Promise<AdminPendingListingsResponse> {
@@ -1230,6 +1274,17 @@ export class ListingService {
 
   private calculateCommission(unlockCostCredits: number) {
     return Math.round(unlockCostCredits * 0.3);
+  }
+
+  private async lockListingRow(
+    client: PrismaService | Prisma.TransactionClient,
+    listingId: string,
+  ) {
+    const rows = await client.$queryRaw<Array<{ id: string }>>(
+      Prisma.sql`SELECT "id" FROM "listings" WHERE "id" = ${listingId} FOR UPDATE`,
+    );
+
+    return rows[0] ?? null;
   }
 
   private buildPagination(total: number, page: number, limit: number) {

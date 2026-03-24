@@ -6,6 +6,7 @@ import {
   MpesaProvider,
   MpesaStkPushRequest,
   MpesaStkPushResponse,
+  MpesaStkQueryRequest,
 } from '../mpesa.types';
 
 type LiveMpesaConfig = {
@@ -101,6 +102,38 @@ export class LiveMpesaProvider implements MpesaProvider {
       originatorConversationId: response.data.OriginatorConversationID,
       responseCode: response.data.ResponseCode,
       responseDescription: response.data.ResponseDescription,
+    };
+  }
+
+  async queryStkPush(payload: MpesaStkQueryRequest) {
+    const timestamp = this.getTimestamp();
+    const password = Buffer.from(
+      `${this.config.shortcode}${this.config.passkey}${timestamp}`,
+    ).toString('base64');
+    const accessToken = await this.getAccessToken();
+    const response = await this.httpClient.post(
+      '/mpesa/stkpushquery/v1/query',
+      {
+        BusinessShortCode: this.config.shortcode,
+        Password: password,
+        Timestamp: timestamp,
+        CheckoutRequestID: payload.checkoutRequestId,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+
+    return {
+      checkoutRequestId: payload.checkoutRequestId,
+      responseCode: String(response.data.ResponseCode ?? '0'),
+      resultCode: Number(response.data.ResultCode ?? 0),
+      resultDesc:
+        (response.data.ResultDesc as string | undefined) ??
+        (response.data.ResponseDescription as string | undefined) ??
+        'STK query completed',
     };
   }
 

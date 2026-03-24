@@ -30,6 +30,7 @@ export const createUnlockResponseSchema = z.object({
 export const unlockHistoryStatusSchema = z.enum([
   'pending_confirmation',
   'confirmed',
+  'disputed',
   'refunded',
 ]);
 

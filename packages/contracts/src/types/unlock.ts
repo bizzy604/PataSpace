@@ -24,7 +24,11 @@ export type CreateUnlockResponse = {
   message: string;
 };
 
-export type UnlockHistoryStatus = 'pending_confirmation' | 'confirmed' | 'refunded';
+export type UnlockHistoryStatus =
+  | 'pending_confirmation'
+  | 'confirmed'
+  | 'disputed'
+  | 'refunded';
 
 export type MyUnlocksFilters = {
   page?: number;

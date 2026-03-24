@@ -10,6 +10,9 @@ describe('CommissionPayoutJob', () => {
         findMany: jest.fn(),
         update: jest.fn(),
       },
+      dispute: {
+        findUnique: jest.fn().mockResolvedValue(null),
+      },
       auditLog: {
         create: jest.fn(),
       },
@@ -210,5 +213,49 @@ describe('CommissionPayoutJob', () => {
 
     expect(summary.blockedByDispute).toBe(1);
     expect(prismaService.commission.update).not.toHaveBeenCalled();
+  });
+
+  it('returns a claimed commission to due when a blocking dispute appears after the payout claim', async () => {
+    const { job, mpesaClient, prismaService } = createJob();
+
+    prismaService.commission.updateMany
+      .mockResolvedValueOnce({ count: 0 })
+      .mockResolvedValueOnce({ count: 0 })
+      .mockResolvedValueOnce({ count: 1 });
+    prismaService.commission.findMany.mockResolvedValue([
+      {
+        id: 'commission_race',
+        unlockId: 'unlock_1',
+        amountKES: 750,
+        paymentAttempts: 0,
+        unlock: {
+          dispute: null,
+          listing: {
+            id: 'listing_1',
+            neighborhood: 'Kilimani',
+            user: {
+              phoneNumberEncrypted: 'encrypted-phone',
+            },
+          },
+        },
+      },
+    ]);
+    prismaService.dispute.findUnique.mockResolvedValue({
+      status: DisputeStatus.INVESTIGATING,
+    });
+
+    const summary = await job.processCommissionPayouts(new Date('2026-04-02T06:00:00.000Z'));
+
+    expect(summary.skipped).toBe(1);
+    expect(prismaService.commission.update).toHaveBeenCalledWith({
+      where: {
+        id: 'commission_race',
+      },
+      data: {
+        status: CommissionStatus.DUE,
+        lastAttemptError: 'Blocked by dispute after payout claim',
+      },
+    });
+    expect(mpesaClient.b2c).not.toHaveBeenCalled();
   });
 });

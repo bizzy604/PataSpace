@@ -6,11 +6,18 @@ export type CreateDisputeRequest = {
   evidence?: string[];
 };
 
+export type ResolveDisputeAction = 'NO_REFUND' | 'FULL_REFUND';
+
 export type CreateDisputeResponse = {
   disputeId: string;
   status: DisputeStatus;
   message: string;
   estimatedResolution: string;
+};
+
+export type ResolveDisputeRequest = {
+  resolution: string;
+  action: ResolveDisputeAction;
 };
 
 export type DisputeRecord = {

@@ -191,6 +191,29 @@ export class CommissionPayoutJob {
       return 'skipped';
     }
 
+    const freshDispute = await this.prismaService.dispute.findUnique({
+      where: {
+        unlockId: commission.unlockId,
+      },
+      select: {
+        status: true,
+      },
+    });
+
+    if (freshDispute && this.blockingDisputeStatuses.has(freshDispute.status)) {
+      await this.prismaService.commission.update({
+        where: {
+          id: commission.id,
+        },
+        data: {
+          status: CommissionStatus.DUE,
+          lastAttemptError: 'Blocked by dispute after payout claim',
+        },
+      });
+
+      return 'skipped';
+    }
+
     const phoneNumber = this.userService.decryptPhoneNumber(
       commission.unlock.listing.user.phoneNumberEncrypted,
     );

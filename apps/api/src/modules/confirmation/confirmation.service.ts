@@ -23,6 +23,8 @@ import { SmsService } from '../../infrastructure/sms/sms.service';
 import { UserService } from '../user/user.service';
 
 const COMMISSION_WAIT_DAYS = 7;
+const AUTO_CONFIRM_AFTER_DAYS = 14;
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const BLOCKING_DISPUTE_STATUSES = new Set<PrismaDisputeStatus>([
   PrismaDisputeStatus.OPEN,
   PrismaDisputeStatus.INVESTIGATING,
@@ -54,6 +56,7 @@ type UnlockForConfirmation = Prisma.UnlockGetPayload<{
     };
     confirmations: {
       select: {
+        confirmedAt: true;
         side: true;
       };
     };
@@ -171,6 +174,7 @@ export class ConfirmationService {
         },
         confirmations: {
           select: {
+            confirmedAt: true,
             side: true,
           },
         },
@@ -196,21 +200,118 @@ export class ConfirmationService {
         unlockId,
       },
       update: {},
-      create: {
-        unlockId,
-        outgoingTenantId: unlock.listing.userId,
-        amountKES: unlock.listing.commission,
-        status: PrismaCommissionStatus.PENDING,
-        eligibleAt: new Date(
-          Date.now() + COMMISSION_WAIT_DAYS * 24 * 60 * 60 * 1000,
-        ),
-      },
+        create: {
+          unlockId,
+          outgoingTenantId: unlock.listing.userId,
+          amountKES: unlock.listing.commission,
+          status: PrismaCommissionStatus.PENDING,
+          eligibleAt: this.calculateEligibleAt(unlock.confirmations),
+        },
       select: {
         amountKES: true,
         status: true,
         eligibleAt: true,
       },
     });
+  }
+
+  async ensureCommissionForUnlock(unlockId: string) {
+    return this.ensureCommissionIfEligible(unlockId);
+  }
+
+  async autoConfirmStaleUnlocks(now = new Date()) {
+    const cutoff = new Date(now.getTime() - AUTO_CONFIRM_AFTER_DAYS * DAY_IN_MS);
+    const candidateUnlocks = await this.prismaService.unlock.findMany({
+      where: {
+        isRefunded: false,
+        confirmations: {
+          some: {
+            confirmedAt: {
+              lt: cutoff,
+            },
+          },
+        },
+      },
+      select: {
+        id: true,
+        buyerId: true,
+        isRefunded: true,
+        refundReason: true,
+        refundedAt: true,
+        listing: {
+          select: {
+            userId: true,
+            neighborhood: true,
+            commission: true,
+            user: {
+              select: {
+                phoneNumberEncrypted: true,
+              },
+            },
+          },
+        },
+        buyer: {
+          select: {
+            phoneNumberEncrypted: true,
+          },
+        },
+        confirmations: {
+          select: {
+            confirmedAt: true,
+            side: true,
+          },
+        },
+        dispute: {
+          select: {
+            status: true,
+          },
+        },
+      },
+    });
+
+    let autoConfirmed = 0;
+
+    for (const unlock of candidateUnlocks) {
+      if (
+        unlock.confirmations.length !== 1 ||
+        (unlock.dispute && BLOCKING_DISPUTE_STATUSES.has(unlock.dispute.status))
+      ) {
+        continue;
+      }
+
+      const existingSide = unlock.confirmations[0]?.side;
+      const missingSide =
+        existingSide === PrismaConfirmationSide.INCOMING_TENANT
+          ? ContractConfirmationSide.OUTGOING_TENANT
+          : ContractConfirmationSide.INCOMING_TENANT;
+      const attributedUserId =
+        missingSide === ContractConfirmationSide.INCOMING_TENANT
+          ? unlock.buyerId
+          : unlock.listing.userId;
+
+      try {
+        await this.createConfirmationRecord(unlock.id, attributedUserId, missingSide);
+      } catch (error) {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2002'
+        ) {
+          continue;
+        }
+
+        if (error instanceof BadRequestException) {
+          continue;
+        }
+
+        throw error;
+      }
+
+      const commission = await this.ensureCommissionIfEligible(unlock.id);
+      await this.sendConfirmationNotifications(unlock, missingSide, commission);
+      autoConfirmed += 1;
+    }
+
+    return autoConfirmed;
   }
 
   private async getUnlockOrThrow(unlockId: string): Promise<UnlockForConfirmation> {
@@ -243,6 +344,7 @@ export class ConfirmationService {
         },
         confirmations: {
           select: {
+            confirmedAt: true,
             side: true,
           },
         },
@@ -325,6 +427,19 @@ export class ConfirmationService {
     return side === ContractConfirmationSide.INCOMING_TENANT
       ? 'Waiting for outgoing tenant to confirm.'
       : 'Waiting for incoming tenant to confirm.';
+  }
+
+  private calculateEligibleAt(confirmations: Array<{ confirmedAt: Date }>) {
+    const latestConfirmation = confirmations.reduce<Date | null>(
+      (latest, confirmation) =>
+        !latest || confirmation.confirmedAt.getTime() > latest.getTime()
+          ? confirmation.confirmedAt
+          : latest,
+      null,
+    );
+
+    const baseTime = latestConfirmation ?? new Date();
+    return new Date(baseTime.getTime() + COMMISSION_WAIT_DAYS * DAY_IN_MS);
   }
 
   private async sendConfirmationNotifications(

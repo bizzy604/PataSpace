@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   ForbiddenException,
   GoneException,
   HttpException,
@@ -8,7 +9,9 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
+  CommissionStatus,
   ConfirmationSide,
+  DisputeStatus,
   ListingStatus,
   Prisma,
   TransactionStatus,
@@ -76,6 +79,10 @@ const UNLOCKABLE_LISTING_STATUSES = [
   ListingStatus.UNLOCKED,
   ListingStatus.CONFIRMED,
 ] as const;
+const ACTIVE_DISPUTE_STATUSES: DisputeStatus[] = [
+  DisputeStatus.OPEN,
+  DisputeStatus.INVESTIGATING,
+];
 
 @Injectable()
 export class UnlockService {
@@ -175,9 +182,56 @@ export class UnlockService {
     }
 
     let result: CreateUnlockResult;
+    let notificationPhoneNumber: string | null = null;
+    let notificationNeighborhood: string | null = null;
 
     try {
       result = await this.prismaService.$transaction(async (db) => {
+        await this.lockListingRow(db, input.listingId);
+        const lockedListing = await db.listing.findFirst({
+          where: {
+            id: input.listingId,
+            isDeleted: false,
+            isApproved: true,
+            status: {
+              in: [...UNLOCKABLE_LISTING_STATUSES],
+            },
+          },
+          select: {
+            id: true,
+            userId: true,
+            addressEncrypted: true,
+            latitude: true,
+            longitude: true,
+            neighborhood: true,
+            unlockCostCredits: true,
+            user: {
+              select: {
+                firstName: true,
+                lastName: true,
+                phoneNumberEncrypted: true,
+              },
+            },
+          },
+        });
+
+        if (!lockedListing) {
+          throw new HttpException(
+            {
+              code: 'LISTING_UNAVAILABLE',
+              message: 'Listing is no longer available for unlock',
+            },
+            HttpStatus.GONE,
+          );
+        }
+
+        if (lockedListing.userId === userId) {
+          throw new ForbiddenException({
+            code: 'CANNOT_UNLOCK_OWN_LISTING',
+            message: 'You cannot unlock your own listing',
+          });
+        }
+
         const concurrentUnlock = await this.findUnlock(input.listingId, userId, db);
 
         if (concurrentUnlock) {
@@ -208,11 +262,11 @@ export class UnlockService {
         const unlock = await db.unlock.create({
           data: {
             buyerId: userId,
-            creditsSpent: listing.unlockCostCredits,
-            listingId: listing.id,
-            revealedAddressEncrypted: listing.addressEncrypted,
-            revealedGPS: `${listing.latitude},${listing.longitude}`,
-            revealedPhoneEncrypted: listing.user.phoneNumberEncrypted,
+            creditsSpent: lockedListing.unlockCostCredits,
+            listingId: lockedListing.id,
+            revealedAddressEncrypted: lockedListing.addressEncrypted,
+            revealedGPS: `${lockedListing.latitude},${lockedListing.longitude}`,
+            revealedPhoneEncrypted: lockedListing.user.phoneNumberEncrypted,
           },
           include: {
             confirmations: {
@@ -252,17 +306,17 @@ export class UnlockService {
 
         const spendResult = await this.creditService.spendCredits(db, {
           userId,
-          amount: listing.unlockCostCredits,
-          description: `Unlocked listing in ${listing.neighborhood}`,
+          amount: lockedListing.unlockCostCredits,
+          description: `Unlocked listing in ${lockedListing.neighborhood}`,
           unlockId: unlock.id,
           metadata: {
-            listingId: listing.id,
+            listingId: lockedListing.id,
           },
         });
 
         await db.listing.update({
           where: {
-            id: listing.id,
+            id: lockedListing.id,
           },
           data: {
             unlockCount: {
@@ -270,6 +324,9 @@ export class UnlockService {
             },
           },
         });
+
+        notificationPhoneNumber = this.decrypt(lockedListing.user.phoneNumberEncrypted);
+        notificationNeighborhood = lockedListing.neighborhood;
 
         return {
           created: true,
@@ -309,10 +366,12 @@ export class UnlockService {
     if (result.created) {
       await this.creditService.invalidateBalanceCache(userId);
       await this.listingCacheService.invalidateListing(input.listingId);
-      await this.sendSmsQuietly(
-        this.decrypt(listing.user.phoneNumberEncrypted),
-        `Someone unlocked your listing in ${listing.neighborhood} on PataSpace.`,
-      );
+      if (notificationPhoneNumber && notificationNeighborhood) {
+        await this.sendSmsQuietly(
+          notificationPhoneNumber,
+          `Someone unlocked your listing in ${notificationNeighborhood} on PataSpace.`,
+        );
+      }
     }
 
     return result;
@@ -346,6 +405,11 @@ export class UnlockService {
               side: true,
             },
           },
+          dispute: {
+            select: {
+              status: true,
+            },
+          },
           listing: {
             select: {
               id: true,
@@ -363,11 +427,11 @@ export class UnlockService {
       const incomingConfirmation = unlock.confirmations.find(
         (confirmation) => confirmation.side === ConfirmationSide.INCOMING_TENANT,
       );
-      const outgoingConfirmation = unlock.confirmations.find(
-        (confirmation) => confirmation.side === ConfirmationSide.OUTGOING_TENANT,
-      );
+        const outgoingConfirmation = unlock.confirmations.find(
+          (confirmation) => confirmation.side === ConfirmationSide.OUTGOING_TENANT,
+        );
 
-      return {
+        return {
         unlockId: unlock.id,
         listing: {
           id: unlock.listing.id,
@@ -382,11 +446,12 @@ export class UnlockService {
           latitude: gps.latitude,
           longitude: gps.longitude,
         },
-        status: this.resolveHistoryStatus(
-          unlock.isRefunded,
-          incomingConfirmation,
-          outgoingConfirmation,
-        ),
+          status: this.resolveHistoryStatus(
+            unlock.isRefunded,
+            unlock.dispute?.status,
+            incomingConfirmation,
+            outgoingConfirmation,
+          ),
         myConfirmation: incomingConfirmation?.confirmedAt.toISOString() ?? null,
         tenantConfirmation: outgoingConfirmation?.confirmedAt.toISOString() ?? null,
         createdAt: unlock.createdAt.toISOString(),
@@ -419,6 +484,10 @@ export class UnlockService {
     }
   }
 
+  async refundUnlockById(unlockId: string, reason: string) {
+    await this.refundUnlock(unlockId, reason);
+  }
+
   private async refundUnlock(unlockId: string, reason: string) {
     let buyerId: string | null = null;
     let buyerPhoneNumber: string | null = null;
@@ -437,6 +506,12 @@ export class UnlockService {
               status: true,
             },
           },
+          commission: {
+            select: {
+              id: true,
+              status: true,
+            },
+          },
           buyer: {
             select: {
               phoneNumberEncrypted: true,
@@ -447,6 +522,13 @@ export class UnlockService {
 
       if (!unlock || unlock.isRefunded) {
         return;
+      }
+
+      if (unlock.commission?.status === CommissionStatus.PAID) {
+        throw new ConflictException({
+          code: 'COMMISSION_ALREADY_PAID',
+          message: 'Cannot refund an unlock after the commission has already been paid',
+        });
       }
 
       const refundResult = await this.creditService.refundCredits(db, {
@@ -483,6 +565,21 @@ export class UnlockService {
               refundReason: reason,
               refundTransactionId: refundResult.transaction.id,
             }),
+          },
+        });
+      }
+
+      if (
+        unlock.commission &&
+        unlock.commission.status !== CommissionStatus.CANCELLED
+      ) {
+        await db.commission.update({
+          where: {
+            id: unlock.commission.id,
+          },
+          data: {
+            status: CommissionStatus.CANCELLED,
+            lastAttemptError: `Cancelled because unlock ${unlock.id} was refunded: ${reason}`,
           },
         });
       }
@@ -590,9 +687,26 @@ export class UnlockService {
       return {};
     }
 
+    const activeDisputeFilter: Prisma.UnlockWhereInput = {
+      dispute: {
+        is: {
+          status: {
+            in: [...ACTIVE_DISPUTE_STATUSES],
+          },
+        },
+      },
+    };
+
     if (status === 'refunded') {
       return {
         isRefunded: true,
+      };
+    }
+
+    if (status === 'disputed') {
+      return {
+        isRefunded: false,
+        ...activeDisputeFilter,
       };
     }
 
@@ -618,23 +732,36 @@ export class UnlockService {
     if (status === 'confirmed') {
       return {
         isRefunded: false,
+        NOT: activeDisputeFilter,
         ...bothConfirmedFilter,
       };
     }
 
     return {
       isRefunded: false,
-      NOT: bothConfirmedFilter,
+      AND: [
+        {
+          NOT: bothConfirmedFilter,
+        },
+        {
+          NOT: activeDisputeFilter,
+        },
+      ],
     };
   }
 
   private resolveHistoryStatus(
     isRefunded: boolean,
+    disputeStatus: DisputeStatus | undefined,
     incomingConfirmation: UnlockConfirmation | undefined,
     outgoingConfirmation: UnlockConfirmation | undefined,
   ): UnlockHistoryStatus {
     if (isRefunded) {
       return 'refunded';
+    }
+
+    if (disputeStatus && ACTIVE_DISPUTE_STATUSES.includes(disputeStatus)) {
+      return 'disputed';
     }
 
     if (incomingConfirmation && outgoingConfirmation) {
@@ -683,6 +810,17 @@ export class UnlockService {
 
   private decrypt(value: string) {
     return decryptField(value, this.encryptionKey);
+  }
+
+  private async lockListingRow(
+    client: PrismaService | Prisma.TransactionClient,
+    listingId: string,
+  ) {
+    const rows = await client.$queryRaw<Array<{ id: string }>>(
+      Prisma.sql`SELECT "id" FROM "listings" WHERE "id" = ${listingId} FOR UPDATE`,
+    );
+
+    return rows[0] ?? null;
   }
 
   private async sendSmsQuietly(phoneNumber: string, message: string) {

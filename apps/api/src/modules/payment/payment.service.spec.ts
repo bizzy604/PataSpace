@@ -26,6 +26,7 @@ describe('PaymentService', () => {
       creditTransaction: {
         updateMany: jest.fn(),
         findFirst: jest.fn(),
+        findMany: jest.fn().mockResolvedValue([]),
         update: jest.fn(),
       },
     };
@@ -41,6 +42,7 @@ describe('PaymentService', () => {
     };
     const mpesaClient = {
       stkPush: jest.fn(),
+      queryStkPush: jest.fn(),
     };
     const smsService = {
       sendMessage: jest.fn(),
@@ -221,6 +223,83 @@ describe('PaymentService', () => {
     expect(smsService.sendMessage).toHaveBeenCalledWith(
       '+254712345678',
       'Your PataSpace credit purchase failed: Request cancelled by user',
+    );
+  });
+
+  it('reconciles successful stale pending purchases when the callback is missed', async () => {
+    const { creditService, mpesaClient, prismaService, service, smsService } =
+      createPaymentService();
+    const currentTransaction = {
+      id: 'txn_1',
+      amount: 5000,
+      userId: 'user_1',
+      metadata: {
+        merchantRequestId: 'ws_MR_123',
+        paymentAmountKES: 5000,
+        requestedPhoneNumber: '+254712345678',
+      },
+      phoneNumberHash: null,
+      mpesaTransactionId: 'ws_CO_123',
+      status: TransactionStatus.PENDING,
+    };
+    const transactionClient = {
+      creditTransaction: {
+        findUnique: jest.fn().mockResolvedValue(currentTransaction),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+        update: jest.fn().mockResolvedValue({}),
+      },
+    };
+
+    prismaService.creditTransaction.findMany.mockResolvedValue([
+      {
+        id: 'txn_1',
+        metadata: currentTransaction.metadata,
+        mpesaTransactionId: 'ws_CO_123',
+      },
+    ]);
+    prismaService.$transaction.mockImplementation(async (callback: Function) =>
+      callback(transactionClient),
+    );
+    mpesaClient.queryStkPush.mockResolvedValue({
+      checkoutRequestId: 'ws_CO_123',
+      resultCode: 0,
+      resultDesc: 'Success',
+      mpesaReceiptNumber: 'PSPACE5000',
+      phoneNumber: '+254712345678',
+    });
+    creditService.applyBalanceIncrement.mockResolvedValue({
+      balanceBefore: 0,
+      balanceAfter: 5000,
+    });
+    smsService.sendMessage.mockResolvedValue({
+      accepted: true,
+      messageId: 'sms_1',
+      provider: 'sandbox',
+    });
+
+    await expect(
+      service.reconcilePendingPurchases(new Date('2026-03-24T08:10:00.000Z')),
+    ).resolves.toBe(1);
+    expect(mpesaClient.queryStkPush).toHaveBeenCalledWith({
+      checkoutRequestId: 'ws_CO_123',
+    });
+    expect(creditService.applyBalanceIncrement).toHaveBeenCalledWith(
+      transactionClient,
+      expect.objectContaining({
+        amount: 5000,
+        userId: 'user_1',
+      }),
+    );
+    expect(transactionClient.creditTransaction.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          mpesaReceiptNumber: 'PSPACE5000',
+          status: TransactionStatus.COMPLETED,
+        }),
+        where: {
+          id: 'txn_1',
+        },
+      }),
     );
   });
 });

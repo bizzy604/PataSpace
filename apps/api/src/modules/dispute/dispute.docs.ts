@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { DisputeStatus } from '@prisma/client';
+import { ResolveDisputeAction } from '@pataspace/contracts';
 
 export class CreateDisputeRequestDto {
   @ApiProperty({ example: 'cm8unlock123' })
@@ -70,4 +71,17 @@ export class DisputeRecordDto {
 
   @ApiProperty({ example: 2500, required: false })
   refundAmount?: number;
+}
+
+export class ResolveDisputeRequestDto {
+  @ApiProperty({
+    example: 'Full refund issued because the landlord rejected the tenant after confirmation.',
+  })
+  resolution!: string;
+
+  @ApiProperty({
+    enum: ['NO_REFUND', 'FULL_REFUND'],
+    example: 'FULL_REFUND',
+  })
+  action!: ResolveDisputeAction;
 }

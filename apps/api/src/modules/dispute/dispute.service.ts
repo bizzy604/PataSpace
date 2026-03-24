@@ -1,21 +1,34 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { DisputeStatus as PrismaDisputeStatus, Prisma, Role } from '@prisma/client';
+import {
+  ConfirmationSide,
+  DisputeStatus as PrismaDisputeStatus,
+  Prisma,
+  Role,
+} from '@prisma/client';
 import {
   CreateDisputeRequest,
   CreateDisputeResponse,
   DisputeRecord,
+  ResolveDisputeRequest,
   DisputeStatus as ContractDisputeStatus,
 } from '@pataspace/contracts';
 import { PrismaService } from '../../common/database/prisma.service';
+import { ConfirmationService } from '../confirmation/confirmation.service';
+import { UnlockService } from '../unlock/unlock.service';
 
 @Injectable()
 export class DisputeService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly unlockService: UnlockService,
+    private readonly confirmationService: ConfirmationService,
+  ) {}
 
   async createDispute(
     userId: string,
@@ -165,6 +178,198 @@ export class DisputeService {
       resolvedAt: dispute.resolvedAt?.toISOString() ?? undefined,
       refundAmount: dispute.unlock.isRefunded ? dispute.unlock.creditsSpent : undefined,
     };
+  }
+
+  async investigateDispute(adminId: string, disputeId: string): Promise<DisputeRecord> {
+    const dispute = await this.prismaService.dispute.findUnique({
+      where: {
+        id: disputeId,
+      },
+      select: {
+        id: true,
+        status: true,
+      },
+    });
+
+    if (!dispute) {
+      throw new NotFoundException({
+        code: 'DISPUTE_NOT_FOUND',
+        message: 'Dispute was not found',
+      });
+    }
+
+    if (
+      dispute.status !== PrismaDisputeStatus.OPEN &&
+      dispute.status !== PrismaDisputeStatus.INVESTIGATING
+    ) {
+      throw new ConflictException({
+        code: 'DISPUTE_NOT_OPEN',
+        message: 'Only open disputes can move into investigation',
+      });
+    }
+
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.dispute.update({
+        where: {
+          id: disputeId,
+        },
+        data: {
+          status: PrismaDisputeStatus.INVESTIGATING,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          userId: adminId,
+          action: 'dispute.investigate',
+          entityType: 'Dispute',
+          entityId: disputeId,
+        },
+      });
+    });
+
+    return this.getDispute(adminId, Role.ADMIN, disputeId);
+  }
+
+  async resolveDispute(
+    adminId: string,
+    disputeId: string,
+    input: ResolveDisputeRequest,
+  ): Promise<DisputeRecord> {
+    const dispute = await this.prismaService.dispute.findUnique({
+      where: {
+        id: disputeId,
+      },
+      select: {
+        id: true,
+        unlockId: true,
+        status: true,
+        unlock: {
+          select: {
+            id: true,
+            isRefunded: true,
+            confirmations: {
+              select: {
+                side: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!dispute) {
+      throw new NotFoundException({
+        code: 'DISPUTE_NOT_FOUND',
+        message: 'Dispute was not found',
+      });
+    }
+
+    if (
+      dispute.status !== PrismaDisputeStatus.OPEN &&
+      dispute.status !== PrismaDisputeStatus.INVESTIGATING
+    ) {
+      throw new ConflictException({
+        code: 'DISPUTE_NOT_OPEN',
+        message: 'Only open disputes can be resolved',
+      });
+    }
+
+    if (input.action === 'FULL_REFUND') {
+      await this.unlockService.refundUnlockById(dispute.unlock.id, input.resolution.trim());
+    }
+
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.dispute.update({
+        where: {
+          id: disputeId,
+        },
+        data: {
+          status: PrismaDisputeStatus.RESOLVED,
+          resolution: input.resolution.trim(),
+          resolvedAt: new Date(),
+          resolvedBy: adminId,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          userId: adminId,
+          action: 'dispute.resolve',
+          entityType: 'Dispute',
+          entityId: disputeId,
+          metadata: {
+            action: input.action,
+            unlockId: dispute.unlockId,
+          },
+        },
+      });
+    });
+
+    const hasBothConfirmations =
+      dispute.unlock.confirmations.some(
+        (confirmation) => confirmation.side === ConfirmationSide.INCOMING_TENANT,
+      ) &&
+      dispute.unlock.confirmations.some(
+        (confirmation) => confirmation.side === ConfirmationSide.OUTGOING_TENANT,
+      );
+
+    if (input.action === 'NO_REFUND' && hasBothConfirmations && !dispute.unlock.isRefunded) {
+      await this.confirmationService.ensureCommissionForUnlock(dispute.unlock.id);
+    }
+
+    return this.getDispute(adminId, Role.ADMIN, disputeId);
+  }
+
+  async closeDispute(adminId: string, disputeId: string): Promise<DisputeRecord> {
+    const dispute = await this.prismaService.dispute.findUnique({
+      where: {
+        id: disputeId,
+      },
+      select: {
+        id: true,
+        status: true,
+      },
+    });
+
+    if (!dispute) {
+      throw new NotFoundException({
+        code: 'DISPUTE_NOT_FOUND',
+        message: 'Dispute was not found',
+      });
+    }
+
+    if (
+      dispute.status !== PrismaDisputeStatus.RESOLVED &&
+      dispute.status !== PrismaDisputeStatus.CLOSED
+    ) {
+      throw new ConflictException({
+        code: 'DISPUTE_NOT_RESOLVED',
+        message: 'Only resolved disputes can be closed',
+      });
+    }
+
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.dispute.update({
+        where: {
+          id: disputeId,
+        },
+        data: {
+          status: PrismaDisputeStatus.CLOSED,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          userId: adminId,
+          action: 'dispute.close',
+          entityType: 'Dispute',
+          entityId: disputeId,
+        },
+      });
+    });
+
+    return this.getDispute(adminId, Role.ADMIN, disputeId);
   }
 
   private assertParticipantAccess(
