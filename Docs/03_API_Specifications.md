@@ -6,16 +6,27 @@
 # EXECUTIVE SUMMARY
 
 **API Style:** REST (HTTP/JSON)  
-**Base URL:** `https://api.pataspace.co.ke/v1`  
+**Base URL:** `https://api.pataspace.co.ke/api/v1`  
 **Authentication:** JWT (Bearer tokens)  
 **Rate Limiting:** 100 requests/minute per user  
-**Versioning:** URI-based (`/v1/`)  
+**Versioning:** URI-based (`/api/v1/`)  
 
 **Core Principles:**
 - Resource-oriented design
 - Consistent error responses
 - Idempotent where appropriate
 - Backward compatible changes only
+
+---
+
+## Implementation Alignment Note (2026-03-24)
+
+- The canonical runtime prefix is `/api/v1`.
+- Refresh tokens are returned and rotated in JSON payloads for the shipped backend surface; this spec no longer treats httpOnly cookies as canonical.
+- Listing moderation and browse visibility stay on the listing record. Unlock, confirmation, dispute, refund, and commission progression live on related records.
+- Repeat unlocks are idempotent: the API returns the existing unlock payload with `200 OK` and does not charge credits again.
+- `GET /unlocks/my-unlocks` supports `pending_confirmation`, `confirmed`, `disputed`, and `refunded`.
+- Disputes now include admin actions to investigate, resolve, and close.
 
 ---
 
@@ -75,9 +86,9 @@
 ```
 
 **Refresh Token (30 days expiry):**
-- Stored in httpOnly cookie
-- Cannot be accessed by JavaScript
+- Returned in JSON response bodies
 - Rotated on each use
+- Stored by clients according to platform-specific security constraints
 
 ---
 
@@ -288,7 +299,7 @@ Create a new listing (mobile only).
 ```json
 {
   "id": "listing_clx456def",
-  "status": "pending",
+  "status": "PENDING",
   "message": "Listing created. Awaiting admin review (first 3 listings).",
   "unlockCostCredits": 2500,
   "commission": 750,
@@ -438,7 +449,7 @@ Get current user's listings.
 **Headers:** `Authorization: Bearer <token>`
 
 **Query Parameters:**
-- `status`: `pending|active|deleted` (optional)
+- `status`: `PENDING|ACTIVE|UNLOCKED|CONFIRMED|COMPLETED|DELETED|REJECTED` (optional)
 - `page`: Page number (default: 1)
 - `limit`: Items per page (default: 20)
 
@@ -503,7 +514,7 @@ Soft delete listing (owner only).
 
 **Errors:**
 - `403` - Not the listing owner
-- `409` - Cannot delete listing with pending unlocks
+- `409` - Cannot delete listing with unresolved unlock activity
 
 ---
 
@@ -552,7 +563,7 @@ Purchase credits via M-Pesa.
 ```json
 {
   "transactionId": "tx_clx789ghi",
-  "status": "pending",
+  "status": "PENDING",
   "amount": 5000,
   "message": "M-Pesa prompt sent to +254712345678. Enter your PIN.",
   "estimatedCompletion": "30 seconds"
@@ -561,8 +572,10 @@ Purchase credits via M-Pesa.
 
 **Webhook (M-Pesa callback):**
 ```
-POST /api/payments/mpesa-callback
+POST /api/v1/payments/mpesa-callback
 ```
+
+**Operational Note:** Pending purchases older than 5 minutes are reconciled by querying STK status so successful payments are not lost when callbacks arrive late or not at all.
 
 **Errors:**
 - `400` - Invalid phone number or package
@@ -656,7 +669,8 @@ Unlock contact information for a listing.
 **Idempotency:** If already unlocked, return same contact info without deducting credits again.
 
 **Errors:**
-- `400` - Already unlocked by this user
+- `200` - Already unlocked by this user; existing payload returned without charge
+- `403` - Cannot unlock your own listing
 - `402` - Insufficient credits
 - `404` - Listing not found or deleted
 - `410` - Listing no longer available (refund issued)
@@ -670,7 +684,7 @@ Get listings I've unlocked.
 **Headers:** `Authorization: Bearer <token>`
 
 **Query Parameters:**
-- `status`: `pending|confirmed|refunded` (optional)
+- `status`: `pending_confirmation|confirmed|disputed|refunded` (optional)
 - `page`, `limit`
 
 **Response:** `200 OK`
@@ -744,7 +758,7 @@ Confirm connection with other party.
   "bothConfirmed": true,
   "commission": {
     "amount": 750,
-    "status": "pending",
+    "status": "PENDING",
     "payableOn": "2026-04-01T10:00:00Z"
   },
   "message": "Both parties confirmed! Commission will be paid on 2026-04-01."
@@ -782,7 +796,7 @@ Report a dispute for an unlock.
 ```json
 {
   "disputeId": "dispute_clx222",
-  "status": "open",
+  "status": "OPEN",
   "message": "Dispute filed. Admin will review within 24 hours.",
   "estimatedResolution": "2-3 business days"
 }
@@ -807,8 +821,76 @@ Get dispute details.
   "unlockId": "unlock_clx999",
   "reason": "Landlord rejected me without valid reason",
   "evidence": ["https://s3.amazonaws.com/evidence/screenshot1.jpg"],
-  "status": "resolved",
+  "status": "RESOLVED",
   "resolution": "Full refund issued. Landlord violated policy.",
+  "resolvedAt": "2026-03-22T16:00:00Z",
+  "refundAmount": 2500
+}
+```
+
+### POST /disputes/:id/investigate
+
+Move a dispute into `INVESTIGATING` (admin only).
+
+**Headers:** `Authorization: Bearer <admin-token>`
+
+**Response:** `200 OK`
+```json
+{
+  "id": "dispute_clx222",
+  "unlockId": "unlock_clx999",
+  "status": "INVESTIGATING",
+  "reason": "Landlord rejected me without valid reason",
+  "evidence": ["https://s3.amazonaws.com/evidence/screenshot1.jpg"],
+  "createdAt": "2026-03-21T09:00:00Z"
+}
+```
+
+### POST /disputes/:id/resolve
+
+Resolve a dispute with or without refund (admin only).
+
+**Headers:** `Authorization: Bearer <admin-token>`
+
+**Request:**
+```json
+{
+  "action": "FULL_REFUND",
+  "resolution": "Listing invalid. Full refund issued."
+}
+```
+
+**Action Options:**
+- `FULL_REFUND`
+- `NO_REFUND`
+
+**Response:** `200 OK`
+```json
+{
+  "id": "dispute_clx222",
+  "unlockId": "unlock_clx999",
+  "status": "RESOLVED",
+  "reason": "Landlord rejected me without valid reason",
+  "resolution": "Listing invalid. Full refund issued.",
+  "resolvedAt": "2026-03-22T16:00:00Z",
+  "refundAmount": 2500
+}
+```
+
+### POST /disputes/:id/close
+
+Close a resolved dispute (admin only).
+
+**Headers:** `Authorization: Bearer <admin-token>`
+
+**Response:** `200 OK`
+```json
+{
+  "id": "dispute_clx222",
+  "unlockId": "unlock_clx999",
+  "status": "CLOSED",
+  "reason": "Landlord rejected me without valid reason",
+  "resolution": "Listing invalid. Full refund issued.",
   "resolvedAt": "2026-03-22T16:00:00Z",
   "refundAmount": 2500
 }
@@ -1136,7 +1218,7 @@ GET /listings?sortBy=monthlyRent&sortOrder=asc
 
 ## 8.1 M-Pesa Payment Callback
 
-**Endpoint:** `POST /api/payments/mpesa-callback`
+**Endpoint:** `POST /api/v1/payments/mpesa-callback`
 
 **Request (from Safaricom):**
 ```json
@@ -1398,7 +1480,7 @@ GET /listings?mock=true
 ## 15.1 JavaScript (Fetch)
 
 ```javascript
-const API_BASE = 'https://api.pataspace.co.ke/v1';
+const API_BASE = 'https://api.pataspace.co.ke/api/v1';
 let accessToken = localStorage.getItem('accessToken');
 
 async function apiCall(endpoint, options = {}) {

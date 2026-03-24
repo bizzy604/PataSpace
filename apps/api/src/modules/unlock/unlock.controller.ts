@@ -59,7 +59,7 @@ export class UnlockController {
   @ApiQuery({
     name: 'status',
     required: false,
-    enum: ['pending_confirmation', 'confirmed', 'refunded'],
+    enum: ['pending_confirmation', 'confirmed', 'disputed', 'refunded'],
   })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })

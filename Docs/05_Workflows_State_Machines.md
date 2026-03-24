@@ -12,6 +12,19 @@
 
 ---
 
+# IMPLEMENTATION ALIGNMENT NOTE (2026-03-24)
+
+- Canonical API base path is `/api/v1`.
+- The overview diagram in section 1 is historical. The shipped backend keeps listing moderation and browse visibility on the listing record, while unlock, confirmation, dispute, refund, and commission progression live on related records.
+- Unlock creation increments `listing.unlockCount`, but does not rely on changing the listing into a hidden browse state.
+- Commission eligibility is created from the unlock workflow once both confirmation sides exist, using the latest confirmation timestamp plus 7 days.
+- One-sided confirmations auto-progress after 14 days when the unlock is not refunded and no dispute is still `OPEN` or `INVESTIGATING`.
+- Missed M-Pesa callbacks are recovered by a reconciliation job that queries STK status for stale pending purchases.
+- Disputes support the full admin lifecycle: `OPEN -> INVESTIGATING -> RESOLVED -> CLOSED`.
+- Dispute resolutions currently support `FULL_REFUND` or `NO_REFUND`. Partial-refund handling is not part of the shipped backend.
+
+---
+
 # 1. LISTING LIFECYCLE WORKFLOW
 
 ## 1.1 State Diagram
@@ -107,12 +120,13 @@ WHERE id = $listing_id
 - User has not already unlocked this listing
 
 **Actions:**
-1. Deduct credits (atomic transaction)
-2. Create `Unlock` record
-3. Update `listing.status = 'UNLOCKED'`
+1. Re-check listing availability inside the transaction
+2. Deduct credits atomically
+3. Create `Unlock` record
 4. Increment `listing.unlockCount`
 5. Send SMS to outgoing tenant: "Someone unlocked your listing!"
 6. Return contact info to incoming tenant
+7. Keep browse visibility explicit on the listing record instead of overloading listing status
 
 ---
 
@@ -120,14 +134,13 @@ WHERE id = $listing_id
 **Trigger:** Both parties confirm connection  
 **Conditions:**
 - Both `outgoing_tenant` and `incoming_tenant` have confirmed
-- No dispute has been filed
+- No dispute is currently `OPEN` or `INVESTIGATING`
 
 **Actions:**
-1. Update `listing.status = 'CONFIRMED'`
-2. Create `Commission` record
-3. Set `commission.eligibleAt = now() + 7 days`
-4. Set `commission.status = 'PENDING'`
-5. Send SMS to both parties: "Connection confirmed! Commission pending."
+1. Create or upsert the `Commission` record for the unlock
+2. Set `commission.eligibleAt = latest_confirmation_time + 7 days`
+3. Set `commission.status = 'PENDING'`
+4. Send SMS to both parties: "Connection confirmed! Commission pending."
 
 ---
 
@@ -138,10 +151,9 @@ WHERE id = $listing_id
 - M-Pesa B2C payment succeeded
 
 **Actions:**
-1. Update `listing.status = 'COMPLETED'`
-2. Update `commission.status = 'PAID'`
-3. Set `commission.paidAt = now()`
-4. Send SMS to outgoing tenant: "Commission paid!"
+1. Update `commission.status = 'PAID'`
+2. Set `commission.paidAt = now()`
+3. Send SMS to outgoing tenant: "Commission paid!"
 
 ---
 
@@ -149,7 +161,8 @@ WHERE id = $listing_id
 **Trigger:** User deletes listing  
 **Conditions:**
 - User is the listing owner
-- No pending unlocks (or all unlocks have been confirmed/refunded)
+- Every non-refunded unlock is already fully confirmed
+- No unlock on the listing has a dispute still `OPEN` or `INVESTIGATING`
 
 **Actions:**
 1. Update `listing.isDeleted = true`
@@ -166,9 +179,9 @@ WHERE id = $listing_id
 **Scenario:** Incoming tenant unlocked, but outgoing tenant deletes listing before confirming
 
 **Resolution:**
-1. **Prevent deletion:** Return error "Cannot delete listing with pending unlocks"
-2. **User must:** Either confirm the connection or wait for dispute resolution
-3. **If legitimate:** User can request admin intervention
+1. **Prevent deletion:** Return error "Cannot delete a listing with unresolved unlock activity"
+2. **User must:** Reach both confirmations or wait for refund or dispute resolution
+3. **If legitimate:** Admin can resolve the dispute and either issue a full refund or restore commission eligibility
 
 ---
 
@@ -257,7 +270,7 @@ async update(listingId: string, userId: string, dto: UpdateListingDto) {
          ▼
 ┌─────────────────────────────────────┐
 │  Backend Webhook                    │
-│  POST /api/payments/mpesa-callback  │
+│  POST /api/v1/payments/mpesa-callback  │
 │  ┌────────────────────────────────┐ │
 │  │ 1. Verify signature            │ │
 │  │ 2. Check idempotency           │ │
@@ -431,12 +444,12 @@ async reconcilePendingTransactions() {
 
   for (const tx of stale) {
     try {
-      // Query M-Pesa API for transaction status
-      const status = await this.mpesa.queryTransactionStatus(
-        tx.mpesaTransactionId,
-      );
+      // Query M-Pesa STK status using the stored checkout request id
+      const status = await this.mpesa.queryStkPush({
+        checkoutRequestId: tx.mpesaTransactionId,
+      });
 
-      if (status.ResultCode === 0) {
+      if (status.resultCode === 0) {
         // Success - process as completed
         await this.processSuccessfulPayment(tx, status);
       } else {
@@ -633,24 +646,28 @@ async confirmUnlock(unlockId: string, userId: string, side: ConfirmationSide) {
 ```typescript
 async handleBothConfirmed(unlock: Unlock) {
   await this.prisma.$transaction(async (tx) => {
-    // 1. Update listing status
-    await tx.listing.update({
-      where: { id: unlock.listingId },
-      data: { status: 'CONFIRMED' },
+    // 1. Create or upsert the commission record for the unlock
+    const latestConfirmation = await tx.confirmation.aggregate({
+      where: { unlockId: unlock.id },
+      _max: { confirmedAt: true },
     });
+    const confirmedAt = latestConfirmation._max.confirmedAt ?? new Date();
 
-    // 2. Create commission record
-    const commission = await tx.commission.create({
-      data: {
+    const commission = await tx.commission.upsert({
+      where: { unlockId: unlock.id },
+      update: {},
+      create: {
         unlockId: unlock.id,
         outgoingTenantId: unlock.listing.userId,
         amountKES: unlock.listing.commission,
         status: 'PENDING',
-        eligibleAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        eligibleAt: new Date(
+          confirmedAt.getTime() + 7 * 24 * 60 * 60 * 1000,
+        ),
       },
     });
 
-    // 3. Send SMS to both parties
+    // 2. Send SMS to both parties
     await this.sms.send(
       unlock.buyer.phoneNumber,
       `Connection confirmed! Enjoy your new home in ${unlock.listing.neighborhood}!`
@@ -683,28 +700,38 @@ async handleBothConfirmed(unlock: Unlock) {
 async autoConfirmStaleUnlocks() {
   const staleUnlocks = await this.prisma.unlock.findMany({
     where: {
-      createdAt: {
-        lt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 14 days
-      },
+      isRefunded: false,
       confirmations: {
-        some: {},
+        some: {
+          confirmedAt: {
+            lt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 14 days
+          },
+        },
       },
     },
     include: {
       confirmations: true,
+      dispute: true,
       listing: true,
     },
   });
 
   for (const unlock of staleUnlocks) {
-    if (unlock.confirmations.length === 1) {
+    const blockedByDispute =
+      unlock.dispute &&
+      ['OPEN', 'INVESTIGATING'].includes(unlock.dispute.status);
+
+    if (unlock.confirmations.length === 1 && !blockedByDispute) {
       // One party confirmed 14 days ago, auto-confirm for the other
       const confirmedSide = unlock.confirmations[0].side;
       const otherSide = confirmedSide === 'incoming_tenant'
         ? 'outgoing_tenant'
         : 'incoming_tenant';
+      const attributedUserId = otherSide === 'incoming_tenant'
+        ? unlock.buyerId
+        : unlock.listing.userId;
 
-      await this.confirmUnlock(unlock.id, 'SYSTEM', otherSide);
+      await this.confirmUnlock(unlock.id, attributedUserId, otherSide);
       
       this.logger.log(`Auto-confirmed unlock ${unlock.id} for ${otherSide}`);
     }
@@ -922,6 +949,8 @@ async payCommission(commission: Commission) {
 }
 ```
 
+**Implementation note:** The shipped payout job claims a `DUE` commission first, then re-reads dispute state before sending B2C. If a dispute became `OPEN` or `INVESTIGATING` after the initial fetch, the commission is returned to `DUE` instead of being paid through the race.
+
 ---
 
 ## 4.3 Edge Cases: Commission Payout
@@ -1080,7 +1109,6 @@ POST /disputes
 
 **Resolutions:**
 - **Full refund:** If landlord clearly violated policy
-- **Partial refund:** If both parties share blame
 - **No refund:** If tenant's claim is invalid
 
 ---
@@ -1116,8 +1144,8 @@ POST /disputes
 async resolveDispute(
   disputeId: string,
   adminId: string,
+  action: 'FULL_REFUND' | 'NO_REFUND',
   resolution: string,
-  refundAmount?: number,
 ) {
   const dispute = await this.prisma.dispute.findUnique({
     where: { id: disputeId },
@@ -1146,7 +1174,7 @@ async resolveDispute(
     });
 
     // 2. Process refund if applicable
-    if (refundAmount > 0) {
+    if (action === 'FULL_REFUND') {
       await this.refundUnlock(dispute.unlock, resolution);
     }
 
@@ -1158,8 +1186,8 @@ async resolveDispute(
         entityType: 'Dispute',
         entityId: disputeId,
         metadata: {
+          action,
           resolution,
-          refundAmount,
         },
       },
     });

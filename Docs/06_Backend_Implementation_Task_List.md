@@ -4,22 +4,28 @@ Based on:
 - `Docs/03_API_Specifications.md`
 - `Docs/04_Backend_Modular_Structure.md`
 
-Cross-checked against the current scaffold in `apps/api`, `packages/contracts`, and `infra/` on 2026-03-21.
+Cross-checked against the implemented backend in `apps/api`, `packages/contracts`, and `infra/` on 2026-03-24.
 
 ## Current Baseline
 
-- `apps/api` already exists as a Nest app and boots through `AppModule`.
-- Feature modules exist, but they are still empty `@Module({})` shells.
-- `apps/api/prisma/schema.prisma` is still a placeholder and must be replaced from `Docs/02_Database_Schema.md`.
-- Shared infrastructure exists only as stubs or no-op implementations:
+- `apps/api` is a working NestJS backend and boots through `AppModule` with implemented modules for auth, uploads, listings, credits, payments, unlocks, confirmations, disputes, admin flows, and scheduled jobs.
+- `apps/api/prisma/schema.prisma`, migrations, and seed flows are implemented and aligned with the current backend surface.
+- Shared infrastructure is implemented behind sandbox and live adapters for:
   - cache
   - queue
   - SMS
   - storage
   - M-Pesa
   - background jobs
-- `packages/contracts` has partial auth and listing contracts, but they do not yet cover the full API surface or validation rules from the spec.
-- Local Postgres and Redis are already available through `infra/docker/docker-compose.yml`.
+- `packages/contracts` now covers auth, listing, credit, payment, unlock, confirmation, dispute, admin, pagination, and error-envelope contracts used by the backend surface.
+- Local Postgres and Redis remain available through `infra/docker/docker-compose.yml`.
+- The post-implementation business-logic audit fixes from 2026-03-24 are now shipped:
+  - dispute investigate, resolve, and close lifecycle
+  - M-Pesa reconciliation for missed callbacks
+  - in-transaction unlock availability recheck before credit spend
+  - 14-day one-sided auto-confirm follow-up job
+  - listing deletion aligned to confirmed-or-refunded unlock activity
+  - dispute recheck after commission payout claim
 
 ## Critical Decisions To Resolve In Sprint 0
 
@@ -35,14 +41,14 @@ Cross-checked against the current scaffold in `apps/api`, `packages/contracts`, 
 
 ## Definition Of Done For "Backend Can Be Spun Locally"
 
-- [ ] `docker compose -f infra/docker/docker-compose.yml up -d` starts Postgres and Redis.
-- [ ] `pnpm dev:api` boots cleanly with validated environment variables and a passing health or readiness endpoint.
-- [ ] Prisma migrations and seed scripts run successfully against local Postgres.
-- [ ] `pnpm --filter @pataspace/api build` passes.
-- [ ] External integrations have working sandbox or local mock adapters for storage, SMS, and M-Pesa.
-- [ ] The current shipped slice works end-to-end locally for the routes promised in that sprint.
-- [ ] Smoke tests for the current shipped slice pass.
-- [ ] A short local runbook exists for starting, seeding, and testing the API.
+- [x] `docker compose -f infra/docker/docker-compose.yml up -d` starts Postgres and Redis.
+- [x] `pnpm dev:api` boots cleanly with validated environment variables and a passing health or readiness endpoint.
+- [x] Prisma migrations and seed scripts run successfully against local Postgres.
+- [x] `pnpm --filter @pataspace/api build` passes.
+- [x] External integrations have working sandbox or local mock adapters for storage, SMS, and M-Pesa.
+- [x] The current shipped slice works end-to-end locally for the routes promised in that sprint.
+- [x] Smoke tests for the current shipped slice pass.
+- [x] A short local runbook exists for starting, seeding, and testing the API.
 
 ## Recommended Build Order
 
@@ -178,6 +184,7 @@ Cross-checked against the current scaffold in `apps/api`, `packages/contracts`, 
   - create pending purchase
   - STK push request
   - callback processing
+  - reconciliation query path for missed callbacks
   - idempotent credit application
   - failure and timeout handling
 - [x] Implement unlock flow with transaction safety.
@@ -194,10 +201,10 @@ Cross-checked against the current scaffold in `apps/api`, `packages/contracts`, 
 ## Phase 6: Confirmations, Disputes, And Admin
 
 - [x] Implement confirmation module endpoints and state transitions.
-- [x] Implement dispute creation and dispute lookup.
+- [x] Implement dispute creation, lookup, investigation, resolution, and closure flows.
 - [x] Harden admin moderation flows with authorization, audit logging, and operator diagnostics around listing review actions.
 - [x] Encode the commission-trigger rules once both confirmation sides are complete.
-- [x] Add tests for double-confirmation, unauthorized confirmation, dispute duplication, and admin review.
+- [x] Add tests for double-confirmation, unauthorized confirmation, dispute duplication, dispute resolution outcomes, and admin review.
 
 ## Phase 7: Jobs And Maintenance Flows
 
@@ -205,6 +212,8 @@ Cross-checked against the current scaffold in `apps/api`, `packages/contracts`, 
   - commission payout job
   - listing cleanup job
   - notification job
+  - payment reconciliation job
+  - confirmation follow-up auto-confirm job
 - [x] Add cleanup tasks from the workflow doc:
   - expired OTP cleanup
   - expired refresh-token cleanup
@@ -274,13 +283,13 @@ Sprint 0 deliverable:
 
 ## Recommended Sprint 1
 
-- [ ] Ship auth register, verify OTP, login, refresh, and logout.
-- [ ] Ship upload presign and confirm endpoints against sandbox storage.
-- [ ] Ship listing create, my listings, browse, and details.
-- [ ] Ship the minimal admin pending, approve, and reject flow required for first-listing moderation.
-- [ ] Enforce GPS, ownership, first-three-review, and pricing rules.
-- [ ] Add auth, listing, and admin integration tests plus e2e smoke coverage for the full slice.
+- [x] Ship auth register, verify OTP, login, refresh, and logout.
+- [x] Ship upload presign and confirm endpoints against sandbox storage.
+- [x] Ship listing create, my listings, browse, and details.
+- [x] Ship the minimal admin pending, approve, and reject flow required for first-listing moderation.
+- [x] Enforce GPS, ownership, first-three-review, and pricing rules.
+- [x] Add auth, listing, and admin integration tests plus e2e smoke coverage for the full slice.
 
 Sprint 1 deliverable:
 
-- [ ] An outgoing tenant can create a listing, an admin can approve it, and an incoming tenant can browse it locally end-to-end.
+- [x] An outgoing tenant can create a listing, an admin can approve it, and an incoming tenant can browse it locally end-to-end.
