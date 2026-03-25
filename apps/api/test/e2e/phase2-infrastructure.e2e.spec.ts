@@ -13,7 +13,11 @@ import { PrismaService } from '../../src/common/database/prisma.service';
 import { MpesaClient } from '../../src/infrastructure/payment/mpesa.client';
 import { SmsService } from '../../src/infrastructure/sms/sms.service';
 import { StorageService } from '../../src/infrastructure/storage/storage.service';
+import { QueueService } from '../../src/infrastructure/queue/queue.service';
+import { RedisService } from '../../src/infrastructure/cache/redis.service';
 import { Role } from '@prisma/client';
+import { UserService } from '../../src/modules/user/user.service';
+import { createInMemoryRedisService } from '../utils/create-in-memory-redis-service';
 
 @Controller('phase2')
 class Phase2TestController {
@@ -53,6 +57,78 @@ class Phase2TestController {
 describe('Phase 2 cross-cutting infrastructure', () => {
   let app: INestApplication;
   let jwtService: JwtService;
+  const usersById = new Map([
+    [
+      'user_1',
+      {
+        id: 'user_1',
+        role: Role.USER,
+        phoneNumberEncrypted: 'encrypted-phone',
+        phoneVerified: true,
+        isActive: true,
+        isBanned: false,
+        banReason: null,
+        firstName: 'User',
+        lastName: 'One',
+      },
+    ],
+    [
+      'admin_1',
+      {
+        id: 'admin_1',
+        role: Role.ADMIN,
+        phoneNumberEncrypted: 'encrypted-phone',
+        phoneVerified: true,
+        isActive: true,
+        isBanned: false,
+        banReason: null,
+        firstName: 'Admin',
+        lastName: 'One',
+      },
+    ],
+    [
+      'admin_2',
+      {
+        id: 'admin_2',
+        role: Role.ADMIN,
+        phoneNumberEncrypted: 'encrypted-phone',
+        phoneVerified: true,
+        isActive: true,
+        isBanned: false,
+        banReason: null,
+        firstName: 'Admin',
+        lastName: 'Two',
+      },
+    ],
+    [
+      'banned_1',
+      {
+        id: 'banned_1',
+        role: Role.ADMIN,
+        phoneNumberEncrypted: 'encrypted-phone',
+        phoneVerified: true,
+        isActive: true,
+        isBanned: true,
+        banReason: 'Fraud review',
+        firstName: 'Banned',
+        lastName: 'User',
+      },
+    ],
+    [
+      'inactive_1',
+      {
+        id: 'inactive_1',
+        role: Role.ADMIN,
+        phoneNumberEncrypted: 'encrypted-phone',
+        phoneVerified: true,
+        isActive: false,
+        isBanned: false,
+        banReason: null,
+        firstName: 'Inactive',
+        lastName: 'User',
+      },
+    ],
+  ]);
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -62,6 +138,24 @@ describe('Phase 2 cross-cutting infrastructure', () => {
       .overrideProvider(PrismaService)
       .useValue({
         $queryRawUnsafe: jest.fn().mockResolvedValue([{ '?column?': 1 }]),
+      })
+      .overrideProvider(RedisService)
+      .useValue(createInMemoryRedisService())
+      .overrideProvider(QueueService)
+      .useValue({
+        healthCheck: jest.fn().mockResolvedValue({ status: 'up', provider: 'bullmq' }),
+      })
+      .overrideProvider(UserService)
+      .useValue({
+        findStoredById: jest.fn(async (userId: string) => usersById.get(userId) ?? null),
+        toAuthUser: jest.fn((user: { id: string; role: Role; phoneVerified: boolean; firstName: string; lastName: string }) => ({
+          id: user.id,
+          role: user.role,
+          phoneNumber: '+254712345678',
+          phoneVerified: user.phoneVerified,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        })),
       })
       .overrideProvider(SmsService)
       .useValue({
@@ -92,7 +186,7 @@ describe('Phase 2 cross-cutting infrastructure', () => {
 
     const userToken = jwtService.sign({
       sub: 'user_1',
-      role: Role.USER,
+      role: Role.ADMIN,
     });
 
     await request(app.getHttpServer())
@@ -102,7 +196,7 @@ describe('Phase 2 cross-cutting infrastructure', () => {
 
     const adminToken = jwtService.sign({
       sub: 'admin_1',
-      role: Role.ADMIN,
+      role: Role.USER,
     });
 
     const response = await request(app.getHttpServer())
@@ -114,6 +208,34 @@ describe('Phase 2 cross-cutting infrastructure', () => {
       userId: 'admin_1',
       role: Role.ADMIN,
     });
+  });
+
+  it('rejects access tokens for banned users even when the JWT is otherwise valid', async () => {
+    const bannedToken = jwtService.sign({
+      sub: 'banned_1',
+      role: Role.ADMIN,
+    });
+
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/phase2/protected')
+      .set('Authorization', `Bearer ${bannedToken}`)
+      .expect(403);
+
+    expect(response.body.error.code).toBe('ACCOUNT_BANNED');
+  });
+
+  it('rejects access tokens for inactive users even when the JWT is otherwise valid', async () => {
+    const inactiveToken = jwtService.sign({
+      sub: 'inactive_1',
+      role: Role.ADMIN,
+    });
+
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/phase2/protected')
+      .set('Authorization', `Bearer ${inactiveToken}`)
+      .expect(403);
+
+    expect(response.body.error.code).toBe('ACCOUNT_INACTIVE');
   });
 
   it('replays idempotent POST requests without executing twice', async () => {

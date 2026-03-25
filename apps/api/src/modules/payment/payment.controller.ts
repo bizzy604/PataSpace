@@ -1,8 +1,19 @@
-import { Body, Controller, HttpCode, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Headers,
+  HttpCode,
+  Post,
+  Query,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { timingSafeEqual } from 'crypto';
+import { ConfigService } from '@nestjs/config';
 import {
   ApiAcceptedResponse,
   ApiBearerAuth,
   ApiBody,
+  ApiHeader,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -53,10 +64,19 @@ export class CreditPurchaseController {
 @ApiTags('Payments')
 @Controller('payments')
 export class PaymentWebhookController {
-  constructor(private readonly paymentService: PaymentService) {}
+  constructor(
+    private readonly paymentService: PaymentService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Public()
   @ApiOperation({ summary: 'Receive M-Pesa STK callback events' })
+  @ApiHeader({
+    name: 'x-mpesa-callback-secret',
+    required: false,
+    description:
+      'Optional shared secret for authenticating callbacks. Required when MPESA_CALLBACK_SECRET is configured.',
+  })
   @ApiBody({ type: MpesaCallbackRequestDto })
   @ApiOkResponse({
     type: MpesaCallbackAckResponseDto,
@@ -65,8 +85,39 @@ export class PaymentWebhookController {
   @HttpCode(200)
   @Post('mpesa-callback')
   handleMpesaCallback(
+    @Headers('x-mpesa-callback-secret') callbackSecretHeader: string | undefined,
+    @Query('token') callbackSecretQuery: string | undefined,
     @Body(new ZodValidationPipe(mpesaCallbackSchema)) input: MpesaCallbackRequest,
   ): Promise<MpesaCallbackAckResponse> {
+    this.assertCallbackAuthorized(callbackSecretHeader ?? callbackSecretQuery);
+
     return this.paymentService.handleMpesaCallback(input);
   }
+
+  private assertCallbackAuthorized(providedSecret: string | undefined) {
+    const expectedSecret =
+      this.configService.get<string>('infrastructure.mpesa.callbackSecret') ?? '';
+
+    if (!expectedSecret) {
+      return;
+    }
+
+    if (!providedSecret || !secretsMatch(providedSecret, expectedSecret)) {
+      throw new UnauthorizedException({
+        code: 'INVALID_CALLBACK_SIGNATURE',
+        message: 'Payment callback authentication failed',
+      });
+    }
+  }
+}
+
+function secretsMatch(providedSecret: string, expectedSecret: string) {
+  const providedBuffer = Buffer.from(providedSecret, 'utf8');
+  const expectedBuffer = Buffer.from(expectedSecret, 'utf8');
+
+  if (providedBuffer.length !== expectedBuffer.length) {
+    return false;
+  }
+
+  return timingSafeEqual(providedBuffer, expectedBuffer);
 }

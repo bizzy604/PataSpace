@@ -23,7 +23,6 @@ export class AppService {
     return {
       status: 'ok',
       service: this.configService.get<string>('app.name') ?? 'pataspace-api',
-      environment: this.configService.get<string>('app.environment') ?? 'development',
       timestamp: new Date().toISOString(),
     };
   }
@@ -52,14 +51,6 @@ export class AppService {
       status,
       service: this.configService.get<string>('app.name') ?? 'pataspace-api',
       timestamp: new Date().toISOString(),
-      components: {
-        database,
-        cache,
-        queue,
-        sms,
-        storage,
-        mpesa,
-      },
     };
   }
 
@@ -73,7 +64,6 @@ export class AppService {
     } catch (error) {
       return {
         status: 'down' as const,
-        message: error instanceof Error ? error.message : 'Database connectivity check failed',
       };
     }
   }

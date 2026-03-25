@@ -18,6 +18,7 @@ process.env.ACCESS_TOKEN_TTL ??= '15m';
 process.env.REFRESH_TOKEN_TTL_DAYS ??= '30';
 process.env.REFRESH_TOKEN_TRANSPORT ??= 'json';
 process.env.ALLOWED_ORIGINS ??= 'http://localhost:3000';
+process.env.HTTP_TRUST_PROXY ??= 'loopback';
 process.env.REQUEST_ID_HEADER ??= 'x-request-id';
 process.env.APP_ENCRYPTION_KEY ??= '12345678901234567890123456789012';
 process.env.OTP_TTL_SECONDS ??= '300';

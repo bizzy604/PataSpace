@@ -82,6 +82,7 @@ http://localhost:3000/api/v1/docs/openapi.json
 ```text
 POST /api/v1/auth/register
 POST /api/v1/auth/verify-otp
+POST /api/v1/auth/resend-otp
 GET /api/v1/users/me
 ```
 

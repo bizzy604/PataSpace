@@ -23,21 +23,14 @@ describe('API smoke checks', () => {
     expect(response.headers['x-request-id']).toBeDefined();
   });
 
-  it('serves the readiness endpoint with component checks', async () => {
+  it('serves the readiness endpoint without exposing dependency internals', async () => {
     const response = await request(app.getHttpServer()).get('/api/v1/ready').expect(200);
 
     expect(response.body).toMatchObject({
       status: 'ready',
       service: 'pataspace-api',
-      components: {
-        database: { status: 'up' },
-        cache: { status: 'up', provider: 'redis' },
-        queue: { status: 'up', provider: 'bullmq' },
-        sms: { status: 'up', provider: 'sandbox' },
-        storage: { status: 'up', provider: 'sandbox' },
-        mpesa: { status: 'up', provider: 'sandbox' },
-      },
     });
+    expect(response.body.components).toBeUndefined();
     expect(response.headers['x-request-id']).toBeDefined();
   });
 });

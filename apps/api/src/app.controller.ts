@@ -1,6 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiHeader, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { SkipThrottle } from '@nestjs/throttler';
 import { AppService } from './app.service';
 import { Public } from './common/decorators/public.decorator';
 import {
@@ -19,7 +18,6 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Public()
-  @SkipThrottle()
   @ApiOperation({ summary: 'Liveness probe for the API service' })
   @ApiOkResponse({
     type: HealthResponseDto,
@@ -31,7 +29,6 @@ export class AppController {
   }
 
   @Public()
-  @SkipThrottle()
   @ApiOperation({ summary: 'Readiness probe for critical backend dependencies' })
   @ApiOkResponse({
     type: ReadinessResponseDto,

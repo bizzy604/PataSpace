@@ -545,6 +545,7 @@ With CDN: $5-10/month
 **APIs:**
 - `POST /auth/register` - Create account + send OTP
 - `POST /auth/verify-otp` - Verify phone number
+- `POST /auth/resend-otp` - Re-issue OTP for a pending account
 - `POST /auth/login` - Login with phone + password
 - `POST /auth/refresh` - Refresh access token
 - `POST /auth/logout` - Invalidate refresh token
@@ -1009,6 +1010,7 @@ async create(@Body() dto: CreateListingDto) {
 // Per-user rate limits (stored in Redis)
 const RATE_LIMITS = {
   'POST /auth/register': { limit: 3, window: 3600 },      // 3/hour
+  'POST /auth/resend-otp': { limit: 3, window: 3600 },    // 3/hour
   'POST /auth/login': { limit: 5, window: 3600 },         // 5/hour
   'POST /listings': { limit: 10, window: 86400 },         // 10/day
   'POST /credits/purchase': { limit: 10, window: 86400 }, // 10/day

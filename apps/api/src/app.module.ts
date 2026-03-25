@@ -56,17 +56,11 @@ import { MpesaModule } from './infrastructure/payment/mpesa.module';
         storage: new RedisThrottlerStorage(redisService),
         setHeaders: false,
         getTracker: (request) => {
-          const forwardedFor = request.headers['x-forwarded-for'];
-
           if (request.user?.id) {
             return request.user.id;
           }
 
-          if (typeof forwardedFor === 'string' && forwardedFor.length > 0) {
-            return forwardedFor.split(',')[0].trim();
-          }
-
-          return request.ip;
+          return request.ip ?? 'unknown';
         },
         generateKey: (context, tracker, throttlerName) => {
           const request = context.switchToHttp().getRequest();

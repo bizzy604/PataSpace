@@ -13,6 +13,13 @@ export function configureApp(app: INestApplication) {
   const globalPrefix = configService.get<string>('http.globalPrefix') ?? 'api/v1';
   const requestIdHeader = configService.get<string>('http.requestIdHeader') ?? 'x-request-id';
   const allowedOrigins = configService.get<string[]>('http.allowedOrigins') ?? [];
+  const trustProxy =
+    configService.get<boolean | number | string | string[]>('http.trustProxy') ?? false;
+  const httpAdapter = app.getHttpAdapter().getInstance() as {
+    set: (name: string, value: boolean | number | string | string[]) => void;
+  };
+
+  httpAdapter.set('trust proxy', trustProxy);
 
   app.enableShutdownHooks();
   app.setGlobalPrefix(globalPrefix);
@@ -43,7 +50,17 @@ export function configureApp(app: INestApplication) {
     },
   );
   app.enableCors({
-    origin: allowedOrigins.length > 0 ? allowedOrigins : true,
+    origin: (
+      origin: string | undefined,
+      callback: (error: Error | null, allow?: boolean) => void,
+    ) => {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+
+      callback(null, allowedOrigins.includes(origin));
+    },
     credentials: false,
   });
   app.use(helmet());

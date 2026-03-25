@@ -39,7 +39,6 @@ describe('AppService', () => {
     expect(service.getHealth()).toMatchObject({
       status: 'ok',
       service: 'pataspace-api',
-      environment: 'test',
     });
   });
 });

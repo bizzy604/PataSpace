@@ -29,7 +29,11 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     _context: ExecutionContext,
     _status?: unknown,
   ): TUser {
-    if (error || !user) {
+    if (error) {
+      throw error;
+    }
+
+    if (!user) {
       throw new UnauthorizedException({
         code: 'UNAUTHORIZED',
         message: info?.message ?? 'Authentication required',

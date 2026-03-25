@@ -1,23 +1,25 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
-import { Role } from '@prisma/client';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { AuthenticatedUser } from './authenticated-request.interface';
+import { UserService } from '../../modules/user/user.service';
 
 type JwtPayload = {
   sub?: string;
   id?: string;
-  role?: Role;
-  phoneNumber?: string;
-  phoneVerified?: boolean;
-  firstName?: string;
-  lastName?: string;
 };
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(configService: ConfigService) {
+  constructor(
+    configService: ConfigService,
+    private readonly userService: UserService,
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -25,14 +27,39 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  validate(payload: JwtPayload): AuthenticatedUser {
-    return {
-      id: payload.sub ?? payload.id ?? '',
-      role: payload.role ?? Role.USER,
-      phoneNumber: payload.phoneNumber ?? null,
-      phoneVerified: payload.phoneVerified ?? false,
-      firstName: payload.firstName ?? null,
-      lastName: payload.lastName ?? null,
-    };
+  async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
+    const userId = payload.sub ?? payload.id;
+
+    if (!userId) {
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED',
+        message: 'Authentication required',
+      });
+    }
+
+    const user = await this.userService.findStoredById(userId);
+
+    if (!user) {
+      throw new UnauthorizedException({
+        code: 'UNAUTHORIZED',
+        message: 'Authentication required',
+      });
+    }
+
+    if (!user.isActive) {
+      throw new ForbiddenException({
+        code: 'ACCOUNT_INACTIVE',
+        message: 'Account is inactive',
+      });
+    }
+
+    if (user.isBanned) {
+      throw new ForbiddenException({
+        code: 'ACCOUNT_BANNED',
+        message: user.banReason ?? 'Account is banned',
+      });
+    }
+
+    return this.userService.toAuthUser(user) as AuthenticatedUser;
   }
 }

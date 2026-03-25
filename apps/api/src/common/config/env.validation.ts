@@ -21,6 +21,7 @@ export const envSchema = z.object({
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
   REFRESH_TOKEN_TRANSPORT: z.enum(['json']).default('json'),
   ALLOWED_ORIGINS: z.string().optional(),
+  HTTP_TRUST_PROXY: z.string().optional(),
   REQUEST_ID_HEADER: z.string().min(1).default('x-request-id'),
   APP_ENCRYPTION_KEY: z.string().min(32),
   OTP_TTL_SECONDS: z.coerce.number().int().positive().default(300),
@@ -57,11 +58,29 @@ export const envSchema = z.object({
   MPESA_SHORTCODE: z.string().min(1).optional(),
   MPESA_PASSKEY: z.string().min(1).optional(),
   MPESA_CALLBACK_URL: z.string().url().optional(),
+  MPESA_CALLBACK_SECRET: z.string().min(16).optional(),
   MPESA_INITIATOR_NAME: z.string().min(1).optional(),
   MPESA_SECURITY_CREDENTIAL: z.string().min(1).optional(),
   MPESA_RESULT_URL: z.string().url().optional(),
   MPESA_TIMEOUT_URL: z.string().url().optional(),
 }).superRefine((value, context) => {
+  const allowedOrigins = value.ALLOWED_ORIGINS
+    ?.split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean) ?? [];
+
+  if (value.NODE_ENV === 'production') {
+    if (allowedOrigins.length === 0) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['ALLOWED_ORIGINS'],
+        message: 'ALLOWED_ORIGINS must be configured in production.',
+      });
+    }
+
+    requireHttps(context, value.APP_BASE_URL, 'APP_BASE_URL');
+  }
+
   if (value.SMS_PROVIDER === 'africastalking') {
     requireFields(context, value, ['AT_USERNAME', 'AT_API_KEY']);
   }
@@ -83,11 +102,17 @@ export const envSchema = z.object({
       'MPESA_SHORTCODE',
       'MPESA_PASSKEY',
       'MPESA_CALLBACK_URL',
+      'MPESA_CALLBACK_SECRET',
       'MPESA_INITIATOR_NAME',
       'MPESA_SECURITY_CREDENTIAL',
       'MPESA_RESULT_URL',
       'MPESA_TIMEOUT_URL',
     ]);
+
+    requireHttps(context, value.MPESA_BASE_URL, 'MPESA_BASE_URL');
+    requireHttps(context, value.MPESA_CALLBACK_URL, 'MPESA_CALLBACK_URL');
+    requireHttps(context, value.MPESA_RESULT_URL, 'MPESA_RESULT_URL');
+    requireHttps(context, value.MPESA_TIMEOUT_URL, 'MPESA_TIMEOUT_URL');
   }
 });
 
@@ -128,4 +153,30 @@ function requireFields(
       message: `${field} is required for the selected provider configuration.`,
     });
   }
+}
+
+function requireHttps(
+  context: z.RefinementCtx,
+  value: string | undefined,
+  field: string,
+) {
+  if (!value) {
+    return;
+  }
+
+  try {
+    const parsedUrl = new URL(value);
+
+    if (parsedUrl.protocol === 'https:') {
+      return;
+    }
+  } catch {
+    return;
+  }
+
+  context.addIssue({
+    code: z.ZodIssueCode.custom,
+    path: [field],
+    message: `${field} must use HTTPS in the selected environment.`,
+  });
 }

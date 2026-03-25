@@ -52,7 +52,7 @@ export function setupSwagger(
     swaggerOptions: {
       displayRequestDuration: true,
       operationsSorter: 'alpha',
-      persistAuthorization: true,
+      persistAuthorization: false,
       tagsSorter: 'alpha',
     },
     useGlobalPrefix: true,

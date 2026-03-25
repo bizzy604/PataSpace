@@ -6,6 +6,9 @@ import { configureApp } from '../../src/common/bootstrap/configure-app';
 import { PrismaService } from '../../src/common/database/prisma.service';
 import { hashLookupValue, normalizePhoneNumber } from '../../src/common/security/encryption.util';
 import { setupSwagger } from '../../src/common/swagger/setup-swagger';
+import { RedisService } from '../../src/infrastructure/cache/redis.service';
+import { QueueService } from '../../src/infrastructure/queue/queue.service';
+import { createInMemoryRedisService } from './create-in-memory-redis-service';
 
 const DEFAULT_TEST_DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432/pataspace';
 
@@ -36,7 +39,13 @@ export async function createApiTestContext(
 
   let testingModuleBuilder = Test.createTestingModule({
     imports: [AppModule],
-  });
+  })
+    .overrideProvider(RedisService)
+    .useValue(createInMemoryRedisService())
+    .overrideProvider(QueueService)
+    .useValue({
+      healthCheck: jest.fn().mockResolvedValue({ status: 'up', provider: 'bullmq' }),
+    });
 
   for (const override of options.overrides ?? []) {
     testingModuleBuilder = testingModuleBuilder

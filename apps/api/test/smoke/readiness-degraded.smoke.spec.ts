@@ -26,21 +26,8 @@ describe('API readiness edge cases', () => {
 
     expect(response.body).toMatchObject({
       status: 'degraded',
-      components: {
-        database: {
-          status: 'down',
-        },
-        cache: {
-          status: 'up',
-        },
-        queue: {
-          status: 'up',
-        },
-        sms: {
-          status: 'degraded',
-          provider: 'africastalking',
-        },
-      },
+      service: 'pataspace-api',
     });
+    expect(response.body.components).toBeUndefined();
   });
 });

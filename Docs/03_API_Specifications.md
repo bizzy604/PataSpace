@@ -174,6 +174,33 @@ Verify phone number with OTP code.
 
 ---
 
+### POST /auth/resend-otp
+
+Issue a fresh OTP for an existing unverified account.
+
+**Request:**
+```json
+{
+  "phoneNumber": "+254712345678"
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "userId": "user_clx123abc",
+  "message": "OTP resent to +254712345678",
+  "expiresIn": 300
+}
+```
+
+**Errors:**
+- `404` - Pending account not found
+- `409` - Phone number already verified
+- `429` - Too many resend attempts (3/hour)
+
+---
+
 ### POST /auth/login
 
 Login with phone and password.
@@ -1135,6 +1162,7 @@ Retry-After: 45
 | Endpoint | Limit | Window |
 |----------|-------|--------|
 | `POST /auth/register` | 3 | 1 hour |
+| `POST /auth/resend-otp` | 3 | 1 hour |
 | `POST /auth/login` | 5 | 1 hour |
 | `POST /auth/verify-otp` | 3 | 1 hour |
 | `POST /listings` | 10 | 24 hours |

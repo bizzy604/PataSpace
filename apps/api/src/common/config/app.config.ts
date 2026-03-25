@@ -4,6 +4,31 @@ const parseCsv = (value: string | undefined) =>
     .map((entry) => entry.trim())
     .filter(Boolean) ?? [];
 
+const parseTrustProxy = (value: string | undefined) => {
+  const normalizedValue = value?.trim();
+
+  if (!normalizedValue) {
+    return false;
+  }
+
+  const normalizedLowerValue = normalizedValue.toLowerCase();
+
+  if (normalizedLowerValue === 'true') {
+    return true;
+  }
+
+  if (normalizedLowerValue === 'false') {
+    return false;
+  }
+
+  if (/^\d+$/.test(normalizedValue)) {
+    return Number(normalizedValue);
+  }
+
+  const entries = parseCsv(normalizedValue);
+  return entries.length <= 1 ? (entries[0] ?? false) : entries;
+};
+
 export default () => ({
   app: {
     name: process.env.APP_NAME ?? 'pataspace-api',
@@ -27,6 +52,7 @@ export default () => ({
     globalPrefix: 'api/v1',
     requestIdHeader: process.env.REQUEST_ID_HEADER ?? 'x-request-id',
     allowedOrigins: parseCsv(process.env.ALLOWED_ORIGINS),
+    trustProxy: parseTrustProxy(process.env.HTTP_TRUST_PROXY),
   },
   security: {
     jwtSecret: process.env.JWT_SECRET,
@@ -105,6 +131,7 @@ export default () => ({
       shortcode: process.env.MPESA_SHORTCODE,
       passkey: process.env.MPESA_PASSKEY,
       callbackUrl: process.env.MPESA_CALLBACK_URL,
+      callbackSecret: process.env.MPESA_CALLBACK_SECRET,
       initiatorName: process.env.MPESA_INITIATOR_NAME,
       securityCredential: process.env.MPESA_SECURITY_CREDENTIAL,
       resultUrl:

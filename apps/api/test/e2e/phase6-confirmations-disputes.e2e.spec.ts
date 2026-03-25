@@ -8,6 +8,9 @@ import { configureApp } from '../../src/common/bootstrap/configure-app';
 import { PrismaService } from '../../src/common/database/prisma.service';
 import { hashLookupValue, normalizePhoneNumber } from '../../src/common/security/encryption.util';
 import { setupSwagger } from '../../src/common/swagger/setup-swagger';
+import { RedisService } from '../../src/infrastructure/cache/redis.service';
+import { QueueService } from '../../src/infrastructure/queue/queue.service';
+import { createInMemoryRedisService } from '../utils/create-in-memory-redis-service';
 
 jest.setTimeout(60_000);
 
@@ -268,7 +271,14 @@ describe('Phase 6 confirmations, disputes, and admin review flows', () => {
 
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(RedisService)
+      .useValue(createInMemoryRedisService())
+      .overrideProvider(QueueService)
+      .useValue({
+        healthCheck: jest.fn().mockResolvedValue({ status: 'up', provider: 'bullmq' }),
+      })
+      .compile();
 
     app = moduleRef.createNestApplication();
     const configService = app.get(ConfigService);

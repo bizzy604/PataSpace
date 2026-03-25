@@ -21,17 +21,17 @@ pnpm --filter @pataspace/api test
 
 Results:
 
-- Unit: 20/20 suites passed, 105/105 tests passed
-- Integration: 2/2 suites passed, 4/4 tests passed
-- Direct unit + integration baseline: 22/22 suites, 109/109 tests
-- Full API suite: 32/32 suites, 133/133 tests
+- Unit: 20/20 suites passed, 108/108 tests passed
+- Integration: 5/5 suites passed, 14/14 tests passed
+- Direct unit + integration baseline: 25/25 suites, 122/122 tests
+- Full API suite: 35/35 suites, 146/146 tests
 
 ## Executive Summary
 
-- The high-priority gaps from the 2026-03-24 audit have mostly been closed.
-- Unit coverage is now strong across auth, payments, unlocks, refunds, listing rules, confirmations, disputes, background jobs, idempotency, logging, and HTTP error behavior.
-- Integration coverage improved, but it is still materially thinner than unit coverage. The backend still relies on unit tests and e2e tests more heavily than Prisma-backed integration flows.
-- The main remaining direct gap is resend-OTP behavior, which is not currently implemented in the API surface, so it cannot be closed with tests alone.
+- The high-priority gaps from the 2026-03-24 audit are now closed for the currently implemented backend surface.
+- Unit coverage remains strong across auth, payments, unlocks, refunds, listing rules, confirmations, disputes, background jobs, idempotency, logging, and HTTP error behavior.
+- Integration coverage is materially stronger than before and now includes resend-OTP behavior, payment reconciliation outcomes, refund side effects, concurrent unlock idempotency, dispute lifecycle persistence, and listing-controller authorization or ETag behavior.
+- No remaining missing endpoint or direct branch gap was identified at the unit or integration layer for the currently implemented backend surface. The main residual risks are live-provider behavior beyond the sandbox and higher-volume stress characteristics.
 
 ## Auth And Identity
 
@@ -47,16 +47,18 @@ Covered and passing:
 - OTP mismatch increments attempts. Evidence: `apps/api/src/modules/auth/auth.service.spec.ts` -> `increments OTP attempts when verification fails`.
 - Expired OTP is rejected and stale OTP records are cleared. Evidence: `apps/api/src/modules/auth/auth.service.spec.ts` -> `rejects OTP verification when the latest code is expired and clears stale records`.
 - OTP max-attempt lockout is rejected and exhausted records are cleaned up. Evidence: `apps/api/src/modules/auth/auth.service.spec.ts` -> `rejects OTP verification when the max attempts are already exhausted`.
+- Resend-OTP service behavior is covered. Evidence: `apps/api/src/modules/auth/auth.service.spec.ts` -> `resends a fresh OTP for an existing unverified user`, `rejects OTP resend when the pending account is missing`, and `rejects OTP resend when the phone number is already verified`.
 - Refresh token rotation works. Evidence: `apps/api/src/modules/auth/auth.service.spec.ts` -> `rotates refresh tokens on refresh`.
 - Expired refresh tokens are rejected. Evidence: `apps/api/src/modules/auth/auth.service.spec.ts` -> `rejects refresh when the token is expired`.
 - Logout invalidates the provided refresh token. Evidence: `apps/api/src/modules/auth/auth.service.spec.ts` -> `invalidates the provided refresh token on logout`.
 - Expired, verified, and exhausted OTP cleanup is covered. Evidence: `apps/api/src/modules/auth/auth.cleanup.service.spec.ts` -> `cleans up expired, verified, and exhausted OTP codes`.
 - Expired refresh-token cleanup is covered. Evidence: `apps/api/src/modules/auth/auth.cleanup.service.spec.ts` -> `cleans up expired refresh tokens`.
+- End-to-end resend-OTP persistence and OTP rotation are covered below e2e. Evidence: `apps/api/test/integration/auth-resend.integration.spec.ts` -> `resends a fresh OTP for a pending account and rotates the stored OTP record`.
+- Resend-specific throttling is covered below e2e. Evidence: `apps/api/test/integration/auth-resend.integration.spec.ts` -> `applies resend-specific throttling with the standard error envelope`.
 
 Remaining at unit or integration level:
 
-- Resend-OTP behavior and resend-specific throttling are not covered.
-- The reason is implementation scope, not only test scope: there is no resend-OTP route or service method in the current API/contracts surface.
+- No major uncovered branch was identified in the currently implemented auth surface after adding resend-OTP.
 
 ## Cross-Cutting Safety And Validation
 
@@ -99,6 +101,9 @@ Covered and passing:
 - Reconciliation to cancelled is covered. Evidence: `apps/api/src/modules/payment/payment.service.spec.ts` -> `reconciles stale pending purchases to cancelled when STK status reports cancellation`.
 - Reconciliation query failure handling is covered. Evidence: `apps/api/src/modules/payment/payment.service.spec.ts` -> `skips reconciliation updates when the STK status query fails`.
 - End-to-end persistence of completed purchases and balance history is covered. Evidence: `apps/api/test/integration/prisma-domain-flows.integration.spec.ts` -> `persists purchase completion and balance history through service calls`.
+- Prisma-backed failed reconciliation persistence is covered. Evidence: `apps/api/test/integration/payment-reconciliation.integration.spec.ts` -> `persists failed reconciliation outcomes without crediting the user`.
+- Prisma-backed cancelled reconciliation persistence is covered. Evidence: `apps/api/test/integration/payment-reconciliation.integration.spec.ts` -> `persists cancelled reconciliation outcomes without crediting the user`.
+- Prisma-backed reconciliation query failure persistence is covered. Evidence: `apps/api/test/integration/payment-reconciliation.integration.spec.ts` -> `leaves stale pending purchases untouched when the reconciliation query fails`.
 - Cached balance retrieval is covered. Evidence: `apps/api/src/modules/credit/credit.service.spec.ts` -> `returns cached balances without querying Prisma`.
 - Balance hydration and caching are covered. Evidence: `apps/api/src/modules/credit/credit.service.spec.ts` -> `hydrates missing balances from Prisma and caches the result`.
 - Insufficient credits at the balance-decrement layer are covered. Evidence: `apps/api/src/modules/credit/credit.service.spec.ts` -> `throws a payment-required error when credits are insufficient`.
@@ -106,7 +111,7 @@ Covered and passing:
 
 Remaining at unit or integration level:
 
-- The remaining risk in this area is depth, not branch absence: failed and cancelled reconciliation outcomes are unit-covered, but not yet backed by richer Prisma integration flows.
+- No major uncovered priority branch remains in credits or payments. Residual risk is mostly limited to live M-Pesa-provider behavior beyond the local sandbox.
 
 ## Unlocks And Refunds
 
@@ -128,10 +133,12 @@ Covered and passing:
   Evidence: `apps/api/src/modules/unlock/unlock.service.spec.ts` -> `refunds an unlock, marks the spend as refunded, and cancels pending commission`.
 - Refund rejection after commission is already paid is covered. Evidence: `apps/api/src/modules/unlock/unlock.service.spec.ts` -> `rejects unlock refunds once the commission has already been paid`.
 - Integration persistence of unlock, commission, dispute, and audit relations is covered. Evidence: `apps/api/test/integration/prisma-domain-flows.integration.spec.ts` -> `persists unlock, commission, dispute, and audit relations through services`.
+- Prisma-backed refund side effects and balance restoration are covered. Evidence: `apps/api/test/integration/prisma-domain-flows.integration.spec.ts` -> `persists refund side effects and balance restoration through services`.
+- Prisma-backed concurrent unlock idempotency is covered. Evidence: `apps/api/test/integration/prisma-domain-flows.integration.spec.ts` -> `persists concurrent unlock idempotency without double-charging through services`.
 
 Remaining at unit or integration level:
 
-- Concurrency behavior is now unit-covered, but not yet backed by a dedicated Prisma integration or stress-style concurrency test.
+- No major uncovered branch remains in the implemented unlock and refund surface. Residual risk is limited to higher-volume stress characteristics beyond the current two-request race test.
 
 ## Listings And Moderation
 
@@ -149,13 +156,14 @@ Covered and passing:
 - Approve or reject only while pending is covered. Evidence: `apps/api/src/modules/listing/listing.service.spec.ts` -> `blocks approving listings unless they are still pending` and `blocks rejecting listings unless they are still pending`.
 - Browse filtering and browse-cache population are covered. Evidence: `apps/api/src/modules/listing/listing.service.spec.ts` -> `applies browse filters and caches the browse response`.
 - ETag behavior is directly covered below e2e for browse responses. Evidence: `apps/api/src/modules/listing/listing.controller.spec.ts` -> `returns 304 without a payload when the ETag matches If-None-Match`.
+- Listing detail-route ETag behavior is covered below e2e. Evidence: `apps/api/test/integration/listing-controller.integration.spec.ts` -> `returns 304 for listing details when If-None-Match matches the current ETag`.
+- Listing-specific admin-route authorization is covered below e2e. Evidence: `apps/api/test/integration/listing-controller.integration.spec.ts` -> `blocks non-admin users from admin listing review routes`.
 - Hard-delete cleanup of aged soft-deleted listings is covered. Evidence: `apps/api/src/jobs/listing-cleanup.job.spec.ts` -> `hard deletes aged soft-deleted listings after deleting storage objects`.
 - Cleanup failure leaves the listing record in place and records diagnostics. Evidence: `apps/api/src/jobs/listing-cleanup.job.spec.ts` -> `records cleanup failures without deleting the listing record`.
 
 Remaining at unit or integration level:
 
-- Listing detail-route ETag behavior is still primarily exercised by smoke and e2e coverage rather than a dedicated unit or integration spec.
-- Listing-specific admin-route authorization remains indirectly covered through generic role-guard tests and e2e flows rather than a dedicated listing-controller integration test.
+- No major uncovered branch was identified in the currently implemented listing and moderation surface after this pass.
 
 ## Confirmations, Disputes, Commissions, And Jobs
 
@@ -176,6 +184,7 @@ Covered and passing:
 - Dispute resolution with full refund is covered. Evidence: `apps/api/src/modules/dispute/dispute.service.spec.ts` -> `resolves disputes with refunds through the unlock refund flow`.
 - No-refund dispute resolution restoring commission eligibility is covered. Evidence: `apps/api/src/modules/dispute/dispute.service.spec.ts` -> `restores commission eligibility after a no-refund resolution when both sides had confirmed`.
 - Closing resolved disputes is covered. Evidence: `apps/api/src/modules/dispute/dispute.service.spec.ts` -> `closes resolved disputes`.
+- Prisma-backed dispute investigation, resolution, closure, and audit persistence are covered. Evidence: `apps/api/test/integration/prisma-domain-flows.integration.spec.ts` -> `persists dispute investigation, resolution, closure, and audit history through services`.
 - Invalid state transitions are covered:
   - investigate on non-open dispute
   - resolve on non-open dispute
@@ -192,17 +201,16 @@ Covered and passing:
 
 Remaining at unit or integration level:
 
-- The main remaining weakness here is integration depth. State transitions and side effects are now unit-covered, but dispute lifecycle persistence still has far fewer Prisma-backed integration assertions than the service layer has unit assertions.
+- No major uncovered priority branch remains in confirmations, disputes, commissions, or jobs. Residual risk is mostly external-provider behavior and operational load rather than missing business-logic branches.
 
 ## Overall Assessment
 
 - The backend no longer has the same edge-case blind spots that existed in the 2026-03-24 audit.
-- The previous highest-priority gaps around payment callbacks, unlock refunds, confirmation/dispute transitions, stale processing recovery, notification no-admin handling, listing rules, and cross-cutting HTTP behavior are now covered.
-- Unit coverage is materially stronger than before and now covers most implemented business branches that were previously missing.
-- Integration coverage improved from 1 file with 2 tests to 2 files with 4 tests, but it is still the thinnest part of the test pyramid.
+- The previous highest-priority gaps around resend-OTP, payment reconciliation persistence, unlock refund persistence, dispute lifecycle persistence, listing-controller authorization, and detail-route ETag behavior are now covered.
+- Unit coverage is materially stronger than before and continues to cover most implemented business branches.
+- Integration coverage improved from 2 files with 4 tests to 5 files with 14 tests and now exercises far more of the real Prisma-backed workflows that previously relied on mocks or e2e only.
 
 ## Remaining Priority Work
 
-1. If product scope requires OTP resend, implement the missing resend-OTP endpoint/service/contracts first, then add unit and integration coverage for resend behavior and resend throttling.
-2. Add deeper Prisma-backed integration coverage for failed or cancelled payment reconciliation outcomes, refund side effects, and dispute lifecycle persistence so those areas rely less on mocks.
-3. Add dedicated listing-controller integration coverage for admin-route authorization and detail-route cache or ETag behavior if direct below-e2e coverage is required there.
+1. No open priority gap remains for the currently implemented backend surface at the unit and integration layers.
+2. Future hardening, if desired, should focus on live-provider behavior, long-running retry or recovery scenarios, and higher-volume concurrency or load characteristics rather than missing core business branches.

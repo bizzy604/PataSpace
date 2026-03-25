@@ -9,7 +9,9 @@ import { SmsService } from '../../src/infrastructure/sms/sms.service';
 import { StorageService } from '../../src/infrastructure/storage/storage.service';
 import { MpesaClient } from '../../src/infrastructure/payment/mpesa.client';
 import { QueueService } from '../../src/infrastructure/queue/queue.service';
+import { RedisService } from '../../src/infrastructure/cache/redis.service';
 import { setupSwagger } from '../../src/common/swagger/setup-swagger';
+import { createInMemoryRedisService } from './create-in-memory-redis-service';
 
 type TestAppOptions = {
   databaseHealth?: {
@@ -50,7 +52,12 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<INest
       $queryRawUnsafe: options.databaseHealth?.shouldFail
         ? jest.fn().mockRejectedValue(new Error('database unavailable'))
         : jest.fn().mockResolvedValue([{ '?column?': 1 }]),
+      user: {
+        findUnique: jest.fn().mockResolvedValue(null),
+      },
     })
+    .overrideProvider(RedisService)
+    .useValue(createInMemoryRedisService())
     .overrideProvider(CacheService)
     .useValue({
       get: jest.fn().mockResolvedValue(null),
