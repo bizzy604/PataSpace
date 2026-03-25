@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 import { AllExceptionsFilter } from '../filters/all-exceptions.filter';
 import { LoggingInterceptor } from '../interceptors/logging.interceptor';
+import { resolveDatabaseAccessModeForPath } from '../database/rls-context.util';
 import { RequestContextService } from '../request-context/request-context.service';
 
 export function configureApp(app: INestApplication) {
@@ -37,13 +38,16 @@ export function configureApp(app: INestApplication) {
 
       request.requestId = requestId;
       response.setHeader(requestIdHeader, requestId);
+      const requestPath =
+        (request as { originalUrl?: string }).originalUrl ??
+        (request as { url?: string }).url;
+
       requestContext.run(
         {
+          databaseAccessMode: resolveDatabaseAccessModeForPath(requestPath),
           requestId,
           method: (request as { method?: string }).method,
-          path:
-            (request as { originalUrl?: string }).originalUrl ??
-            (request as { url?: string }).url,
+          path: requestPath,
         },
         next,
       );

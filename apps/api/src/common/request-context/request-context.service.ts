@@ -1,10 +1,13 @@
 import { AsyncLocalStorage } from 'async_hooks';
 import { Injectable } from '@nestjs/common';
+import type { DatabaseAccessMode } from '../database/rls-context.util';
 
 export type RequestContextState = {
+  databaseAccessMode?: DatabaseAccessMode;
   requestId: string;
   method?: string;
   path?: string;
+  rlsTransactionScoped?: boolean;
   userId?: string;
   role?: string;
 };

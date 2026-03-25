@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
+import { resolveDatabaseAccessModeForRole } from '../database/rls-context.util';
 import { RequestContextService } from '../request-context/request-context.service';
 
 @Injectable()
@@ -23,6 +24,7 @@ export class LoggingInterceptor implements NestInterceptor {
 
     if (request.user) {
       this.requestContext?.set({
+        databaseAccessMode: resolveDatabaseAccessModeForRole(request.user.role),
         userId: request.user.id,
         role: request.user.role,
       });

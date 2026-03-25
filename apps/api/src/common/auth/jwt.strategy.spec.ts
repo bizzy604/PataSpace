@@ -24,15 +24,23 @@ describe('JwtStrategy', () => {
         lastName: 'User',
       })),
     };
+    const requestContext = {
+      set: jest.fn(),
+    };
 
     return {
-      strategy: new JwtStrategy(configService as never, userService as never),
+      strategy: new JwtStrategy(
+        configService as never,
+        userService as never,
+        requestContext as never,
+      ),
+      requestContext,
       userService,
     };
   };
 
   it('hydrates the authenticated user from current storage state', async () => {
-    const { strategy, userService } = createStrategy();
+    const { requestContext, strategy, userService } = createStrategy();
     userService.findStoredById.mockResolvedValue({
       id: 'user_1',
       role: Role.ADMIN,
@@ -49,6 +57,11 @@ describe('JwtStrategy', () => {
       role: Role.ADMIN,
     });
     expect(userService.toAuthUser).toHaveBeenCalled();
+    expect(requestContext.set).toHaveBeenCalledWith({
+      databaseAccessMode: 'admin',
+      role: Role.ADMIN,
+      userId: 'user_1',
+    });
   });
 
   it('rejects tokens for missing users', async () => {

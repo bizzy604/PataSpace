@@ -56,6 +56,7 @@ describe('LoggingInterceptor', () => {
 
     await expect(lastValueFrom(result)).resolves.toEqual({ accepted: true });
     expect(requestContext.set).toHaveBeenCalledWith({
+      databaseAccessMode: 'user',
       role: 'USER',
       userId: 'user_1',
     });

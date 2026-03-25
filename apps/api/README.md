@@ -47,6 +47,14 @@ docker compose -f infra/docker/docker-compose.yml up -d
 - Infrastructure integration must stay behind adapters in `src/infrastructure`.
 - Source files must stay under the 200-line limit defined in `Docs/08_Engineering_Standards.md`.
 
+## Database Security
+
+- PostgreSQL row-level security is enforced by the migration in `prisma/migrations/20260325183000_add_row_level_security`.
+- Request-scoped database access mode is derived from request context, then stamped into Postgres by `PrismaService` before model queries and transactions.
+- Auth bootstrap routes, health/readiness checks, webhooks, and background jobs run with internal DB context.
+- Authenticated requests run with `user` or `admin` DB context, and public listing browse/details run with anonymous DB context.
+- If you connect to the database directly for debugging, expect RLS behavior to differ unless you explicitly set the same `app.current_user_id`, `app.current_role`, and `app.access_mode` session settings.
+
 ## Current Gaps
 
 - Several modules are still scaffold shells and need real implementations.
