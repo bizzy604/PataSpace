@@ -23,6 +23,16 @@ docker compose -f infra/docker/docker-compose.yml up -d
 1. Copy `apps/api/.env.example` to `apps/api/.env`.
 2. Adjust values only if your local ports or credentials differ.
 3. Leave `SMS_PROVIDER=sandbox`, `STORAGE_PROVIDER=sandbox`, and `MPESA_MODE=sandbox` for local work unless you are explicitly validating a live adapter.
+4. Keep the DB role split in place:
+   - `DATABASE_URL` is the runtime app role.
+   - `DATABASE_MIGRATION_URL` is the Prisma migration role.
+   - `DATABASE_ADMIN_URL` is only for one-time bootstrap commands.
+
+If you start with a fresh Docker Postgres volume, the compose init scripts create the roles automatically. If you are upgrading an existing local database, run:
+
+```bash
+pnpm --filter @pataspace/api prisma:bootstrap:roles
+```
 
 ### Sandbox Failure Injection
 
@@ -113,6 +123,7 @@ POST /api/v1/admin/listings/:id/reject
 ```bash
 pnpm lint
 pnpm --filter @pataspace/contracts build
+pnpm --filter @pataspace/api prisma:migrate:status
 pnpm --filter @pataspace/api build
 pnpm --filter @pataspace/api test
 pnpm --filter @pataspace/api test:integration

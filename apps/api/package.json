@@ -6,8 +6,11 @@
     "seed": "ts-node prisma/seed.ts"
   },
   "scripts": {
+    "prisma:bootstrap:roles": "ts-node prisma/bootstrap/bootstrap-roles.ts",
     "prisma:generate": "prisma generate",
-    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:migrate:deploy": "ts-node prisma/bootstrap/run-prisma-with-migration-url.ts migrate deploy",
+    "prisma:migrate:dev": "ts-node prisma/bootstrap/run-prisma-with-migration-url.ts migrate dev",
+    "prisma:migrate:status": "ts-node prisma/bootstrap/run-prisma-with-migration-url.ts migrate status",
     "prisma:seed": "prisma db seed",
     "start": "nest start",
     "start:dev": "nest start --watch",

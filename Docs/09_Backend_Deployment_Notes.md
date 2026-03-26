@@ -9,6 +9,8 @@ These notes cover the current `apps/api` deployment baseline for a single backen
 1. Copy `apps/api/.env.example` to the target host as `apps/api/.env`.
 2. Replace all placeholder secrets before first boot:
    - `DATABASE_URL`
+   - `DATABASE_MIGRATION_URL`
+   - `DATABASE_ADMIN_URL` for bootstrap-only operations
    - `JWT_SECRET`
    - `JWT_REFRESH_SECRET`
    - `APP_ENCRYPTION_KEY`
@@ -17,6 +19,18 @@ These notes cover the current `apps/api` deployment baseline for a single backen
 4. Use sandbox adapters in staging unless you are intentionally validating live SMS, storage, or M-Pesa behavior.
 
 ## Database Migrations
+
+The backend now expects a least-privilege Postgres split:
+
+- `DATABASE_URL`: runtime API connection with DML permissions only
+- `DATABASE_MIGRATION_URL`: Prisma migration connection that owns schema objects
+- `DATABASE_ADMIN_URL`: bootstrap-only admin connection for creating or repairing those roles
+
+Bootstrap the roles once per database before the first release or when repairing an older environment:
+
+```bash
+pnpm --filter @pataspace/api prisma:bootstrap:roles
+```
 
 Run migrations before each release restart:
 

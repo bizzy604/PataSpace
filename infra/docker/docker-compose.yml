@@ -7,10 +7,15 @@ services:
       POSTGRES_DB: pataspace
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      PATA_DB_APP_USER: pataspace_app
+      PATA_DB_APP_PASSWORD: pataspace_app_dev_password
+      PATA_DB_MIGRATOR_USER: pataspace_migrator
+      PATA_DB_MIGRATOR_PASSWORD: pataspace_migrator_dev_password
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ../../apps/api/prisma/bootstrap:/docker-entrypoint-initdb.d:ro
 
   redis:
     image: redis:7

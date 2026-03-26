@@ -19,7 +19,10 @@ pnpm --filter @pataspace/api start:dev
 pnpm --filter @pataspace/api build
 pnpm --filter @pataspace/api test
 pnpm --filter @pataspace/api test:smoke
+pnpm --filter @pataspace/api prisma:bootstrap:roles
 pnpm --filter @pataspace/api prisma:generate
+pnpm --filter @pataspace/api prisma:migrate:status
+pnpm --filter @pataspace/api prisma:migrate:deploy
 pnpm --filter @pataspace/api prisma:seed
 docker compose -f infra/docker/docker-compose.yml up -d
 ```
@@ -54,6 +57,12 @@ docker compose -f infra/docker/docker-compose.yml up -d
 - Auth bootstrap routes, health/readiness checks, webhooks, and background jobs run with internal DB context.
 - Authenticated requests run with `user` or `admin` DB context, and public listing browse/details run with anonymous DB context.
 - If you connect to the database directly for debugging, expect RLS behavior to differ unless you explicitly set the same `app.current_user_id`, `app.current_role`, and `app.access_mode` session settings.
+- The API runtime and Prisma migrations now use separate Postgres roles:
+  - `DATABASE_URL` is the low-privilege runtime connection.
+  - `DATABASE_MIGRATION_URL` is the schema-owner connection used by the Prisma migration scripts.
+  - `DATABASE_ADMIN_URL` is only for one-time bootstrap tasks such as creating or repairing those roles.
+- `pnpm --filter @pataspace/api prisma:bootstrap:roles` applies the role/bootstrap SQL against an existing database.
+- Fresh local Docker Postgres volumes create the runtime and migrator roles automatically through `prisma/bootstrap/010-bootstrap-roles.sh`.
 
 ## Current Gaps
 

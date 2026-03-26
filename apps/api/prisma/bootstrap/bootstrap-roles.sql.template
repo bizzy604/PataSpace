@@ -1,0 +1,175 @@
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+
+DO $bootstrap$
+DECLARE
+  v_database_name text := __DATABASE_NAME_LITERAL__;
+  v_app_role text := __APP_ROLE_NAME_LITERAL__;
+  v_app_password text := __APP_ROLE_PASSWORD_LITERAL__;
+  v_migrator_role text := __MIGRATOR_ROLE_NAME_LITERAL__;
+  v_migrator_password text := __MIGRATOR_ROLE_PASSWORD_LITERAL__;
+  object_record record;
+BEGIN
+  IF current_database() <> v_database_name THEN
+    RAISE EXCEPTION 'Bootstrap connected to %, but expected %.', current_database(), v_database_name;
+  END IF;
+
+  IF v_app_role = v_migrator_role THEN
+    RAISE EXCEPTION 'Runtime and migrator roles must be different.';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = v_migrator_role) THEN
+    EXECUTE format(
+      'CREATE ROLE %I LOGIN PASSWORD %L NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS INHERIT',
+      v_migrator_role,
+      v_migrator_password
+    );
+  ELSE
+    EXECUTE format(
+      'ALTER ROLE %I WITH LOGIN PASSWORD %L NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS INHERIT',
+      v_migrator_role,
+      v_migrator_password
+    );
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = v_app_role) THEN
+    EXECUTE format(
+      'CREATE ROLE %I LOGIN PASSWORD %L NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS INHERIT',
+      v_app_role,
+      v_app_password
+    );
+  ELSE
+    EXECUTE format(
+      'ALTER ROLE %I WITH LOGIN PASSWORD %L NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS INHERIT',
+      v_app_role,
+      v_app_password
+    );
+  END IF;
+
+  EXECUTE format('GRANT CONNECT ON DATABASE %I TO %I', v_database_name, v_app_role);
+  EXECUTE format('GRANT CONNECT, CREATE, TEMP ON DATABASE %I TO %I', v_database_name, v_migrator_role);
+
+  EXECUTE format('REVOKE CREATE ON DATABASE %I FROM %I', v_database_name, v_app_role);
+  EXECUTE format('REVOKE TEMP ON DATABASE %I FROM %I', v_database_name, v_app_role);
+
+  EXECUTE format('GRANT USAGE ON SCHEMA public TO %I', v_app_role);
+  EXECUTE format('GRANT USAGE, CREATE ON SCHEMA public TO %I', v_migrator_role);
+  EXECUTE format('REVOKE CREATE ON SCHEMA public FROM %I', v_app_role);
+
+  EXECUTE format('CREATE SCHEMA IF NOT EXISTS app AUTHORIZATION %I', v_migrator_role);
+  EXECUTE format('ALTER SCHEMA app OWNER TO %I', v_migrator_role);
+  EXECUTE format('REVOKE ALL ON SCHEMA app FROM PUBLIC');
+  EXECUTE format('GRANT USAGE ON SCHEMA app TO %I', v_app_role);
+  EXECUTE format('GRANT USAGE, CREATE ON SCHEMA app TO %I', v_migrator_role);
+  EXECUTE format('REVOKE CREATE ON SCHEMA app FROM %I', v_app_role);
+
+  FOR object_record IN
+    SELECT schemaname, tablename
+    FROM pg_tables
+    WHERE schemaname IN ('public', 'app')
+  LOOP
+    EXECUTE format(
+      'ALTER TABLE %I.%I OWNER TO %I',
+      object_record.schemaname,
+      object_record.tablename,
+      v_migrator_role
+    );
+  END LOOP;
+
+  FOR object_record IN
+    SELECT schemaname, sequencename
+    FROM pg_sequences
+    WHERE schemaname IN ('public', 'app')
+  LOOP
+    EXECUTE format(
+      'ALTER SEQUENCE %I.%I OWNER TO %I',
+      object_record.schemaname,
+      object_record.sequencename,
+      v_migrator_role
+    );
+  END LOOP;
+
+  FOR object_record IN
+    SELECT schemaname, viewname
+    FROM pg_views
+    WHERE schemaname IN ('public', 'app')
+  LOOP
+    EXECUTE format(
+      'ALTER VIEW %I.%I OWNER TO %I',
+      object_record.schemaname,
+      object_record.viewname,
+      v_migrator_role
+    );
+  END LOOP;
+
+  FOR object_record IN
+    SELECT schemaname, matviewname
+    FROM pg_matviews
+    WHERE schemaname IN ('public', 'app')
+  LOOP
+    EXECUTE format(
+      'ALTER MATERIALIZED VIEW %I.%I OWNER TO %I',
+      object_record.schemaname,
+      object_record.matviewname,
+      v_migrator_role
+    );
+  END LOOP;
+
+  FOR object_record IN
+    SELECT n.nspname AS schemaname, p.proname, pg_get_function_identity_arguments(p.oid) AS args
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname IN ('public', 'app')
+      AND p.prokind = 'f'
+  LOOP
+    EXECUTE format(
+      'ALTER FUNCTION %I.%I(%s) OWNER TO %I',
+      object_record.schemaname,
+      object_record.proname,
+      object_record.args,
+      v_migrator_role
+    );
+  END LOOP;
+
+  FOR object_record IN
+    SELECT n.nspname AS schemaname, t.typname
+    FROM pg_type t
+    JOIN pg_namespace n ON n.oid = t.typnamespace
+    WHERE n.nspname IN ('public', 'app')
+      AND t.typtype IN ('e', 'd')
+      AND t.typname NOT LIKE E'\\_%'
+  LOOP
+    EXECUTE format(
+      'ALTER TYPE %I.%I OWNER TO %I',
+      object_record.schemaname,
+      object_record.typname,
+      v_migrator_role
+    );
+    EXECUTE format(
+      'GRANT USAGE ON TYPE %I.%I TO %I',
+      object_record.schemaname,
+      object_record.typname,
+      v_app_role
+    );
+  END LOOP;
+
+  EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO %I', v_app_role);
+  EXECUTE format('GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO %I', v_app_role);
+  EXECUTE format('GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA app TO %I', v_app_role);
+
+  EXECUTE format(
+    'ALTER DEFAULT PRIVILEGES FOR ROLE %I IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO %I',
+    v_migrator_role,
+    v_app_role
+  );
+  EXECUTE format(
+    'ALTER DEFAULT PRIVILEGES FOR ROLE %I IN SCHEMA public GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO %I',
+    v_migrator_role,
+    v_app_role
+  );
+  EXECUTE format(
+    'ALTER DEFAULT PRIVILEGES FOR ROLE %I IN SCHEMA app GRANT EXECUTE ON FUNCTIONS TO %I',
+    v_migrator_role,
+    v_app_role
+  );
+END
+$bootstrap$;
