@@ -1,24 +1,69 @@
-import { Link } from 'expo-router';
-import { useLocalSearchParams } from 'expo-router';
+import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import { Text, View } from 'react-native';
-import { getListingById } from '@/data/mock-listings';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
 import { SectionHeader } from '@/components/ui/section-header';
+import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
+import { appRoutes, contactRevealedHref } from '@/lib/routes';
 
 export function UnlockListingScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
+  const { getListingById, walletBalance, unlockListing, isListingUnlocked } = useMobileApp();
+  const router = useRouter();
   const listing = getListingById(params.id);
+
+  if (!listing) {
+    return (
+      <Screen>
+        <Card>
+          <CardTitle className="text-[20px]">Listing not found</CardTitle>
+          <CardDescription>That unlock target no longer exists.</CardDescription>
+        </Card>
+        <Link href={appRoutes.search} asChild>
+          <Button label="Back to search" />
+        </Link>
+      </Screen>
+    );
+  }
+
+  const alreadyUnlocked = isListingUnlocked(listing.id);
+  const hasEnoughCredits = walletBalance >= listing.unlockCostCredits;
+  const balanceAfterUnlock = Math.max(0, walletBalance - listing.unlockCostCredits);
 
   return (
     <Screen
       bottomBar={
         <View className="gap-3">
-          <Button label={`Unlock for ${listing.unlockCost}`} />
-          <Link href="/confirmations" asChild>
-            <Button variant="outline" label="See confirmation flow" />
+          <Button
+            label={
+              alreadyUnlocked
+                ? 'Open revealed contact'
+                : hasEnoughCredits
+                  ? `Unlock for ${listing.unlockCost}`
+                  : 'Top up credits first'
+            }
+            onPress={() => {
+              if (alreadyUnlocked) {
+                router.push(contactRevealedHref(listing.id));
+                return;
+              }
+
+              if (!hasEnoughCredits) {
+                router.push(appRoutes.buyCredits);
+                return;
+              }
+
+              const result = unlockListing(listing.id);
+
+              if (result === 'success' || result === 'already_unlocked') {
+                router.push(contactRevealedHref(listing.id));
+              }
+            }}
+          />
+          <Link href={appRoutes.credits} asChild>
+            <Button variant="outline" label="Open wallet" />
           </Link>
         </View>
       }
@@ -26,15 +71,13 @@ export function UnlockListingScreen() {
       <SectionHeader
         kicker="Unlock flow"
         title="Review unlock"
-        description="Show the tenant exactly what will be spent, what gets revealed, and how the follow-up confirmation works."
+        description="Cost and contact reveal"
       />
 
       <Card>
         <Badge variant="secondary">{listing.area}</Badge>
         <CardTitle className="mt-4 text-[22px]">{listing.title}</CardTitle>
-        <CardDescription>
-          Unlocking reveals phone number, exact address, and GPS pin so both parties can connect directly without back-and-forth.
-        </CardDescription>
+        <CardDescription>Phone, address, and directions unlock instantly.</CardDescription>
       </Card>
 
       <View className="gap-3">
@@ -46,26 +89,26 @@ export function UnlockListingScreen() {
         </Card>
         <Card className="p-5">
           <Text className="text-xs uppercase tracking-[1.8px] text-tertiary-foreground">Current balance</Text>
-          <Text className="mt-2 text-2xl font-semibold tracking-[-0.5px] text-foreground">5,000</Text>
+          <Text className="mt-2 text-2xl font-semibold tracking-[-0.5px] text-foreground">
+            {walletBalance.toLocaleString()} credits
+          </Text>
         </Card>
         <Card className="p-5">
           <Text className="text-xs uppercase tracking-[1.8px] text-tertiary-foreground">Balance after unlock</Text>
-          <Text className="mt-2 text-2xl font-semibold tracking-[-0.5px] text-foreground">2,500</Text>
+          <Text className="mt-2 text-2xl font-semibold tracking-[-0.5px] text-foreground">
+            {balanceAfterUnlock.toLocaleString()} credits
+          </Text>
         </Card>
       </View>
 
       <Card>
         <CardTitle className="text-xl">What you reveal</CardTitle>
-        <CardDescription>
-          Tenant phone number, building directions, GPS marker, and move-out timing become available immediately after payment.
-        </CardDescription>
+        <CardDescription>Phone, address, directions, move date.</CardDescription>
       </Card>
 
       <Card>
         <CardTitle className="text-xl">Protection built in</CardTitle>
-        <CardDescription>
-          The outgoing tenant is notified, both sides confirm the contact later, and commission only moves forward after the hold window.
-        </CardDescription>
+        <CardDescription>No repeat charge. Both sides confirm later.</CardDescription>
       </Card>
     </Screen>
   );

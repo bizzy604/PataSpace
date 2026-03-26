@@ -1,13 +1,39 @@
+import { Link, useRouter } from 'expo-router';
 import { Text, View } from 'react-native';
-import { Link } from 'expo-router';
-import { confirmationStages, featuredListings } from '@/data/mock-listings';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
 import { SectionHeader } from '@/components/ui/section-header';
+import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
+import { appRoutes } from '@/lib/routes';
 
 export function ConfirmationsScreen() {
+  const { latestUnlock, getListingById, confirmationStages, confirmIncoming, confirmOutgoing } =
+    useMobileApp();
+  const router = useRouter();
+  const listing = getListingById(latestUnlock?.listingId);
+
+  if (!latestUnlock || !listing) {
+    return (
+      <Screen withTabBar>
+        <SectionHeader
+          kicker="Confirmation flow"
+          title="No unlock to confirm yet"
+          description="Unlock a listing first, then both sides can record the connection here."
+        />
+        <Link href={appRoutes.search} asChild>
+          <Button label="Browse listings" />
+        </Link>
+      </Screen>
+    );
+  }
+
+  const completedSteps =
+    Number(latestUnlock.incomingConfirmed) + Number(latestUnlock.outgoingConfirmed);
+  const progressWidth = completedSteps === 0 ? '33%' : completedSteps === 1 ? '66%' : '100%';
+  const bothConfirmed = latestUnlock.incomingConfirmed && latestUnlock.outgoingConfirmed;
+
   return (
     <Screen withTabBar>
       <SectionHeader
@@ -21,24 +47,30 @@ export function ConfirmationsScreen() {
           Current unlock
         </Text>
         <Text className="mt-2 text-[26px] font-semibold tracking-[-0.6px] text-white">
-          Waiting on outgoing tenant confirmation.
+          {listing.title}
         </Text>
         <Text className="mt-2 text-sm leading-6 text-white/70">
-          Once both parties confirm, commission moves into hold before payout processing starts.
+          {bothConfirmed
+            ? 'Both confirmations are complete. The commission hold window can now begin.'
+            : 'Record both sides of the connection so the unlock can move into commission hold.'}
         </Text>
         <View className="mt-4 h-2 rounded-full bg-white/15">
-          <View className="h-2 w-1/2 rounded-full bg-primary" />
+          <View className="h-2 rounded-full bg-primary" style={{ width: progressWidth }} />
         </View>
       </View>
 
       <Card>
         <View className="flex-row flex-wrap gap-3">
-          <Badge>Incoming confirmed</Badge>
-          <Badge variant="secondary">Outgoing pending</Badge>
+          <Badge variant={latestUnlock.incomingConfirmed ? 'dark' : 'secondary'}>
+            Incoming {latestUnlock.incomingConfirmed ? 'confirmed' : 'pending'}
+          </Badge>
+          <Badge variant={latestUnlock.outgoingConfirmed ? 'dark' : 'secondary'}>
+            Outgoing {latestUnlock.outgoingConfirmed ? 'confirmed' : 'pending'}
+          </Badge>
         </View>
         <CardTitle className="mt-4">Current unlock status</CardTitle>
         <CardDescription>
-          The latest unlocked listing is {featuredListings[0].title}. One side is done, one side still needs to acknowledge the connection.
+          The latest unlocked listing is {listing.title}. Once both confirmations are recorded, commission enters a seven-day hold window.
         </CardDescription>
       </Card>
 
@@ -54,7 +86,28 @@ export function ConfirmationsScreen() {
         ))}
       </View>
 
-      <Link href="/my-listings" asChild>
+      <View className="gap-3">
+        <Button
+          label={latestUnlock.incomingConfirmed ? 'Incoming side already confirmed' : 'Confirm incoming tenant side'}
+          disabled={latestUnlock.incomingConfirmed}
+          onPress={() => confirmIncoming(listing.id)}
+        />
+        <Button
+          variant="outline"
+          label={latestUnlock.outgoingConfirmed ? 'Outgoing side already confirmed' : 'Confirm outgoing tenant side'}
+          disabled={latestUnlock.outgoingConfirmed}
+          onPress={() => confirmOutgoing(listing.id)}
+        />
+        {bothConfirmed ? (
+          <Button
+            variant="dark"
+            label="View success screen"
+            onPress={() => router.push(appRoutes.confirmationSuccess)}
+          />
+        ) : null}
+      </View>
+
+      <Link href={appRoutes.myListings} asChild>
         <Button variant="secondary" label="View listing dashboard" />
       </Link>
     </Screen>

@@ -1,4 +1,5 @@
-import { Pressable, Text, type PressableProps } from 'react-native';
+import { useRef } from 'react';
+import { Animated, Pressable, Text, type PressableProps } from 'react-native';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/cn';
 
@@ -53,11 +54,37 @@ export function Button({
   variant,
   size,
   label,
+  onPressIn,
+  onPressOut,
   ...props
 }: ButtonProps) {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  function animateTo(value: number) {
+    Animated.spring(scale, {
+      toValue: value,
+      useNativeDriver: true,
+      speed: 30,
+      bounciness: 0,
+    }).start();
+  }
+
   return (
-    <Pressable className={cn(buttonVariants({ variant, size }), className)} {...props}>
-      <Text className={buttonTextVariants({ variant, size })}>{label}</Text>
+    <Pressable
+      className={cn(buttonVariants({ variant, size }), props.disabled ? 'opacity-60' : '', className)}
+      onPressIn={(event) => {
+        animateTo(0.985);
+        onPressIn?.(event);
+      }}
+      onPressOut={(event) => {
+        animateTo(1);
+        onPressOut?.(event);
+      }}
+      {...props}
+    >
+      <Animated.View style={{ transform: [{ scale }] }}>
+        <Text className={buttonTextVariants({ variant, size })}>{label}</Text>
+      </Animated.View>
     </Pressable>
   );
 }

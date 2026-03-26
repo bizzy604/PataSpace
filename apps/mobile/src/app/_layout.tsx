@@ -1,7 +1,29 @@
 import '../../global.css';
-import { Stack } from 'expo-router';
+import { useEffect } from 'react';
+import { Stack, usePathname, useRouter } from 'expo-router';
+import { MobileAppProvider, useMobileApp } from '@/features/mobile-app/mobile-app-provider';
 
-export default function RootLayout() {
+const publicPaths = ['/', '/onboarding', '/register', '/verify-otp', '/login'];
+
+function RootNavigator() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { isAuthenticated } = useMobileApp();
+
+  useEffect(() => {
+    const isPublicPath = publicPaths.includes(pathname);
+    const isAuthOnlyPath = pathname !== '/' && publicPaths.includes(pathname);
+
+    if (!isAuthenticated && !isPublicPath) {
+      router.replace('/');
+      return;
+    }
+
+    if (isAuthenticated && isAuthOnlyPath) {
+      router.replace('/');
+    }
+  }, [isAuthenticated, pathname, router]);
+
   return (
     <Stack
       screenOptions={{
@@ -11,5 +33,13 @@ export default function RootLayout() {
         },
       }}
     />
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <MobileAppProvider>
+      <RootNavigator />
+    </MobileAppProvider>
   );
 }
