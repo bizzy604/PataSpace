@@ -9,6 +9,7 @@ const badgeVariants = cva('rounded-full px-3 py-1.5', {
       default: 'bg-primary shadow-card',
       secondary: 'bg-secondary',
       outline: 'border border-border bg-card',
+      dark: 'bg-surface-inverse',
     },
   },
   defaultVariants: {
@@ -22,6 +23,7 @@ const badgeTextVariants = cva('text-xs font-bold uppercase tracking-[2px]', {
       default: 'text-primary-foreground',
       secondary: 'text-foreground',
       outline: 'text-muted-foreground',
+      dark: 'text-primary-foreground',
     },
   },
   defaultVariants: {
@@ -32,12 +34,16 @@ const badgeTextVariants = cva('text-xs font-bold uppercase tracking-[2px]', {
 export function Badge({
   children,
   variant,
+  className,
+  textClassName,
 }: {
   children: ReactNode;
+  className?: string;
+  textClassName?: string;
 } & VariantProps<typeof badgeVariants>) {
   return (
-    <View className={badgeVariants({ variant })}>
-      <Text className={badgeTextVariants({ variant })}>{children}</Text>
+    <View className={cn(badgeVariants({ variant }), className)}>
+      <Text className={cn(badgeTextVariants({ variant }), textClassName)}>{children}</Text>
     </View>
   );
 }

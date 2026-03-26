@@ -3,6 +3,21 @@
 
 ---
 
+## 2026 Visual System Override
+
+- Accent and active states: Teal `#28809A`
+- Dark nav, tab bars, and hero panels: Eerie Black `#252525`
+- Secondary text, metadata, and inactive icons: Battleship Grey `#8D9192`
+- Search fields, muted cards, and chips: Anti-flash White `#EDEDED`
+- Main canvas and elevated cards: White `#FFFFFF`
+- Headings: Poppins Bold or DM Sans Bold
+- Body and labels: DM Sans Regular
+- Component language: dark navigation shell, teal active pill, white cards, circular teal CTA, generous 16px to 20px radii
+
+Treat any legacy terracotta note in the detailed prompt document as replaced by this palette.
+
+---
+
 ## 📱 COMPLETE SCREEN INVENTORY
 
 ### 🔐 AUTHENTICATION FLOW (5 Screens)
@@ -233,7 +248,7 @@ Nice-to-have features:
 
 ### Before You Start:
 - [ ] Read Apple HIG documentation
-- [ ] Review PataSpace brand colors (Terracotta: #D2691E)
+- [ ] Review PataSpace mobile palette: `#252525`, `#8D9192`, `#EDEDED`, `#FFFFFF`, `#28809A`
 - [ ] Understand user flows (see above)
 - [ ] Prepare placeholder images/icons
 
@@ -357,7 +372,7 @@ After wireframes are complete, measure:
 4. **Iterate based on feedback**
 5. **Hand off to developers** with annotated specs
 
-**Ready to build PataSpace? Start with Screen 01 (Splash/Welcome)!**
+**Ready to build PataSpace? Start with Screen 06 (Home), Screen 07 (Listing Details), and Screen 10 (Unlock Confirmation).**
 
 ---
 

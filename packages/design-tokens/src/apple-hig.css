@@ -1,31 +1,31 @@
 :root {
   color-scheme: light;
-  --font-family-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
+  --font-family-sans: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-  --font-family-display: -apple-system, BlinkMacSystemFont, "SF Pro Display",
-    "Segoe UI", sans-serif;
+  --font-family-display: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
 
-  --hig-color-bg-canvas: #f5f5f7;
-  --hig-color-bg-subtle: #ededf0;
-  --hig-color-bg-strong: #e3e4e8;
-  --hig-color-surface: rgba(255, 255, 255, 0.78);
-  --hig-color-surface-elevated: rgba(255, 255, 255, 0.92);
+  --hig-color-bg-canvas: #ffffff;
+  --hig-color-bg-subtle: #ededed;
+  --hig-color-bg-strong: #d8dbdc;
+  --hig-color-surface: rgba(255, 255, 255, 0.92);
+  --hig-color-surface-elevated: #ffffff;
   --hig-color-surface-solid: #ffffff;
-  --hig-color-surface-inverse: #1c1c1e;
-  --hig-color-text-primary: #1d1d1f;
-  --hig-color-text-secondary: #6e6e73;
-  --hig-color-text-tertiary: #86868b;
+  --hig-color-surface-inverse: #252525;
+  --hig-color-text-primary: #252525;
+  --hig-color-text-secondary: #8d9192;
+  --hig-color-text-tertiary: #8d9192;
   --hig-color-text-inverse: #ffffff;
-  --hig-color-accent: #0071e3;
-  --hig-color-accent-hover: #0062c4;
-  --hig-color-accent-soft: rgba(0, 113, 227, 0.12);
-  --hig-color-border: rgba(60, 60, 67, 0.18);
-  --hig-color-border-strong: rgba(60, 60, 67, 0.29);
-  --hig-color-fill-soft: rgba(120, 120, 128, 0.12);
-  --hig-color-fill-strong: rgba(120, 120, 128, 0.2);
-  --hig-color-success: #34c759;
-  --hig-color-warning: #ff9f0a;
-  --hig-color-danger: #ff3b30;
+  --hig-color-accent: #28809a;
+  --hig-color-accent-hover: #1f677c;
+  --hig-color-accent-soft: rgba(40, 128, 154, 0.14);
+  --hig-color-border: rgba(37, 37, 37, 0.08);
+  --hig-color-border-strong: rgba(37, 37, 37, 0.16);
+  --hig-color-fill-soft: #ededed;
+  --hig-color-fill-strong: rgba(37, 37, 37, 0.06);
+  --hig-color-success: #2d9d78;
+  --hig-color-warning: #d89a3d;
+  --hig-color-danger: #d35d5d;
 
   --hig-radius-sm: 10px;
   --hig-radius-md: 14px;
@@ -61,10 +61,11 @@
   --destructive-foreground: var(--hig-color-text-inverse);
   --border: var(--hig-color-border);
   --input: rgba(255, 255, 255, 0.72);
-  --ring: rgba(0, 113, 227, 0.32);
+  --ring: rgba(40, 128, 154, 0.28);
   --surface: var(--hig-color-surface);
   --surface-elevated: var(--hig-color-surface-elevated);
   --surface-subtle: var(--hig-color-bg-subtle);
+  --surface-inverse: var(--hig-color-surface-inverse);
   --foreground-secondary: var(--hig-color-text-secondary);
   --foreground-tertiary: var(--hig-color-text-tertiary);
   --separator: var(--hig-color-border);
@@ -74,6 +75,6 @@
 }
 
 ::selection {
-  background: rgba(0, 113, 227, 0.16);
+  background: rgba(40, 128, 154, 0.16);
   color: var(--hig-color-text-primary);
 }

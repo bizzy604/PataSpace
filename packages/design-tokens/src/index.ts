@@ -1,46 +1,46 @@
 export const appleHIGTokens = {
   fontFamily: {
     sans:
-      '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif',
+      '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
     display:
-      '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif',
+      '"Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
   },
   color: {
     background: {
-      canvas: '#F5F5F7',
-      subtle: '#EDEDF0',
-      strong: '#E3E4E8',
+      canvas: '#FFFFFF',
+      subtle: '#EDEDED',
+      strong: '#D8DBDC',
     },
     surface: {
-      translucent: 'rgba(255, 255, 255, 0.78)',
-      elevated: 'rgba(255, 255, 255, 0.92)',
+      translucent: 'rgba(255, 255, 255, 0.92)',
+      elevated: '#FFFFFF',
       solid: '#FFFFFF',
-      inverse: '#1C1C1E',
+      inverse: '#252525',
     },
     text: {
-      primary: '#1D1D1F',
-      secondary: '#6E6E73',
-      tertiary: '#86868B',
+      primary: '#252525',
+      secondary: '#8D9192',
+      tertiary: '#8D9192',
       inverse: '#FFFFFF',
     },
     border: {
-      subtle: 'rgba(60, 60, 67, 0.18)',
-      strong: 'rgba(60, 60, 67, 0.29)',
+      subtle: 'rgba(37, 37, 37, 0.08)',
+      strong: 'rgba(37, 37, 37, 0.16)',
     },
     fill: {
-      soft: 'rgba(120, 120, 128, 0.12)',
-      strong: 'rgba(120, 120, 128, 0.2)',
-      accent: 'rgba(0, 113, 227, 0.12)',
+      soft: '#EDEDED',
+      strong: 'rgba(37, 37, 37, 0.06)',
+      accent: 'rgba(40, 128, 154, 0.14)',
     },
     accent: {
-      primary: '#0071E3',
-      hover: '#0062C4',
+      primary: '#28809A',
+      hover: '#1F677C',
       foreground: '#FFFFFF',
     },
     status: {
-      success: '#34C759',
-      warning: '#FF9F0A',
-      danger: '#FF3B30',
+      success: '#2D9D78',
+      warning: '#D89A3D',
+      danger: '#D35D5D',
     },
   },
   radius: {
@@ -144,11 +144,11 @@ export const appleHIGNativeTheme = {
   card: {
     backgroundColor: appleHIGTokens.color.surface.elevated,
     borderColor: appleHIGTokens.color.border.subtle,
-    shadowColor: '#0F172A',
+    shadowColor: '#252525',
     shadowOpacity: 0.08,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 14 },
-    elevation: 8,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 6,
   },
   insetCard: {
     backgroundColor: appleHIGTokens.color.fill.soft,

@@ -3,13 +3,14 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/cn';
 
 const buttonVariants = cva(
-  'items-center justify-center rounded-full border px-5 py-3 active:opacity-90',
+  'items-center justify-center rounded-[18px] border px-5 py-3 active:opacity-90',
   {
     variants: {
       variant: {
         default: 'border-transparent bg-primary shadow-card',
         secondary: 'border-border bg-secondary',
         outline: 'border-border bg-card',
+        dark: 'border-transparent bg-surface-inverse shadow-floating',
       },
       size: {
         default: 'min-h-12',
@@ -29,6 +30,7 @@ const buttonTextVariants = cva('text-center font-semibold tracking-[-0.2px]', {
       default: 'text-primary-foreground',
       secondary: 'text-foreground',
       outline: 'text-foreground',
+      dark: 'text-primary-foreground',
     },
     size: {
       default: 'text-[15px]',

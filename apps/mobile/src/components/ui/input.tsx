@@ -10,7 +10,7 @@ export function Input({
   return (
     <TextInput
       className={cn(
-        'min-h-12 rounded-[22px] border border-border bg-surface px-4 py-3 text-base text-foreground',
+        'min-h-12 rounded-[18px] border border-border bg-surface px-4 py-3 text-base text-foreground',
         className,
       )}
       placeholderTextColor={placeholderTextColor}

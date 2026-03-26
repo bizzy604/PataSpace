@@ -2,11 +2,27 @@
 ## Google Stitch Prompts | Apple Human Interface Guidelines
 
 **Design System Reference:**
-- Font: SF Pro (iOS system font)
-- Colors: System colors (iOS dynamic colors)
-- Components: Native iOS UIKit components
+- Font: Poppins Bold for headings and DM Sans for body and labels, with SF Pro fallback where the generator expects native iOS naming
+- Colors: PataSpace branded light surfaces with dark navigation chrome and teal accent states
+- Components: Native-feeling mobile patterns styled with white cards, pill tabs, circular CTA buttons, and a dark navigation shell
 - Spacing: 8pt grid system
 - Safe areas: Respect notch and home indicator
+
+**2026 Brand Override:**
+- Keep Apple HIG layout, spacing, safe areas, and navigation structure from every prompt below
+- Replace every legacy terracotta instruction with accent teal `#28809A`
+- Use eerie black `#252525` for side rails, tab bars, hero panels, media placeholders, and dark navigation surfaces
+- Use battleship grey `#8D9192` for secondary text, helper copy, metadata, and inactive icons
+- Use anti-flash white `#EDEDED` for input fills, search bars, inactive pills, and subtle panels
+- Use white `#FFFFFF` for the main canvas, elevated cards, and text on dark surfaces
+- Keep generous radii: 16px cards, full-pill tabs, and circular teal icon buttons
+
+**Component Language:**
+- Dark navigation shell with white labels and a teal active pill
+- White cards with soft shadow and rounded corners
+- Profile greeting with avatar plus name
+- Minimal top-right search/action control
+- Product or property card with media on top and price plus CTA below
 
 ---
 
@@ -1820,7 +1836,7 @@ Each prompt contains:
 ### Customization Tips:
 
 - **Change device:** Replace "iPhone 14 Pro (393x852pt)" with your target device
-- **Adjust colors:** Replace terracotta (#D2691E) with your brand color
+- **Adjust colors:** Apply the brand override above and treat all older terracotta notes as teal `#28809A`
 - **Modify content:** Update placeholder text with your actual content
 - **Add/remove sections:** Customize each screen to your needs
 
@@ -1831,8 +1847,9 @@ Each prompt contains:
 All 40 screens follow these Apple HIG standards:
 
 **Typography:**
-- SF Pro Display (headlines)
-- SF Pro Text (body)
+- Poppins Bold or DM Sans Bold (headlines)
+- DM Sans Regular (body and labels)
+- SF Pro fallback only when the generator needs explicit iOS defaults
 - Sizes: 11pt to 48pt scale
 
 **Spacing:**
@@ -1847,9 +1864,11 @@ All 40 screens follow these Apple HIG standards:
 - UITableView (standard cell height: 44pt)
 
 **Colors:**
-- Primary: Terracotta (#D2691E)
-- System colors: systemGray, systemGreen, systemRed
-- Dynamic colors (light/dark mode support)
+- Primary accent: Teal (`#28809A`)
+- Navigation dark: Eerie Black (`#252525`)
+- Secondary text and icons: Battleship Grey (`#8D9192`)
+- Subtle fills and filters: Anti-flash White (`#EDEDED`)
+- Canvas and elevated cards: White (`#FFFFFF`)
 
 **Interactions:**
 - Haptic feedback on important actions

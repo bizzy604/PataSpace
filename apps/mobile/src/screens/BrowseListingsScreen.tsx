@@ -1,58 +1,52 @@
-import { Link } from 'expo-router';
-import { View } from 'react-native';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardDescription, CardTitle } from '@/components/ui/card';
+import { Text, View } from 'react-native';
+import { featuredListings, listingFilters } from '@/data/mock-listings';
+import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
+import { ListingCard } from '@/components/ui/listing-card';
 import { Screen } from '@/components/ui/screen';
 import { SectionHeader } from '@/components/ui/section-header';
-
-const listings = [
-  {
-    id: 'kilimani-2br',
-    title: 'Sunny 2BR handover near Yaya Centre',
-    rent: 'KES 25,000',
-    unlock: '2,500 credits',
-  },
-  {
-    id: 'southb-studio',
-    title: 'Affordable studio close to CBD routes',
-    rent: 'KES 14,500',
-    unlock: '1,450 credits',
-  },
-];
+import { listingHref } from '@/lib/routes';
 
 export function BrowseListingsScreen() {
   return (
-    <Screen>
+    <Screen withTabBar>
       <SectionHeader
         kicker="Incoming tenant flow"
-        title="Browse listings"
-        description="Free browsing, fast filters, then unlock only the listing you want."
+        title="Browse homes"
+        description="Filter down quickly, compare verified listings, then unlock only what is worth the spend."
       />
 
-      <View className="gap-3">
-        <Input placeholder="Search neighborhood" />
-        <View className="flex-row gap-3">
-          <Input className="flex-1" placeholder="Min rent" keyboardType="numeric" />
-          <Input className="flex-1" placeholder="Max rent" keyboardType="numeric" />
-        </View>
+      <View className="flex-row items-center gap-3">
+        <Input className="flex-1" placeholder="Search neighborhood, road, or budget" />
+        <IconButton label="FX" />
       </View>
 
-      {listings.map((listing) => (
-        <Card key={listing.id}>
-          <View className="flex-row flex-wrap gap-2">
-            <Badge variant="outline">Verified</Badge>
-            <Badge variant="secondary">{listing.unlock}</Badge>
+      <View className="flex-row flex-wrap gap-2">
+        {listingFilters.map((filter, index) => (
+          <View
+            key={filter}
+            className={index === 1 ? 'rounded-full bg-primary px-4 py-2' : 'rounded-full bg-secondary px-4 py-2'}
+          >
+            <Text
+              className={
+                index === 1
+                  ? 'text-sm font-semibold text-primary-foreground'
+                  : 'text-sm font-semibold text-foreground'
+              }
+            >
+              {filter}
+            </Text>
           </View>
-          <CardTitle className="mt-4 text-2xl">{listing.title}</CardTitle>
-          <CardDescription>
-            {listing.rent}. Photos, video, and GPS verification available.
-          </CardDescription>
-          <Link href="/unlock" asChild>
-            <Button className="mt-6" label="Unlock this listing" />
-          </Link>
-        </Card>
+        ))}
+      </View>
+
+      {featuredListings.map((listing) => (
+        <ListingCard
+          key={listing.id}
+          listing={listing}
+          href={listingHref(listing.id)}
+          actionLabel="View details"
+        />
       ))}
     </Screen>
   );
