@@ -25,13 +25,22 @@ pnpm --filter @pataspace/mobile build:apk
 
 - `apps/mobile/eas.json` includes a `preview` profile that produces an installable Android `.apk`.
 - The app config now uses `apps/mobile/app.config.ts` with the Android package id `com.pataspace.mobile`.
-- For standalone Android maps, set `GOOGLE_MAPS_API_KEY` before building so `react-native-maps` can render in the APK.
+- Put your Android Maps key in `apps/mobile/.env` as `GOOGLE_MAPS_API_KEY=...` so `app.config.ts` can inject it into the standalone build config.
+- `apps/mobile/.env.example` shows the expected shape without storing the real key in source.
 
 ```bash
 cd apps/mobile
-set GOOGLE_MAPS_API_KEY=your_google_maps_android_key
 pnpm build:apk
 ```
+
+If `npx eas-cli` fails on Windows with a temp-cache module error, use the packaged script above or run:
+
+```bash
+pnpm dlx eas-cli build --platform android --profile preview
+```
+
+For EAS cloud builds, also create the same `GOOGLE_MAPS_API_KEY` variable in the EAS project environment. Expo documents that EAS CLI does not use your local `.env` file for remote app-config resolution:
+https://docs.expo.dev/eas/environment-variables/
 
 ## Current Source Layout
 
