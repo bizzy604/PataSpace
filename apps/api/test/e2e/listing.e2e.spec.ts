@@ -356,6 +356,7 @@ describe('Upload, listing, and admin review flows', () => {
     expect(browseResponse.body.pagination.total).toBe(2);
     expect(browseResponse.body.pagination.totalPages).toBe(2);
     expect(browseResponse.headers.etag).toBeTruthy();
+    expect(browseResponse.body.data[0].mapLocation).toBeTruthy();
 
     await request(app.getHttpServer())
       .get('/api/v1/listings')
@@ -383,6 +384,10 @@ describe('Upload, listing, and admin review flows', () => {
     expect(detailsResponse.body.id).toBe(listing4.body.id);
     expect(detailsResponse.body.contactInfo).toBeUndefined();
     expect(detailsResponse.headers.etag).toBeTruthy();
+    expect(detailsResponse.body.mapLocation).toEqual({
+      approxLatitude: -1.29,
+      approxLongitude: 36.79,
+    });
 
     await request(app.getHttpServer())
       .get(`/api/v1/listings/${listing4.body.id}`)

@@ -1,9 +1,58 @@
 import type { ImageSourcePropType } from 'react-native';
+import type { ListingMapLocation } from '@pataspace/contracts';
 import { draftCameraSequence, listingGallerySets, type LocalMedia } from '@/data/media-library';
 
 export type ListingStatus = 'Verified' | 'Hot' | 'New' | 'Live' | 'Review' | 'Closed';
 
 export type ListingMedia = LocalMedia;
+
+const APPROXIMATE_MAP_COORDINATE_DECIMALS = 2;
+
+const fallbackMapLocationByArea: Record<string, ListingMapLocation> = {
+  Kilimani: {
+    approxLatitude: -1.29,
+    approxLongitude: 36.79,
+  },
+  'South B': {
+    approxLatitude: -1.32,
+    approxLongitude: 36.83,
+  },
+  Westlands: {
+    approxLatitude: -1.27,
+    approxLongitude: 36.8,
+  },
+  'Ngong Road': {
+    approxLatitude: -1.3,
+    approxLongitude: 36.78,
+  },
+};
+
+function roundCoordinate(value: number) {
+  const precision = 10 ** APPROXIMATE_MAP_COORDINATE_DECIMALS;
+
+  return Math.round(value * precision) / precision;
+}
+
+export function toApproximateMapLocation(
+  latitude: number,
+  longitude: number,
+): ListingMapLocation {
+  return {
+    approxLatitude: roundCoordinate(latitude),
+    approxLongitude: roundCoordinate(longitude),
+  };
+}
+
+export function resolveApproximateMapLocation(
+  area: string,
+  gps?: { latitude: number; longitude: number },
+): ListingMapLocation {
+  if (gps) {
+    return toApproximateMapLocation(gps.latitude, gps.longitude);
+  }
+
+  return fallbackMapLocationByArea[area] ?? fallbackMapLocationByArea.Kilimani;
+}
 
 export type ListingPreview = {
   id: string;
@@ -30,6 +79,7 @@ export type ListingPreview = {
   tags: string[];
   amenities: string[];
   galleryMedia: ListingMedia[];
+  mapLocation: ListingMapLocation;
   quote: string;
   quoteAuthor: string;
   stats: {
@@ -104,6 +154,9 @@ export type ListingDraftPhoto = {
   gps?: {
     latitude: number;
     longitude: number;
+    accuracyMeters?: number | null;
+    mocked?: boolean;
+    timestamp?: number;
   };
 };
 
@@ -220,6 +273,7 @@ export const featuredListings: ListingPreview[] = [
     tags: ['Balcony', 'Water 24/7', 'Parking'],
     amenities: ['Water 24/7', 'Parking', 'Caretaker on site', 'Prepaid power'],
     galleryMedia: [...listingGallerySets.kilimani],
+    mapLocation: fallbackMapLocationByArea.Kilimani,
     quote: 'The landlord fixes things quickly and the block stays quiet even on weekends.',
     quoteAuthor: 'Current tenant, moving out next month',
     stats: {
@@ -250,6 +304,7 @@ export const featuredListings: ListingPreview[] = [
     tags: ['Near CBD', 'Budget', 'Fast move'],
     amenities: ['Water storage', 'Secure gate', 'Laundry line', 'Good bus access'],
     galleryMedia: [...listingGallerySets.southB],
+    mapLocation: fallbackMapLocationByArea['South B'],
     quote: 'If you leave before 7:30 AM, the commute into town is straightforward.',
     quoteAuthor: 'Current tenant, shifting for work',
     stats: {
@@ -280,6 +335,7 @@ export const featuredListings: ListingPreview[] = [
     tags: ['Rooftop', 'Premium', 'Generator'],
     amenities: ['Generator backup', 'Lift access', 'Gym nearby', 'Dedicated parking'],
     galleryMedia: [...listingGallerySets.westlands],
+    mapLocation: fallbackMapLocationByArea.Westlands,
     quote: 'The building management is responsive and the rooftop is rarely crowded.',
     quoteAuthor: 'Current tenant, relocating overseas',
     stats: {

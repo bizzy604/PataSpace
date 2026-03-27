@@ -20,6 +20,7 @@ export const appRoutes = {
   createListingReview: '/create-listing-review',
   listingSubmitted: '/listing-submitted',
   myListings: '/my-listings',
+  myListing: '/my-listing',
   unlock: '/unlock',
   contactRevealed: '/contact-revealed',
   confirmations: '/confirmations',
@@ -90,5 +91,12 @@ export function myListingsHref(filter?: MyListingsFilter): Href {
   return {
     pathname: '/my-listings',
     params: { filter },
+  };
+}
+
+export function myListingHref(id: string): Href {
+  return {
+    pathname: '/my-listing',
+    params: { id },
   };
 }

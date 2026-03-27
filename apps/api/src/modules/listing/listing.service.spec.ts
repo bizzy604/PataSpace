@@ -312,6 +312,8 @@ describe('ListingService', () => {
       createdAt: new Date('2026-03-25T09:30:00.000Z'),
       furnished: false,
       id: 'listing_1',
+      latitude: -1.289563,
+      longitude: 36.790942,
       monthlyRent: 25000,
       neighborhood: 'Kilimani',
       propertyType: 'Apartment',
@@ -368,6 +370,10 @@ describe('ListingService', () => {
     expect(result.data[0]).toMatchObject({
       id: 'listing_1',
       isUnlocked: true,
+      mapLocation: {
+        approxLatitude: -1.29,
+        approxLongitude: 36.79,
+      },
       neighborhood: 'Kilimani',
     });
     expect(listingCacheService.setBrowse).toHaveBeenCalledWith(

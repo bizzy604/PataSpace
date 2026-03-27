@@ -65,6 +65,11 @@ export type ListingContactInfo = {
   longitude: number;
 };
 
+export type ListingMapLocation = {
+  approxLatitude: number;
+  approxLongitude: number;
+};
+
 export type ListingCard = {
   id: string;
   county: string;
@@ -81,6 +86,7 @@ export type ListingCard = {
   unlockCount: number;
   isUnlocked: boolean;
   createdAt: string;
+  mapLocation: ListingMapLocation;
   tenant: ListingTenantPreview;
 };
 

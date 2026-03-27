@@ -5,6 +5,7 @@ import { formatCredits, type ListingPreview, type SearchFilters } from '@/data/m
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
+import { ListingsMap } from '@/components/map/listings-map';
 import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
 import { ListingCard } from '@/components/ui/listing-card';
@@ -282,9 +283,6 @@ export function ListingGalleryScreen() {
           <CardTitle className="text-[20px]">Listing not found</CardTitle>
           <CardDescription>That gallery no longer has a listing attached.</CardDescription>
         </Card>
-        <Link href={appRoutes.search} asChild>
-          <Button label="Back to search" />
-        </Link>
       </Screen>
     );
   }
@@ -409,10 +407,6 @@ export function ListingGalleryScreen() {
           />
         ))}
       </View>
-
-      <Link href={listingHref(listing.id)}>
-        <Text className="text-sm font-semibold text-primary">Back to listing details</Text>
-      </Link>
     </Screen>
   );
 }
@@ -476,46 +470,70 @@ export function ListingStatsScreen() {
 }
 
 export function MapViewScreen() {
-  const { browseListings } = useMobileApp();
-  const mapPins = [
-    { id: browseListings[0]?.id, left: 52, top: 56 },
-    { id: browseListings[1]?.id, left: 158, top: 198 },
-    { id: browseListings[2]?.id, left: 238, top: 92 },
-  ].filter((pin) => pin.id);
+  const { browseListings, isListingUnlocked, searchFilters } = useMobileApp();
+  const mapListings = filterBrowseListings(browseListings, '', searchFilters);
+  const [selectedListingId, setSelectedListingId] = useState<string | undefined>(
+    mapListings[0]?.id,
+  );
+  const selectedListing =
+    mapListings.find((listing) => listing.id === selectedListingId) ?? mapListings[0];
+
+  useEffect(() => {
+    if (selectedListingId && mapListings.some((listing) => listing.id === selectedListingId)) {
+      return;
+    }
+
+    setSelectedListingId(mapListings[0]?.id);
+  }, [mapListings, selectedListingId]);
 
   return (
     <Screen>
       <SectionHeader
         kicker="Map view"
         title="Listings by area"
-        description="Tap a pin"
+        description="Approximate pins until unlock"
       />
 
-      <View className="relative h-96 rounded-[32px] bg-secondary p-5">
-        <View className="absolute inset-5 rounded-[28px] border border-border bg-card" />
-        {mapPins.map((pin) => {
-          const listing = browseListings.find((item) => item.id === pin.id);
+      {mapListings.length === 0 ? (
+        <Card>
+          <CardTitle className="text-[20px]">No listings match the current filters</CardTitle>
+          <CardDescription>
+            Adjust the browse filters to repopulate the map with approximate area pins.
+          </CardDescription>
+        </Card>
+      ) : (
+        <>
+          <View className="overflow-hidden rounded-[32px] border border-border">
+            <ListingsMap
+              listings={mapListings}
+              selectedListingId={selectedListing?.id}
+              onSelectListing={setSelectedListingId}
+            />
+          </View>
 
-          if (!listing) {
-            return null;
-          }
+          <Card>
+            <Text className="text-sm font-semibold text-foreground">
+              {mapListings.length} listings visible on the map
+            </Text>
+            <CardDescription>
+              Pins use approximate neighborhood coordinates in browse. Exact address and precise GPS
+              still reveal only after unlock.
+            </CardDescription>
+          </Card>
 
-          return (
-            <Link key={pin.id} href={listingHref(listing.id)} asChild>
-              <Pressable
-                className="absolute rounded-full bg-primary px-4 py-2 shadow-card"
-                style={{ left: pin.left, top: pin.top }}
-              >
-                <Text className="text-sm font-semibold text-primary-foreground">{listing.area}</Text>
-              </Pressable>
-            </Link>
-          );
-        })}
-        <View className="absolute bottom-5 left-5 right-5 rounded-[20px] bg-surface-inverse p-5">
-          <Text className="text-lg font-semibold text-white">Mock map pins</Text>
-          <Text className="mt-2 text-sm text-white/70">Map layer can be swapped later.</Text>
-        </View>
-      </View>
+          {selectedListing ? (
+            <ListingCard
+              listing={selectedListing}
+              href={
+                isListingUnlocked(selectedListing.id)
+                  ? contactRevealedHref(selectedListing.id)
+                  : listingHref(selectedListing.id)
+              }
+              actionLabel={isListingUnlocked(selectedListing.id) ? 'Open contact' : 'View details'}
+            />
+          ) : null}
+        </>
+      )}
     </Screen>
   );
 }

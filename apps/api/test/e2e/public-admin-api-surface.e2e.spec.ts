@@ -52,12 +52,19 @@ describe('Main public and admin API surface', () => {
     expect(browseResponse.body.data.map((listing: { id: string }) => listing.id)).toContain(
       listingResponse.body.id,
     );
+    expect(browseResponse.body.data[0].mapLocation).toBeTruthy();
+    expect(browseResponse.body.data[0].mapLocation.approxLatitude).toBeCloseTo(-1.29, 2);
+    expect(browseResponse.body.data[0].mapLocation.approxLongitude).toBeCloseTo(36.79, 2);
 
     const detailsResponse = await request(context.app.getHttpServer())
       .get(`/api/v1/listings/${listingResponse.body.id}`)
       .expect(200);
 
     expect(detailsResponse.body.contactInfo).toBeUndefined();
+    expect(detailsResponse.body.mapLocation).toEqual({
+      approxLatitude: -1.29,
+      approxLongitude: 36.79,
+    });
 
     const myListingsResponse = await request(context.app.getHttpServer())
       .get('/api/v1/listings/my-listings')
@@ -97,6 +104,10 @@ describe('Main public and admin API surface', () => {
       .set('Authorization', `Bearer ${buyer.accessToken}`)
       .expect(200);
 
+    expect(listingDetailsAfterUnlock.body.mapLocation).toEqual({
+      approxLatitude: -1.29,
+      approxLongitude: 36.79,
+    });
     expect(listingDetailsAfterUnlock.body.contactInfo.phoneNumber).toBe(owner.phoneNumber);
 
     const unlockHistoryResponse = await request(context.app.getHttpServer())

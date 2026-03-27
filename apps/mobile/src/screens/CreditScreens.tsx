@@ -210,11 +210,8 @@ export function PaymentSuccessScreen() {
       </Card>
 
       <View className="gap-3">
-        <Link href={appRoutes.credits} asChild>
-          <Button label="Back to wallet" />
-        </Link>
         <Link href={appRoutes.search} asChild>
-          <Button variant="outline" label="Browse listings" />
+          <Button label="Browse listings" />
         </Link>
       </View>
     </Screen>

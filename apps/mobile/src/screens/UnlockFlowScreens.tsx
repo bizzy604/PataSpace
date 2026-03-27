@@ -40,9 +40,6 @@ export function ContactRevealedScreen() {
               router.push(appRoutes.confirmations);
             }}
           />
-          <Link href={listingHref(listing.id)} asChild>
-            <Button variant="outline" label="Back to listing" />
-          </Link>
         </View>
       }
     >
@@ -90,9 +87,6 @@ export function ConfirmationSuccessScreen() {
       <View className="gap-3">
         <Link href={appRoutes.rateReview} asChild>
           <Button label="Rate the experience" />
-        </Link>
-        <Link href={appRoutes.confirmations} asChild>
-          <Button variant="outline" label="Back to confirmations" />
         </Link>
       </View>
     </Screen>

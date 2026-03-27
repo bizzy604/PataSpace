@@ -24,6 +24,7 @@ type StaticRoute =
   | `/listing-submitted`
   | `/map`
   | `/mpesa-processing`
+  | `/my-listing`
   | `/my-listings`
   | `/notifications`
   | `/onboarding`
@@ -68,6 +69,7 @@ type StaticHrefInput =
   | { pathname: `/listing-submitted`; params?: Router.UnknownInputParams }
   | { pathname: `/map`; params?: Router.UnknownInputParams }
   | { pathname: `/mpesa-processing`; params?: Router.UnknownInputParams }
+  | { pathname: `/my-listing`; params: { id: string | number } }
   | { pathname: `/my-listings`; params?: Router.UnknownInputParams }
   | { pathname: `/notifications`; params?: Router.UnknownInputParams }
   | { pathname: `/onboarding`; params?: Router.UnknownInputParams }
@@ -110,6 +112,7 @@ type StaticHrefOutput =
   | { pathname: `/listing-submitted`; params?: Router.UnknownOutputParams }
   | { pathname: `/map`; params?: Router.UnknownOutputParams }
   | { pathname: `/mpesa-processing`; params?: Router.UnknownOutputParams }
+  | { pathname: `/my-listing`; params: { id: string } }
   | { pathname: `/my-listings`; params?: Router.UnknownOutputParams }
   | { pathname: `/notifications`; params?: Router.UnknownOutputParams }
   | { pathname: `/onboarding`; params?: Router.UnknownOutputParams }

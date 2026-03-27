@@ -1,6 +1,6 @@
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,8 @@ import { Screen } from '@/components/ui/screen';
 import { SectionHeader } from '@/components/ui/section-header';
 import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
 import { appRoutes } from '@/lib/routes';
+
+const pataspaceLogo = require('../../assets/PataSpace Logo.png');
 
 function ToggleRow({
   label,
@@ -373,6 +375,10 @@ export function AppUpdateScreen() {
         title="What changed"
         description="Recent changes"
       />
+
+      <View className="items-center justify-center py-4">
+        <Image className="h-24 w-24" resizeMode="contain" source={pataspaceLogo} />
+      </View>
 
       {updateNotes.map((note) => (
         <Card key={note}>

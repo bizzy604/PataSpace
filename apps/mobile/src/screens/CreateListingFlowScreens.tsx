@@ -60,6 +60,28 @@ function MiniAction({
   );
 }
 
+async function buildLocationLabel(position: Location.LocationObject) {
+  const fallbackLabel = `${position.coords.latitude.toFixed(5)}, ${position.coords.longitude.toFixed(5)}`;
+
+  try {
+    const [address] = await Location.reverseGeocodeAsync({
+      latitude: position.coords.latitude,
+      longitude: position.coords.longitude,
+    });
+    const parts = [address?.district, address?.street, address?.city]
+      .map((part) => part?.trim())
+      .filter(Boolean);
+
+    if (parts.length > 0) {
+      return parts.slice(0, 2).join(', ');
+    }
+  } catch {
+    return fallbackLabel;
+  }
+
+  return fallbackLabel;
+}
+
 export function CreateListingScreen() {
   const cameraRef = useRef<CameraView | null>(null);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
@@ -127,22 +149,30 @@ export function CreateListingScreen() {
       }
 
       const position = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
+        accuracy: Location.Accuracy.High,
+        mayShowUserSettingsDialog: true,
       });
+      const locationLabel = await buildLocationLabel(position);
+      const weakGpsFix =
+        position.mocked === true ||
+        (position.coords.accuracy !== null && position.coords.accuracy > 50);
 
       addDraftPhoto({
         id: `draft-photo-${Date.now()}`,
         label: nextPrompt,
-        quality: 'Strong',
+        quality: weakGpsFix ? 'Retake' : 'Strong',
         source: { uri: photo.uri },
-        capturedAt: new Date().toLocaleTimeString([], {
+        capturedAt: new Date(position.timestamp).toLocaleTimeString([], {
           hour: '2-digit',
           minute: '2-digit',
         }),
-        locationLabel: `${position.coords.latitude.toFixed(5)}, ${position.coords.longitude.toFixed(5)}`,
+        locationLabel,
         gps: {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
+          accuracyMeters: position.coords.accuracy,
+          mocked: position.mocked,
+          timestamp: position.timestamp,
         },
       });
     } catch {
@@ -283,18 +313,13 @@ export function PhotoReviewScreen() {
   return (
     <Screen
       bottomBar={
-        <View className="gap-3">
-          <Link href={appRoutes.createListing} asChild>
-            <Button variant="outline" label="Back to camera" />
+        draft.photos.length > 0 ? (
+          <Link href={appRoutes.createListingDetails} asChild>
+            <Button variant="dark" label="Continue" />
           </Link>
-          {draft.photos.length > 0 ? (
-            <Link href={appRoutes.createListingDetails} asChild>
-              <Button variant="dark" label="Continue" />
-            </Link>
-          ) : (
-            <Button disabled label="Capture a photo first" />
-          )}
-        </View>
+        ) : (
+          <Button disabled label="Capture a photo first" />
+        )
       }
     >
       <SectionHeader kicker="Post listing" title="Photos" description="Review captures" />
@@ -318,6 +343,16 @@ export function PhotoReviewScreen() {
             <Text className="text-sm text-muted-foreground">
               {photo.locationLabel ?? 'GPS unavailable'}
             </Text>
+            {photo.gps ? (
+              <Text className="text-xs text-muted-foreground">
+                {photo.gps.mocked
+                  ? 'Mocked location flagged. Retake with a live fix.'
+                  : photo.gps.accuracyMeters !== null &&
+                      photo.gps.accuracyMeters !== undefined
+                    ? `Approx. accuracy +/-${Math.round(photo.gps.accuracyMeters)}m`
+                    : 'GPS accuracy unavailable'}
+              </Text>
+            ) : null}
           </View>
           <View className="flex-row gap-3">
             <Button

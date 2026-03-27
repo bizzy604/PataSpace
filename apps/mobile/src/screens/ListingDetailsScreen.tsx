@@ -25,9 +25,6 @@ export function ListingDetailsScreen() {
           <CardTitle className="text-[20px]">Listing not found</CardTitle>
           <CardDescription>This property is no longer available in the current demo data.</CardDescription>
         </Card>
-        <Link href={appRoutes.search} asChild>
-          <Button label="Back to search" />
-        </Link>
       </Screen>
     );
   }
@@ -51,10 +48,6 @@ export function ListingDetailsScreen() {
         </View>
       }
     >
-      <Link href={appRoutes.browse}>
-        <Text className="text-sm font-semibold text-primary">Back</Text>
-      </Link>
-
       <ImageBackground
         className="h-72 overflow-hidden rounded-[32px] bg-surface-inverse p-6 shadow-floating"
         imageStyle={{ borderRadius: 32 }}

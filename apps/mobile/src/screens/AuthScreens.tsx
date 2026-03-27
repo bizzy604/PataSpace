@@ -27,18 +27,12 @@ function AuthShell({
   description,
   children,
   footer,
-  showBack = false,
-  onBackPress,
 }: {
   title: string;
   description: string;
   children: ReactNode;
   footer?: ReactNode;
-  showBack?: boolean;
-  onBackPress?: () => void;
 }) {
-  const router = useRouter();
-
   return (
     <Screen contentContainerStyle={{ flexGrow: 1, paddingTop: 10, paddingBottom: 24 }}>
       <KeyboardAvoidingView
@@ -51,17 +45,6 @@ function AuthShell({
             <View className="absolute -right-24 bottom-16 h-72 w-72 rounded-full bg-[#252525]/[0.05]" />
             <View className="absolute right-8 top-36 h-24 w-24 rounded-[30px] border border-primary/10 bg-primary/5" />
             <View className="absolute left-10 bottom-28 h-16 w-16 rounded-[22px] bg-[#252525]/[0.04]" />
-          </View>
-
-          <View className="min-h-12">
-            {showBack ? (
-              <Pressable
-                className="h-11 w-11 items-center justify-center rounded-[14px] border border-border bg-card active:opacity-90"
-                onPress={onBackPress ?? (() => router.back())}
-              >
-                <AppIcon name="arrow-back-outline" size={20} />
-              </Pressable>
-            ) : null}
           </View>
 
           <View className="flex-1 justify-center">
@@ -221,8 +204,6 @@ export function OnboardingScreen() {
     <AuthShell
       title={slide.title.toUpperCase()}
       description={slide.description}
-      showBack
-      onBackPress={() => router.replace(appRoutes.home)}
       footer={
         <View className="flex-row gap-3">
           <Button
@@ -298,8 +279,6 @@ export function RegisterScreen() {
     <AuthShell
       title="SIGN UP"
       description="Create your account and continue."
-      showBack
-      onBackPress={() => router.replace('/')}
       footer={
         <AuthFooterLink
           question="Already have an account?"
@@ -411,8 +390,6 @@ export function VerifyOtpScreen() {
     <AuthShell
       title={'VERIFY\nYOUR PHONE'}
       description={`Code sent to ${pendingAuth?.phone ?? 'your phone number'}.`}
-      showBack
-      onBackPress={() => router.replace(appRoutes.register)}
       footer={
         <View className="items-center gap-4">
           <Pressable

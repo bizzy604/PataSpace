@@ -39,6 +39,7 @@ import { ListingCacheService } from './listing-cache.service';
 
 const GPS_MATCH_THRESHOLD_METERS = 100;
 const FIRST_LISTINGS_REVIEW_THRESHOLD = 3;
+const PUBLIC_MAP_COORDINATE_DECIMALS = 2;
 const VISIBLE_LISTING_STATUSES = [
   ListingStatus.ACTIVE,
   ListingStatus.UNLOCKED,
@@ -215,6 +216,7 @@ export class ListingService {
         unlockCount: listing.unlockCount,
         isUnlocked: unlockedListingIds.has(listing.id),
         createdAt: listing.createdAt.toISOString(),
+        mapLocation: this.buildMapLocation(listing.latitude, listing.longitude),
         tenant: {
           firstName: listing.user.firstName,
           joinedDate: listing.user.createdAt.toISOString(),
@@ -319,6 +321,7 @@ export class ListingService {
       unlockCount: listing.unlockCount,
       isUnlocked: canViewContactInfo,
       createdAt: listing.createdAt.toISOString(),
+      mapLocation: this.buildMapLocation(listing.latitude, listing.longitude),
       description: listing.description,
       amenities: listing.amenities,
       propertyNotes: listing.propertyNotes ?? undefined,
@@ -1268,12 +1271,25 @@ export class ListingService {
     return (value * Math.PI) / 180;
   }
 
+  private buildMapLocation(latitude: number, longitude: number) {
+    return {
+      approxLatitude: this.roundCoordinate(latitude, PUBLIC_MAP_COORDINATE_DECIMALS),
+      approxLongitude: this.roundCoordinate(longitude, PUBLIC_MAP_COORDINATE_DECIMALS),
+    };
+  }
+
   private calculateUnlockCost(monthlyRent: number) {
     return Math.round(monthlyRent * 0.1);
   }
 
   private calculateCommission(unlockCostCredits: number) {
     return Math.round(unlockCostCredits * 0.3);
+  }
+
+  private roundCoordinate(value: number, decimals: number) {
+    const precision = 10 ** decimals;
+
+    return Math.round(value * precision) / precision;
   }
 
   private async lockListingRow(

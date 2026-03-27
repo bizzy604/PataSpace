@@ -129,6 +129,11 @@ export const listingContactInfoSchema = z
   })
   .merge(coordinateSchema);
 
+export const listingMapLocationSchema = z.object({
+  approxLatitude: z.number().gte(-90).lte(90),
+  approxLongitude: z.number().gte(-180).lte(180),
+});
+
 export const listingTenantPreviewSchema = z.object({
   firstName: z.string().min(1),
   joinedDate: isoDateStringSchema,
@@ -154,6 +159,7 @@ export const listingCardSchema = z.object({
   unlockCount: z.number().int().nonnegative(),
   isUnlocked: z.boolean(),
   createdAt: isoDateStringSchema,
+  mapLocation: listingMapLocationSchema,
   tenant: listingTenantPreviewSchema,
 });
 

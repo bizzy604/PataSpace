@@ -144,6 +144,14 @@ export class ListingContactInfoDto {
   longitude!: number;
 }
 
+export class ListingMapLocationDto {
+  @ApiProperty({ example: -1.29 })
+  approxLatitude!: number;
+
+  @ApiProperty({ example: 36.79 })
+  approxLongitude!: number;
+}
+
 export class ListingCardDto {
   @ApiProperty({ example: 'cm8listing123' })
   id!: string;
@@ -191,6 +199,9 @@ export class ListingCardDto {
 
   @ApiProperty({ example: '2026-03-20T10:00:00.000Z' })
   createdAt!: string;
+
+  @ApiProperty({ type: () => ListingMapLocationDto })
+  mapLocation!: ListingMapLocationDto;
 
   @ApiProperty({ type: () => ListingTenantPreviewDto })
   tenant!: ListingTenantPreviewDto;

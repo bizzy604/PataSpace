@@ -23,6 +23,7 @@ import {
   onboardingSlides,
   photoCapturePrompts,
   referralHighlights,
+  resolveApproximateMapLocation,
   reviewPrompts,
   supportTopics,
   updateNotes,
@@ -143,6 +144,7 @@ function toInitials(name: string) {
 function buildSubmittedListingPreview(draft: ListingDraft, listingIndex: number) {
   const monthlyRent = Number(draft.monthlyRent) || 0;
   const listingId = `draft-listing-${Date.now()}`;
+  const coverPhoto = draft.photos[0];
   const galleryMedia = draft.photos.map((photo) => ({
     id: photo.id,
     label: photo.label,
@@ -182,6 +184,7 @@ function buildSubmittedListingPreview(draft: ListingDraft, listingIndex: number)
       .map((item) => item.trim())
       .filter(Boolean),
     galleryMedia,
+    mapLocation: resolveApproximateMapLocation(draft.area || 'Kilimani', coverPhoto?.gps),
     quote: 'Listing draft submitted from mobile.',
     quoteAuthor: 'Outgoing tenant',
     stats: {

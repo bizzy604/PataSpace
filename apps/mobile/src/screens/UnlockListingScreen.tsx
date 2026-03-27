@@ -21,9 +21,6 @@ export function UnlockListingScreen() {
           <CardTitle className="text-[20px]">Listing not found</CardTitle>
           <CardDescription>That unlock target no longer exists.</CardDescription>
         </Card>
-        <Link href={appRoutes.search} asChild>
-          <Button label="Back to search" />
-        </Link>
       </Screen>
     );
   }
