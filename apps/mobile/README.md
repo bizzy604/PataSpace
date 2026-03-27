@@ -19,6 +19,7 @@ pnpm --filter @pataspace/mobile android
 pnpm --filter @pataspace/mobile ios
 pnpm --filter @pataspace/mobile web
 pnpm --filter @pataspace/mobile build:apk
+pnpm --filter @pataspace/mobile build:ios
 ```
 
 ## APK Build
@@ -41,6 +42,23 @@ pnpm dlx eas-cli build --platform android --profile preview
 
 For EAS cloud builds, also create the same `GOOGLE_MAPS_API_KEY` variable in the EAS project environment. Expo documents that EAS CLI does not use your local `.env` file for remote app-config resolution:
 https://docs.expo.dev/eas/environment-variables/
+
+## iOS Build
+
+- `app.config.ts` now includes the iOS bundle identifier `com.pataspace.mobile`.
+- Use the same `preview` EAS profile to create an internal iOS build.
+- For a real iPhone install, Apple requires a paid Apple Developer account and device registration for ad hoc/internal distribution.
+
+```bash
+cd apps/mobile
+pnpm build:ios
+```
+
+If you want to install the build on a physical iPhone, register the device first:
+
+```bash
+pnpm dlx eas-cli device:create
+```
 
 ## Current Source Layout
 

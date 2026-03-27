@@ -25,6 +25,13 @@ const config: ExpoConfig = {
     bundler: 'metro',
   },
   plugins: ['expo-router', 'expo-font'],
+  ios: {
+    bundleIdentifier: 'com.pataspace.mobile',
+    buildNumber: '1',
+    infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
+    },
+  },
   android: {
     package: 'com.pataspace.mobile',
     versionCode: 1,

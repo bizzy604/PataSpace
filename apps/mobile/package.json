@@ -8,7 +8,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "build:apk": "pnpm dlx eas-cli build --platform android --profile preview"
+    "build:apk": "pnpm dlx eas-cli build --platform android --profile preview",
+    "build:ios": "pnpm dlx eas-cli build --platform ios --profile preview"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
