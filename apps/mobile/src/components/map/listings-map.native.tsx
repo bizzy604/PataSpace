@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
-import MapView, { Marker, type Region } from 'react-native-maps';
+import { Platform, StyleSheet, View } from 'react-native';
+import MapView, { Marker, PROVIDER_GOOGLE, type Region } from 'react-native-maps';
 import type { ListingPreview } from '@/data/mock-listings';
 
 type ListingsMapProps = {
@@ -67,6 +67,7 @@ export function ListingsMap({
       <MapView
         ref={mapRef}
         initialRegion={buildOverviewRegion(listings)}
+        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
         showsCompass
         showsScale
         style={StyleSheet.absoluteFillObject}

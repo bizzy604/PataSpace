@@ -1,5 +1,5 @@
-import { StyleSheet, View } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import { Platform, StyleSheet, View } from 'react-native';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
 type RevealedLocationMapProps = {
   address: string;
@@ -23,6 +23,7 @@ export function RevealedLocationMap({
           latitudeDelta: 0.01,
           longitudeDelta: 0.01,
         }}
+        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
         showsCompass
         showsScale
         style={StyleSheet.absoluteFillObject}

@@ -18,6 +18,19 @@ pnpm --filter @pataspace/mobile start
 pnpm --filter @pataspace/mobile android
 pnpm --filter @pataspace/mobile ios
 pnpm --filter @pataspace/mobile web
+pnpm --filter @pataspace/mobile build:apk
+```
+
+## APK Build
+
+- `apps/mobile/eas.json` includes a `preview` profile that produces an installable Android `.apk`.
+- The app config now uses `apps/mobile/app.config.ts` with the Android package id `com.pataspace.mobile`.
+- For standalone Android maps, set `GOOGLE_MAPS_API_KEY` before building so `react-native-maps` can render in the APK.
+
+```bash
+cd apps/mobile
+set GOOGLE_MAPS_API_KEY=your_google_maps_android_key
+pnpm build:apk
 ```
 
 ## Current Source Layout
