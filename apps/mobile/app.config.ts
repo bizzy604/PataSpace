@@ -24,7 +24,7 @@ const config: ExpoConfig = {
   web: {
     bundler: 'metro',
   },
-  plugins: ['expo-router'],
+  plugins: ['expo-router', 'expo-font'],
   android: {
     package: 'com.pataspace.mobile',
     versionCode: 1,
