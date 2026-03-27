@@ -2,10 +2,11 @@ import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import { Text, View } from 'react-native';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
+import { RevealedLocationMap } from '@/components/map/revealed-location-map';
 import { Screen } from '@/components/ui/screen';
 import { SectionHeader } from '@/components/ui/section-header';
 import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
-import { appRoutes, listingHref } from '@/lib/routes';
+import { appRoutes } from '@/lib/routes';
 
 export function ContactRevealedScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
@@ -13,6 +14,8 @@ export function ContactRevealedScreen() {
   const router = useRouter();
   const listing = getListingById(params.id);
   const unlock = getUnlockRecord(params.id);
+  const latitude = unlock?.contactInfo.latitude;
+  const longitude = unlock?.contactInfo.longitude;
 
   if (!listing || !unlock) {
     return (
@@ -46,21 +49,39 @@ export function ContactRevealedScreen() {
       <SectionHeader
         kicker="Contact revealed"
         title={listing.title}
-        description="A valid unlock now exposes the outgoing tenant contact details and exact directions."
+        description="A valid unlock now exposes the outgoing tenant contact details, exact directions, and precise GPS."
       />
 
       <Card>
         <CardTitle className="text-[20px]">Phone number</CardTitle>
-        <CardDescription>{listing.contactPhone}</CardDescription>
+        <CardDescription>{unlock.contactInfo.phoneNumber}</CardDescription>
       </Card>
       <Card>
         <CardTitle className="text-[20px]">Exact address</CardTitle>
-        <CardDescription>{listing.exactAddress}</CardDescription>
+        <CardDescription>{unlock.contactInfo.address}</CardDescription>
       </Card>
       <Card>
         <CardTitle className="text-[20px]">Directions</CardTitle>
         <CardDescription>{listing.directions}</CardDescription>
       </Card>
+      {latitude !== undefined && longitude !== undefined ? (
+        <>
+          <Card>
+            <CardTitle className="text-[20px]">Exact GPS location</CardTitle>
+            <CardDescription>
+              {latitude.toFixed(6)}, {longitude.toFixed(6)}
+            </CardDescription>
+          </Card>
+          <View className="overflow-hidden rounded-[32px] border border-border">
+            <RevealedLocationMap
+              address={unlock.contactInfo.address}
+              latitude={latitude}
+              longitude={longitude}
+              title={listing.title}
+            />
+          </View>
+        </>
+      ) : null}
     </Screen>
   );
 }

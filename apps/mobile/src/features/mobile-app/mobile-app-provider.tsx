@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
+import type { UnlockContactInfo } from '@pataspace/contracts';
 import {
+  buildUnlockContactInfo,
   confirmationStages,
   defaultReferralCode,
   draftCameraSequence,
@@ -16,6 +18,7 @@ import {
   initialSearchFilters,
   initialSettings,
   initialTransactions,
+  initialUnlockContactInfoByListingId,
   initialUnlocks,
   initialUserProfile,
   listingFilters,
@@ -141,7 +144,7 @@ function toInitials(name: string) {
   return initials || 'PS';
 }
 
-function buildSubmittedListingPreview(draft: ListingDraft, listingIndex: number) {
+function buildSubmittedListingDraftData(draft: ListingDraft, listingIndex: number) {
   const monthlyRent = Number(draft.monthlyRent) || 0;
   const listingId = `draft-listing-${Date.now()}`;
   const coverPhoto = draft.photos[0];
@@ -151,8 +154,15 @@ function buildSubmittedListingPreview(draft: ListingDraft, listingIndex: number)
     source: photo.source,
   }));
   const unlockCostCredits = Math.round(monthlyRent * 0.1);
+  const fallbackMapLocation = resolveApproximateMapLocation(draft.area || 'Kilimani', coverPhoto?.gps);
+  const contactInfo = buildUnlockContactInfo(
+    `${draft.location || 'Location pending'}, Nairobi`,
+    draft.landlordPhone || '+254 700 000 000',
+    coverPhoto?.gps?.latitude,
+    coverPhoto?.gps?.longitude,
+  );
 
-  return {
+  const listingPreview = {
     id: listingId,
     title: draft.title || `Draft listing ${listingIndex}`,
     monthlyRent,
@@ -162,9 +172,7 @@ function buildSubmittedListingPreview(draft: ListingDraft, listingIndex: number)
     commissionAmount: `KES ${Math.round(unlockCostCredits * 0.3).toLocaleString()}`,
     area: draft.area || 'Nairobi',
     location: draft.location || 'Location pending',
-    exactAddress: `${draft.location || 'Location pending'}, Nairobi`,
     directions: 'Directions will appear after the listing is approved and unlocked.',
-    contactPhone: draft.landlordPhone || '+254 700 000 000',
     meta: '1 listing  |  Pending review',
     blurb: draft.description || 'New listing draft awaiting review.',
     status: listingIndex <= 3 ? 'Review' : 'Live',
@@ -184,7 +192,7 @@ function buildSubmittedListingPreview(draft: ListingDraft, listingIndex: number)
       .map((item) => item.trim())
       .filter(Boolean),
     galleryMedia,
-    mapLocation: resolveApproximateMapLocation(draft.area || 'Kilimani', coverPhoto?.gps),
+    mapLocation: fallbackMapLocation,
     quote: 'Listing draft submitted from mobile.',
     quoteAuthor: 'Outgoing tenant',
     stats: {
@@ -194,6 +202,11 @@ function buildSubmittedListingPreview(draft: ListingDraft, listingIndex: number)
       freshness: 'Just now',
     },
   } satisfies ListingPreview;
+
+  return {
+    listingPreview,
+    contactInfo,
+  };
 }
 
 export function MobileAppProvider({ children }: { children: ReactNode }) {
@@ -206,6 +219,8 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
   const [walletBalance, setWalletBalance] = useState(5000);
   const [transactions, setTransactions] = useState(initialTransactions);
   const [unlocks, setUnlocks] = useState(initialUnlocks);
+  const [listingContactInfoById, setListingContactInfoById] =
+    useState<Record<string, UnlockContactInfo>>(initialUnlockContactInfoByListingId);
   const [notifications, setNotifications] = useState(initialNotifications);
   const [pendingAuth, setPendingAuth] = useState<PendingAuth | null>(null);
   const [pendingTopUp, setPendingTopUp] = useState<PendingTopUp | null>(null);
@@ -330,7 +345,7 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
   }
 
   function submitDraft() {
-    const listingPreview = buildSubmittedListingPreview(draft, myListings.length + 1);
+    const { listingPreview, contactInfo } = buildSubmittedListingDraftData(draft, myListings.length + 1);
     const myListing: MyListingRow = {
       id: listingPreview.id,
       title: listingPreview.title,
@@ -347,6 +362,10 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
 
     setListings((current) => [listingPreview, ...current]);
     setMyListings((current) => [myListing, ...current]);
+    setListingContactInfoById((current) => ({
+      ...current,
+      [listingPreview.id]: contactInfo,
+    }));
     pushNotification({
       id: `notif-submit-${Date.now()}`,
       title: 'Listing submitted',
@@ -423,10 +442,17 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
       return 'insufficient';
     }
 
+    const contactInfo = listingContactInfoById[listingId];
+
+    if (!contactInfo) {
+      return 'insufficient';
+    }
+
     const unlock: UnlockRecord = {
       id: `unlock-${Date.now()}`,
       listingId,
       creditsSpent: listing.unlockCostCredits,
+      contactInfo,
       incomingConfirmed: false,
       outgoingConfirmed: false,
       createdAt: 'Just now',

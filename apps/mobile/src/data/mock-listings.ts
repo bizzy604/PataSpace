@@ -1,5 +1,8 @@
 import type { ImageSourcePropType } from 'react-native';
-import type { ListingMapLocation } from '@pataspace/contracts';
+import type {
+  ListingMapLocation,
+  UnlockContactInfo,
+} from '@pataspace/contracts';
 import { draftCameraSequence, listingGallerySets, type LocalMedia } from '@/data/media-library';
 
 export type ListingStatus = 'Verified' | 'Hot' | 'New' | 'Live' | 'Review' | 'Closed';
@@ -54,6 +57,28 @@ export function resolveApproximateMapLocation(
   return fallbackMapLocationByArea[area] ?? fallbackMapLocationByArea.Kilimani;
 }
 
+export function buildUnlockContactInfo(
+  address: string,
+  phoneNumber: string,
+  latitude?: number,
+  longitude?: number,
+): UnlockContactInfo {
+  const contactInfo: UnlockContactInfo = {
+    address,
+    phoneNumber,
+  };
+
+  if (latitude !== undefined) {
+    contactInfo.latitude = latitude;
+  }
+
+  if (longitude !== undefined) {
+    contactInfo.longitude = longitude;
+  }
+
+  return contactInfo;
+}
+
 export type ListingPreview = {
   id: string;
   title: string;
@@ -64,9 +89,7 @@ export type ListingPreview = {
   commissionAmount: string;
   area: string;
   location: string;
-  exactAddress: string;
   directions: string;
-  contactPhone: string;
   meta: string;
   blurb: string;
   status: ListingStatus;
@@ -125,6 +148,7 @@ export type UnlockRecord = {
   id: string;
   listingId: string;
   creditsSpent: number;
+  contactInfo: UnlockContactInfo;
   incomingConfirmed: boolean;
   outgoingConfirmed: boolean;
   createdAt: string;
@@ -241,7 +265,7 @@ export const onboardingSlides = [
     id: 'unlock',
     title: 'Only pay when the listing feels worth it',
     description:
-      'Unlocking reveals direct contact and exact directions. Repeat unlocks stay idempotent inside the prototype.',
+      'Unlocking reveals direct contact, exact address, directions, and the precise GPS pin.',
   },
   {
     id: 'post',
@@ -258,9 +282,7 @@ export const featuredListings: ListingPreview[] = [
     monthlyRent: 25000,
     area: 'Kilimani',
     location: 'Argwings Kodhek Rd, Nairobi',
-    exactAddress: 'Yaya Court Apartments, Block B, 4th Floor, Kilimani',
     directions: 'Use the Yaya Centre roundabout gate, then take the second left into Block B.',
-    contactPhone: '+254 712 440 128',
     meta: '2 bed  |  1 bath  |  Apartment  |  3 unlocks',
     blurb:
       'Bright corner unit with balcony light, honest tenant photos, and an easy matatu connection into town.',
@@ -289,9 +311,7 @@ export const featuredListings: ListingPreview[] = [
     monthlyRent: 14500,
     area: 'South B',
     location: 'Likoni Rd, Nairobi',
-    exactAddress: 'Likoni Flats, South B Estate, Ground Floor',
     directions: 'Enter through the east gate and the studio is the second unit on the right.',
-    contactPhone: '+254 703 281 990',
     meta: 'Studio  |  1 bath  |  Bedsitter  |  2 unlocks',
     blurb:
       'Compact setup for someone commuting daily, with recent kitchen upgrades and strong daylight.',
@@ -320,9 +340,7 @@ export const featuredListings: ListingPreview[] = [
     monthlyRent: 38000,
     area: 'Westlands',
     location: 'Muthithi Rd, Nairobi',
-    exactAddress: 'Muthithi Heights, 8th Floor, Westlands',
     directions: 'Pass the lobby desk, use lift B, and the rooftop access is one level above the apartment.',
-    contactPhone: '+254 722 441 660',
     meta: '1 bed  |  1 bath  |  Loft  |  5 unlocks',
     blurb:
       'Premium finish, strong natural light, and a flexible move-in window for someone upgrading fast.',
@@ -346,6 +364,27 @@ export const featuredListings: ListingPreview[] = [
     },
   }),
 ];
+
+export const initialUnlockContactInfoByListingId: Record<string, UnlockContactInfo> = {
+  'kilimani-sunny-2br': buildUnlockContactInfo(
+    'Yaya Court Apartments, Block B, 4th Floor, Kilimani',
+    '+254 712 440 128',
+    -1.289563,
+    36.790942,
+  ),
+  'south-b-studio': buildUnlockContactInfo(
+    'Likoni Flats, South B Estate, Ground Floor',
+    '+254 703 281 990',
+    -1.3167,
+    36.8333,
+  ),
+  'westlands-loft': buildUnlockContactInfo(
+    'Muthithi Heights, 8th Floor, Westlands',
+    '+254 722 441 660',
+    -1.2675,
+    36.8108,
+  ),
+};
 
 export function getListingById(listings: ListingPreview[], id?: string | string[]) {
   const listingId = Array.isArray(id) ? id[0] : id;

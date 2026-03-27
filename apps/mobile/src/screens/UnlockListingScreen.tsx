@@ -74,7 +74,7 @@ export function UnlockListingScreen() {
       <Card>
         <Badge variant="secondary">{listing.area}</Badge>
         <CardTitle className="mt-4 text-[22px]">{listing.title}</CardTitle>
-        <CardDescription>Phone, address, and directions unlock instantly.</CardDescription>
+        <CardDescription>Phone, exact address, directions, and the GPS pin unlock instantly.</CardDescription>
       </Card>
 
       <View className="gap-3">
@@ -100,7 +100,7 @@ export function UnlockListingScreen() {
 
       <Card>
         <CardTitle className="text-xl">What you reveal</CardTitle>
-        <CardDescription>Phone, address, directions, move date.</CardDescription>
+        <CardDescription>Phone, exact address, directions, exact GPS pin, move date.</CardDescription>
       </Card>
 
       <Card>
