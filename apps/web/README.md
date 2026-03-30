@@ -25,6 +25,29 @@ pnpm --filter @pataspace/web start
 - `lib`: API helpers, utilities, and local mock data
 - `public`: static assets
 
+## Current Route Surface
+
+- `/`: landing page and web scope overview
+- `/listings`: browse listings with inline search and filter shell
+- `/listings/[id]`: listing details
+- `/listings/[id]/gallery`: media review
+- `/listings/[id]/unlock`: unlock confirmation
+- `/auth/register`: account creation
+- `/auth/verify-otp`: OTP verification
+- `/auth/sign-in`: sign-in flow
+- `/wallet`: wallet overview
+- `/wallet/buy`: credit purchase flow
+- `/wallet/processing`: M-Pesa pending state
+- `/wallet/success`: payment success state
+- `/wallet/transactions`: transaction history
+- `/wallet/transactions/[id]`: transaction detail
+- `/unlocks`: unlock history
+- `/unlocks/[id]`: revealed contact state
+- `/unlocks/[id]/confirm`: confirmation flow
+- `/unlocks/[id]/dispute`: dispute entry
+- `/profile`: tenant dashboard
+- `/support`: support and FAQ
+
 ## Dependencies
 
 - Backend contracts and endpoints served by `apps/api`
@@ -38,5 +61,5 @@ pnpm --filter @pataspace/web start
 
 ## Current Gaps
 
-- The app is still scaffold-stage and not yet fully wired to the live backend.
-- Some flows still rely on local mock data.
+- The app now has a full tenant-facing route scaffold, but it still relies on local mock data for most route content.
+- API integration, auth session persistence, and real mutation wiring are the next major steps.

@@ -1,31 +1,41 @@
-import { ListingCard } from '../../components/listings/listing-card';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { mockListings } from '../../lib/mock-listings';
+import Link from 'next/link';
+import { SlidersHorizontal } from 'lucide-react';
+import { ListingCard } from '@/components/listings/listing-card';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { PageIntro } from '@/components/shared/page-intro';
+import { formatKes } from '@/lib/format';
+import { linkButtonVariants } from '@/lib/link-button';
+import { mockListings } from '@/lib/mock-listings';
 
 export default function ListingsPage() {
   return (
-    <section className="mx-auto max-w-6xl px-6 py-14">
-      <div className="mb-8 flex items-end justify-between gap-4">
-        <div>
-          <p className="section-kicker">Explore</p>
-          <h1 className="mt-2 font-display text-4xl font-semibold tracking-[-0.05em] text-foreground">
-            Current listings
-          </h1>
-        </div>
-        <p className="max-w-md text-right text-sm leading-6 text-foreground-secondary">
-          Filter by neighborhood, rent, availability, and bedrooms once the API layer is wired.
-        </p>
-      </div>
+    <section className="mx-auto max-w-7xl px-6 py-16">
+      <PageIntro
+        badge="Browse listings"
+        kicker="Web discovery"
+        title="Search the verified handover inventory."
+        description="Search and filters are embedded directly into the web browse page instead of being split into separate mobile sheets."
+        actions={
+          <Link href="/support" className={linkButtonVariants({ variant: 'outline' })}>
+            Need help first?
+          </Link>
+        }
+      />
 
-      <div className="mb-8 grid gap-3 rounded-[32px] border border-separator-strong bg-surface-elevated p-4 shadow-soft-md backdrop-blur-2xl md:grid-cols-[1fr_220px_220px_auto]">
-        <Input placeholder="Search neighborhood" />
-        <Input placeholder="Min rent" />
-        <Input placeholder="Max rent" />
-        <Button>Apply filters</Button>
-      </div>
+      <Card className="mt-8 bg-surface-elevated shadow-soft-md">
+        <CardContent className="grid gap-3 py-5 md:grid-cols-[1.3fr_0.9fr_0.9fr_auto]">
+          <Input placeholder="Search neighborhood e.g. Kilimani" />
+          <Input placeholder={`Min rent e.g. ${formatKes(15000)}`} />
+          <Input placeholder={`Max rent e.g. ${formatKes(45000)}`} />
+          <Link href="/listings" className={linkButtonVariants()}>
+            <SlidersHorizontal className="size-4" />
+            Apply filters
+          </Link>
+        </CardContent>
+      </Card>
 
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="mt-5 flex flex-wrap gap-2">
         <span className="rounded-full border border-separator bg-card px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-foreground-secondary shadow-soft-sm">
           Nairobi
         </span>
@@ -36,6 +46,10 @@ export default function ListingsPage() {
           Mobile-verified
         </span>
       </div>
+
+      <p className="mt-5 text-sm text-foreground-secondary">
+        {mockListings.length} listings in the current web inventory. Listing detail and unlock routes are already scaffolded from this page.
+      </p>
 
       {mockListings.map((listing) => (
         <ListingCard key={listing.id} listing={listing} />

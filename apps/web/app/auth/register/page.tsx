@@ -1,21 +1,37 @@
 import Link from 'next/link';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { ArrowRight, Smartphone } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { PageIntro } from '@/components/shared/page-intro';
+import { linkButtonVariants } from '@/lib/link-button';
 
 export default function RegisterPage() {
   return (
-    <section className="mx-auto grid min-h-[calc(100vh-73px)] max-w-6xl gap-10 px-6 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+    <section className="mx-auto grid min-h-[calc(100vh-73px)] max-w-7xl gap-10 px-6 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
       <div>
-        <Badge variant="secondary">Registration flow</Badge>
-        <h1 className="mt-4 font-display text-5xl font-semibold tracking-[-0.05em] text-foreground">
-          Create your PataSpace account.
-        </h1>
-        <p className="mt-6 max-w-2xl text-lg leading-8 text-foreground-secondary">
-          This form matches the documented MVP flow: phone number, password, names,
-          then OTP verification.
-        </p>
+        <PageIntro
+          badge="Register"
+          kicker="Account setup"
+          title="Create an account before you spend credits on a listing."
+          description="The web registration flow mirrors the backend contract: names, phone number, password, and then OTP verification to mint the first session."
+        />
+
+        <div className="mt-8 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-[24px] border border-separator bg-surface-elevated px-5 py-5 shadow-soft-sm">
+            <Smartphone className="size-5 text-primary" />
+            <p className="mt-4 font-semibold text-foreground">OTP next</p>
+            <p className="mt-2 text-sm leading-6 text-foreground-secondary">
+              Registration hands off to verification immediately so the wallet and unlock flows stay tied to a verified phone number.
+            </p>
+          </div>
+          <div className="rounded-[24px] border border-separator bg-surface-elevated px-5 py-5 shadow-soft-sm">
+            <p className="section-kicker">Why it matters</p>
+            <p className="mt-3 font-semibold text-foreground">Protect the paid reveal step</p>
+            <p className="mt-2 text-sm leading-6 text-foreground-secondary">
+              Unlocks, confirmations, and disputes are all attached to the verified user identity.
+            </p>
+          </div>
+        </div>
       </div>
 
       <Card className="bg-surface-elevated shadow-soft-md">
@@ -30,7 +46,10 @@ export default function RegisterPage() {
           </div>
           <Input placeholder="+254712345678" />
           <Input type="password" placeholder="SecurePassword123!" />
-          <Button className="w-full">Create account</Button>
+          <Link href="/auth/verify-otp" className={linkButtonVariants({ fullWidth: true })}>
+            Create account
+            <ArrowRight className="size-4" />
+          </Link>
           <p className="text-sm text-muted-foreground">
             Already registered?{' '}
             <Link href="/auth/sign-in" className="font-semibold text-foreground underline underline-offset-4">

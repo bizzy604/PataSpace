@@ -1,21 +1,34 @@
 import Link from 'next/link';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { ArrowRight, ShieldCheck } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { PageIntro } from '@/components/shared/page-intro';
+import { linkButtonVariants } from '@/lib/link-button';
 
 export default function SignInPage() {
   return (
-    <section className="mx-auto grid min-h-[calc(100vh-73px)] max-w-6xl gap-10 px-6 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+    <section className="mx-auto grid min-h-[calc(100vh-73px)] max-w-7xl gap-10 px-6 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
       <div>
-        <Badge variant="secondary">Web auth flow</Badge>
-        <h1 className="mt-4 font-display text-5xl font-semibold tracking-[-0.05em] text-foreground">
-          Sign in to unlock real leads.
-        </h1>
-        <p className="mt-6 max-w-2xl text-lg leading-8 text-foreground-secondary">
-          Incoming tenants sign in to unlock listings and track confirmations.
-          Outgoing tenants use mobile to create and manage listings.
-        </p>
+        <PageIntro
+          badge="Sign in"
+          kicker="Auth flow"
+          title="Sign in to unlock real leads and track every follow-through step."
+          description="Incoming tenants use the web app to buy credits, reveal contact details, confirm a move, and raise disputes when the evidence and the visit do not match."
+        />
+
+        <div className="mt-8 rounded-[28px] border border-separator bg-surface-elevated p-5 shadow-soft-md">
+          <div className="flex items-start gap-4">
+            <div className="flex size-11 items-center justify-center rounded-full bg-accent text-primary">
+              <ShieldCheck className="size-5" />
+            </div>
+            <div>
+              <p className="font-semibold text-foreground">Phone-first security</p>
+              <p className="mt-2 text-sm leading-6 text-foreground-secondary">
+                The backend session model is built around Kenyan phone numbers, OTP verification, and token rotation under `/api/v1/auth`.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <Card className="bg-surface-elevated shadow-soft-md">
@@ -26,7 +39,10 @@ export default function SignInPage() {
         <CardContent className="space-y-4">
           <Input placeholder="+254712345678" />
           <Input type="password" placeholder="Password" />
-          <Button className="w-full">Continue</Button>
+          <Link href="/wallet" className={linkButtonVariants({ fullWidth: true })}>
+            Continue
+            <ArrowRight className="size-4" />
+          </Link>
           <p className="text-sm text-muted-foreground">
             No account yet?{' '}
             <Link href="/auth/register" className="font-semibold text-foreground underline underline-offset-4">
