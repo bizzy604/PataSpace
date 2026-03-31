@@ -5,17 +5,17 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
-  "group/badge inline-flex h-7 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border px-3 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.18em] whitespace-nowrap transition-[background-color,border-color,color,box-shadow] duration-200 focus-visible:border-primary/30 focus-visible:ring-4 focus-visible:ring-primary/15 has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5 aria-invalid:border-destructive aria-invalid:ring-destructive/15 [&>svg]:pointer-events-none [&>svg]:size-3!",
+  "group/badge inline-flex h-8 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border px-3.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.2em] whitespace-nowrap transition-[background-color,border-color,color,box-shadow] duration-200 focus-visible:border-primary/30 focus-visible:ring-4 focus-visible:ring-primary/15 has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5 aria-invalid:border-destructive aria-invalid:ring-destructive/15 [&>svg]:pointer-events-none [&>svg]:size-3!",
   {
     variants: {
       variant: {
-        default: "border-transparent bg-primary text-primary-foreground shadow-soft-sm",
+        default: "border-transparent bg-foreground text-background shadow-soft-sm",
         secondary:
-          "border-transparent bg-fill-soft text-secondary-foreground",
+          "border border-transparent bg-accent text-accent-foreground shadow-soft-sm",
         destructive:
           "border-destructive/15 bg-destructive/10 text-destructive focus-visible:ring-destructive/15",
         outline:
-          "border-separator bg-surface text-foreground-secondary",
+          "border-separator bg-card text-foreground-secondary shadow-soft-sm backdrop-blur-xl",
         ghost: "border-transparent bg-transparent text-foreground-secondary hover:bg-fill-soft",
         link: "border-transparent bg-transparent px-0 text-primary",
       },

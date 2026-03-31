@@ -7,14 +7,14 @@ export const linkButtonVariants = cva(
     variants: {
       variant: {
         default:
-          'bg-primary text-primary-foreground shadow-soft-sm hover:bg-[var(--hig-color-accent-hover)] hover:shadow-soft-md',
+          'bg-primary text-primary-foreground shadow-soft-sm hover:-translate-y-px hover:bg-[var(--hig-color-accent-hover)] hover:shadow-soft-md',
         outline:
-          'border-separator bg-card text-foreground shadow-soft-sm hover:border-separator-strong hover:bg-surface-elevated',
+          'border-separator bg-card text-foreground shadow-soft-sm backdrop-blur-xl hover:-translate-y-px hover:border-separator-strong hover:bg-surface-elevated',
         ghost: 'text-foreground-secondary hover:bg-fill-soft hover:text-foreground',
       },
       size: {
-        default: 'h-11 gap-2 px-5',
-        sm: 'h-9 gap-1.5 px-4 text-sm',
+        default: 'h-12 gap-2 px-6',
+        sm: 'h-10 gap-1.5 px-4 text-sm',
       },
       fullWidth: {
         true: 'w-full',

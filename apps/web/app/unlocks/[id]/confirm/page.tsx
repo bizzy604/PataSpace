@@ -1,9 +1,6 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PageIntro } from '@/components/shared/page-intro';
+import { ConfirmConnectionForm } from '@/components/unlocks/confirm-connection-form';
 import { formatDateLabel } from '@/lib/format';
-import { linkButtonVariants } from '@/lib/link-button';
 import { getMockUnlockBundle } from '@/lib/mock-app-state';
 
 type UnlockConfirmPageProps = {
@@ -23,50 +20,26 @@ export default async function UnlockConfirmPage({ params }: UnlockConfirmPagePro
   const { unlock, listing } = bundle;
 
   return (
-    <section className="mx-auto max-w-6xl px-6 py-16">
-      <PageIntro
-        badge="Confirmation"
-        kicker={listing.title}
-        title="Confirm whether the move-in connection happened."
-        description="The backend supports explicit confirmation records and commission eligibility only after both sides confirm."
-      />
+    <section className="bg-white">
+      <div className="mx-auto max-w-[900px] px-4 py-10 sm:px-6">
+        <div className="rounded-[24px] bg-[#EDEDED] px-6 py-6 shadow-[0_4px_20px_rgba(0,0,0,0.06)]">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#8D9192]">Step 1 of 2</p>
+          <h1 className="mt-3 font-display text-4xl font-bold tracking-[-0.05em] text-[#252525]">
+            Confirm Your Connection
+          </h1>
+          <div className="mt-5 h-2 rounded-full bg-white">
+            <div className="h-2 w-1/2 rounded-full bg-[#28809A]" />
+          </div>
+        </div>
 
-      <div className="mt-8 grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
-        <Card className="bg-surface-elevated shadow-soft-md">
-          <CardHeader>
-            <CardTitle>Current progress</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 pb-5 text-sm text-foreground-secondary">
-            <div className="rounded-[22px] border border-separator bg-fill-soft px-4 py-3">
-              Incoming tenant confirmation: {unlock.myConfirmation ? formatDateLabel(unlock.myConfirmation) : 'Pending'}
-            </div>
-            <div className="rounded-[22px] border border-separator bg-fill-soft px-4 py-3">
-              Outgoing tenant confirmation: {unlock.tenantConfirmation ? formatDateLabel(unlock.tenantConfirmation) : 'Pending'}
-            </div>
-            <div className="rounded-[22px] border border-separator bg-fill-soft px-4 py-3">
-              Status: {unlock.status.replace('_', ' ')}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="mt-6 rounded-[20px] border border-[#EDEDED] bg-white px-5 py-5 shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
+          <p className="text-sm font-semibold text-[#252525]">{listing.title}</p>
+          <p className="mt-2 text-sm text-[#8D9192]">Unlocked {formatDateLabel(unlock.createdAt)}</p>
+        </div>
 
-        <Card className="bg-[#252525] text-white shadow-soft-lg">
-          <CardHeader>
-            <CardTitle className="text-white">Incoming tenant action</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 pb-5 text-sm text-white/78">
-            <p>
-              Use this route to confirm that the handover connection is real. If something went wrong, file a dispute instead of confirming.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Link href="/unlocks" className={linkButtonVariants()}>
-                Mark as confirmed
-              </Link>
-              <Link href={`/unlocks/${unlock.unlockId}/dispute`} className={linkButtonVariants({ variant: 'outline' })}>
-                Open dispute
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="mt-6">
+          <ConfirmConnectionForm unlockId={unlock.unlockId} />
+        </div>
       </div>
     </section>
   );

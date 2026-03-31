@@ -9,6 +9,7 @@
 - Next.js App Router
 - React
 - Tailwind CSS
+- Three.js via `@react-three/fiber` and `@react-three/drei` for the landing scene
 
 ## Local Commands
 
@@ -61,5 +62,5 @@ pnpm --filter @pataspace/web start
 
 ## Current Gaps
 
-- The app now has a full tenant-facing route scaffold, but it still relies on local mock data for most route content.
+- The app now has a full tenant-facing route scaffold and a stronger visual system, but it still relies on local mock data for most route content.
 - API integration, auth session persistence, and real mutation wiring are the next major steps.

@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PataSpace — Find Your Next Home</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --color-eerie-black: #252525;
+    --color-battleship-grey: #8D9192;
+    --color-anti-flash-white: #EDEDED;
+    --color-white: #FFFFFF;
+    --color-teal: #28809A;
+    --color-teal-light: #3AA0BF;
+    --color-teal-dark: #1C6070;
+    --color-teal-glow: rgba(40, 128, 154, 0.3);
+    --font-heading: 'Poppins', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --radius-card: 24px;
+    --radius-pill: 999px;
+    --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.08);
+    --shadow-glow: 0 0 60px rgba(40, 128, 154, 0.2);
+    --glass-bg: rgba(255, 255, 255, 0.08);
+    --glass-bg-light: rgba(255, 255, 255, 0.12);
+    --glass-border: rgba(255, 255, 255, 0.15);
+    --glass-border-strong: rgba(255, 255, 255, 0.25);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-body);
+    background: #0a0e14;
+    color: var(--color-white);
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: #0a0e14; }
+  ::-webkit-scrollbar-thumb { background: var(--color-teal); border-radius: 2px; }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 20px 60px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(10, 14, 20, 0.6);
+    backdrop-filter: blur(24px) saturate(1.5);
+    -webkit-backdrop-filter: blur(24px) saturate(1.5);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    transition: all 0.3s ease;
+  }
+
+  .nav-logo {
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none; color: white;
+  }
+  .nav-logo-icon {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, var(--color-teal), var(--color-teal-light));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 4px 16px rgba(40, 128, 154, 0.4);
+  }
+  .nav-logo-text {
+    font-family: var(--font-heading);
+    font-weight: 700; font-size: 20px;
+    letter-spacing: -0.3px;
+  }
+  .nav-logo-text span { color: var(--color-teal-light); }
+
+  .nav-links { display: flex; gap: 36px; list-style: none; }
+  .nav-links a {
+    text-decoration: none; color: rgba(255,255,255,0.65);
+    font-size: 14px; font-weight: 400;
+    transition: color 0.2s ease;
+    letter-spacing: 0.2px;
+  }
+  .nav-links a:hover { color: white; }
+
+  .nav-actions { display: flex; gap: 14px; align-items: center; }
+  .btn-nav-ghost {
+    padding: 9px 22px; border-radius: var(--radius-pill);
+    background: transparent; border: 1px solid rgba(255,255,255,0.18);
+    color: white; font-family: var(--font-body); font-size: 14px;
+    cursor: pointer; transition: all 0.25s ease;
+  }
+  .btn-nav-ghost:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.3); }
+  .btn-nav-cta {
+    padding: 9px 22px; border-radius: var(--radius-pill);
+    background: linear-gradient(135deg, var(--color-teal), var(--color-teal-light));
+    border: none; color: white; font-family: var(--font-body); font-size: 14px;
+    font-weight: 500; cursor: pointer; transition: all 0.25s ease;
+    box-shadow: 0 4px 16px rgba(40, 128, 154, 0.35);
+  }
+  .btn-nav-cta:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(40, 128, 154, 0.5); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    position: relative;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 140px 60px 80px;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 30%, rgba(40,128,154,0.18) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 40% at 80% 60%, rgba(40,128,154,0.08) 0%, transparent 60%),
+                linear-gradient(180deg, #0a0e14 0%, #0d1420 100%);
+  }
+
+  .hero-grid {
+    position: absolute; inset: 0; z-index: 0; opacity: 0.04;
+    background-image: linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  /* Floating orbs */
+  .orb {
+    position: absolute; border-radius: 50%;
+    filter: blur(80px); pointer-events: none;
+    animation: float 8s ease-in-out infinite;
+  }
+  .orb-1 { width: 500px; height: 500px; background: rgba(40,128,154,0.12); top: -100px; right: -100px; animation-delay: 0s; }
+  .orb-2 { width: 300px; height: 300px; background: rgba(58,160,191,0.1); bottom: 100px; left: -50px; animation-delay: 3s; }
+  .orb-3 { width: 200px; height: 200px; background: rgba(40,128,154,0.08); top: 50%; left: 60%; animation-delay: 5s; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) scale(1); }
+    50% { transform: translateY(-30px) scale(1.05); }
+  }
+
+  .hero-eyebrow {
+    position: relative; z-index: 1;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 18px; border-radius: var(--radius-pill);
+    background: var(--glass-bg-light);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(12px);
+    font-size: 12px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--color-teal-light);
+    margin-bottom: 28px;
+    animation: fadeUp 0.8s ease both;
+  }
+  .eyebrow-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--color-teal-light);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.5)} }
+
+  .hero-headline {
+    position: relative; z-index: 1;
+    font-family: var(--font-heading);
+    font-size: clamp(52px, 7vw, 96px);
+    font-weight: 800; line-height: 1.0; letter-spacing: -3px;
+    text-align: center; max-width: 900px;
+    animation: fadeUp 0.8s 0.1s ease both;
+  }
+  .hero-headline .line-accent { color: transparent;
+    background: linear-gradient(135deg, var(--color-teal-light), #6DD5ED);
+    -webkit-background-clip: text; background-clip: text;
+  }
+  .hero-headline .line-muted { color: rgba(255,255,255,0.35); font-weight: 300; }
+
+  .hero-sub {
+    position: relative; z-index: 1;
+    font-size: 18px; line-height: 1.7; font-weight: 300;
+    color: rgba(255,255,255,0.5); max-width: 560px;
+    text-align: center; margin-top: 24px;
+    animation: fadeUp 0.8s 0.2s ease both;
+  }
+
+  .hero-actions {
+    position: relative; z-index: 1;
+    display: flex; gap: 16px; margin-top: 48px; align-items: center;
+    animation: fadeUp 0.8s 0.3s ease both;
+  }
+  .btn-primary {
+    padding: 16px 36px; border-radius: var(--radius-pill);
+    background: linear-gradient(135deg, var(--color-teal), var(--color-teal-light));
+    border: none; color: white; font-family: var(--font-body);
+    font-size: 16px; font-weight: 500; cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 32px rgba(40,128,154,0.4);
+    letter-spacing: 0.2px;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 48px rgba(40,128,154,0.5); }
+
+  .btn-ghost-large {
+    padding: 15px 32px; border-radius: var(--radius-pill);
+    background: transparent; border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.8); font-family: var(--font-body);
+    font-size: 16px; cursor: pointer; transition: all 0.3s ease;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .btn-ghost-large:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.35); color: white; }
+
+  .hero-stats {
+    position: relative; z-index: 1;
+    display: flex; gap: 48px; margin-top: 72px;
+    animation: fadeUp 0.8s 0.4s ease both;
+  }
+  .stat { text-align: center; }
+  .stat-num {
+    font-family: var(--font-heading);
+    font-size: 36px; font-weight: 700; letter-spacing: -1px;
+    background: linear-gradient(135deg, white, rgba(255,255,255,0.7));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .stat-label { font-size: 13px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+  .stat-divider { width: 1px; background: rgba(255,255,255,0.08); }
+
+  /* Hero mockup card */
+  .hero-card-float {
+    position: absolute; z-index: 1;
+    animation: floatCard 6s ease-in-out infinite;
+  }
+  @keyframes floatCard {
+    0%,100%{transform:translateY(0) rotate(-1deg)}
+    50%{transform:translateY(-16px) rotate(0deg)}
+  }
+
+  .hero-visual {
+    position: relative; z-index: 1; margin-top: 80px; width: 100%;
+    max-width: 1100px; height: 520px;
+    animation: fadeUp 0.8s 0.5s ease both;
+  }
+
+  /* Glass listing cards */
+  .listing-preview {
+    position: absolute;
+    background: rgba(255,255,255,0.07);
+    backdrop-filter: blur(32px) saturate(1.8);
+    -webkit-backdrop-filter: blur(32px) saturate(1.8);
+    border: 1px solid rgba(255,255,255,0.13);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.4);
+    transition: transform 0.4s ease;
+  }
+  .listing-preview:hover { transform: translateY(-8px) scale(1.02); }
+
+  .lp-main {
+    width: 380px; left: 50%; top: 0;
+    transform: translateX(-50%);
+  }
+  .lp-main .lp-img {
+    width: 100%; height: 200px;
+    background: linear-gradient(135deg, #1a3a4a, #2d6b85);
+    position: relative; overflow: hidden;
+  }
+  .lp-img-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+  }
+  .lp-badge {
+    position: absolute; top: 14px; left: 14px;
+    padding: 4px 12px; border-radius: var(--radius-pill);
+    background: rgba(40,128,154,0.9); font-size: 11px; font-weight: 600;
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .lp-body { padding: 18px 20px; }
+  .lp-title { font-family: var(--font-heading); font-size: 16px; font-weight: 600; }
+  .lp-meta { display: flex; gap: 16px; margin-top: 10px; }
+  .lp-meta-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: rgba(255,255,255,0.5); }
+  .lp-price { margin-top: 14px; display: flex; justify-content: space-between; align-items: center; }
+  .lp-price-val { font-family: var(--font-heading); font-size: 20px; font-weight: 700; color: var(--color-teal-light); }
+  .lp-price-period { font-size: 12px; color: rgba(255,255,255,0.4); }
+  .lp-btn-unlock {
+    padding: 8px 18px; border-radius: var(--radius-pill);
+    background: linear-gradient(135deg, var(--color-teal), var(--color-teal-light));
+    border: none; color: white; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.25s ease;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .lp-left { width: 260px; left: 60px; top: 60px; animation: floatCard 7s 1s ease-in-out infinite; }
+  .lp-right { width: 260px; right: 60px; top: 80px; animation: floatCard 7s 2s ease-in-out infinite; }
+  .lp-left .lp-img, .lp-right .lp-img {
+    height: 140px;
+    background: linear-gradient(135deg, #162a38, #1e5268);
+  }
+  .lp-right .lp-img { background: linear-gradient(135deg, #1e3a1e, #2a5a3a); }
+
+  /* Notification toast */
+  .notif-toast {
+    position: absolute; bottom: 40px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(40,128,154,0.15);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(40,128,154,0.3);
+    border-radius: 16px; padding: 14px 20px;
+    display: flex; align-items: center; gap: 12px;
+    white-space: nowrap;
+    animation: slideUp 0.6s 1s ease both;
+  }
+  .notif-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--color-teal), var(--color-teal-light));
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+    flex-shrink: 0;
+  }
+  .notif-text { font-size: 13px; }
+  .notif-title { font-weight: 600; }
+  .notif-sub { color: rgba(255,255,255,0.5); font-size: 11px; margin-top: 2px; }
+
+  @keyframes slideUp { from{opacity:0;transform:translateX(-50%) translateY(20px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+
+  /* ── SECTIONS ── */
+  section { padding: 120px 60px; position: relative; }
+
+  .section-label {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 11px; font-weight: 600; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--color-teal-light);
+    margin-bottom: 20px;
+  }
+  .section-label::before {
+    content: ''; width: 20px; height: 1px; background: var(--color-teal-light);
+  }
+
+  .section-title {
+    font-family: var(--font-heading); font-size: clamp(36px, 4vw, 56px);
+    font-weight: 700; line-height: 1.1; letter-spacing: -1.5px;
+  }
+  .section-title .accent { color: var(--color-teal-light); }
+
+  /* ── STORY ARC — PROBLEM ── */
+  .problem-section {
+    background: linear-gradient(180deg, #0a0e14 0%, #0d1218 100%);
+    text-align: center;
+  }
+
+  .problem-content { max-width: 800px; margin: 0 auto; }
+
+  .problem-section .section-title { margin-bottom: 24px; }
+
+  .problem-desc {
+    font-size: 20px; line-height: 1.8; color: rgba(255,255,255,0.5);
+    font-weight: 300; max-width: 640px; margin: 0 auto 64px;
+  }
+
+  .emotion-cards {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+    margin-top: 60px;
+  }
+  .emotion-card {
+    padding: 36px 28px; border-radius: var(--radius-card);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    text-align: left;
+    transition: all 0.4s ease;
+    position: relative; overflow: hidden;
+  }
+  .emotion-card::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(40,128,154,0.5), transparent);
+    opacity: 0; transition: opacity 0.4s ease;
+  }
+  .emotion-card:hover { background: rgba(40,128,154,0.06); border-color: rgba(40,128,154,0.2); transform: translateY(-4px); }
+  .emotion-card:hover::before { opacity: 1; }
+
+  .emotion-emoji { font-size: 36px; margin-bottom: 18px; display: block; }
+  .emotion-card h3 { font-family: var(--font-heading); font-size: 18px; font-weight: 600; margin-bottom: 10px; }
+  .emotion-card p { font-size: 14px; line-height: 1.7; color: rgba(255,255,255,0.45); }
+
+  /* ── SOLUTION ── */
+  .solution-section {
+    background: linear-gradient(180deg, #0d1218 0%, #0a1520 100%);
+  }
+  .solution-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+  .solution-text { }
+  .solution-text .section-title { margin-bottom: 24px; }
+  .solution-text p { font-size: 18px; line-height: 1.8; color: rgba(255,255,255,0.5); font-weight: 300; margin-bottom: 40px; }
+
+  .step-flow { display: flex; flex-direction: column; gap: 0; }
+  .step-item {
+    display: flex; gap: 20px; align-items: flex-start;
+    padding: 24px 0; position: relative;
+  }
+  .step-item:not(:last-child)::after {
+    content: ''; position: absolute;
+    left: 19px; top: 68px; width: 2px; bottom: 0;
+    background: linear-gradient(180deg, rgba(40,128,154,0.4), transparent);
+  }
+  .step-num {
+    width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+    background: rgba(40,128,154,0.15);
+    border: 1.5px solid rgba(40,128,154,0.4);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-heading); font-size: 14px; font-weight: 700;
+    color: var(--color-teal-light);
+  }
+  .step-content h4 { font-family: var(--font-heading); font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .step-content p { font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.4); }
+
+  /* Glass phone mockup */
+  .phone-mockup {
+    width: 320px; margin: 0 auto;
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(40px) saturate(2);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 48px; padding: 12px;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06) inset;
+    position: relative;
+  }
+  .phone-notch {
+    width: 100px; height: 28px; border-radius: 20px;
+    background: rgba(0,0,0,0.8); margin: 0 auto 12px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .phone-screen {
+    border-radius: 40px; overflow: hidden;
+    background: linear-gradient(180deg, #0d1520 0%, #0a1820 100%);
+    padding: 20px 16px; min-height: 500px;
+  }
+  .phone-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .phone-title { font-family: var(--font-heading); font-size: 18px; font-weight: 700; }
+  .phone-badge { padding: 4px 10px; border-radius: 20px; background: rgba(40,128,154,0.2); border: 1px solid rgba(40,128,154,0.3); font-size: 11px; color: var(--color-teal-light); }
+
+  .phone-search {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px; padding: 10px 14px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: rgba(255,255,255,0.3);
+    margin-bottom: 20px;
+  }
+
+  .mini-card {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 16px; overflow: hidden; margin-bottom: 12px;
+    transition: all 0.3s ease;
+  }
+  .mini-card:hover { border-color: rgba(40,128,154,0.3); }
+  .mini-card-img { height: 120px; background: linear-gradient(135deg, #1a3a4a, #2d6b85); position: relative; }
+  .mini-card-img-2 { background: linear-gradient(135deg, #1e3820, #2d5a35); }
+  .mini-card-body { padding: 12px 14px; }
+  .mini-card-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .mini-card-sub { font-size: 11px; color: rgba(255,255,255,0.4); display: flex; align-items: center; gap: 4px; }
+  .mini-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+  .mini-price { font-size: 15px; font-weight: 700; color: var(--color-teal-light); font-family: var(--font-heading); }
+  .mini-unlock { padding: 5px 12px; border-radius: 20px; background: var(--color-teal); border: none; color: white; font-size: 11px; font-weight: 600; cursor: pointer; }
+
+  /* ── HOW IT WORKS ── */
+  .how-section {
+    background: linear-gradient(180deg, #0a1520 0%, #0a0e14 100%);
+  }
+  .how-header { text-align: center; margin-bottom: 80px; }
+  .how-header p { font-size: 18px; color: rgba(255,255,255,0.4); max-width: 500px; margin: 20px auto 0; font-weight: 300; }
+
+  .personas { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+
+  .persona-card {
+    border-radius: 28px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.08);
+    position: relative;
+  }
+  .persona-card-inner {
+    padding: 48px 40px;
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(20px);
+    position: relative; z-index: 1;
+  }
+  .persona-card-glow {
+    position: absolute; width: 300px; height: 300px;
+    border-radius: 50%; filter: blur(100px);
+    top: -100px; right: -100px; z-index: 0;
+  }
+  .persona-outgoing .persona-card-glow { background: rgba(40,128,154,0.2); }
+  .persona-incoming .persona-card-glow { background: rgba(58,160,191,0.15); }
+
+  .persona-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 16px; border-radius: var(--radius-pill);
+    font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+  .persona-outgoing .persona-tag { background: rgba(40,128,154,0.15); color: var(--color-teal-light); border: 1px solid rgba(40,128,154,0.25); }
+  .persona-incoming .persona-tag { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.12); }
+
+  .persona-card h3 { font-family: var(--font-heading); font-size: 26px; font-weight: 700; margin-bottom: 14px; line-height: 1.2; }
+  .persona-card > .persona-card-inner > p { font-size: 15px; line-height: 1.7; color: rgba(255,255,255,0.45); margin-bottom: 32px; }
+
+  .persona-steps { display: flex; flex-direction: column; gap: 16px; }
+  .p-step {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 16px 18px; border-radius: 14px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    transition: all 0.3s ease;
+  }
+  .p-step:hover { background: rgba(40,128,154,0.08); border-color: rgba(40,128,154,0.2); }
+  .p-step-icon { width: 32px; height: 32px; border-radius: 10px; background: rgba(40,128,154,0.2); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .p-step-text h5 { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .p-step-text p { font-size: 12px; color: rgba(255,255,255,0.35); line-height: 1.5; }
+
+  .persona-earn {
+    margin-top: 28px; padding: 18px 20px; border-radius: 16px;
+    background: linear-gradient(135deg, rgba(40,128,154,0.15), rgba(40,128,154,0.05));
+    border: 1px solid rgba(40,128,154,0.25);
+    display: flex; align-items: center; gap: 16px;
+  }
+  .earn-icon { font-size: 28px; }
+  .earn-text h4 { font-family: var(--font-heading); font-size: 18px; font-weight: 700; color: var(--color-teal-light); }
+  .earn-text p { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+  /* ── CREDITS ── */
+  .credits-section {
+    background: linear-gradient(180deg, #0a0e14 0%, #080c10 100%);
+  }
+  .credits-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+  .credits-text .section-title { margin-bottom: 20px; }
+  .credits-text p { font-size: 18px; line-height: 1.8; color: rgba(255,255,255,0.45); font-weight: 300; margin-bottom: 40px; }
+
+  .credit-packages { display: flex; flex-direction: column; gap: 16px; }
+  .credit-pkg {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px; border-radius: 16px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: all 0.3s ease; cursor: pointer;
+  }
+  .credit-pkg:hover, .credit-pkg.featured {
+    background: rgba(40,128,154,0.1); border-color: rgba(40,128,154,0.3);
+  }
+  .credit-pkg.featured { position: relative; }
+  .credit-pkg.featured::before {
+    content: 'Most Popular'; position: absolute; top: -10px; right: 20px;
+    padding: 3px 12px; border-radius: 20px; font-size: 10px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+    background: linear-gradient(135deg, var(--color-teal), var(--color-teal-light));
+  }
+  .pkg-info h4 { font-family: var(--font-heading); font-size: 16px; font-weight: 600; }
+  .pkg-info p { font-size: 13px; color: rgba(255,255,255,0.4); margin-top: 3px; }
+  .pkg-price { font-family: var(--font-heading); font-size: 22px; font-weight: 700; color: var(--color-teal-light); }
+  .pkg-price span { font-size: 13px; color: rgba(255,255,255,0.4); font-family: var(--font-body); font-weight: 400; }
+
+  /* ── TESTIMONIALS ── */
+  .testimonials-section {
+    background: linear-gradient(180deg, #080c10 0%, #0a0e14 100%);
+    text-align: center;
+  }
+  .testimonials-section .section-title { margin-bottom: 16px; }
+  .testimonials-section > p { font-size: 17px; color: rgba(255,255,255,0.4); margin-bottom: 64px; font-weight: 300; }
+
+  .testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; text-align: left; }
+  .testi-card {
+    padding: 32px 28px; border-radius: var(--radius-card);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(20px);
+    transition: all 0.4s ease; position: relative; overflow: hidden;
+  }
+  .testi-card:hover { transform: translateY(-6px); background: rgba(40,128,154,0.06); border-color: rgba(40,128,154,0.18); }
+  .testi-card::before {
+    content: '"'; position: absolute; top: 20px; right: 24px;
+    font-size: 80px; font-family: var(--font-heading); font-weight: 900;
+    color: rgba(40,128,154,0.08); line-height: 1;
+  }
+  .testi-stars { color: var(--color-teal-light); font-size: 14px; margin-bottom: 18px; letter-spacing: 2px; }
+  .testi-text { font-size: 15px; line-height: 1.7; color: rgba(255,255,255,0.65); margin-bottom: 24px; font-style: italic; }
+  .testi-author { display: flex; align-items: center; gap: 12px; }
+  .testi-avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-teal-dark), var(--color-teal));
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 16px; flex-shrink: 0;
+  }
+  .testi-name { font-weight: 600; font-size: 14px; }
+  .testi-role { font-size: 12px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+
+  /* ── TRUST ── */
+  .trust-section {
+    background: #0a0e14; padding: 60px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .trust-inner { display: flex; align-items: center; justify-content: center; gap: 60px; flex-wrap: wrap; }
+  .trust-item { display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,0.3); }
+  .trust-icon { font-size: 22px; }
+  .trust-label { font-size: 13px; font-weight: 500; }
+
+  /* ── CTA ── */
+  .cta-section {
+    background: linear-gradient(180deg, #0a0e14 0%, #0d1a24 100%);
+    text-align: center; padding: 140px 60px;
+  }
+  .cta-glass {
+    max-width: 780px; margin: 0 auto;
+    padding: 72px 60px; border-radius: 36px;
+    background: rgba(40,128,154,0.08);
+    backdrop-filter: blur(40px);
+    border: 1px solid rgba(40,128,154,0.2);
+    box-shadow: 0 40px 120px rgba(40,128,154,0.1);
+    position: relative; overflow: hidden;
+  }
+  .cta-glow {
+    position: absolute; width: 400px; height: 400px;
+    border-radius: 50%; background: rgba(40,128,154,0.15);
+    filter: blur(100px); top: 50%; left: 50%; transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .cta-glass .section-title { font-size: clamp(36px, 4vw, 52px); margin-bottom: 20px; position: relative; z-index: 1; }
+  .cta-glass p { font-size: 18px; color: rgba(255,255,255,0.5); margin-bottom: 48px; position: relative; z-index: 1; font-weight: 300; }
+  .cta-buttons { display: flex; gap: 16px; justify-content: center; position: relative; z-index: 1; }
+
+  .cta-commission {
+    margin-top: 48px; padding: 20px 32px; border-radius: 20px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    display: inline-flex; align-items: center; gap: 16px;
+    position: relative; z-index: 1;
+  }
+  .commission-label { font-size: 13px; color: rgba(255,255,255,0.4); }
+  .commission-val { font-family: var(--font-heading); font-size: 22px; font-weight: 700; color: var(--color-teal-light); }
+
+  /* ── FOOTER ── */
+  footer {
+    background: #080b10; padding: 80px 60px 40px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+  .footer-top { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 60px; margin-bottom: 60px; }
+  .footer-brand { }
+  .footer-brand .nav-logo { margin-bottom: 16px; }
+  .footer-brand p { font-size: 14px; line-height: 1.7; color: rgba(255,255,255,0.35); max-width: 260px; }
+  .footer-social { display: flex; gap: 12px; margin-top: 24px; }
+  .social-btn {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
+    display: flex; align-items: center; justify-content: center; font-size: 14px;
+    cursor: pointer; transition: all 0.25s ease; text-decoration: none; color: white;
+  }
+  .social-btn:hover { background: rgba(40,128,154,0.2); border-color: rgba(40,128,154,0.3); }
+
+  .footer-col h5 { font-family: var(--font-heading); font-size: 13px; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 20px; }
+  .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+  .footer-col a { text-decoration: none; font-size: 13px; color: rgba(255,255,255,0.35); transition: color 0.2s ease; }
+  .footer-col a:hover { color: var(--color-teal-light); }
+
+  .footer-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.05); }
+  .footer-copyright { font-size: 13px; color: rgba(255,255,255,0.25); }
+  .footer-links { display: flex; gap: 24px; }
+  .footer-links a { font-size: 12px; color: rgba(255,255,255,0.25); text-decoration: none; }
+  .footer-links a:hover { color: rgba(255,255,255,0.5); }
+
+  /* ── SCROLL INDICATOR ── */
+  .scroll-indicator {
+    position: absolute; bottom: 40px; left: 50%;
+    transform: translateX(-50%); z-index: 5;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    color: rgba(255,255,255,0.3); font-size: 11px; letter-spacing: 1.5px;
+    text-transform: uppercase; animation: fadeUp 1s 1.5s ease both;
+  }
+  .scroll-line {
+    width: 1px; height: 48px;
+    background: linear-gradient(180deg, rgba(40,128,154,0.6), transparent);
+    animation: scrollPulse 2s ease-in-out infinite;
+  }
+  @keyframes scrollPulse { 0%,100%{opacity:1;transform:scaleY(1)} 50%{opacity:0.4;transform:scaleY(0.6)} }
+
+  /* House artwork in phone */
+  .house-art {
+    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-size: 60px;
+  }
+
+  /* Vertical text watermark */
+  .v-watermark {
+    position: fixed; right: 24px; top: 50%; transform: translateY(-50%) rotate(90deg);
+    font-size: 10px; letter-spacing: 4px; text-transform: uppercase;
+    color: rgba(255,255,255,0.08); pointer-events: none; z-index: 200;
+    white-space: nowrap;
+  }
+
+  /* ── SECTION DIVIDER ── */
+  .divider {
+    width: 100%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(40,128,154,0.3), transparent);
+    margin: 0;
+  }
+
+  /* Map visual  */
+  .map-visual {
+    width: 100%; height: 300px; border-radius: 20px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+    margin-top: 32px;
+  }
+  .map-bg {
+    position: absolute; inset: 0; opacity: 0.15;
+    background-image: linear-gradient(rgba(40,128,154,0.4) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(40,128,154,0.4) 1px, transparent 1px);
+    background-size: 30px 30px;
+  }
+  .map-pin {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-teal), var(--color-teal-light));
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+    position: relative; z-index: 1;
+    box-shadow: 0 0 0 8px rgba(40,128,154,0.15), 0 0 0 16px rgba(40,128,154,0.05);
+    animation: mapPulse 2s ease-in-out infinite;
+  }
+  @keyframes mapPulse {
+    0%,100%{box-shadow:0 0 0 8px rgba(40,128,154,0.15), 0 0 0 16px rgba(40,128,154,0.05)}
+    50%{box-shadow:0 0 0 16px rgba(40,128,154,0.1), 0 0 0 28px rgba(40,128,154,0.03)}
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    nav { padding: 16px 24px; }
+    .nav-links { display: none; }
+    section { padding: 80px 24px; }
+    .hero { padding: 120px 24px 60px; }
+    .hero-headline { font-size: 42px; letter-spacing: -1.5px; }
+    .hero-stats { gap: 24px; }
+    .stat-num { font-size: 26px; }
+    .solution-grid, .credits-inner, .footer-top { grid-template-columns: 1fr; gap: 48px; }
+    .emotion-cards, .personas, .testimonials-grid { grid-template-columns: 1fr; }
+    .trust-inner { gap: 32px; }
+    .cta-buttons { flex-direction: column; align-items: center; }
+    .lp-left, .lp-right { display: none; }
+    .lp-main { width: 85%; }
+    .hero-visual { height: 380px; }
+    .footer-top { grid-template-columns: 1fr 1fr; }
+    .footer-bottom { flex-direction: column; gap: 16px; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="v-watermark">PataSpace — Kenya's First Tenant-to-Tenant Marketplace</div>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#">
+    <div class="nav-logo-icon">🏠</div>
+    <div class="nav-logo-text">Pata<span>Space</span></div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#how">How it Works</a></li>
+    <li><a href="#credits">Credits</a></li>
+    <li><a href="#testimonials">Stories</a></li>
+    <li><a href="#post">Post a Listing</a></li>
+  </ul>
+  <div class="nav-actions">
+    <button class="btn-nav-ghost">Sign In</button>
+    <button class="btn-nav-cta">Get Started Free</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="hero-eyebrow">
+    <div class="eyebrow-dot"></div>
+    Nairobi's Tenant-to-Tenant Marketplace
+  </div>
+
+  <h1 class="hero-headline">
+    Your Next Home<br>
+    <span class="line-accent">Already Has a Story</span><br>
+    <span class="line-muted">Worth Telling</span>
+  </h1>
+
+  <p class="hero-sub">
+    Skip the broker. Skip the guesswork. Connect directly with tenants who know the house — because they lived in it.
+  </p>
+
+  <div class="hero-actions">
+    <button class="btn-primary">🔍 &nbsp;Find a Home</button>
+    <button class="btn-ghost-large">
+      <span>🏠</span> Post Your Space
+    </button>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-num">2,400+</div>
+      <div class="stat-label">Active Listings</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <div class="stat-num">KES 750</div>
+      <div class="stat-label">Avg. Commission Earned</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <div class="stat-num">48hrs</div>
+      <div class="stat-label">Avg. Time to Connect</div>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <!-- Left card -->
+    <div class="listing-preview lp-left">
+      <div class="lp-img lp-img-dark">
+        <div class="lp-img-overlay"></div>
+        <div class="lp-badge">Westlands</div>
+        <div class="house-art" style="font-size:40px;opacity:0.3">🏢</div>
+      </div>
+      <div class="lp-body">
+        <div class="lp-title">2BR Apartment</div>
+        <div class="lp-meta">
+          <div class="lp-meta-item">🛏 2 Beds</div>
+          <div class="lp-meta-item">🚿 1 Bath</div>
+        </div>
+        <div class="lp-price">
+          <div>
+            <div class="lp-price-val">KES 28k</div>
+            <div class="lp-price-period">/ month</div>
+          </div>
+          <button class="lp-btn-unlock">🔓 Unlock</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main card -->
+    <div class="listing-preview lp-main">
+      <div class="lp-img">
+        <div class="lp-img-overlay"></div>
+        <div class="lp-badge">Kilimani · Verified ✓</div>
+        <div class="house-art">🏠</div>
+      </div>
+      <div class="lp-body">
+        <div class="lp-title">Modern 3BR in Kilimani</div>
+        <div class="lp-meta">
+          <div class="lp-meta-item">🛏 3 Beds</div>
+          <div class="lp-meta-item">🚿 2 Baths</div>
+          <div class="lp-meta-item">📐 1,200 sqft</div>
+        </div>
+        <div class="lp-price">
+          <div>
+            <div class="lp-price-val">KES 55,000</div>
+            <div class="lp-price-period">/ month</div>
+          </div>
+          <button class="lp-btn-unlock">🔓 Unlock Contact</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right card -->
+    <div class="listing-preview lp-right">
+      <div class="lp-img lp-img-2" style="background:linear-gradient(135deg,#1e3820,#2a5a3a)">
+        <div class="lp-img-overlay"></div>
+        <div class="lp-badge" style="background:rgba(40,100,60,0.9)">Karen</div>
+        <div class="house-art" style="font-size:40px;opacity:0.3">🌿</div>
+      </div>
+      <div class="lp-body">
+        <div class="lp-title">Garden Cottage, Karen</div>
+        <div class="lp-meta">
+          <div class="lp-meta-item">🛏 2 Beds</div>
+          <div class="lp-meta-item">🌳 Garden</div>
+        </div>
+        <div class="lp-price">
+          <div>
+            <div class="lp-price-val">KES 42k</div>
+            <div class="lp-price-period">/ month</div>
+          </div>
+          <button class="lp-btn-unlock">🔓 Unlock</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification toast -->
+    <div class="notif-toast">
+      <div class="notif-icon">💰</div>
+      <div class="notif-text">
+        <div class="notif-title">Amara just earned KES 750</div>
+        <div class="notif-sub">Commission paid · Westlands listing confirmed</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-indicator">
+    <div class="scroll-line"></div>
+    Scroll
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ACT I: THE PROBLEM -->
+<section class="problem-section" id="problem">
+  <div class="problem-content">
+    <div class="section-label">Act I — The Problem</div>
+    <h2 class="section-title">House hunting in Nairobi<br>shouldn't feel like <span class="accent">this</span></h2>
+    <p class="problem-desc">
+      Every day, thousands of Nairobians wake up stressed, scrolling through outdated listings, paying brokers who've never stepped inside the house, and visiting properties that look nothing like the photos.
+    </p>
+
+    <div class="emotion-cards">
+      <div class="emotion-card">
+        <span class="emotion-emoji">😤</span>
+        <h3>The broker takes 10%</h3>
+        <p>You pay a broker KES 5,000–20,000 to show you a house they've maybe visited once. They don't live there. They don't know the water schedule.</p>
+      </div>
+      <div class="emotion-card">
+        <span class="emotion-emoji">📸</span>
+        <h3>Photos are lies</h3>
+        <p>You travel across town, heart full of hope. The "spacious living room" is barely bigger than a closet. The photos were taken 4 years ago.</p>
+      </div>
+      <div class="emotion-card">
+        <span class="emotion-emoji">📞</span>
+        <h3>No one picks up</h3>
+        <p>Landlord numbers go unanswered. Caretakers give you someone else's number. You spend weeks chasing ghosts of available houses.</p>
+      </div>
+    </div>
+
+    <div style="margin-top:64px;padding:36px 40px;border-radius:20px;background:rgba(40,128,154,0.06);border:1px solid rgba(40,128,154,0.15);max-width:600px;margin-left:auto;margin-right:auto">
+      <p style="font-size:22px;font-weight:300;line-height:1.6;font-style:italic;color:rgba(255,255,255,0.7)">
+        "And when you finally <em>do</em> find a place — the outgoing tenant who knew all the real details? Already gone. Their number? Changed."
+      </p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ACT II: THE SOLUTION -->
+<section class="solution-section" id="solution">
+  <div class="solution-grid">
+    <div class="solution-text">
+      <div class="section-label">Act II — The Relief</div>
+      <h2 class="section-title">What if you could talk<br>to the <span class="accent">person who lives there?</span></h2>
+      <p>
+        PataSpace connects you directly with the outgoing tenant — the one person who knows the house better than anyone. Real photos, real GPS, real contact.
+      </p>
+
+      <div class="step-flow">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Outgoing tenant posts their house</h4>
+            <p>Real photos with GPS verification. Honest description. No middlemen.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>You browse & unlock the contact</h4>
+            <p>See listings for free. Spend credits to unlock the GPS location + contact details of tenant and caretaker.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Both parties confirm the connection</h4>
+            <p>You confirm you're moving in. They confirm they're moving out. PataSpace validates the handover.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>Outgoing tenant earns their commission</h4>
+            <p>M-Pesa sends them KES 750 directly — 7 days after confirmed move-in. Zero admin. Just money.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phone mockup -->
+    <div>
+      <div class="phone-mockup">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="phone-header">
+            <div class="phone-title">Discover</div>
+            <div class="phone-badge">Nairobi</div>
+          </div>
+          <div class="phone-search">
+            <span>🔍</span> Search by neighborhood...
+          </div>
+
+          <div class="mini-card">
+            <div class="mini-card-img">
+              <div class="house-art" style="font-size:36px;opacity:0.4">🏠</div>
+              <div class="lp-badge" style="position:absolute;top:8px;left:8px;font-size:10px">Lavington</div>
+            </div>
+            <div class="mini-card-body">
+              <div class="mini-card-title">2BR · Lavington Close</div>
+              <div class="mini-card-sub">📍 0.3km from ABC Place</div>
+              <div class="mini-card-footer">
+                <div class="mini-price">KES 38,000</div>
+                <button class="mini-unlock">🔓 Unlock</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="mini-card">
+            <div class="mini-card-img mini-card-img-2">
+              <div class="house-art" style="font-size:36px;opacity:0.4">🏢</div>
+              <div class="lp-badge" style="position:absolute;top:8px;left:8px;font-size:10px;background:rgba(40,100,60,0.9)">Kilimani</div>
+            </div>
+            <div class="mini-card-body">
+              <div class="mini-card-title">Bedsitter · Yaya Centre Area</div>
+              <div class="mini-card-sub">📍 0.1km from Yaya Centre</div>
+              <div class="mini-card-footer">
+                <div class="mini-price">KES 14,500</div>
+                <button class="mini-unlock">🔓 Unlock</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="map-visual" style="height:140px;margin-top:16px">
+            <div class="map-bg"></div>
+            <div class="map-pin">📍</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- HOW IT WORKS (Two Personas) -->
+<section class="how-section" id="how">
+  <div class="how-header">
+    <div class="section-label" style="justify-content:center">Act III — Everyone Wins</div>
+    <h2 class="section-title">Two journeys. One <span class="accent">marketplace</span>.</h2>
+    <p>Whether you're leaving or arriving — PataSpace is built for you.</p>
+  </div>
+
+  <div class="personas">
+    <!-- Outgoing Tenant -->
+    <div class="persona-card persona-outgoing">
+      <div class="persona-card-inner">
+        <div class="persona-card-glow"></div>
+        <div class="persona-tag">
+          <span>🏃</span> Outgoing Tenant
+        </div>
+        <h3>You're leaving.<br>Make it worth it.</h3>
+        <p>You've lived here. You know the real deal — the morning light, the quiet floors, the caretaker who actually responds. That insider knowledge? Someone will pay for it.</p>
+
+        <div class="persona-steps">
+          <div class="p-step">
+            <div class="p-step-icon">📸</div>
+            <div class="p-step-text">
+              <h5>Post your listing</h5>
+              <p>Upload photos + video. GPS verifies your location automatically. First 3 listings are always free.</p>
+            </div>
+          </div>
+          <div class="p-step">
+            <div class="p-step-icon">👁️</div>
+            <div class="p-step-text">
+              <h5>Watch people discover it</h5>
+              <p>Your listing goes live to thousands of house-hunters in Nairobi. SMS notifies you every time someone unlocks it.</p>
+            </div>
+          </div>
+          <div class="p-step">
+            <div class="p-step-icon">✅</div>
+            <div class="p-step-text">
+              <h5>Confirm the handover</h5>
+              <p>Tap to confirm when the new tenant moves in. Simple. Takes 10 seconds.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="persona-earn">
+          <div class="earn-icon">💰</div>
+          <div class="earn-text">
+            <h4>Earn KES 750 via M-Pesa</h4>
+            <p>Paid automatically, 7 days after confirmed move-in</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Incoming Tenant -->
+    <div class="persona-card persona-incoming">
+      <div class="persona-card-inner">
+        <div class="persona-card-glow"></div>
+        <div class="persona-tag">
+          <span>🏠</span> Incoming Tenant
+        </div>
+        <h3>You're searching.<br>Search smarter.</h3>
+        <p>Stop wasting weekends on broker appointments for houses already taken. Browse real listings from people who actually lived there — with verified photos and honest reviews.</p>
+
+        <div class="persona-steps">
+          <div class="p-step">
+            <div class="p-step-icon">🔍</div>
+            <div class="p-step-text">
+              <h5>Browse freely</h5>
+              <p>See photos, videos, neighborhood, rent — no account needed. Zero cost to browse.</p>
+            </div>
+          </div>
+          <div class="p-step">
+            <div class="p-step-icon">🔓</div>
+            <div class="p-step-text">
+              <h5>Unlock what matters</h5>
+              <p>Use credits to reveal GPS location + tenant phone + caretaker/landlord contact. All verified.</p>
+            </div>
+          </div>
+          <div class="p-step">
+            <div class="p-step-icon">🤝</div>
+            <div class="p-step-text">
+              <h5>Connect directly</h5>
+              <p>Call, WhatsApp, visit. No broker standing between you and the house. Deal directly.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="persona-earn" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.1)">
+          <div class="earn-icon">🛡️</div>
+          <div class="earn-text">
+            <h4 style="color:rgba(255,255,255,0.8)">Refund guarantee</h4>
+            <p>Landlord rejected you after you confirmed? We refund your credits. Always.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CREDITS -->
+<section class="credits-section" id="credits">
+  <div class="credits-inner">
+    <div class="credits-text">
+      <div class="section-label">Simple Pricing</div>
+      <h2 class="section-title">Credits, not<br><span class="accent">subscriptions</span></h2>
+      <p>
+        Buy credits once. Use them when you need them. Each unlock reveals GPS location, tenant contact, and caretaker number — everything you need to visit and decide.
+      </p>
+
+      <div style="display:flex;align-items:center;gap:16px;padding:20px 24px;border-radius:16px;background:rgba(40,128,154,0.08);border:1px solid rgba(40,128,154,0.2)">
+        <span style="font-size:32px">🔓</span>
+        <div>
+          <div style="font-family:var(--font-heading);font-size:18px;font-weight:600">1 Unlock = 2,500 credits</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-top:4px">One unlock reveals full contact + GPS for one listing</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="credit-packages">
+        <div class="credit-pkg">
+          <div class="pkg-info">
+            <h4>Starter Pack</h4>
+            <p>2,500 credits · 1 unlock</p>
+          </div>
+          <div class="pkg-price">KES 150 <span>/ once</span></div>
+        </div>
+        <div class="credit-pkg featured">
+          <div class="pkg-info">
+            <h4>Explorer Pack</h4>
+            <p>10,000 credits · 4 unlocks</p>
+          </div>
+          <div class="pkg-price">KES 500 <span>/ once</span></div>
+        </div>
+        <div class="credit-pkg">
+          <div class="pkg-info">
+            <h4>Power Pack</h4>
+            <p>25,000 credits · 10 unlocks</p>
+          </div>
+          <div class="pkg-price">KES 1,100 <span>/ once</span></div>
+        </div>
+      </div>
+
+      <div style="margin-top:24px;padding:16px 20px;border-radius:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:12px">
+        <span style="font-size:20px">📱</span>
+        <div style="font-size:13px;color:rgba(255,255,255,0.45);line-height:1.5">Pay securely via <strong style="color:rgba(255,255,255,0.7)">M-Pesa STK Push</strong>. Credits hit your account in seconds.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST BAR -->
+<div class="trust-section">
+  <div class="trust-inner">
+    <div class="trust-item">
+      <span class="trust-icon">🔒</span>
+      <span class="trust-label">GPS-Verified Listings</span>
+    </div>
+    <div class="trust-item">
+      <span class="trust-icon">✅</span>
+      <span class="trust-label">Admin-Approved</span>
+    </div>
+    <div class="trust-item">
+      <span class="trust-icon">💳</span>
+      <span class="trust-label">M-Pesa Secure Payments</span>
+    </div>
+    <div class="trust-item">
+      <span class="trust-icon">🛡️</span>
+      <span class="trust-label">Refund Guarantee</span>
+    </div>
+    <div class="trust-item">
+      <span class="trust-icon">📱</span>
+      <span class="trust-label">SMS Notifications</span>
+    </div>
+    <div class="trust-item">
+      <span class="trust-icon">🏆</span>
+      <span class="trust-label">Dispute Resolution</span>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials-section" id="testimonials">
+  <div class="section-label" style="justify-content:center">Real Stories</div>
+  <h2 class="section-title">People who found home<br>through <span class="accent">PataSpace</span></h2>
+  <p style="font-size:17px;color:rgba(255,255,255,0.4);margin-bottom:64px;font-weight:300">Not broker scripts. Not staged testimonials. Real Nairobians.</p>
+
+  <div class="testimonials-grid">
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-text">I moved from Mombasa to Nairobi and had no idea where to start. Found a 2BR in Kilimani, unlocked the contact, called the outgoing tenant, and moved in 5 days later. No broker. Unbelievable.</p>
+      <div class="testi-author">
+        <div class="testi-avatar">A</div>
+        <div>
+          <div class="testi-name">Aisha Mwangi</div>
+          <div class="testi-role">Found home in Kilimani · 3 weeks ago</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-text">I was nervous posting. Thought nobody would care. Within 48 hours, someone unlocked my listing. Two weeks later, KES 750 landed in my M-Pesa. I literally screamed.</p>
+      <div class="testi-author">
+        <div class="testi-avatar" style="background:linear-gradient(135deg,#1a5040,#2a8060)">J</div>
+        <div>
+          <div class="testi-name">James Otieno</div>
+          <div class="testi-role">Outgoing tenant, Westlands · Earned KES 750</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-text">The outgoing tenant told me about the water schedule, which floors have best pressure, even introduced me to the caretaker before I moved in. That's not just a house — that's community.</p>
+      <div class="testi-author">
+        <div class="testi-avatar" style="background:linear-gradient(135deg,#3a1a40,#6a2a80)">F</div>
+        <div>
+          <div class="testi-name">Faith Njeri</div>
+          <div class="testi-role">Found home in Lavington · 1 month ago</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- CTA -->
+<section class="cta-section" id="post">
+  <div class="cta-glass">
+    <div class="cta-glow"></div>
+    <h2 class="section-title">Ready to find your<br><span class="accent">next chapter?</span></h2>
+    <p>Join thousands of Nairobians who've made the smarter move.</p>
+    <div class="cta-buttons">
+      <button class="btn-primary" style="font-size:17px;padding:18px 44px">🔍 &nbsp;Find a Home</button>
+      <button class="btn-ghost-large" style="font-size:16px;padding:17px 36px">🏠 Post Your Space — It's Free</button>
+    </div>
+    <div style="margin-top:40px;position:relative;z-index:1">
+      <div style="display:flex;align-items:center;justify-content:center;gap:32px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:rgba(255,255,255,0.35)">
+          <span>✓</span> Free to browse
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:rgba(255,255,255,0.35)">
+          <span>✓</span> First 3 listings free
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:rgba(255,255,255,0.35)">
+          <span>✓</span> Pay only to unlock contacts
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:rgba(255,255,255,0.35)">
+          <span>✓</span> Refund guarantee
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <a class="nav-logo" href="#" style="margin-bottom:16px;display:inline-flex">
+        <div class="nav-logo-icon">🏠</div>
+        <div class="nav-logo-text">Pata<span>Space</span></div>
+      </a>
+      <p>Kenya's first tenant-to-tenant housing marketplace. Find or pass on your house — honestly, directly, and with real commission.</p>
+      <div class="footer-social">
+        <a class="social-btn" href="#">𝕏</a>
+        <a class="social-btn" href="#">in</a>
+        <a class="social-btn" href="#">📘</a>
+        <a class="social-btn" href="#">📸</a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h5>Product</h5>
+      <ul>
+        <li><a href="#">Browse Listings</a></li>
+        <li><a href="#">Post a House</a></li>
+        <li><a href="#">Buy Credits</a></li>
+        <li><a href="#">How It Works</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h5>Company</h5>
+      <ul>
+        <li><a href="#">About Us</a></li>
+        <li><a href="#">Blog</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h5>Legal</h5>
+      <ul>
+        <li><a href="#">Privacy Policy</a></li>
+        <li><a href="#">Terms of Use</a></li>
+        <li><a href="#">Refund Policy</a></li>
+        <li><a href="#">Data & GDPR</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copyright">© 2026 PataSpace. Built with ❤️ in Nairobi, Kenya.</div>
+    <div class="footer-links">
+      <a href="#">Privacy</a>
+      <a href="#">Terms</a>
+      <a href="#">Support</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Nav scroll effect
+  const nav = document.querySelector('nav');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 60) {
+      nav.style.background = 'rgba(10, 14, 20, 0.88)';
+      nav.style.borderBottomColor = 'rgba(255,255,255,0.08)';
+    } else {
+      nav.style.background = 'rgba(10, 14, 20, 0.6)';
+      nav.style.borderBottomColor = 'rgba(255,255,255,0.06)';
+    }
+  });
+
+  // Intersection observer for fade-in animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.emotion-card, .persona-card, .testi-card, .credit-pkg, .p-step').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(24px)';
+    el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+    observer.observe(el);
+  });
+
+  // Stagger delays
+  document.querySelectorAll('.emotion-card').forEach((el, i) => el.style.transitionDelay = `${i * 0.1}s`);
+  document.querySelectorAll('.testi-card').forEach((el, i) => el.style.transitionDelay = `${i * 0.12}s`);
+  document.querySelectorAll('.credit-pkg').forEach((el, i) => el.style.transitionDelay = `${i * 0.1}s`);
+  document.querySelectorAll('.p-step').forEach((el, i) => el.style.transitionDelay = `${i * 0.08}s`);
+
+  // Smooth scroll for nav links
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+
+  // Counter animation
+  function animateCounter(el, target, suffix = '') {
+    let start = 0;
+    const duration = 2000;
+    const step = target / (duration / 16);
+    const timer = setInterval(() => {
+      start += step;
+      if (start >= target) { start = target; clearInterval(timer); }
+      el.textContent = Math.floor(start).toLocaleString() + suffix;
+    }, 16);
+  }
+
+  const statsObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const statNums = entry.target.querySelectorAll('.stat-num');
+        if (statNums[0]) animateCounter(statNums[0], 2400, '+');
+        statsObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.5 });
+
+  const heroStats = document.querySelector('.hero-stats');
+  if (heroStats) statsObserver.observe(heroStats);
+</script>
+</body>
+</html>
