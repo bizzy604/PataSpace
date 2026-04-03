@@ -1,196 +1,175 @@
 import Link from 'next/link';
-import { Grid2X2, LayoutList, Map, SlidersHorizontal } from 'lucide-react';
-import { ListingCard } from '@/components/listings/listing-card';
-import { formatKes } from '@/lib/format';
-import { mockCreditBalance, mockCurrentUser } from '@/lib/mock-app-state';
+import { ArrowRight, Filter, ShieldCheck, Wallet } from 'lucide-react';
+import { PublicSiteFrame } from '@/components/shared/public-site-frame';
+import { ScreenHero } from '@/components/shared/screen-hero';
+import { MetricCard } from '@/components/shared/metric-card';
+import { ListingPreviewCard } from '@/components/listings/listing-preview-card';
 import { mockListings } from '@/lib/mock-listings';
+import { formatKes } from '@/lib/format';
+import { neighborhoodSearchCards } from '@/lib/listing-visuals';
+import { linkButtonClass } from '@/lib/link-button';
 
-const filterSections = {
-  neighborhoods: ['Kilimani', 'Westlands', 'Lavington', 'Parklands'],
-  propertyTypes: ['Apartment', 'Bedsitter', 'Studio'],
-  beds: ['Any', '1+', '2+', '3+'],
-  baths: ['Any', '1+', '2+'],
-};
+type SearchParamValue = string | string[] | undefined;
 
-export default function ListingsPage() {
+function firstValue(value: SearchParamValue) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function matchesBedroomFilter(bedrooms: number, filter?: string) {
+  if (!filter) {
+    return true;
+  }
+
+  if (filter === 'Bedsitter') {
+    return bedrooms === 0;
+  }
+
+  const count = Number.parseInt(filter, 10);
+  return Number.isNaN(count) ? true : bedrooms === count;
+}
+
+function matchesPriceFilter(monthlyRent: number, filter?: string) {
+  if (!filter) {
+    return true;
+  }
+
+  if (filter === 'KES 10k - 20k') {
+    return monthlyRent >= 10000 && monthlyRent <= 20000;
+  }
+
+  if (filter === 'KES 20k - 50k') {
+    return monthlyRent >= 20000 && monthlyRent <= 50000;
+  }
+
+  if (filter === 'KES 50k - 80k') {
+    return monthlyRent >= 50000 && monthlyRent <= 80000;
+  }
+
+  if (filter === 'KES 80k+') {
+    return monthlyRent >= 80000;
+  }
+
+  return true;
+}
+
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, SearchParamValue>>;
+}) {
+  const params = await searchParams;
+  const location = firstValue(params.location);
+  const bedrooms = firstValue(params.bedrooms);
+  const price = firstValue(params.price);
+
+  const filteredListings = mockListings.filter((listing) => {
+    const matchesLocation = location ? listing.neighborhood === location : true;
+    return (
+      matchesLocation &&
+      matchesBedroomFilter(listing.bedrooms, bedrooms) &&
+      matchesPriceFilter(listing.monthlyRent, price)
+    );
+  });
+
+  const averageUnlockCost = Math.round(
+    filteredListings.reduce((sum, listing) => sum + listing.unlockCostCredits, 0) /
+      Math.max(filteredListings.length, 1),
+  );
+
   return (
-    <section className="bg-white">
-      <div className="mx-auto flex w-full max-w-[1440px] gap-0">
-        <aside className="sticky top-20 hidden h-[calc(100vh-80px)] w-[280px] shrink-0 overflow-y-auto bg-[#252525] px-6 py-6 text-white shadow-[4px_0_24px_rgba(0,0,0,0.3)] xl:block">
-          <p className="font-display text-2xl font-bold tracking-[-0.04em]">PataSpace</p>
-
-          <div className="mt-8 flex items-center gap-4">
-            <div className="flex size-12 items-center justify-center rounded-full border-2 border-[#28809A] text-sm font-semibold text-white">
-              {mockCurrentUser.firstName[0]}
-              {mockCurrentUser.lastName[0]}
-            </div>
-            <div>
-              <p className="text-sm text-white/80">Hello, {mockCurrentUser.firstName}</p>
-              <p className="font-display text-xl font-semibold text-[#67d1e3]">{formatKes(mockCreditBalance.balance)}</p>
-            </div>
-          </div>
-
-          <div className="mt-8 rounded-[20px] bg-[#28809A] p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">Your Balance</p>
-            <p className="mt-3 font-display text-3xl font-bold">{formatKes(mockCreditBalance.balance)}</p>
-            <p className="mt-2 text-xs text-white/70">About 2 unlocks ready</p>
-            <Link
-              href="/wallet/buy"
-              className="mt-4 inline-flex size-10 items-center justify-center rounded-full bg-white text-[#28809A]"
-            >
-              +
+    <PublicSiteFrame>
+      <ScreenHero
+        eyebrow="Browse listings"
+        title="Discover verified homes before you spend a credit"
+        description={`Showing ${filteredListings.length} listings across Nairobi. Browse stays free, then unlock direct contact only when a listing feels worth pursuing.`}
+        actions={
+          <>
+            <Link href="/wallet" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
+              <Wallet className="size-4" />
+              Wallet
             </Link>
-          </div>
+            <Link href="/auth/sign-in" className={linkButtonClass({ size: 'sm' })}>
+              Continue to sign in
+              <ArrowRight className="size-4" />
+            </Link>
+          </>
+        }
+      />
 
-          <div className="mt-8 space-y-6">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Filters</p>
-              <div className="mt-3 rounded-[14px] border border-white/15 bg-white/8 px-4 py-3 text-sm text-white">
-                Nairobi County
-              </div>
-            </div>
+      <section className="px-4 pb-6 sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-7xl gap-4 md:grid-cols-3">
+          <MetricCard
+            label="Results"
+            value={`${filteredListings.length}`}
+            hint="Listings that match the current browse context from the landing search."
+            Icon={Filter}
+          />
+          <MetricCard
+            label="Typical unlock"
+            value={formatKes(averageUnlockCost)}
+            hint="Unlock cost follows the 10% of monthly rent rule documented for the marketplace."
+            Icon={Wallet}
+          />
+          <MetricCard
+            label="Verification"
+            value="GPS-backed"
+            hint="Mock listings include approved media, timestamps, and approximate map previews before contact reveal."
+            Icon={ShieldCheck}
+          />
+        </div>
+      </section>
 
+      <section className="px-4 pb-8 sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[0.95fr_2.05fr]">
+          <div className="space-y-6 rounded-[32px] border border-black/8 bg-white p-6 shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
             <div>
-              <p className="text-sm font-semibold text-white">Neighborhoods</p>
-              <div className="mt-3 space-y-3">
-                {filterSections.neighborhoods.map((item, index) => (
-                  <label key={item} className="flex items-center gap-3 text-sm text-white">
-                    <span
-                      className={`inline-flex size-5 rounded-[6px] border ${index === 0 ? 'border-[#28809A] bg-[#28809A]' : 'border-white/40 bg-transparent'}`}
-                    />
-                    <span>{item}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <p className="text-sm font-semibold text-white">Rent Range</p>
-              <div className="mt-3 rounded-full bg-white/20">
-                <div className="h-2 w-2/3 rounded-full bg-[#28809A]" />
-              </div>
-              <p className="mt-3 text-xs text-white/70">10K - 50K</p>
-            </div>
-
-            <div>
-              <p className="text-sm font-semibold text-white">Bedrooms</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {filterSections.beds.map((item, index) => (
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#28809A]">
+                Current filters
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {[
+                  location ? `Area: ${location}` : 'Area: Any',
+                  bedrooms ? `Bedrooms: ${bedrooms}` : 'Bedrooms: Any',
+                  price ? `Budget: ${price}` : 'Budget: Any',
+                ].map((chip) => (
                   <span
-                    key={item}
-                    className={`rounded-full px-4 py-2 text-sm ${index === 0 ? 'bg-[#28809A] text-white' : 'bg-white/10 text-white'}`}
+                    key={chip}
+                    className="rounded-full border border-black/8 bg-[#f7f4ee] px-3 py-1 text-xs font-medium text-[#4b4f50]"
                   >
-                    {item}
+                    {chip}
                   </span>
                 ))}
               </div>
             </div>
 
             <div>
-              <p className="text-sm font-semibold text-white">Bathrooms</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {filterSections.baths.map((item, index) => (
-                  <span
-                    key={item}
-                    className={`rounded-full px-4 py-2 text-sm ${index === 0 ? 'bg-[#28809A] text-white' : 'bg-white/10 text-white'}`}
+              <p className="font-display text-2xl font-semibold tracking-[-0.05em] text-[#252525]">
+                Explore fast-moving neighborhoods
+              </p>
+              <div className="mt-4 grid gap-3">
+                {neighborhoodSearchCards.map((neighborhood) => (
+                  <Link
+                    key={neighborhood.name}
+                    href={`/listings?location=${encodeURIComponent(neighborhood.name)}`}
+                    className="rounded-[24px] border border-black/8 bg-[#fbfaf7] p-4 transition hover:border-[#28809A]/30 hover:bg-white"
                   >
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <p className="text-sm font-semibold text-white">Property Type</p>
-              <div className="mt-3 space-y-3">
-                {filterSections.propertyTypes.map((item, index) => (
-                  <label key={item} className="flex items-center gap-3 text-sm text-white">
-                    <span
-                      className={`inline-flex size-5 rounded-[6px] border ${index === 0 ? 'border-[#28809A] bg-[#28809A]' : 'border-white/40 bg-transparent'}`}
-                    />
-                    <span>{item}</span>
-                  </label>
+                    <p className="font-medium text-[#252525]">{neighborhood.name}</p>
+                    <p className="mt-1 text-sm leading-6 text-[#62686a]">
+                      {neighborhood.description}
+                    </p>
+                  </Link>
                 ))}
               </div>
             </div>
           </div>
 
-          <div className="mt-8 flex gap-3">
-            <button type="button" className="flex-1 rounded-full border border-white/15 px-4 py-3 text-sm font-semibold text-white">
-              Clear
-            </button>
-            <button type="button" className="flex-1 rounded-full bg-[#28809A] px-4 py-3 text-sm font-semibold text-white">
-              Apply
-            </button>
-          </div>
-        </aside>
-
-        <div className="min-w-0 flex-1 px-4 py-8 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#EDEDED] pb-6">
-            <div>
-              <p className="text-sm text-[#8D9192]">Home / Browse Listings</p>
-              <h1 className="mt-2 font-display text-3xl font-bold tracking-[-0.04em] text-[#252525]">
-                {mockListings.length} listings found
-              </h1>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <Link
-                href="/saved"
-                className="inline-flex h-11 items-center justify-center rounded-full border border-[#EDEDED] px-4 text-sm font-semibold text-[#252525]"
-              >
-                Saved
-              </Link>
-              <div className="inline-flex rounded-full border border-[#EDEDED] bg-white p-1">
-                <span className="inline-flex size-9 items-center justify-center rounded-full bg-[#28809A] text-white">
-                  <Grid2X2 className="size-4" />
-                </span>
-                <span className="inline-flex size-9 items-center justify-center rounded-full text-[#8D9192]">
-                  <LayoutList className="size-4" />
-                </span>
-              </div>
-              <button type="button" className="inline-flex h-11 items-center justify-center rounded-full border border-[#EDEDED] px-4 text-sm font-medium text-[#252525]">
-                Newest First
-              </button>
-              <Link
-                href="/map"
-                className="inline-flex size-11 items-center justify-center rounded-full bg-[#28809A] text-white"
-              >
-                <Map className="size-4" />
-              </Link>
-            </div>
-          </div>
-
-          <div className="mt-6 flex flex-wrap gap-3 xl:hidden">
-            <button type="button" className="inline-flex h-11 items-center justify-center rounded-full border border-[#EDEDED] px-4 text-sm font-semibold text-[#252525]">
-              <SlidersHorizontal className="mr-2 size-4 text-[#28809A]" />
-              Filters
-            </button>
-            <span className="rounded-full bg-[#EDEDED] px-4 py-3 text-sm font-medium text-[#252525]">Kilimani</span>
-            <span className="rounded-full bg-[#EDEDED] px-4 py-3 text-sm font-medium text-[#252525]">Apartment</span>
-          </div>
-
-          <div className="mt-8 grid gap-6 md:grid-cols-2 2xl:grid-cols-3">
-            {mockListings.map((listing) => (
-              <ListingCard key={listing.id} listing={listing} />
-            ))}
-          </div>
-
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-            {['<', '1', '2', '3', '>'].map((item, index) => (
-              <button
-                key={item}
-                type="button"
-                className={`inline-flex size-11 items-center justify-center rounded-full text-sm font-semibold ${
-                  index === 1 ? 'bg-[#28809A] text-white' : 'border border-[#EDEDED] bg-white text-[#8D9192]'
-                }`}
-              >
-                {item}
-              </button>
+          <div className="grid gap-6 xl:grid-cols-2">
+            {filteredListings.map((listing) => (
+              <ListingPreviewCard key={listing.id} listing={listing} />
             ))}
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </PublicSiteFrame>
   );
 }

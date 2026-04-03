@@ -1,56 +1,44 @@
-import Link from 'next/link';
-import { ArrowRight, ShieldCheck } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PageIntro } from '@/components/shared/page-intro';
-import { linkButtonVariants } from '@/lib/link-button';
+import { AuthScreenShell } from '@/components/auth/auth-screen-shell';
 
-export default function SignInPage() {
+export default function Page() {
   return (
-    <section className="mx-auto grid min-h-[calc(100vh-73px)] max-w-7xl gap-10 px-6 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-      <div>
-        <PageIntro
-          badge="Sign in"
-          kicker="Auth flow"
-          title="Sign in to unlock real leads and track every follow-through step."
-          description="Incoming tenants use the web app to buy credits, reveal contact details, confirm a move, and raise disputes when the evidence and the visit do not match."
-        />
+    <AuthScreenShell
+      title="Sign back into your workspace"
+      description="Tenant web access is designed around repeat activity: checking wallet balance, revisiting unlocks, confirming move-ins, and following disputes without re-entering data each time."
+      footerPrompt="Need a new account?"
+      footerLinkLabel="Register"
+      footerLinkHref="/auth/register"
+      form={
+        <form className="space-y-4">
+          <label className="space-y-2 text-sm font-medium text-[#252525]">
+            Phone number
+            <Input className="h-11 rounded-2xl" defaultValue="+254701234567" />
+          </label>
 
-        <div className="mt-8 rounded-[28px] border border-separator bg-surface-elevated p-5 shadow-soft-md">
-          <div className="flex items-start gap-4">
-            <div className="flex size-11 items-center justify-center rounded-full bg-accent text-primary">
-              <ShieldCheck className="size-5" />
-            </div>
-            <div>
-              <p className="font-semibold text-foreground">Phone-first security</p>
-              <p className="mt-2 text-sm leading-6 text-foreground-secondary">
-                The backend session model is built around Kenyan phone numbers, OTP verification, and token rotation under `/api/v1/auth`.
-              </p>
-            </div>
+          <label className="space-y-2 text-sm font-medium text-[#252525]">
+            Password
+            <Input className="h-11 rounded-2xl" type="password" defaultValue="SecurePassword123!" />
+          </label>
+
+          <div className="flex items-center justify-between rounded-[24px] border border-black/8 bg-[#f7f4ee] p-4 text-sm text-[#62686a]">
+            <span>Phone verification stays tied to your account for unlock and wallet actions.</span>
+            <Button variant="link" className="h-auto px-0 text-[#28809A]">
+              Forgot password
+            </Button>
           </div>
-        </div>
-      </div>
 
-      <Card className="bg-surface-elevated shadow-soft-md">
-        <CardHeader>
-          <CardTitle>Sign in</CardTitle>
-          <CardDescription>Phone number plus password for the current MVP auth shape.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Input placeholder="+254712345678" />
-          <Input type="password" placeholder="Password" />
-          <Link href="/wallet" className={linkButtonVariants({ fullWidth: true })}>
-            Continue
-            <ArrowRight className="size-4" />
-          </Link>
-          <p className="text-sm text-muted-foreground">
-            No account yet?{' '}
-            <Link href="/auth/register" className="font-semibold text-foreground underline underline-offset-4">
-              Create one
-            </Link>
-          </p>
-        </CardContent>
-      </Card>
-    </section>
+          <div className="flex flex-wrap gap-3">
+            <Button className="h-11 rounded-full bg-[#28809A] px-6 text-white hover:bg-[#21687d]">
+              Sign in
+            </Button>
+            <Button variant="outline" className="h-11 rounded-full px-6">
+              Continue with OTP
+            </Button>
+          </div>
+        </form>
+      }
+    />
   );
 }

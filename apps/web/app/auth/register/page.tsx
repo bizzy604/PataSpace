@@ -1,63 +1,57 @@
-import Link from 'next/link';
-import { ArrowRight, Smartphone } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PageIntro } from '@/components/shared/page-intro';
-import { linkButtonVariants } from '@/lib/link-button';
+import { AuthScreenShell } from '@/components/auth/auth-screen-shell';
 
-export default function RegisterPage() {
+export default function Page() {
   return (
-    <section className="mx-auto grid min-h-[calc(100vh-73px)] max-w-7xl gap-10 px-6 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-      <div>
-        <PageIntro
-          badge="Register"
-          kicker="Account setup"
-          title="Create an account before you spend credits on a listing."
-          description="The web registration flow mirrors the backend contract: names, phone number, password, and then OTP verification to mint the first session."
-        />
+    <AuthScreenShell
+      title="Create your tenant account"
+      description="Register once, verify your number with OTP, and carry the same account across browsing, wallet funding, unlocks, confirmations, and support."
+      footerPrompt="Already have an account?"
+      footerLinkLabel="Sign in"
+      footerLinkHref="/auth/sign-in"
+      form={
+        <form className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="space-y-2 text-sm font-medium text-[#252525]">
+              First name
+              <Input className="h-11 rounded-2xl" defaultValue="Amina" />
+            </label>
+            <label className="space-y-2 text-sm font-medium text-[#252525]">
+              Last name
+              <Input className="h-11 rounded-2xl" defaultValue="Njeri" />
+            </label>
+          </div>
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-[24px] border border-separator bg-surface-elevated px-5 py-5 shadow-soft-sm">
-            <Smartphone className="size-5 text-primary" />
-            <p className="mt-4 font-semibold text-foreground">OTP next</p>
-            <p className="mt-2 text-sm leading-6 text-foreground-secondary">
-              Registration hands off to verification immediately so the wallet and unlock flows stay tied to a verified phone number.
-            </p>
-          </div>
-          <div className="rounded-[24px] border border-separator bg-surface-elevated px-5 py-5 shadow-soft-sm">
-            <p className="section-kicker">Why it matters</p>
-            <p className="mt-3 font-semibold text-foreground">Protect the paid reveal step</p>
-            <p className="mt-2 text-sm leading-6 text-foreground-secondary">
-              Unlocks, confirmations, and disputes are all attached to the verified user identity.
-            </p>
-          </div>
-        </div>
-      </div>
+          <label className="space-y-2 text-sm font-medium text-[#252525]">
+            Kenyan phone number
+            <Input className="h-11 rounded-2xl" defaultValue="+254701234567" />
+          </label>
 
-      <Card className="bg-surface-elevated shadow-soft-md">
-        <CardHeader>
-          <CardTitle>Register</CardTitle>
-          <CardDescription>OTP verification will follow after the account is created.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Input placeholder="First name" />
-            <Input placeholder="Last name" />
+          <label className="space-y-2 text-sm font-medium text-[#252525]">
+            Email address
+            <Input className="h-11 rounded-2xl" defaultValue="amina@pataspace.test" />
+          </label>
+
+          <label className="space-y-2 text-sm font-medium text-[#252525]">
+            Password
+            <Input className="h-11 rounded-2xl" type="password" defaultValue="SecurePassword123!" />
+          </label>
+
+          <div className="rounded-[24px] border border-[#28809A]/14 bg-[#28809A]/6 p-4 text-sm leading-7 text-[#4b4f50]">
+            Registration triggers an OTP to the supplied number. The next screen completes verification before wallet and unlock actions are available.
           </div>
-          <Input placeholder="+254712345678" />
-          <Input type="password" placeholder="SecurePassword123!" />
-          <Link href="/auth/verify-otp" className={linkButtonVariants({ fullWidth: true })}>
-            Create account
-            <ArrowRight className="size-4" />
-          </Link>
-          <p className="text-sm text-muted-foreground">
-            Already registered?{' '}
-            <Link href="/auth/sign-in" className="font-semibold text-foreground underline underline-offset-4">
-              Sign in
-            </Link>
-          </p>
-        </CardContent>
-      </Card>
-    </section>
+
+          <div className="flex flex-wrap gap-3">
+            <Button className="h-11 rounded-full bg-[#28809A] px-6 text-white hover:bg-[#21687d]">
+              Create account
+            </Button>
+            <Button variant="outline" className="h-11 rounded-full px-6">
+              Use invite code
+            </Button>
+          </div>
+        </form>
+      }
+    />
   );
 }

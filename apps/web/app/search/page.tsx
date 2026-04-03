@@ -1,95 +1,154 @@
 import Link from 'next/link';
-import { Clock3, Search, TrendingUp } from 'lucide-react';
-import { ListingCard } from '@/components/listings/listing-card';
-import { neighborhoodSearchCards } from '@/lib/listing-visuals';
+import { Search, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { PublicSiteFrame } from '@/components/shared/public-site-frame';
+import { ScreenHero } from '@/components/shared/screen-hero';
+import { ListingPreviewCard } from '@/components/listings/listing-preview-card';
 import { mockListings } from '@/lib/mock-listings';
+import { mockRecentSearches } from '@/lib/mock-app-state';
+import { linkButtonClass } from '@/lib/link-button';
 
-export default function SearchPage() {
-  const results = mockListings.slice(0, 2);
+type SearchParamValue = string | string[] | undefined;
+
+function firstValue(value: SearchParamValue) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, SearchParamValue>>;
+}) {
+  const params = await searchParams;
+  const q = firstValue(params.q)?.trim() ?? '';
+  const normalizedQuery = q.toLowerCase();
+
+  const results = normalizedQuery
+    ? mockListings.filter((listing) =>
+        [
+          listing.title,
+          listing.neighborhood,
+          listing.address,
+          listing.propertyType,
+          ...listing.amenities,
+        ]
+          .join(' ')
+          .toLowerCase()
+          .includes(normalizedQuery),
+      )
+    : mockListings;
 
   return (
-    <section className="bg-white">
-      <div className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6">
-        <div className="rounded-[24px] bg-[#EDEDED] px-6 py-10 shadow-[0_4px_20px_rgba(0,0,0,0.06)]">
-          <div className="mx-auto max-w-[600px] rounded-full border-2 border-[#EDEDED] bg-white px-6 py-4 shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
-            <div className="flex items-center gap-3">
-              <Search className="size-5 text-[#28809A]" />
-              <span className="text-lg text-[#252525]">Kilimani 2 bedroom</span>
-            </div>
-          </div>
-        </div>
+    <PublicSiteFrame>
+      <ScreenHero
+        eyebrow="Search"
+        title="Search neighborhoods, listing types, and amenities"
+        description="This route complements browse by letting users jump directly to a neighborhood or listing signal, then continue into the standard listing and unlock flow."
+      />
 
-        <div className="mt-8 grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="space-y-8">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8D9192]">Popular searches</p>
-              <div className="mt-4 rounded-[24px] border border-[#EDEDED] bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
-                {['Kilimani 2 bedroom', 'Westlands under 30K', 'Lavington apartment'].map((item) => (
-                  <div key={item} className="flex items-center gap-3 rounded-[16px] px-3 py-3 text-sm text-[#252525] hover:bg-[#fafafa]">
-                    <TrendingUp className="size-4 text-[#28809A]" />
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8D9192]">Recent</p>
-              <div className="mt-4 rounded-[24px] border border-[#EDEDED] bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
-                {['Ngong Road studio', 'South B budget', 'Westlands loft'].map((item) => (
-                  <div key={item} className="flex items-center gap-3 rounded-[16px] px-3 py-3 text-sm text-[#252525] hover:bg-[#fafafa]">
-                    <Clock3 className="size-4 text-[#8D9192]" />
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8D9192]">Browse by neighborhood</p>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                {neighborhoodSearchCards.map((card) => (
-                  <Link
-                    key={card.name}
-                    href={`/listings?area=${encodeURIComponent(card.name)}`}
-                    className="group overflow-hidden rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.05)]"
-                  >
-                    <div
-                      className="aspect-[4/3] bg-cover bg-center"
-                      style={{ backgroundImage: `linear-gradient(180deg, rgba(37,37,37,0.04), rgba(37,37,37,0.6)), url(${card.image})` }}
+      <section className="px-4 pb-10 sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[0.95fr_2.05fr]">
+          <div className="space-y-6">
+            <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+              <CardHeader>
+                <CardTitle className="font-display text-2xl font-semibold tracking-[-0.05em] text-[#252525]">
+                  Search directly
+                </CardTitle>
+                <CardDescription className="text-sm leading-7 text-[#62686a]">
+                  Try a neighborhood, furnishing style, or listing type.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form action="/search" className="space-y-4">
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#7b8081]" />
+                    <Input
+                      name="q"
+                      defaultValue={q}
+                      placeholder="Search by neighborhood, property type, or amenity"
+                      className="h-12 rounded-full border-black/10 pl-10"
                     />
-                    <div className="-mt-16 p-5 text-white">
-                      <p className="font-display text-2xl font-semibold tracking-[-0.04em]">{card.name}</p>
-                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    <Button className="h-11 rounded-full bg-[#28809A] px-6 text-white hover:bg-[#21687d]">
+                      Search
+                    </Button>
+                    <Link href="/listings" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
+                      <SlidersHorizontal className="size-4" />
+                      Open full browse filters
+                    </Link>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+              <CardHeader>
+                <CardTitle className="font-display text-2xl font-semibold tracking-[-0.05em] text-[#252525]">
+                  Recent searches
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {mockRecentSearches.map((item) => (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className="block rounded-[24px] border border-black/8 bg-[#fbfaf7] p-4 transition hover:border-[#28809A]/30 hover:bg-white"
+                  >
+                    <p className="font-medium text-[#252525]">{item.label}</p>
+                    <p className="mt-1 text-sm leading-6 text-[#62686a]">{item.note}</p>
                   </Link>
                 ))}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
 
-          <div>
-            <div className="rounded-[24px] border border-[#EDEDED] bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
-              <p className="text-sm text-[#8D9192]">Results for:</p>
-              <h1 className="mt-2 font-display text-3xl font-bold tracking-[-0.05em] text-[#252525]">
-                Kilimani 2 bedroom
-              </h1>
-              <div className="mt-4 flex flex-wrap gap-3">
-                {['Westlands 2BR', 'Lavington', 'Under 25K'].map((tag) => (
-                  <span key={tag} className="rounded-full border border-[#EDEDED] bg-[#fafafa] px-4 py-2 text-sm text-[#252525]">
-                    {tag}
+          <div className="space-y-6">
+            <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+              <CardContent className="flex flex-wrap items-center justify-between gap-4 p-6">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#28809A]">
+                    Results
+                  </p>
+                  <p className="mt-2 font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
+                    {results.length} match{results.length === 1 ? '' : 'es'}
+                  </p>
+                  <p className="mt-1 text-sm text-[#62686a]">
+                    {q ? `for “${q}”` : 'using all current listing data'}
+                  </p>
+                </div>
+                <div className="rounded-full border border-black/8 bg-[#f7f4ee] px-4 py-2 text-sm text-[#4b4f50]">
+                  <span className="inline-flex items-center gap-2">
+                    <Sparkles className="size-4 text-[#28809A]" />
+                    Search routes into the same listing detail and unlock flow
                   </span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {results.length ? (
+              <div className="grid gap-6 xl:grid-cols-2">
+                {results.map((listing) => (
+                  <ListingPreviewCard key={listing.id} listing={listing} />
                 ))}
               </div>
-            </div>
-
-            <div className="mt-6 grid gap-6">
-              {results.map((listing) => (
-                <ListingCard key={listing.id} listing={listing} />
-              ))}
-            </div>
+            ) : (
+              <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+                <CardHeader>
+                  <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
+                    No results for “{q}”
+                  </CardTitle>
+                  <CardDescription className="text-sm leading-7 text-[#62686a]">
+                    Try a broader neighborhood term like “Kilimani”, “Westlands”, or “studio”.
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            )}
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </PublicSiteFrame>
   );
 }

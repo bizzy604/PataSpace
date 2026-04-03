@@ -1,19 +1,22 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Check, Info } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Wallet } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { PublicSiteFrame } from '@/components/shared/public-site-frame';
+import { ScreenHero } from '@/components/shared/screen-hero';
+import { getMockListingById } from '@/lib/mock-listings';
 import { formatKes } from '@/lib/format';
 import { getListingVisual } from '@/lib/listing-visuals';
-import { mockCreditBalance, mockUnlocks } from '@/lib/mock-app-state';
-import { getMockListingById } from '@/lib/mock-listings';
+import { mockCreditBalance } from '@/lib/mock-app-state';
+import { linkButtonClass } from '@/lib/link-button';
 
-type ListingUnlockPageProps = {
-  params: Promise<{
-    id: string;
-  }>;
-};
-
-export default async function ListingUnlockPage({ params }: ListingUnlockPageProps) {
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   const listing = getMockListingById(id);
 
@@ -22,84 +25,135 @@ export default async function ListingUnlockPage({ params }: ListingUnlockPagePro
   }
 
   const visual = getListingVisual(listing.id);
-  const existingUnlock = mockUnlocks.find((unlock) => unlock.listingId === listing.id);
-  const newBalance = mockCreditBalance.balance - listing.unlockCostCredits;
+  const postUnlockBalance = mockCreditBalance.balance - listing.unlockCostCredits;
 
   return (
-    <section className="flex min-h-[calc(100vh-80px)] items-center justify-center bg-[#252525]/8 px-4 py-12">
-      <div className="w-full max-w-[500px] rounded-[24px] bg-white p-8 shadow-[0_8px_40px_rgba(0,0,0,0.2)] sm:p-10">
-        <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-[#28809A]/12 text-[#28809A]">
-          <Check className="size-8" />
-        </div>
+    <PublicSiteFrame>
+      <ScreenHero
+        eyebrow="Unlock confirmation"
+        title="Review the spend before revealing contact"
+        description="This is the paid step in the tenant flow. Spend once to reveal the contact details, notify the current tenant, and move the listing into confirmation or dispute follow-through."
+        actions={
+          <>
+            <Link
+              href={`/listings/${listing.id}`}
+              className={linkButtonClass({ variant: 'outline', size: 'sm' })}
+            >
+              Back to listing
+            </Link>
+            <Link href="/wallet/buy" className={linkButtonClass({ size: 'sm' })}>
+              Top up wallet
+            </Link>
+          </>
+        }
+      />
 
-        <h1 className="mt-6 text-center font-display text-3xl font-bold tracking-[-0.04em] text-[#252525]">
-          Unlock Contact Information?
-        </h1>
-
-        <div className="mt-8 flex items-center gap-4 rounded-[18px] bg-[#EDEDED] p-4">
-          <div className="relative h-[60px] w-[60px] overflow-hidden rounded-xl">
-            <Image src={visual.hero} alt={visual.alt} fill className="object-cover" sizes="60px" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-[#252525]">
-              {formatKes(listing.monthlyRent)}/mo / {listing.neighborhood}
-            </p>
-            <p className="mt-1 text-sm text-[#8D9192]">{listing.title}</p>
-          </div>
-        </div>
-
-        <div className="mt-6 rounded-[18px] border border-[#EDEDED] p-5">
-          <div className="flex items-center justify-between text-sm text-[#8D9192]">
-            <span>Unlock Cost</span>
-            <span className="font-semibold text-[#28809A]">{formatKes(listing.unlockCostCredits)}</span>
-          </div>
-          <div className="mt-3 flex items-center justify-between text-sm text-[#8D9192]">
-            <span>Current Balance</span>
-            <span>{formatKes(mockCreditBalance.balance)}</span>
-          </div>
-          <div className="my-4 border-t border-[#EDEDED]" />
-          <div className="flex items-center justify-between text-sm text-[#252525]">
-            <span>New Balance</span>
-            <span className="font-semibold">{formatKes(newBalance)}</span>
-          </div>
-        </div>
-
-        <div className="mt-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8D9192]">What you&apos;ll get</p>
-          <div className="mt-4 space-y-3">
-            {['Tenant phone number', 'Full address', 'GPS coordinates', 'WhatsApp contact'].map((item) => (
-              <div key={item} className="flex items-start gap-3 text-sm text-[#252525]">
-                <span className="mt-1 inline-flex size-5 items-center justify-center rounded-full bg-[#28809A]/12 text-[#28809A]">
-                  <Check className="size-3.5" />
-                </span>
-                <span>{item}</span>
+      <section className="px-4 pb-10 sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <Card className="overflow-hidden border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+            <div className="relative h-72">
+              <Image
+                src={visual.hero}
+                alt={visual.alt}
+                fill
+                className="object-cover"
+                sizes="(min-width: 1024px) 60vw, 100vw"
+              />
+            </div>
+            <CardContent className="space-y-5 pt-5">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#28809A]">
+                  Listing summary
+                </p>
+                <h2 className="mt-3 font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
+                  {listing.title}
+                </h2>
+                <p className="mt-2 text-sm leading-7 text-[#62686a]">{listing.description}</p>
               </div>
-            ))}
-          </div>
-        </div>
 
-        <div className="mt-6 rounded-[18px] border-l-4 border-[#28809A] bg-[#28809A]/10 px-4 py-4">
-          <div className="flex items-start gap-3">
-            <Info className="mt-0.5 size-4 text-[#28809A]" />
-            <p className="text-sm leading-6 text-[#28809A]">Full refund if the landlord rejects you through the documented policy path.</p>
-          </div>
-        </div>
+              <div className="grid gap-3 rounded-[24px] bg-[#f7f4ee] p-4 text-sm text-[#4b4f50] sm:grid-cols-3">
+                <p>{listing.neighborhood}</p>
+                <p>{formatKes(listing.monthlyRent)} monthly rent</p>
+                <p>{listing.unlockCount} previous unlocks</p>
+              </div>
 
-        <div className="mt-8 space-y-3">
-          <Link
-            href={existingUnlock ? `/unlocks/${existingUnlock.unlockId}` : '/auth/sign-in'}
-            className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#28809A] text-sm font-semibold text-white"
-          >
-            Unlock for {formatKes(listing.unlockCostCredits)}
-          </Link>
-          <Link
-            href={`/listings/${listing.id}`}
-            className="inline-flex h-12 w-full items-center justify-center rounded-full text-sm font-semibold text-[#8D9192]"
-          >
-            Cancel
-          </Link>
+              <div className="grid gap-3">
+                {[
+                  'Exact address and phone number are revealed immediately after purchase.',
+                  'Repeat unlocks stay idempotent and should not charge twice for the same listing.',
+                  'The current tenant is notified so both sides can move into confirmation workflow cleanly.',
+                ].map((item) => (
+                  <div
+                    key={item}
+                    className="rounded-[20px] border border-black/8 bg-[#fbfaf7] p-4 text-sm leading-7 text-[#4b4f50]"
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+            <CardHeader>
+              <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
+                Wallet checkout
+              </CardTitle>
+              <CardDescription className="text-sm leading-7 text-[#62686a]">
+                Unlock pricing follows the marketplace rule of 10% of monthly rent.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="rounded-[24px] border border-black/8 bg-[#252525] p-5 text-white">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/56">
+                  Unlock cost
+                </p>
+                <p className="mt-2 font-display text-4xl font-semibold tracking-[-0.07em]">
+                  {formatKes(listing.unlockCostCredits)}
+                </p>
+                <div className="mt-5 grid gap-3 text-sm text-white/72">
+                  <p className="flex items-center justify-between">
+                    <span>Current balance</span>
+                    <span>{formatKes(mockCreditBalance.balance)}</span>
+                  </p>
+                  <p className="flex items-center justify-between">
+                    <span>Balance after unlock</span>
+                    <span>{formatKes(postUnlockBalance)}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-[24px] border border-[#28809A]/12 bg-[#28809A]/6 p-4 text-sm leading-7 text-[#4b4f50]">
+                <p className="inline-flex items-center gap-2 font-medium text-[#252525]">
+                  <ShieldCheck className="size-4 text-[#28809A]" />
+                  Protected actions after purchase
+                </p>
+                <p className="mt-2">
+                  Unlock detail, move-in confirmation, and dispute follow-through all reuse the same paid record.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <Button className="h-11 rounded-full bg-[#28809A] px-6 text-white hover:bg-[#21687d]">
+                  Reveal contact
+                </Button>
+                <Link
+                  href="/wallet/processing"
+                  className={linkButtonClass({ variant: 'outline', size: 'sm' })}
+                >
+                  Preview processing state
+                  <ArrowRight className="size-4" />
+                </Link>
+              </div>
+
+              <Link href="/wallet" className="inline-flex items-center gap-2 text-sm font-medium text-[#28809A]">
+                <Wallet className="size-4" />
+                Review wallet history first
+              </Link>
+            </CardContent>
+          </Card>
         </div>
-      </div>
-    </section>
+      </section>
+    </PublicSiteFrame>
   );
 }

@@ -1,121 +1,122 @@
 import Link from 'next/link';
-import { Check, Lock, ShieldCheck } from 'lucide-react';
+import { MapPinned, ShieldCheck, Wallet, Users } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { PublicSiteFrame } from '@/components/shared/public-site-frame';
+import { ScreenHero } from '@/components/shared/screen-hero';
+import { MetricCard } from '@/components/shared/metric-card';
+import { mockListings } from '@/lib/mock-listings';
+import { mockUnlocks } from '@/lib/mock-app-state';
+import { formatKes } from '@/lib/format';
+import { linkButtonClass } from '@/lib/link-button';
 
-export default function AboutPage() {
+const principles = [
+  {
+    title: 'Browse stays free',
+    body: 'Incoming tenants can evaluate listings, media evidence, amenities, neighborhood, and approximate location before spending anything.',
+  },
+  {
+    title: 'Direct contact is the paid step',
+    body: 'PataSpace charges only when a user is ready to reveal the exact address and phone number for a listing.',
+  },
+  {
+    title: 'Trust is part of the product',
+    body: 'Mobile-first listing capture, GPS-backed media, verification notes, and disputes are all part of the same marketplace loop.',
+  },
+] as const;
+
+export default function Page() {
+  const averageRent = Math.round(
+    mockListings.reduce((sum, listing) => sum + listing.monthlyRent, 0) / Math.max(mockListings.length, 1),
+  );
+
   return (
-    <div className="bg-white">
-      <section className="bg-[linear-gradient(135deg,#28809A,#1e6377)] text-white">
-        <div className="mx-auto max-w-[800px] px-4 py-24 text-center sm:px-6">
-          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-white/72">Trust and verification</p>
-          <h1 className="mt-4 font-display text-5xl font-bold tracking-[-0.05em]">
-            Stop wasting time on fake listings
-          </h1>
-          <p className="mt-6 text-2xl leading-9 text-white/84">
-            Average renters lose hours viewing bad properties. PataSpace is built to cut that waste down.
-          </p>
-          <Link
-            href="#verification"
-            className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-white px-6 text-sm font-semibold text-[#28809A]"
-          >
-            Our Solution
-          </Link>
+    <PublicSiteFrame>
+      <ScreenHero
+        eyebrow="About PataSpace"
+        title="A tenant-to-tenant housing marketplace built for Nairobi"
+        description="PataSpace is structured around one belief: the best person to explain a home is often the tenant leaving it. The web experience focuses on incoming-tenant discovery, credit funding, unlocks, and follow-through after contact is revealed."
+        actions={
+          <>
+            <Link href="/listings" className={linkButtonClass({ size: 'sm' })}>
+              Browse listings
+            </Link>
+            <Link href="/how-it-works" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
+              See how it works
+            </Link>
+          </>
+        }
+      />
+
+      <section className="px-4 pb-6 sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-7xl gap-4 md:grid-cols-4">
+          <MetricCard
+            label="Verified listings"
+            value={`${mockListings.length}`}
+            hint="Current mock inventory wired through the web experience."
+            Icon={ShieldCheck}
+          />
+          <MetricCard
+            label="Unlock records"
+            value={`${mockUnlocks.length}`}
+            hint="Paid contact reveals already modeled through follow-through workflows."
+            Icon={Wallet}
+          />
+          <MetricCard
+            label="Typical rent"
+            value={formatKes(averageRent)}
+            hint="Representative monthly rent across the current Nairobi sample."
+            Icon={MapPinned}
+          />
+          <MetricCard
+            label="Audience"
+            value="Incoming tenants"
+            hint="This web app is focused on the renter side of the marketplace."
+            Icon={Users}
+          />
         </div>
       </section>
 
-      <section id="verification" className="mx-auto max-w-[1200px] px-4 py-20 sm:px-6">
-        <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
-          <div className="rounded-[28px] bg-[#EDEDED] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
-            <div
-              className="aspect-[4/3] rounded-[22px] bg-cover bg-center"
-              style={{ backgroundImage: 'linear-gradient(180deg, rgba(37,37,37,0.08), rgba(37,37,37,0.42)), url(/mock/houses/photo6.jpg)' }}
-            />
-            <div className="mt-5 rounded-[20px] bg-white p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8D9192]">Verification layer</p>
-              <p className="mt-2 font-display text-2xl font-semibold text-[#252525]">GPS-backed listing evidence</p>
-              <p className="mt-3 text-sm leading-6 text-[#8D9192]">
-                Location proof, review gates, and a cleaner paid reveal step reduce bad leads before a renter travels.
-              </p>
-            </div>
-          </div>
-
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#28809A]">How we verify every listing</p>
-            <h2 className="mt-4 font-display text-4xl font-bold tracking-[-0.05em] text-[#252525]">
-              Verification is part of the product, not a footnote.
-            </h2>
-            <div className="mt-8 space-y-4">
-              {[
-                'GPS coordinates stay tied to the listing media and neighborhood context.',
-                'Photos must align with the approximate location before the listing earns trust.',
-                'First posters go through admin review before repeated listings become easier to publish.',
-              ].map((item, index) => (
-                <div key={item} className="rounded-[20px] border border-[#EDEDED] bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
-                  <div className="flex items-start gap-4">
-                    <div className="flex size-10 items-center justify-center rounded-full bg-[#28809A] text-sm font-bold text-white">
-                      {index + 1}
-                    </div>
-                    <p className="text-base leading-7 text-[#252525]">{item}</p>
-                  </div>
+      <section className="px-4 pb-10 sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+          <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+            <CardHeader>
+              <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
+                Why this exists
+              </CardTitle>
+              <CardDescription className="text-sm leading-7 text-[#62686a]">
+                Traditional rental discovery often charges for access but still leaves the renter with weak information. PataSpace flips that by making context visible first and charging only when a listing becomes worth pursuing.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {principles.map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-[24px] border border-black/8 bg-[#fbfaf7] p-5"
+                >
+                  <p className="font-display text-xl font-semibold tracking-[-0.04em] text-[#252525]">
+                    {item.title}
+                  </p>
+                  <p className="mt-2 text-sm leading-7 text-[#62686a]">{item.body}</p>
                 </div>
               ))}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-black/8 bg-[#252525] text-white shadow-[0_24px_80px_rgba(37,37,37,0.18)]">
+            <CardHeader>
+              <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-white">
+                Marketplace guardrails
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm leading-7 text-white/76">
+              <p>Listing creation stays mobile-first so media capture and GPS evidence are stronger.</p>
+              <p>Unlock pricing stays tied to rent, which keeps contact reveal aligned with listing value.</p>
+              <p>Disputes, refunds, and confirmation remain explicit parts of the workflow, not side conversations.</p>
+              <p>Outgoing-tenant commissions only move forward after both sides confirm the connection outcome.</p>
+            </CardContent>
+          </Card>
         </div>
       </section>
-
-      <section className="bg-[#EDEDED]">
-        <div className="mx-auto max-w-[1200px] px-4 py-20 sm:px-6">
-          <div className="max-w-[720px]">
-            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#28809A]">Safety features</p>
-            <h2 className="mt-4 font-display text-4xl font-bold tracking-[-0.05em] text-[#252525]">
-              Payment, data, and fraud controls stay visible to the renter.
-            </h2>
-          </div>
-
-          <div className="mt-10 grid gap-6 lg:grid-cols-3">
-            {[
-              {
-                title: 'Data Protection',
-                body: 'Protected identity and verified sessions keep unlock history tied to the right user.',
-                Icon: ShieldCheck,
-              },
-              {
-                title: 'Payment Security',
-                body: 'M-Pesa-aligned top-ups make the paid reveal step easier to trust.',
-                Icon: Lock,
-              },
-              {
-                title: 'Fraud Prevention',
-                body: 'Review gates and evidence checks lower the number of bad listings.',
-                Icon: Check,
-              },
-            ].map(({ title, body, Icon }) => (
-              <div key={title} className="rounded-[24px] bg-white p-8 shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
-                <div className="flex size-14 items-center justify-center rounded-full bg-[#28809A] text-white">
-                  <Icon className="size-5" />
-                </div>
-                <p className="mt-6 font-display text-2xl font-semibold text-[#252525]">{title}</p>
-                <p className="mt-4 text-base leading-7 text-[#8D9192]">{body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-[#252525]">
-        <div className="mx-auto grid max-w-[1200px] gap-10 px-4 py-16 text-white sm:px-6 md:grid-cols-3">
-          {[
-            { value: '2,000+', label: 'Listings' },
-            { value: '5,000+', label: 'Users' },
-            { value: '95%', label: 'Success Rate' },
-          ].map((item) => (
-            <div key={item.label}>
-              <p className="font-display text-6xl font-bold tracking-[-0.05em]">{item.value}</p>
-              <p className="mt-3 text-lg text-white/72">{item.label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-    </div>
+    </PublicSiteFrame>
   );
 }

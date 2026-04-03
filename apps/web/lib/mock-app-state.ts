@@ -188,6 +188,65 @@ export const supportTopics = [
   },
 ];
 
+export type MockSupportRequest = {
+  id: string;
+  subject: string;
+  status: "OPEN" | "IN_REVIEW" | "RESOLVED";
+  channel: "WhatsApp" | "Email";
+  summary: string;
+  updatedAt: string;
+  relatedUnlockId?: string;
+};
+
+export const mockSupportRequests: MockSupportRequest[] = [
+  {
+    id: "support-1",
+    subject: "Pending M-Pesa prompt follow-up",
+    status: "IN_REVIEW",
+    channel: "WhatsApp",
+    summary: "STK push arrived late and the transaction stayed pending for fifteen minutes.",
+    updatedAt: "2026-03-29T08:10:00.000Z",
+  },
+  {
+    id: "support-2",
+    subject: "Unlock refund clarification",
+    status: "RESOLVED",
+    channel: "Email",
+    summary: "Requested confirmation that refunded credits for unlock-2 were restored correctly.",
+    updatedAt: "2026-03-23T16:45:00.000Z",
+    relatedUnlockId: "unlock-2",
+  },
+  {
+    id: "support-3",
+    subject: "Need call guidance before confirm move-in",
+    status: "OPEN",
+    channel: "WhatsApp",
+    summary: "Asked for the safest way to document a successful handover before both parties confirm.",
+    updatedAt: "2026-03-30T11:55:00.000Z",
+    relatedUnlockId: "unlock-1",
+  },
+];
+
+export const mockSavedListingIds = ["listing-1", "listing-3"];
+
+export const mockRecentSearches = [
+  {
+    label: "Kilimani 2 bedroom",
+    href: "/search?q=Kilimani%202%20bedroom",
+    note: "Strong fit for mid-range apartment handovers.",
+  },
+  {
+    label: "Westlands furnished",
+    href: "/search?q=Westlands%20furnished",
+    note: "Useful for move-in-ready shortlisting.",
+  },
+  {
+    label: "South B studio",
+    href: "/search?q=South%20B%20studio",
+    note: "Budget search with commuter access.",
+  },
+] as const;
+
 export function getMockTransactionById(id: string) {
   return mockTransactions.find((transaction) => transaction.id === id);
 }

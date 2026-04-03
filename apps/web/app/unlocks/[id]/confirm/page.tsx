@@ -1,15 +1,18 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ConfirmConnectionForm } from '@/components/unlocks/confirm-connection-form';
-import { formatDateLabel } from '@/lib/format';
+import { CheckCircle2, ClipboardCheck } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { TenantWorkspaceShell } from '@/components/workspace/tenant-workspace-shell';
 import { getMockUnlockBundle } from '@/lib/mock-app-state';
+import { formatDateLabel } from '@/lib/format';
+import { linkButtonClass } from '@/lib/link-button';
 
-type UnlockConfirmPageProps = {
-  params: Promise<{
-    id: string;
-  }>;
-};
-
-export default async function UnlockConfirmPage({ params }: UnlockConfirmPageProps) {
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   const bundle = getMockUnlockBundle(id);
 
@@ -20,27 +23,68 @@ export default async function UnlockConfirmPage({ params }: UnlockConfirmPagePro
   const { unlock, listing } = bundle;
 
   return (
-    <section className="bg-white">
-      <div className="mx-auto max-w-[900px] px-4 py-10 sm:px-6">
-        <div className="rounded-[24px] bg-[#EDEDED] px-6 py-6 shadow-[0_4px_20px_rgba(0,0,0,0.06)]">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#8D9192]">Step 1 of 2</p>
-          <h1 className="mt-3 font-display text-4xl font-bold tracking-[-0.05em] text-[#252525]">
-            Confirm Your Connection
-          </h1>
-          <div className="mt-5 h-2 rounded-full bg-white">
-            <div className="h-2 w-1/2 rounded-full bg-[#28809A]" />
-          </div>
-        </div>
+    <TenantWorkspaceShell
+      pathname="/unlocks"
+      title="Confirm move-in"
+      description="Use the confirmation step to document that contact led to a successful housing handover."
+      actions={
+        <Link href={`/unlocks/${unlock.unlockId}`} className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
+          Back to unlock
+        </Link>
+      }
+    >
+      <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+        <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+          <CardHeader>
+            <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
+              Confirmation checklist
+            </CardTitle>
+            <CardDescription className="text-sm leading-7 text-[#62686a]">
+              Confirm only after you have spoken to the outgoing tenant and validated the handover outcome.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {[
+              'You reached the current tenant on the revealed contact details.',
+              'The property details and occupancy context matched what was discussed.',
+              'You are ready to confirm the move-in outcome on your side.',
+            ].map((item) => (
+              <div
+                key={item}
+                className="flex gap-4 rounded-[24px] border border-black/8 bg-[#fbfaf7] p-4 text-sm leading-7 text-[#4b4f50]"
+              >
+                <span className="mt-1 flex size-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                  <CheckCircle2 className="size-4" />
+                </span>
+                <p>{item}</p>
+              </div>
+            ))}
 
-        <div className="mt-6 rounded-[20px] border border-[#EDEDED] bg-white px-5 py-5 shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
-          <p className="text-sm font-semibold text-[#252525]">{listing.title}</p>
-          <p className="mt-2 text-sm text-[#8D9192]">Unlocked {formatDateLabel(unlock.createdAt)}</p>
-        </div>
+            <Button className="h-11 rounded-full bg-[#28809A] px-6 text-white hover:bg-[#21687d]">
+              Confirm move-in
+            </Button>
+          </CardContent>
+        </Card>
 
-        <div className="mt-6">
-          <ConfirmConnectionForm unlockId={unlock.unlockId} />
-        </div>
+        <Card className="border border-black/8 bg-[#252525] text-white shadow-[0_24px_80px_rgba(37,37,37,0.18)]">
+          <CardHeader>
+            <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-white">
+              Unlock context
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 text-sm leading-7 text-white/76">
+            <p className="inline-flex items-center gap-2 font-medium text-white">
+              <ClipboardCheck className="size-4 text-[#8ed7e7]" />
+              {listing.title}
+            </p>
+            <p>Unlocked on {formatDateLabel(unlock.createdAt)}</p>
+            <p>Your first confirmation was {unlock.myConfirmation ? 'already recorded' : 'not yet recorded'}.</p>
+            <p>
+              Once both sides confirm, the owner-side commission workflow becomes eligible to continue.
+            </p>
+          </CardContent>
+        </Card>
       </div>
-    </section>
+    </TenantWorkspaceShell>
   );
 }

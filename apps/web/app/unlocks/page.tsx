@@ -1,33 +1,56 @@
-import { UnlockCard } from '@/components/unlocks/unlock-card';
+import Link from 'next/link';
+import { MessageSquareWarning, ShieldCheck, Wallet2 } from 'lucide-react';
+import { TenantWorkspaceShell } from '@/components/workspace/tenant-workspace-shell';
+import { MetricCard } from '@/components/shared/metric-card';
+import { UnlocksDataTable } from '@/components/tables/unlocks-data-table';
 import { mockUnlocks } from '@/lib/mock-app-state';
-import { getMockListingById } from '@/lib/mock-listings';
+import { linkButtonClass } from '@/lib/link-button';
 
-export default function UnlocksPage() {
+export default function Page() {
+  const pending = mockUnlocks.filter((unlock) => unlock.status === 'pending_confirmation').length;
+  const confirmed = mockUnlocks.filter((unlock) => unlock.status === 'confirmed').length;
+  const refunded = mockUnlocks.filter((unlock) => unlock.status === 'refunded').length;
+
   return (
-    <section className="bg-[#EDEDED]">
-      <div className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6">
-        <div className="rounded-[24px] bg-white px-6 py-6 shadow-[0_4px_20px_rgba(0,0,0,0.08)] sm:px-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#8D9192]">Unlock tracker</p>
-          <h1 className="mt-3 font-display text-4xl font-bold tracking-[-0.05em] text-[#252525]">
-            Track what you unlocked and what still needs confirmation.
-          </h1>
-          <p className="mt-4 max-w-[720px] text-base leading-7 text-[#8D9192]">
-            This page follows the wireframe status model: contact revealed, confirmation state, and reminder-ready next steps in one place.
-          </p>
-        </div>
-
-        <div className="mt-8 space-y-6">
-          {mockUnlocks.map((unlock) => {
-            const listing = getMockListingById(unlock.listingId);
-
-            if (!listing) {
-              return null;
-            }
-
-            return <UnlockCard key={unlock.unlockId} unlock={unlock} listing={listing} />;
-          })}
-        </div>
+    <TenantWorkspaceShell
+      pathname="/unlocks"
+      title="My unlocks"
+      description="Everything you have paid to reveal, including contact access, pending confirmation, dispute outcomes, and refunded paths."
+      actions={
+        <>
+          <Link href="/listings" className={linkButtonClass({ size: 'sm' })}>
+            Browse listings
+          </Link>
+          <Link href="/support" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
+            Get support
+          </Link>
+        </>
+      }
+    >
+      <div className="grid gap-4 md:grid-cols-3">
+        <MetricCard
+          label="Pending confirmation"
+          value={`${pending}`}
+          hint="Unlocks where one or both parties still need to confirm the handover."
+          Icon={Wallet2}
+        />
+        <MetricCard
+          label="Confirmed"
+          value={`${confirmed}`}
+          hint="Unlocks that completed the tenant side of the post-contact loop."
+          Icon={ShieldCheck}
+        />
+        <MetricCard
+          label="Refund protected"
+          value={`${refunded}`}
+          hint="Unlocks that moved through dispute and returned credit value."
+          Icon={MessageSquareWarning}
+        />
       </div>
-    </section>
+
+      <div className="mt-6">
+        <UnlocksDataTable data={mockUnlocks} />
+      </div>
+    </TenantWorkspaceShell>
   );
 }

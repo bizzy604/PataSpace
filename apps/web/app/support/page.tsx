@@ -1,71 +1,97 @@
 import Link from 'next/link';
-import { Mail, MessageSquareText, Phone } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PageIntro } from '@/components/shared/page-intro';
-import { linkButtonVariants } from '@/lib/link-button';
-import { supportTopics } from '@/lib/mock-app-state';
+import { LifeBuoy, Mail, MessageSquareMore } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { TenantWorkspaceShell } from '@/components/workspace/tenant-workspace-shell';
+import { MetricCard } from '@/components/shared/metric-card';
+import { mockSupportRequests, supportTopics } from '@/lib/mock-app-state';
+import { formatDateLabel } from '@/lib/format';
+import { linkButtonClass } from '@/lib/link-button';
 
-export default function SupportPage() {
-  const contactChannels = [
-    { label: 'Support phone', value: '+254 700 123 123', Icon: Phone },
-    { label: 'Support email', value: 'support@pataspace.test', Icon: Mail },
-    {
-      label: 'Response mode',
-      value: 'Use this route before escalating to a dispute',
-      Icon: MessageSquareText,
-    },
-  ];
+export default function Page() {
+  const openRequests = mockSupportRequests.filter((request) => request.status !== 'RESOLVED').length;
 
   return (
-    <section className="mx-auto max-w-6xl px-6 py-16">
-      <PageIntro
-        badge="Support"
-        kicker="Help and FAQ"
-        title="Get help with unlocks, refunds, and payment timing."
-        description="This route consolidates the support screens that make sense on web today, without copying every mobile utility page one-for-one."
-        actions={
-          <Link href="/unlocks" className={linkButtonVariants()}>
-            Open unlock history
-          </Link>
-        }
-      />
+    <TenantWorkspaceShell
+      pathname="/support"
+      title="Support"
+      description="Help topics, contact channels, and prior support requests connected to wallet, unlock, and dispute activity."
+      actions={
+        <Link href="/profile" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
+          Profile
+        </Link>
+      }
+    >
+      <div className="grid gap-4 md:grid-cols-3">
+        <MetricCard
+          label="Open requests"
+          value={`${openRequests}`}
+          hint="Support conversations that still need follow-up or resolution."
+          Icon={LifeBuoy}
+        />
+        <MetricCard
+          label="WhatsApp support"
+          value="24/7"
+          hint="The fastest path for payment delays and urgent unlock guidance."
+          Icon={MessageSquareMore}
+        />
+        <MetricCard
+          label="Email support"
+          value="support@pataspace.co.ke"
+          hint="Best for longer dispute write-ups and attachments."
+          Icon={Mail}
+        />
+      </div>
 
-      <div className="mt-8 grid gap-5 lg:grid-cols-[1fr_0.92fr]">
-        <div className="space-y-4">
-          {supportTopics.map((topic) => (
-            <Card key={topic.title} className="bg-surface-elevated shadow-soft-md">
-              <CardHeader>
-                <CardTitle>{topic.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="pb-5 text-sm leading-7 text-foreground-secondary">
-                {topic.body}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        <Card className="bg-[#252525] text-white shadow-soft-lg">
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1fr]">
+        <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
           <CardHeader>
-            <CardTitle className="text-white">Contact channels</CardTitle>
+            <CardTitle className="font-display text-2xl font-semibold tracking-[-0.05em] text-[#252525]">
+              Help topics
+            </CardTitle>
+            <CardDescription className="text-sm leading-7 text-[#62686a]">
+              Fast answers for the most common tenant-side questions.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 pb-5 text-sm text-white/78">
-            {contactChannels.map(({ label, value, Icon }) => (
+          <CardContent className="space-y-4">
+            {supportTopics.map((topic) => (
               <div
-                key={label}
-                className="flex items-start gap-3 rounded-[24px] border border-white/10 bg-white/6 px-4 py-4"
+                key={topic.title}
+                className="rounded-[24px] border border-black/8 bg-[#fbfaf7] p-4"
               >
-                <div className="mt-1 flex size-9 items-center justify-center rounded-full bg-white/10 text-[#67d1e3]">
-                  <Icon className="size-4" />
+                <p className="font-medium text-[#252525]">{topic.title}</p>
+                <p className="mt-2 text-sm leading-7 text-[#62686a]">{topic.body}</p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+          <CardHeader>
+            <CardTitle className="font-display text-2xl font-semibold tracking-[-0.05em] text-[#252525]">
+              Previous requests
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {mockSupportRequests.map((request) => (
+              <div
+                key={request.id}
+                className="rounded-[24px] border border-black/8 bg-[#fbfaf7] p-4"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-medium text-[#252525]">{request.subject}</p>
+                  <span className="rounded-full border border-black/8 px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-[#4b4f50]">
+                    {request.status}
+                  </span>
                 </div>
-                <div>
-                  <p className="font-semibold text-white">{label}</p>
-                  <p className="mt-2 leading-6">{value}</p>
-                </div>
+                <p className="mt-2 text-sm leading-7 text-[#62686a]">{request.summary}</p>
+                <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#7b8081]">
+                  {request.channel} • updated {formatDateLabel(request.updatedAt)}
+                </p>
               </div>
             ))}
           </CardContent>
         </Card>
       </div>
-    </section>
+    </TenantWorkspaceShell>
   );
 }

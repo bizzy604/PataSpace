@@ -2,8 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Poppins } from 'next/font/google';
 import { ReactNode } from 'react';
-import { SiteHeader } from '../components/layout/site-header';
-import { ThemeProvider } from '../components/theme-provider';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -13,8 +12,8 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: 'PataSpace',
-  description: 'Verified tenant-to-tenant housing marketplace with wallet-powered unlocks and GPS-backed media.',
+  title: 'PataSpace | Find Your Next Home in Nairobi',
+  description: 'Find your next home in Nairobi, connect directly with outgoing tenants, and move without agent fees.',
   icons: {
     icon: '/brand/pataspace-logo.png',
     shortcut: '/brand/pataspace-logo.png',
@@ -24,20 +23,19 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <body className={poppins.variable}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <TooltipProvider>
           <a
             href="#main-content"
             className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-card focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-foreground"
           >
             Skip to content
           </a>
-          <SiteHeader />
-          <main id="main-content" className="min-h-[calc(100vh-80px)]">
+          <main id="main-content" className="min-h-screen">
             {children}
           </main>
-        </ThemeProvider>
+        </TooltipProvider>
       </body>
     </html>
   );
