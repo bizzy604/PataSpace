@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Clock3, CircleCheck, Smartphone } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { TenantWorkspaceShell } from '@/components/workspace/tenant-workspace-shell';
+import { TenantWorkspaceShell } from '@/components/workspace/page';
 import { formatKes } from '@/lib/format';
 import { linkButtonClass } from '@/lib/link-button';
 

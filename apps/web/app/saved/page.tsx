@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Bookmark, Search, Wallet2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { TenantWorkspaceShell } from '@/components/workspace/tenant-workspace-shell';
+import { TenantWorkspaceShell } from '@/components/workspace/page';
 import { MetricCard } from '@/components/shared/metric-card';
 import { ListingPreviewCard } from '@/components/listings/listing-preview-card';
 import { mockSavedListingIds } from '@/lib/mock-app-state';

@@ -1,4 +1,4 @@
-import { PostDetailsPage } from '@/components/posting/post-pages';
+import { PostDetailsPage } from '@/components/posting/page';
 
 export default function Page() {
   return <PostDetailsPage />;

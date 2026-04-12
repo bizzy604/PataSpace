@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { CheckCircle2, Wallet2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { TenantWorkspaceShell } from '@/components/workspace/tenant-workspace-shell';
+import { TenantWorkspaceShell } from '@/components/workspace/page';
 import { mockTransactions } from '@/lib/mock-app-state';
 import { formatDateLabel, formatKes } from '@/lib/format';
 import { linkButtonClass } from '@/lib/link-button';

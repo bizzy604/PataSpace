@@ -11,7 +11,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { TenantWorkspaceShell } from '@/components/workspace/tenant-workspace-shell';
+import { TenantWorkspaceShell } from '@/components/workspace/page';
 import { getMockUnlockBundle } from '@/lib/mock-app-state';
 import { linkButtonClass } from '@/lib/link-button';
 

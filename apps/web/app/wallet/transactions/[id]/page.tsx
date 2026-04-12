@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ReceiptText, Wallet2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { TenantWorkspaceShell } from '@/components/workspace/tenant-workspace-shell';
+import { TenantWorkspaceShell } from '@/components/workspace/page';
 import { StatusBadge, transactionStatusMeta, transactionTypeMeta } from '@/components/shared/status-badge';
 import { getMockTransactionById } from '@/lib/mock-app-state';
 import { formatDateLabel, formatKes } from '@/lib/format';

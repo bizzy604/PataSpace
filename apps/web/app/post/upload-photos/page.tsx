@@ -1,4 +1,4 @@
-import { PostUploadPhotosPage } from '@/components/posting/post-pages';
+import { PostUploadPhotosPage } from '@/components/posting/page';
 
 export default function Page() {
   return <PostUploadPhotosPage />;

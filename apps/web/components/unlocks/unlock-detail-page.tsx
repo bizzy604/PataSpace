@@ -1,11 +1,11 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { CheckCircle2, Compass, MapPinned, Phone, ShieldCheck, UserRound } from 'lucide-react';
-import { RevealedLocationMap } from '@/components/map/revealed-location-map';
+import { RevealedLocationMap } from '@/components/map/page';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge, unlockStatusMeta } from '@/components/shared/status-badge';
-import { TenantWorkspaceShell } from '@/components/workspace/tenant-workspace-shell';
+import { TenantWorkspaceShell } from '@/components/workspace/page';
 import { getMockUnlockBundle } from '@/lib/mock-app-state';
 import { formatDateLabel } from '@/lib/format';
 import { linkButtonClass } from '@/lib/link-button';

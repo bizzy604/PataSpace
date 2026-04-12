@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { MetricCard } from '@/components/shared/metric-card';
 import { StatusBadge, transactionStatusMeta, transactionTypeMeta } from '@/components/shared/status-badge';
 import { TransactionsDataTable } from '@/components/tables/transactions-data-table';
-import { TenantWorkspaceShell } from '@/components/workspace/tenant-workspace-shell';
+import { TenantWorkspaceShell } from '@/components/workspace/page';
 import { creditPackages, mockCreditBalance, mockTransactions } from '@/lib/mock-app-state';
 import { formatDateLabel, formatKes } from '@/lib/format';
 import { linkButtonClass } from '@/lib/link-button';

@@ -1,4 +1,4 @@
-import { MapViewPage } from '@/components/discovery/search-pages';
+import { MapViewPage } from '@/components/discovery/page';
 
 type SearchParamValue = string | string[] | undefined;
 

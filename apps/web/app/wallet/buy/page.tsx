@@ -1,4 +1,4 @@
-import { WalletBuyPage } from '@/components/wallet/wallet-pages';
+import { WalletBuyPage } from '@/components/wallet/page';
 
 export default function Page() {
   return <WalletBuyPage />;

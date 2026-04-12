@@ -3,7 +3,7 @@ import { Bell, MessageCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MetricCard } from '@/components/shared/metric-card';
 import { StatusBadge } from '@/components/shared/status-badge';
-import { TenantWorkspaceShell } from '@/components/workspace/tenant-workspace-shell';
+import { TenantWorkspaceShell } from '@/components/workspace/page';
 import { linkButtonClass } from '@/lib/link-button';
 
 const notificationGroups = [

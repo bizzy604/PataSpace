@@ -1,4 +1,4 @@
-import { SearchPage } from '@/components/discovery/search-pages';
+import { SearchPage } from '@/components/discovery/page';
 
 type SearchParamValue = string | string[] | undefined;
 

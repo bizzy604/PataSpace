@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { MetricCard } from '@/components/shared/metric-card';
 import { StatusBadge, unlockStatusMeta } from '@/components/shared/status-badge';
-import { TenantWorkspaceShell } from '@/components/workspace/tenant-workspace-shell';
+import { TenantWorkspaceShell } from '@/components/workspace/page';
 import {
   mockCreditBalance,
   mockCurrentUser,

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { MessageSquareWarning, ShieldCheck, Wallet2 } from 'lucide-react';
-import { TenantWorkspaceShell } from '@/components/workspace/tenant-workspace-shell';
+import { TenantWorkspaceShell } from '@/components/workspace/page';
 import { MetricCard } from '@/components/shared/metric-card';
 import { UnlocksDataTable } from '@/components/tables/unlocks-data-table';
 import { mockUnlocks } from '@/lib/mock-app-state';

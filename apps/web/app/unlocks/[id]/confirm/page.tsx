@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { CheckCircle2, ClipboardCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { TenantWorkspaceShell } from '@/components/workspace/tenant-workspace-shell';
+import { TenantWorkspaceShell } from '@/components/workspace/page';
 import { getMockUnlockBundle } from '@/lib/mock-app-state';
 import { formatDateLabel } from '@/lib/format';
 import { linkButtonClass } from '@/lib/link-button';
