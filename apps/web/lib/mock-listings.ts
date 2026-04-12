@@ -20,6 +20,7 @@ export type MockListing = {
   county: string;
   neighborhood: string;
   address: string;
+  directions: string;
   monthlyRent: number;
   bedrooms: number;
   bathrooms: number;
@@ -42,6 +43,11 @@ export type MockListing = {
     listingsPosted: number;
     phoneNumber: string;
   };
+  caretaker: {
+    name: string;
+    role: string;
+    phoneNumber: string;
+  };
   mapLocation: {
     approxLatitude: number;
     approxLongitude: number;
@@ -62,6 +68,7 @@ export const mockListings: MockListing[] = [
     county: "Nairobi",
     neighborhood: "Kilimani",
     address: "Argwings Kodhek Road, Kilimani",
+    directions: "Use the Yaya Centre roundabout gate, then take the second left into Block B.",
     monthlyRent: 25000,
     bedrooms: 2,
     bathrooms: 1,
@@ -89,15 +96,20 @@ export const mockListings: MockListing[] = [
       listingsPosted: 2,
       phoneNumber: "+254712345678",
     },
+    caretaker: {
+      name: "Samuel Ndegwa",
+      role: "Block B caretaker",
+      phoneNumber: "+254711020304",
+    },
     mapLocation: {
       approxLatitude: -1.2896,
       approxLongitude: 36.7909,
     },
     contactInfo: {
-      address: "123 Argwings Kodhek Rd, Apartment 5B",
-      phoneNumber: "+254712345678",
-      latitude: -1.2896,
-      longitude: 36.7909,
+      address: "Yaya Court Apartments, Block B, 4th Floor, Kilimani",
+      phoneNumber: "+254712440128",
+      latitude: -1.289563,
+      longitude: 36.790942,
     },
     media: [
       {
@@ -129,6 +141,7 @@ export const mockListings: MockListing[] = [
     county: "Nairobi",
     neighborhood: "South B",
     address: "Likoni Road, South B",
+    directions: "Enter through the east gate and the studio is the second unit on the right.",
     monthlyRent: 14500,
     bedrooms: 0,
     bathrooms: 1,
@@ -156,15 +169,20 @@ export const mockListings: MockListing[] = [
       listingsPosted: 1,
       phoneNumber: "+254722111222",
     },
+    caretaker: {
+      name: "Daniel Mwangi",
+      role: "Caretaker on site",
+      phoneNumber: "+254701665420",
+    },
     mapLocation: {
       approxLatitude: -1.3132,
       approxLongitude: 36.8378,
     },
     contactInfo: {
-      address: "Likoni Road Court, Room 17",
-      phoneNumber: "+254722111222",
-      latitude: -1.3132,
-      longitude: 36.8378,
+      address: "Likoni Flats, South B Estate, Ground Floor",
+      phoneNumber: "+254703281990",
+      latitude: -1.3167,
+      longitude: 36.8333,
     },
     media: [
       {
@@ -196,6 +214,7 @@ export const mockListings: MockListing[] = [
     county: "Nairobi",
     neighborhood: "Westlands",
     address: "Muthithi Road, Westlands",
+    directions: "Pass the lobby desk, use lift B, and the rooftop access is one level above the apartment.",
     monthlyRent: 42000,
     bedrooms: 1,
     bathrooms: 1,
@@ -224,15 +243,20 @@ export const mockListings: MockListing[] = [
       listingsPosted: 3,
       phoneNumber: "+254733444555",
     },
+    caretaker: {
+      name: "Grace Wambui",
+      role: "Front desk and access contact",
+      phoneNumber: "+254700554812",
+    },
     mapLocation: {
       approxLatitude: -1.2684,
       approxLongitude: 36.8065,
     },
     contactInfo: {
-      address: "Muthithi Heights, Unit 14C",
-      phoneNumber: "+254733444555",
-      latitude: -1.2684,
-      longitude: 36.8065,
+      address: "Muthithi Heights, 8th Floor, Westlands",
+      phoneNumber: "+254722441660",
+      latitude: -1.2675,
+      longitude: 36.8108,
     },
     media: [
       {

@@ -13,6 +13,16 @@ export enum ListingStatus {
   REJECTED = 'REJECTED',
 }
 
+export enum ListingHouseType {
+  STUDIO = 'STUDIO',
+  BEDSITTER = 'BEDSITTER',
+  ONE_BEDROOM = 'ONE_BEDROOM',
+  TWO_BEDROOM = 'TWO_BEDROOM',
+  THREE_BEDROOM = 'THREE_BEDROOM',
+  FOUR_BEDROOM_PLUS = 'FOUR_BEDROOM_PLUS',
+  MANSION = 'MANSION',
+}
+
 export enum TransactionStatus {
   PENDING = 'PENDING',
   COMPLETED = 'COMPLETED',

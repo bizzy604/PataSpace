@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { ListingHouseType } from '@pataspace/contracts';
 import { ListingStatus } from '@prisma/client';
 import { ListingPhotoDto } from '../listing/listing.docs';
 
@@ -31,6 +32,9 @@ export class AdminPendingListingDto {
 
   @ApiProperty({ example: 25000 })
   monthlyRent!: number;
+
+  @ApiProperty({ enum: ListingHouseType, example: ListingHouseType.ONE_BEDROOM })
+  houseType!: ListingHouseType;
 
   @ApiProperty({ type: [ListingPhotoDto] })
   photos!: ListingPhotoDto[];

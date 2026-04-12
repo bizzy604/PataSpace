@@ -5,6 +5,7 @@ import { linkButtonClass } from '@/lib/link-button';
 
 const primaryLinks = [
   { label: 'Browse listings', href: '/listings' },
+  { label: 'Post listing', href: '/post' },
   { label: 'Wallet', href: '/wallet' },
   { label: 'My unlocks', href: '/unlocks' },
   { label: 'Support', href: '/support' },
@@ -15,6 +16,7 @@ const footerColumns = [
     title: 'Discovery',
     links: [
       { label: 'Browse listings', href: '/listings' },
+      { label: 'Post listing', href: '/post' },
       { label: 'Photo gallery', href: '/listings/listing-1/gallery' },
       { label: 'How unlocks work', href: '/listings/listing-1/unlock' },
     ],

@@ -1,14 +1,24 @@
 import '../../global.css';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Stack, usePathname, useRouter } from 'expo-router';
+import { AppLaunchScreen } from '@/components/ui/app-launch-screen';
 import { MobileAppProvider, useMobileApp } from '@/features/mobile-app/mobile-app-provider';
 
 const publicPaths = ['/', '/onboarding', '/register', '/verify-otp', '/login'];
 
 function RootNavigator() {
+  const [showLaunch, setShowLaunch] = useState(true);
   const pathname = usePathname();
   const router = useRouter();
-  const { isAuthenticated } = useMobileApp();
+  const { isAuthenticated, theme } = useMobileApp();
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setShowLaunch(false);
+    }, 1500);
+
+    return () => clearTimeout(timeout);
+  }, []);
 
   useEffect(() => {
     const isPublicPath = publicPaths.includes(pathname);
@@ -24,12 +34,16 @@ function RootNavigator() {
     }
   }, [isAuthenticated, pathname, router]);
 
+  if (showLaunch) {
+    return <AppLaunchScreen />;
+  }
+
   return (
     <Stack
       screenOptions={{
         headerShown: false,
         contentStyle: {
-          backgroundColor: '#ffffff',
+          backgroundColor: theme.background,
         },
       }}
     />

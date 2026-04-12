@@ -1,4 +1,11 @@
-import { PrismaClient, Role, ListingStatus, TransactionStatus, TransactionType } from '@prisma/client';
+import {
+  PrismaClient,
+  Role,
+  ListingHouseType,
+  ListingStatus,
+  TransactionStatus,
+  TransactionType,
+} from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import {
   encryptField,
@@ -110,6 +117,7 @@ async function main() {
       monthlyRent: 25000,
       bedrooms: 1,
       bathrooms: 1,
+      houseType: ListingHouseType.ONE_BEDROOM,
       propertyType: 'Apartment',
       furnished: false,
       description: 'A clean one-bedroom apartment ready for move-in.',
@@ -161,6 +169,7 @@ async function main() {
       monthlyRent: 18000,
       bedrooms: 1,
       bathrooms: 1,
+      houseType: ListingHouseType.STUDIO,
       propertyType: 'Studio',
       furnished: true,
       description: 'Pending review studio listing.',

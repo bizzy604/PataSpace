@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ListingStatus } from '../enums';
+import { ListingHouseType, ListingStatus } from '../enums';
 import { isoDateStringSchema } from './common';
 import { listingPhotoSchema } from './listing';
 
@@ -20,6 +20,7 @@ export const adminPendingListingSchema = z.object({
   county: z.string().min(1),
   neighborhood: z.string().min(1),
   monthlyRent: z.number().int().positive(),
+  houseType: z.nativeEnum(ListingHouseType),
   photos: z.array(listingPhotoSchema),
   createdAt: isoDateStringSchema,
   daysWaiting: z.number().int().nonnegative(),

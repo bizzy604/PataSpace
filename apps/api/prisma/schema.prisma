@@ -22,6 +22,16 @@ enum ListingStatus {
   REJECTED
 }
 
+enum ListingHouseType {
+  STUDIO
+  BEDSITTER
+  ONE_BEDROOM
+  TWO_BEDROOM
+  THREE_BEDROOM
+  FOUR_BEDROOM_PLUS
+  MANSION
+}
+
 enum TransactionType {
   PURCHASE
   SPEND
@@ -172,6 +182,7 @@ model Listing {
   monthlyRent       Int
   bedrooms          Int
   bathrooms         Int
+  houseType         ListingHouseType
   propertyType      String
   furnished         Boolean        @default(false)
   description       String         @db.Text

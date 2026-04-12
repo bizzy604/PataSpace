@@ -221,6 +221,7 @@ describe('Phase 6 confirmations, disputes, and admin review flows', () => {
         monthlyRent,
         bedrooms: 2,
         bathrooms: 1,
+        houseType: 'TWO_BEDROOM',
         propertyType: 'Apartment',
         furnished: false,
         description: `Listing ${label} has enough detail to satisfy validation rules.`,

@@ -1,4 +1,4 @@
-import { ListingStatus } from '../enums';
+import { ListingHouseType, ListingStatus } from '../enums';
 
 export type ListingPhotoInput = {
   url: string;
@@ -25,6 +25,7 @@ export type CreateListingRequest = {
   monthlyRent: number;
   bedrooms: number;
   bathrooms: number;
+  houseType: ListingHouseType;
   propertyType: string;
   furnished?: boolean;
   description: string;
@@ -77,6 +78,7 @@ export type ListingCard = {
   monthlyRent: number;
   bedrooms: number;
   bathrooms: number;
+  houseType: ListingHouseType;
   propertyType: string;
   furnished: boolean;
   availableFrom: string;

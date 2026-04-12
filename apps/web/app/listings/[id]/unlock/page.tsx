@@ -3,13 +3,12 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowRight, ShieldCheck, Wallet } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { PublicSiteFrame } from '@/components/shared/public-site-frame';
 import { ScreenHero } from '@/components/shared/screen-hero';
 import { getMockListingById } from '@/lib/mock-listings';
 import { formatKes } from '@/lib/format';
 import { getListingVisual } from '@/lib/listing-visuals';
-import { mockCreditBalance } from '@/lib/mock-app-state';
+import { getMockUnlockByListingId, mockCreditBalance } from '@/lib/mock-app-state';
 import { linkButtonClass } from '@/lib/link-button';
 
 export default async function Page({
@@ -26,6 +25,7 @@ export default async function Page({
 
   const visual = getListingVisual(listing.id);
   const postUnlockBalance = mockCreditBalance.balance - listing.unlockCostCredits;
+  const existingUnlock = getMockUnlockByListingId(listing.id);
 
   return (
     <PublicSiteFrame>
@@ -79,7 +79,7 @@ export default async function Page({
 
               <div className="grid gap-3">
                 {[
-                  'Exact address and phone number are revealed immediately after purchase.',
+                  'Exact address, directions, map pin, and contact numbers are revealed immediately after purchase.',
                   'Repeat unlocks stay idempotent and should not charge twice for the same listing.',
                   'The current tenant is notified so both sides can move into confirmation workflow cleanly.',
                 ].map((item) => (
@@ -134,9 +134,12 @@ export default async function Page({
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <Button className="h-11 rounded-full bg-[#28809A] px-6 text-white hover:bg-[#21687d]">
+                <Link
+                  href={existingUnlock ? `/unlocks/${existingUnlock.unlockId}` : '/unlocks'}
+                  className={linkButtonClass({ size: 'sm' })}
+                >
                   Reveal contact
-                </Button>
+                </Link>
                 <Link
                   href="/wallet/processing"
                   className={linkButtonClass({ variant: 'outline', size: 'sm' })}

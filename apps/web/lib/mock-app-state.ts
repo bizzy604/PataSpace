@@ -255,6 +255,10 @@ export function getMockUnlockById(id: string) {
   return mockUnlocks.find((unlock) => unlock.unlockId === id);
 }
 
+export function getMockUnlockByListingId(listingId: string) {
+  return mockUnlocks.find((unlock) => unlock.listingId === listingId);
+}
+
 export function getMockDisputeByUnlockId(unlockId: string) {
   return mockDisputes.find((dispute) => dispute.unlockId === unlockId);
 }
@@ -277,4 +281,14 @@ export function getMockUnlockBundle(unlockId: string) {
     listing,
     dispute: getMockDisputeByUnlockId(unlockId),
   };
+}
+
+export function getMockUnlockBundleByListingId(listingId: string) {
+  const unlock = getMockUnlockByListingId(listingId);
+
+  if (!unlock) {
+    return null;
+  }
+
+  return getMockUnlockBundle(unlock.unlockId);
 }

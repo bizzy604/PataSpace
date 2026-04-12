@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
+import { ColorSchemeToggle } from '@/components/ui/color-scheme-toggle';
 import { Input } from '@/components/ui/input';
 import { Screen } from '@/components/ui/screen';
 import { SectionHeader } from '@/components/ui/section-header';
@@ -168,9 +169,19 @@ export function SettingsScreen() {
     <Screen>
       <SectionHeader
         kicker="Settings"
-        title="Notifications and alerts"
-        description="Push, SMS, saved search"
+        title="Notifications and appearance"
+        description="Push, SMS, saved search, theme"
       />
+
+      <Card className="items-center gap-4">
+        <Text className="text-xs font-semibold uppercase tracking-[1.8px] text-muted-foreground">
+          Appearance
+        </Text>
+        <ColorSchemeToggle showLabels />
+        <Text className="text-center text-sm leading-6 text-muted-foreground">
+          Switch the mobile app between the light and dark presentation at any time.
+        </Text>
+      </Card>
 
       <View className="gap-3">
         <ToggleRow

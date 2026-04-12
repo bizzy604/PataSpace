@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { UnlockContactInfo } from '@pataspace/contracts';
+import { useColorScheme as useNativeWindColorScheme } from 'nativewind';
 import {
   buildUnlockContactInfo,
   confirmationStages,
@@ -8,6 +9,7 @@ import {
   featuredListings,
   filterBudgetOptions,
   filterSizeOptions,
+  formatListingHouseType,
   formatCredits,
   getListingById,
   helpArticles,
@@ -43,6 +45,7 @@ import {
   type UserProfile,
   type WalletPackage,
 } from '@/data/mock-listings';
+import { mobileThemes, type AppColorScheme, type MobileThemePalette } from '@/lib/theme';
 
 type PendingAuth = {
   name: string;
@@ -55,6 +58,8 @@ type PendingTopUp = {
 };
 
 type MobileAppContextValue = {
+  colorScheme: AppColorScheme;
+  theme: MobileThemePalette;
   isAuthenticated: boolean;
   user: UserProfile;
   settings: AppSettings;
@@ -98,6 +103,7 @@ type MobileAppContextValue = {
   logout: () => void;
   updateProfile: (profile: Partial<UserProfile>) => void;
   updateSettings: (settings: Partial<AppSettings>) => void;
+  setColorSchemePreference: (scheme: AppColorScheme) => void;
   toggleSaved: (listingId: string) => void;
   updateSearchFilters: (filters: Partial<SearchFilters>) => void;
   resetSearchFilters: () => void;
@@ -156,7 +162,7 @@ function buildSubmittedListingDraftData(draft: ListingDraft, listingIndex: numbe
   const unlockCostCredits = Math.round(monthlyRent * 0.1);
   const fallbackMapLocation = resolveApproximateMapLocation(draft.area || 'Kilimani', coverPhoto?.gps);
   const contactInfo = buildUnlockContactInfo(
-    `${draft.location || 'Location pending'}, Nairobi`,
+    `${draft.location || 'Location pending'}, ${draft.county || 'Nairobi'}`,
     draft.landlordPhone || '+254 700 000 000',
     coverPhoto?.gps?.latitude,
     coverPhoto?.gps?.longitude,
@@ -170,10 +176,14 @@ function buildSubmittedListingDraftData(draft: ListingDraft, listingIndex: numbe
     unlockCostCredits,
     unlockCost: formatCredits(unlockCostCredits),
     commissionAmount: `KES ${Math.round(unlockCostCredits * 0.3).toLocaleString()}`,
+    county: draft.county || 'Nairobi',
+    houseType: draft.houseType,
     area: draft.area || 'Nairobi',
-    location: draft.location || 'Location pending',
+    location: draft.location
+      ? `${draft.location}, ${draft.county || 'Nairobi'}`
+      : `Location pending, ${draft.county || 'Nairobi'}`,
     directions: 'Directions will appear after the listing is approved and unlocked.',
-    meta: '1 listing  |  Pending review',
+    meta: `${formatListingHouseType(draft.houseType)}  |  ${draft.county || 'Nairobi'}  |  Pending review`,
     blurb: draft.description || 'New listing draft awaiting review.',
     status: listingIndex <= 3 ? 'Review' : 'Live',
     coverImage: galleryMedia[0]?.source ?? draftCameraSequence[0].source,
@@ -210,6 +220,8 @@ function buildSubmittedListingDraftData(draft: ListingDraft, listingIndex: numbe
 }
 
 export function MobileAppProvider({ children }: { children: ReactNode }) {
+  const { colorScheme: nativeWindColorScheme, setColorScheme: setNativeWindColorScheme } =
+    useNativeWindColorScheme();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(initialUserProfile);
   const [settings, setSettings] = useState(initialSettings);
@@ -226,12 +238,18 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
   const [pendingTopUp, setPendingTopUp] = useState<PendingTopUp | null>(null);
   const [draft, setDraft] = useState(initialDraft);
   const [searchFilters, setSearchFilters] = useState(initialSearchFilters);
+  const colorScheme: AppColorScheme = nativeWindColorScheme === 'dark' ? 'dark' : 'light';
+  const theme = mobileThemes[colorScheme];
 
   const browseListings = listings.filter((listing) => listing.status !== 'Review' && listing.status !== 'Closed');
   const savedListings = browseListings.filter((listing) => savedListingIds.includes(listing.id));
   const latestUnlock = unlocks[0];
   const latestTopUp = transactions.find((transaction) => transaction.type === 'topup');
   const latestSubmittedListing = myListings[0];
+
+  useEffect(() => {
+    setNativeWindColorScheme(settings.colorScheme);
+  }, [setNativeWindColorScheme, settings.colorScheme]);
 
   function pushNotification(notification: NotificationRecord) {
     setNotifications((current) => [notification, ...current]);
@@ -271,13 +289,13 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
     return true;
   }
 
-  function login(phone: string) {
-    const normalizedPhone = normalizePhone(phone);
+  function login(identifier: string) {
+    const normalizedPhone = normalizePhone(identifier);
 
     setIsAuthenticated(true);
     setUser((current) => ({
       ...current,
-      phone: normalizedPhone || current.phone,
+      phone: identifier.includes('@') ? current.phone : normalizedPhone || current.phone,
     }));
   }
 
@@ -298,6 +316,10 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
       ...current,
       ...nextSettings,
     }));
+  }
+
+  function setColorSchemePreference(scheme: AppColorScheme) {
+    updateSettings({ colorScheme: scheme });
   }
 
   function toggleSaved(listingId: string) {
@@ -559,6 +581,8 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
   return (
     <MobileAppContext.Provider
       value={{
+        colorScheme,
+        theme,
         isAuthenticated,
         user,
         settings,
@@ -603,6 +627,7 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
         logout,
         updateProfile,
         updateSettings,
+        setColorSchemePreference,
         toggleSaved,
         updateSearchFilters,
         resetSearchFilters,

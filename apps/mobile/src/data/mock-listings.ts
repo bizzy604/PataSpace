@@ -1,8 +1,6 @@
 import type { ImageSourcePropType } from 'react-native';
-import type {
-  ListingMapLocation,
-  UnlockContactInfo,
-} from '@pataspace/contracts';
+import { ListingHouseType, type ListingMapLocation, type UnlockContactInfo } from '@pataspace/contracts';
+import type { AppColorScheme } from '@/lib/theme';
 import { draftCameraSequence, listingGallerySets, type LocalMedia } from '@/data/media-library';
 
 export type ListingStatus = 'Verified' | 'Hot' | 'New' | 'Live' | 'Review' | 'Closed';
@@ -87,6 +85,8 @@ export type ListingPreview = {
   unlockCost: string;
   unlockCostCredits: number;
   commissionAmount: string;
+  county: string;
+  houseType: ListingHouseType;
   area: string;
   location: string;
   directions: string;
@@ -186,6 +186,8 @@ export type ListingDraftPhoto = {
 
 export type ListingDraft = {
   title: string;
+  county: string;
+  houseType: ListingHouseType;
   area: string;
   location: string;
   monthlyRent: string;
@@ -215,6 +217,7 @@ export type UserProfile = {
 };
 
 export type AppSettings = {
+  colorScheme: AppColorScheme;
   pushNotifications: boolean;
   smsAlerts: boolean;
   savedSearchAlerts: boolean;
@@ -226,6 +229,20 @@ function formatCurrency(amount: number) {
 
 export function formatCredits(amount: number) {
   return `${amount.toLocaleString()} credits`;
+}
+
+const listingHouseTypeLabels: Record<ListingHouseType, string> = {
+  [ListingHouseType.STUDIO]: 'Studio',
+  [ListingHouseType.BEDSITTER]: 'Bedsitter',
+  [ListingHouseType.ONE_BEDROOM]: '1BR',
+  [ListingHouseType.TWO_BEDROOM]: '2BR',
+  [ListingHouseType.THREE_BEDROOM]: '3BR',
+  [ListingHouseType.FOUR_BEDROOM_PLUS]: '4BR+',
+  [ListingHouseType.MANSION]: 'Mansion',
+};
+
+export function formatListingHouseType(houseType: ListingHouseType) {
+  return listingHouseTypeLabels[houseType];
 }
 
 function buildListing(
@@ -247,6 +264,18 @@ function buildListing(
 }
 
 export const listingFilters = ['For you', 'Verified', 'Budget', '2 BR'];
+
+export const countyOptions = ['Nairobi', 'Kiambu', 'Machakos', 'Kajiado', 'Nakuru', 'Mombasa'];
+
+export const houseTypeOptions: Array<{ label: string; value: ListingHouseType }> = [
+  { label: 'Bedsitter', value: ListingHouseType.BEDSITTER },
+  { label: 'Studio', value: ListingHouseType.STUDIO },
+  { label: '1BR', value: ListingHouseType.ONE_BEDROOM },
+  { label: '2BR', value: ListingHouseType.TWO_BEDROOM },
+  { label: '3BR', value: ListingHouseType.THREE_BEDROOM },
+  { label: '4BR+', value: ListingHouseType.FOUR_BEDROOM_PLUS },
+  { label: 'Mansion', value: ListingHouseType.MANSION },
+];
 
 export const neighborhoodSuggestions = ['Kilimani', 'South B', 'Westlands', 'Ngong Road'];
 
@@ -280,6 +309,8 @@ export const featuredListings: ListingPreview[] = [
     id: 'kilimani-sunny-2br',
     title: 'Sunny 2BR handover near Yaya Centre',
     monthlyRent: 25000,
+    county: 'Nairobi',
+    houseType: ListingHouseType.TWO_BEDROOM,
     area: 'Kilimani',
     location: 'Argwings Kodhek Rd, Nairobi',
     directions: 'Use the Yaya Centre roundabout gate, then take the second left into Block B.',
@@ -309,6 +340,8 @@ export const featuredListings: ListingPreview[] = [
     id: 'south-b-studio',
     title: 'Budget studio close to CBD routes',
     monthlyRent: 14500,
+    county: 'Nairobi',
+    houseType: ListingHouseType.BEDSITTER,
     area: 'South B',
     location: 'Likoni Rd, Nairobi',
     directions: 'Enter through the east gate and the studio is the second unit on the right.',
@@ -338,6 +371,8 @@ export const featuredListings: ListingPreview[] = [
     id: 'westlands-loft',
     title: 'Modern loft with rooftop access',
     monthlyRent: 38000,
+    county: 'Nairobi',
+    houseType: ListingHouseType.ONE_BEDROOM,
     area: 'Westlands',
     location: 'Muthithi Rd, Nairobi',
     directions: 'Pass the lobby desk, use lift B, and the rooftop access is one level above the apartment.',
@@ -425,6 +460,8 @@ export { draftCameraSequence };
 
 export const initialDraft: ListingDraft = {
   title: 'Bright 1BR near Ngong Road',
+  county: 'Nairobi',
+  houseType: ListingHouseType.ONE_BEDROOM,
   area: 'Kilimani',
   location: 'Ngong Road, Nairobi',
   monthlyRent: '22000',
@@ -575,6 +612,7 @@ export const initialUserProfile: UserProfile = {
 };
 
 export const initialSettings: AppSettings = {
+  colorScheme: 'light',
   pushNotifications: true,
   smsAlerts: true,
   savedSearchAlerts: true,

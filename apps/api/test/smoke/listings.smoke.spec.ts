@@ -17,6 +17,7 @@ describe('Public listings smoke checks', () => {
                 {
                   id: 'listing_smoke_1',
                   county: 'Nairobi',
+                  houseType: 'TWO_BEDROOM',
                   neighborhood: 'Kilimani',
                   monthlyRent: 30000,
                 },
@@ -33,6 +34,7 @@ describe('Public listings smoke checks', () => {
             getListingDetails: jest.fn().mockResolvedValue({
               id: 'listing_smoke_1',
               county: 'Nairobi',
+              houseType: 'TWO_BEDROOM',
               neighborhood: 'Kilimani',
               monthlyRent: 30000,
               contactInfo: undefined,

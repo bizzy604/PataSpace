@@ -15,6 +15,7 @@ const config: ExpoConfig = {
   userInterfaceStyle: 'light',
   experiments: {
     typedRoutes: true,
+    autolinkingModuleResolution: true,
   },
   extra: {
     eas: {
@@ -24,7 +25,24 @@ const config: ExpoConfig = {
   web: {
     bundler: 'metro',
   },
-  plugins: ['expo-router', 'expo-font'],
+  plugins: [
+    'expo-router',
+    'expo-font',
+    [
+      'expo-camera',
+      {
+        cameraPermission: 'Allow PataSpace to capture listing photos.',
+        microphonePermission: 'Allow PataSpace to record listing videos.',
+        recordAudioAndroid: false,
+      },
+    ],
+    [
+      'expo-location',
+      {
+        locationWhenInUsePermission: 'Allow PataSpace to attach GPS to listing photos.',
+      },
+    ],
+  ],
   ios: {
     bundleIdentifier: 'com.pataspace.mobile',
     buildNumber: '1',

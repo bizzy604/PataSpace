@@ -28,31 +28,42 @@ pnpm --filter @pataspace/web start
 
 ## Current Route Surface
 
-- `/`: landing page and web scope overview
+- `/`: Stitch-backed PataSpace home
 - `/listings`: browse listings with inline search and filter shell
-- `/listings/[id]`: listing details
+- `/listings/[id]`: Stitch-backed listing details
 - `/listings/[id]/gallery`: media review
 - `/listings/[id]/unlock`: unlock confirmation
 - `/auth/register`: account creation
 - `/auth/verify-otp`: OTP verification
-- `/auth/sign-in`: sign-in flow
-- `/wallet`: wallet overview
-- `/wallet/buy`: credit purchase flow
+- `/auth/sign-in`: Stitch-backed sign-in flow
+- `/wallet`: Stitch-backed wallet overview
+- `/wallet/buy`: Stitch-backed M-Pesa payment flow
 - `/wallet/processing`: M-Pesa pending state
 - `/wallet/success`: payment success state
-- `/wallet/transactions`: transaction history
+- `/wallet/transactions`: Stitch-backed transaction history
 - `/wallet/transactions/[id]`: transaction detail
 - `/unlocks`: unlock history
-- `/unlocks/[id]`: revealed contact state
+- `/unlocks/[id]`: Stitch-backed connection status
 - `/unlocks/[id]/confirm`: confirmation flow
 - `/unlocks/[id]/dispute`: dispute entry
-- `/profile`: tenant dashboard
-- `/support`: support and FAQ
+- `/profile`: Stitch-backed user profile
+- `/profile/edit`: Stitch-backed edit profile
+- `/notifications`: Stitch-backed notifications
+- `/post`: redirects to the listing-posting upload flow
+- `/post/upload-photos`: Stitch-backed listing photo upload
+- `/post/details`: Stitch-backed listing details form
+- `/search`: Stitch-backed search and map view
+- `/map`: Stitch-backed search and map view
+- `/settings`: Stitch-backed settings
+- `/support`: Stitch-backed help center
+- `/whats-new`: Stitch-backed feature announcement
+- `/stitch/pataspace-login`: supporting Stitch asset index and raw export access
 
 ## Dependencies
 
 - Backend contracts and endpoints served by `apps/api`
 - Shared design direction from `packages/design-tokens`
+- Stitch export artifacts stored under `Docs/Stitch/PataSpace-Login`
 
 ## Development Rules
 
@@ -62,5 +73,6 @@ pnpm --filter @pataspace/web start
 
 ## Current Gaps
 
-- The app now has a full tenant-facing route scaffold and a stronger visual system, but it still relies on local mock data for most route content.
+- Several user-facing routes now render committed Stitch HTML exports through local iframe-backed shells for design fidelity. They are integrated into the app route surface, but they are not yet native React/Tailwind rewrites.
+- The app still relies on local mock data for most route content and route gating.
 - API integration, auth session persistence, and real mutation wiring are the next major steps.

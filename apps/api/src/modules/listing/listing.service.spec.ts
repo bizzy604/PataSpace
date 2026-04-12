@@ -94,6 +94,7 @@ describe('ListingService', () => {
     county: 'Nairobi',
     description: 'Listing with enough detail to satisfy validation rules.',
     furnished: false,
+    houseType: 'TWO_BEDROOM',
     latitude: -1.289563,
     longitude: 36.790942,
     monthlyRent: 25000,
@@ -131,6 +132,7 @@ describe('ListingService', () => {
 
   const createExistingListing = (overrides = {}) => ({
     commission: 750,
+    houseType: 'TWO_BEDROOM',
     id: 'listing_1',
     isApproved: true,
     isDeleted: false,
@@ -311,6 +313,7 @@ describe('ListingService', () => {
       county: 'Nairobi',
       createdAt: new Date('2026-03-25T09:30:00.000Z'),
       furnished: false,
+      houseType: 'TWO_BEDROOM',
       id: 'listing_1',
       latitude: -1.289563,
       longitude: 36.790942,

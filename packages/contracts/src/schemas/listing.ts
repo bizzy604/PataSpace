@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ListingStatus } from '../enums';
+import { ListingHouseType, ListingStatus } from '../enums';
 import { isoDateStringSchema, paginationMetaSchema } from './common';
 
 const coordinateSchema = z.object({
@@ -83,6 +83,7 @@ const createListingShape = z.object({
   monthlyRent: z.number().int().min(2000).max(500000),
   bedrooms: z.number().int().min(0).max(10),
   bathrooms: z.number().int().min(0).max(10),
+  houseType: z.nativeEnum(ListingHouseType),
   propertyType: z.string().min(2),
   furnished: z.boolean().default(false),
   description: z.string().min(20),
@@ -150,6 +151,7 @@ export const listingCardSchema = z.object({
   monthlyRent: z.number().int().positive(),
   bedrooms: z.number().int().min(0),
   bathrooms: z.number().int().min(0),
+  houseType: z.nativeEnum(ListingHouseType),
   propertyType: z.string().min(1),
   furnished: z.boolean(),
   availableFrom: isoDateStringSchema,

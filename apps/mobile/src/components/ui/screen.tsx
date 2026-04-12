@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { cn } from '@/lib/cn';
 import { BottomNav } from '@/components/ui/bottom-nav';
+import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
 
 type ScreenProps = ScrollViewProps & {
   className?: string;
@@ -18,11 +19,12 @@ export function Screen({
   bottomBar,
   ...props
 }: ScreenProps) {
+  const { theme } = useMobileApp();
   const basePaddingBottom = bottomBar && withTabBar ? 18 : bottomBar || withTabBar ? 24 : 12;
 
   return (
     <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-background">
-      <StatusBar style="dark" />
+      <StatusBar style={theme.statusBarStyle} />
       <View className="flex-1 bg-background">
         <ScrollView
           className={cn('flex-1 bg-background', className)}

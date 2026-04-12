@@ -1,10 +1,26 @@
 import type { ComponentProps } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useRouter } from 'expo-router';
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import { Camera, CameraView } from 'expo-camera';
 import * as Location from 'expo-location';
-import { Image, ImageBackground, StyleSheet, Text, View } from 'react-native';
-import { createListingSteps, draftCameraSequence, photoCapturePrompts } from '@/data/mock-listings';
+import {
+  Image,
+  ImageBackground,
+  NativeModules,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import {
+  countyOptions,
+  createListingSteps,
+  draftCameraSequence,
+  formatListingHouseType,
+  houseTypeOptions,
+  photoCapturePrompts,
+} from '@/data/mock-listings';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
@@ -13,6 +29,39 @@ import { Screen } from '@/components/ui/screen';
 import { SectionHeader } from '@/components/ui/section-header';
 import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
 import { appRoutes } from '@/lib/routes';
+
+type NativeUnimoduleProxy = {
+  NativeUnimoduleProxy?: {
+    viewManagersMetadata?: Record<string, unknown>;
+  };
+};
+
+type ExpoGlobal = typeof globalThis & {
+  expo?: {
+    getViewConfig?: (
+      moduleName: string,
+      viewName?: string,
+    ) =>
+      | {
+          validAttributes?: Record<string, unknown>;
+          directEventTypes?: Record<string, unknown>;
+        }
+      | null
+      | undefined;
+  };
+};
+
+function hasExpoCameraViewManager() {
+  if (Platform.OS === 'web') {
+    return true;
+  }
+
+  const expoCameraMetadata = (NativeModules as NativeUnimoduleProxy).NativeUnimoduleProxy
+    ?.viewManagersMetadata?.ExpoCamera;
+  const expoCameraViewConfig = (globalThis as ExpoGlobal).expo?.getViewConfig?.('ExpoCamera');
+
+  return Boolean(expoCameraMetadata && expoCameraViewConfig);
+}
 
 function Field({
   label,
@@ -38,6 +87,50 @@ function Field({
         onChangeText={onChangeText}
         placeholder={placeholder}
       />
+    </View>
+  );
+}
+
+function ChoiceField<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: T;
+  options: Array<{ label: string; value: T }>;
+  onChange: (value: T) => void;
+}) {
+  return (
+    <View className="gap-3">
+      <Text className="text-sm font-semibold text-foreground">{label}</Text>
+      <View className="flex-row flex-wrap gap-3">
+        {options.map((option) => {
+          const isSelected = option.value === value;
+
+          return (
+            <Pressable
+              key={option.value}
+              accessibilityRole="button"
+              className={[
+                'rounded-full border px-4 py-3',
+                isSelected ? 'border-transparent bg-primary' : 'border-border bg-secondary',
+              ].join(' ')}
+              onPress={() => onChange(option.value)}
+            >
+              <Text
+                className={[
+                  'text-sm font-semibold',
+                  isSelected ? 'text-primary-foreground' : 'text-foreground',
+                ].join(' ')}
+              >
+                {option.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -83,9 +176,10 @@ async function buildLocationLabel(position: Location.LocationObject) {
 }
 
 export function CreateListingScreen() {
+  const cameraViewManagerAvailable = hasExpoCameraViewManager();
   const cameraRef = useRef<CameraView | null>(null);
-  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
-  const [locationPermission, requestLocationPermission] = Location.useForegroundPermissions();
+  const [cameraPermissionGranted, setCameraPermissionGranted] = useState<boolean | null>(null);
+  const [locationPermissionGranted, setLocationPermissionGranted] = useState<boolean | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [captureError, setCaptureError] = useState('');
@@ -93,27 +187,71 @@ export function CreateListingScreen() {
   const nextPrompt = photoCapturePrompts[draft.photos.length] ?? `Extra angle ${draft.photos.length + 1}`;
 
   useEffect(() => {
-    if (!cameraPermission) {
-      void requestCameraPermission();
+    let active = true;
+
+    async function syncPermissions() {
+      if (!cameraViewManagerAvailable) {
+        setCaptureError(
+          'Camera preview is unavailable in this Expo runtime. Update Expo Go, restart Metro with a clean cache, or use a development build.',
+        );
+        return;
+      }
+
+      try {
+        let [cameraPermission, locationPermission] = await Promise.all([
+          Camera.getCameraPermissionsAsync(),
+          Location.getForegroundPermissionsAsync(),
+        ]);
+
+        if (!cameraPermission.granted) {
+          cameraPermission = await Camera.requestCameraPermissionsAsync();
+        }
+
+        if (!locationPermission.granted) {
+          locationPermission = await Location.requestForegroundPermissionsAsync();
+        }
+
+        if (!active) {
+          return;
+        }
+
+        setCameraPermissionGranted(cameraPermission.granted);
+        setLocationPermissionGranted(locationPermission.granted);
+      } catch {
+        if (active) {
+          setCaptureError('Permissions could not be checked.');
+        }
+      }
     }
 
-    if (!locationPermission) {
-      void requestLocationPermission();
-    }
-  }, [cameraPermission, locationPermission, requestCameraPermission, requestLocationPermission]);
+    void syncPermissions();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   async function ensurePermissions() {
-    let hasCamera = cameraPermission?.granted ?? false;
-    let hasLocation = locationPermission?.granted ?? false;
+    if (!cameraViewManagerAvailable) {
+      setCaptureError(
+        'Camera preview is unavailable in this Expo runtime. Update Expo Go, restart Metro with a clean cache, or use a development build.',
+      );
+      return false;
+    }
+
+    let hasCamera = cameraPermissionGranted ?? false;
+    let hasLocation = locationPermissionGranted ?? false;
 
     if (!hasCamera) {
-      const result = await requestCameraPermission();
+      const result = await Camera.requestCameraPermissionsAsync();
       hasCamera = result.granted;
+      setCameraPermissionGranted(result.granted);
     }
 
     if (!hasLocation) {
-      const result = await requestLocationPermission();
+      const result = await Location.requestForegroundPermissionsAsync();
       hasLocation = result.granted;
+      setLocationPermissionGranted(result.granted);
     }
 
     if (!hasCamera || !hasLocation) {
@@ -183,14 +321,20 @@ export function CreateListingScreen() {
   }
 
   const previewStrip = draft.photos.slice(-3).reverse();
+  const canRenderLiveCamera = cameraViewManagerAvailable && cameraPermissionGranted;
+  const captureLabel = !cameraViewManagerAvailable
+    ? 'Camera unavailable in this build'
+    : isCapturing
+      ? 'Saving...'
+      : `Capture ${nextPrompt}`;
 
   return (
     <Screen
       bottomBar={
         <View className="gap-3">
           <Button
-            disabled={isCapturing || !cameraReady}
-            label={isCapturing ? 'Saving...' : `Capture ${nextPrompt}`}
+            disabled={isCapturing || !cameraReady || !cameraViewManagerAvailable}
+            label={captureLabel}
             onPress={() => {
               void handleCapture();
             }}
@@ -203,7 +347,7 @@ export function CreateListingScreen() {
     >
       <SectionHeader kicker="Post listing" title="Camera" description="Live capture with GPS" />
 
-      {cameraPermission?.granted ? (
+      {canRenderLiveCamera ? (
         <View className="h-[420px] overflow-hidden rounded-[32px] bg-surface-inverse shadow-floating">
           <CameraView
             ref={cameraRef}
@@ -235,7 +379,7 @@ export function CreateListingScreen() {
             <View className="gap-2">
               <Text className="text-[32px] font-semibold tracking-[-0.8px] text-white">{nextPrompt}</Text>
               <Text className="text-sm text-white/75">
-                {locationPermission?.granted ? 'GPS ready' : 'Enable GPS to capture'}
+                {locationPermissionGranted ? 'GPS ready' : 'Enable GPS to capture'}
               </Text>
             </View>
           </View>
@@ -249,14 +393,20 @@ export function CreateListingScreen() {
           <View className="absolute inset-0 bg-black/30" />
           <View className="mt-auto gap-3">
             <Text className="text-[30px] font-semibold tracking-[-0.8px] text-white">
-              Camera permission needed
+              {cameraViewManagerAvailable ? 'Camera permission needed' : 'Camera preview unavailable'}
             </Text>
-            <Button
-              label="Enable camera and GPS"
-              onPress={() => {
-                void ensurePermissions();
-              }}
-            />
+            {cameraViewManagerAvailable ? (
+              <Button
+                label="Enable camera and GPS"
+                onPress={() => {
+                  void ensurePermissions();
+                }}
+              />
+            ) : (
+              <Text className="text-sm text-white/80">
+                Install a fresh development build or reopen the app in a runtime with camera support.
+              </Text>
+            )}
           </View>
         </ImageBackground>
       )}
@@ -272,7 +422,7 @@ export function CreateListingScreen() {
         <MiniAction
           icon="location-outline"
           label="GPS"
-          value={locationPermission?.granted ? 'Attached' : 'Required'}
+          value={locationPermissionGranted ? 'Attached' : 'Required'}
         />
       </View>
 
@@ -373,6 +523,10 @@ export function PhotoReviewScreen() {
 
 export function ListingDetailsFormScreen() {
   const { draft, updateDraft } = useMobileApp();
+  const countyChoices = countyOptions.map((county) => ({
+    label: county,
+    value: county,
+  }));
 
   return (
     <Screen
@@ -382,7 +536,11 @@ export function ListingDetailsFormScreen() {
         </Link>
       }
     >
-      <SectionHeader kicker="Post listing" title="Details" description="Rent, move date, contact" />
+      <SectionHeader
+        kicker="Post listing"
+        title="Details"
+        description="County, house type, rent, move date, contact"
+      />
 
       <Card className="gap-5">
         <Field
@@ -391,14 +549,26 @@ export function ListingDetailsFormScreen() {
           onChangeText={(value) => updateDraft({ title: value })}
           placeholder="Sunny 1BR near Ngong Road"
         />
+        <ChoiceField
+          label="County"
+          value={draft.county}
+          options={countyChoices}
+          onChange={(value) => updateDraft({ county: value })}
+        />
+        <ChoiceField
+          label="House type"
+          value={draft.houseType}
+          options={houseTypeOptions}
+          onChange={(value) => updateDraft({ houseType: value })}
+        />
         <Field
-          label="Area"
+          label="Neighborhood"
           value={draft.area}
           onChangeText={(value) => updateDraft({ area: value })}
           placeholder="Kilimani"
         />
         <Field
-          label="Location"
+          label="Location / address"
           value={draft.location}
           onChangeText={(value) => updateDraft({ location: value })}
           placeholder="Ngong Road, Nairobi"
@@ -483,7 +653,9 @@ export function ListingReviewScreen() {
           <View className="absolute inset-0 bg-black/24" />
           <View className="mt-auto gap-2">
             <Text className="text-[28px] font-semibold tracking-[-0.8px] text-white">{draft.title}</Text>
-            <Text className="text-sm text-white/75">{heroPhoto.locationLabel ?? draft.location}</Text>
+            <Text className="text-sm text-white/75">
+              {heroPhoto.locationLabel ?? `${draft.area}, ${draft.county}`}
+            </Text>
           </View>
         </ImageBackground>
       ) : (
@@ -508,11 +680,27 @@ export function ListingReviewScreen() {
         </Card>
       </View>
 
+      <View className="flex-row gap-3">
+        <Card className="flex-1">
+          <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">County</Text>
+          <Text className="mt-2 text-lg font-semibold text-foreground">{draft.county}</Text>
+        </Card>
+        <Card className="flex-1">
+          <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">House type</Text>
+          <Text className="mt-2 text-lg font-semibold text-foreground">
+            {formatListingHouseType(draft.houseType)}
+          </Text>
+        </Card>
+      </View>
+
       <Card>
         <CardTitle className="text-[20px]">Summary</CardTitle>
         <CardDescription>
-          {draft.photos.length} photos | {draft.availableFrom} | {draft.landlordPhone}
+          {draft.photos.length} photos | {draft.area}, {draft.county} | {draft.availableFrom}
         </CardDescription>
+        <Text className="mt-2 text-sm text-muted-foreground">
+          {formatListingHouseType(draft.houseType)} | {draft.landlordPhone}
+        </Text>
       </Card>
     </Screen>
   );

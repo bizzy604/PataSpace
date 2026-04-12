@@ -1,3 +1,61 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --background: 255 255 255;
+    --foreground: 37 37 37;
+    --surface: 247 248 248;
+    --surface-elevated: 255 255 255;
+    --surface-subtle: 237 237 237;
+    --surface-inverse: 37 37 37;
+    --card: 255 255 255;
+    --popover: 255 255 255;
+    --primary: 40 128 154;
+    --primary-foreground: 255 255 255;
+    --secondary: 237 237 237;
+    --secondary-foreground: 37 37 37;
+    --accent: 232 243 247;
+    --accent-soft: 232 243 247;
+    --accent-foreground: 40 128 154;
+    --border: 216 219 220;
+    --muted: 237 237 237;
+    --muted-foreground: 141 145 146;
+    --tertiary-foreground: 164 168 169;
+    --fill-soft: 237 237 237;
+    --fill-strong: 216 219 220;
+    --success: 45 157 120;
+    --warning: 216 154 61;
+    --danger: 211 93 93;
+  }
+
+  .dark:root {
+    color-scheme: dark;
+    --background: 18 20 21;
+    --foreground: 245 247 248;
+    --surface: 23 26 27;
+    --surface-elevated: 28 32 33;
+    --surface-subtle: 35 39 40;
+    --surface-inverse: 37 37 37;
+    --card: 28 32 33;
+    --popover: 23 26 27;
+    --primary: 40 128 154;
+    --primary-foreground: 255 255 255;
+    --secondary: 35 39 40;
+    --secondary-foreground: 245 247 248;
+    --accent: 31 62 72;
+    --accent-soft: 31 62 72;
+    --accent-foreground: 122 191 214;
+    --border: 49 55 57;
+    --muted: 35 39 40;
+    --muted-foreground: 160 167 170;
+    --tertiary-foreground: 127 134 136;
+    --fill-soft: 23 26 27;
+    --fill-strong: 49 55 57;
+    --success: 84 196 156;
+    --warning: 241 181 91;
+    --danger: 239 123 123;
+  }
+}

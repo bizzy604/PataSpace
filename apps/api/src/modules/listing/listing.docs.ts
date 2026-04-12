@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { ListingHouseType } from '@pataspace/contracts';
 import { ListingStatus } from '@prisma/client';
 
 export class ListingPhotoInputDto {
@@ -63,6 +64,9 @@ export class CreateListingRequestDto {
 
   @ApiProperty({ example: 1 })
   bathrooms!: number;
+
+  @ApiProperty({ enum: ListingHouseType, example: ListingHouseType.TWO_BEDROOM })
+  houseType!: ListingHouseType;
 
   @ApiProperty({ example: 'Apartment' })
   propertyType!: string;
@@ -170,6 +174,9 @@ export class ListingCardDto {
 
   @ApiProperty({ example: 1 })
   bathrooms!: number;
+
+  @ApiProperty({ enum: ListingHouseType, example: ListingHouseType.TWO_BEDROOM })
+  houseType!: ListingHouseType;
 
   @ApiProperty({ example: 'Apartment' })
   propertyType!: string;

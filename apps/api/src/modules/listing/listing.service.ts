@@ -10,6 +10,7 @@ import {
   CommissionStatus,
   ConfirmationSide,
   DisputeStatus,
+  ListingHouseType as PrismaListingHouseType,
   ListingStatus,
   Prisma,
   Role,
@@ -19,6 +20,7 @@ import {
   AdminPendingListingsResponse,
   CreateListingRequest,
   CreateListingResponse,
+  ListingHouseType as ContractListingHouseType,
   ListingDetails,
   ListingFilters,
   ListingStatus as ContractListingStatus,
@@ -98,6 +100,7 @@ export class ListingService {
         county: input.county.trim(),
         description: input.description.trim(),
         furnished: input.furnished ?? false,
+        houseType: input.houseType as unknown as PrismaListingHouseType,
         isApproved: !requiresReview,
         latitude: input.latitude,
         longitude: input.longitude,
@@ -207,6 +210,7 @@ export class ListingService {
         monthlyRent: listing.monthlyRent,
         bedrooms: listing.bedrooms,
         bathrooms: listing.bathrooms,
+        houseType: listing.houseType as unknown as ContractListingHouseType,
         propertyType: listing.propertyType,
         furnished: listing.furnished,
         availableFrom: listing.availableFrom.toISOString(),
@@ -312,6 +316,7 @@ export class ListingService {
       monthlyRent: listing.monthlyRent,
       bedrooms: listing.bedrooms,
       bathrooms: listing.bathrooms,
+      houseType: listing.houseType as unknown as ContractListingHouseType,
       propertyType: listing.propertyType,
       furnished: listing.furnished,
       availableFrom: listing.availableFrom.toISOString(),
@@ -561,6 +566,10 @@ export class ListingService {
         county: input.county?.trim(),
         description: input.description?.trim(),
         furnished: input.furnished,
+        houseType:
+          input.houseType !== undefined
+            ? (input.houseType as unknown as PrismaListingHouseType)
+            : undefined,
         isApproved:
           listing.status === ListingStatus.REJECTED && requestedFields.length > 0
             ? false
@@ -770,6 +779,7 @@ export class ListingService {
         county: listing.county,
         neighborhood: listing.neighborhood,
         monthlyRent: listing.monthlyRent,
+        houseType: listing.houseType as unknown as ContractListingHouseType,
         photos: listing.photos.map((photo) => ({
           url: photo.url,
           order: photo.order,
@@ -1367,6 +1377,7 @@ export class ListingService {
     listing: {
       userId: string;
       county: string;
+      houseType: PrismaListingHouseType;
       neighborhood: string;
       monthlyRent: number;
       unlockCostCredits: number;
@@ -1381,6 +1392,7 @@ export class ListingService {
       reviewOutcome,
       listingOwnerId: listing.userId,
       county: listing.county,
+      houseType: listing.houseType,
       neighborhood: listing.neighborhood,
       monthlyRent: listing.monthlyRent,
       unlockCostCredits: listing.unlockCostCredits,

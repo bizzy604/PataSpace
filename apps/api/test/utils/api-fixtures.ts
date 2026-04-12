@@ -16,6 +16,7 @@ type CreateListingFixtureOptions = {
   monthlyRent: number;
   bedrooms?: number;
   bathrooms?: number;
+  houseType?: string;
   propertyType?: string;
   furnished?: boolean;
   deviceType?: string;
@@ -231,6 +232,7 @@ export async function createListing(
       monthlyRent: options.monthlyRent,
       bedrooms: options.bedrooms ?? 2,
       bathrooms: options.bathrooms ?? 1,
+      houseType: options.houseType ?? 'TWO_BEDROOM',
       propertyType: options.propertyType ?? 'Apartment',
       furnished: options.furnished ?? false,
       description: `Listing ${label} has enough detail to satisfy validation rules.`,

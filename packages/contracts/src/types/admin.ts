@@ -1,4 +1,4 @@
-import { ListingStatus } from '../enums';
+import { ListingHouseType, ListingStatus } from '../enums';
 
 export type RejectListingRequest = {
   reason: string;
@@ -17,6 +17,7 @@ export type AdminPendingListing = {
   county: string;
   neighborhood: string;
   monthlyRent: number;
+  houseType: ListingHouseType;
   photos: Array<{
     url: string;
     order: number;

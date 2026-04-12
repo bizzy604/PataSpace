@@ -11,7 +11,8 @@
     "build": "pnpm -r --if-present build",
     "lint": "pnpm -r --if-present lint",
     "test": "pnpm -r --if-present test",
-    "standards:check": "node scripts/standards-check.mjs"
+    "standards:check": "node scripts/standards-check.mjs",
+    "stitch:export:pataspace-login": "node scripts/export-stitch-project.mjs scripts/stitch-projects/pataspace-login.json"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.38.0",
