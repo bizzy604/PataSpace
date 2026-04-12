@@ -518,7 +518,7 @@ export function LandingHomePage() {
               <h2 className={sectionTitleClass}>Every day a unit sits empty, you are paying for it.</h2>
               <p className={cn(bodyTextClass, 'max-w-[600px]')}>
                 The moment a tenant gives notice, a clock starts. You call an agent. The agent posts to
-                WhatsApp groups and OLX. Strangers visit at inconvenient hours. Weeks pass. The unit
+                WhatsApp groups and Facebook. Strangers visit at inconvenient hours. Weeks pass. The unit
                 earns nothing - but the mortgage, water, and security bills do not pause.
               </p>
 
