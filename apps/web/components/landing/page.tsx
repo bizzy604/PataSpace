@@ -1,28 +1,9 @@
 'use client';
 
 import Image from 'next/image';
-import { DM_Sans, Playfair_Display } from 'next/font/google';
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { ArrowRight, Check, ClipboardList, Clock3, Moon, Repeat2, RotateCcw, Sun } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const dmSans = DM_Sans({
-  subsets: ['latin'],
-  weight: ['300', '400', '500'],
-  variable: '--font-owner-sans',
-  display: 'swap',
-});
-
-const playfairDisplay = Playfair_Display({
-  subsets: ['latin'],
-  weight: ['600', '700', '900'],
-  variable: '--font-owner-display',
-  display: 'swap',
-});
-
-const ownerSansStyle = {
-  fontFamily: 'var(--font-owner-sans), sans-serif',
-} satisfies CSSProperties;
 
 const noiseStyle = {
   backgroundImage:
@@ -43,7 +24,7 @@ const darkGridStyle = {
   maskImage: 'radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%)',
 } satisfies CSSProperties;
 
-const displayFontClass = '[font-family:var(--font-owner-display)]';
+const displayFontClass = 'font-display';
 const pageShell = 'mx-auto w-full max-w-[1400px]';
 const sectionShell = 'mx-auto max-w-[1400px] px-6 py-20 md:px-10 lg:px-16 lg:py-28';
 const sectionTitleClass = cn(
@@ -393,12 +374,9 @@ export function LandingHomePage() {
     <div
       id="top"
       className={cn(
-        dmSans.variable,
-        playfairDisplay.variable,
         isDark && 'dark',
         'relative isolate overflow-x-hidden bg-[#f7f3ea] text-[#171717] transition-colors duration-300 dark:bg-[#0d0d0d] dark:text-white',
       )}
-      style={ownerSansStyle}
     >
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 dark:hidden">
         <div className="absolute inset-0 bg-[linear-gradient(180deg,#faf6ee_0%,#efe6d8_100%)]" />

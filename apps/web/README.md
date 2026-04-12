@@ -57,13 +57,11 @@ pnpm --filter @pataspace/web start
 - `/settings`: Stitch-backed settings
 - `/support`: Stitch-backed help center
 - `/whats-new`: Stitch-backed feature announcement
-- `/stitch/pataspace-login`: supporting Stitch asset index and raw export access
 
 ## Dependencies
 
 - Backend contracts and endpoints served by `apps/api`
 - Shared design direction from `packages/design-tokens`
-- Stitch export artifacts stored under `Docs/Stitch/PataSpace-Login`
 
 ## Development Rules
 

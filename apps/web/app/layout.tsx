@@ -1,14 +1,21 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Poppins } from 'next/font/google';
+import { DM_Sans, Playfair_Display } from 'next/font/google';
 import { ReactNode } from 'react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
-const poppins = Poppins({
+const dmSans = DM_Sans({
   subsets: ['latin'],
   weight: ['300', '400', '500', '600', '700', '800'],
   display: 'swap',
-  variable: '--font-poppins',
+  variable: '--font-dm-sans',
+});
+
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800', '900'],
+  display: 'swap',
+  variable: '--font-playfair-display',
 });
 
 export const metadata: Metadata = {
@@ -24,7 +31,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body className={poppins.variable}>
+      <body className={`${dmSans.variable} ${playfairDisplay.variable}`}>
         <TooltipProvider>
           <a
             href="#main-content"
