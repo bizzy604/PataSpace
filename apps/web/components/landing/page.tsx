@@ -524,12 +524,48 @@ export function LandingHomePage() {
 
               <Reveal className="mt-10">
                 <div className="space-y-3">
-                  <div className="md:hidden text-[0.72rem] uppercase tracking-[0.12em] text-[#6b7174] dark:text-[#8d9192]">
-                    Swipe to compare
+                  <div className="grid gap-3 md:hidden">
+                    {comparisonRows.map((row) => (
+                      <article key={row.label} className={cn(cardClass, 'rounded-[8px] p-4')}>
+                        <div className="text-[0.68rem] uppercase tracking-[0.14em] text-[#6b7174] dark:text-[#8d9192]">
+                          {row.label}
+                        </div>
+
+                        <div className="mt-4 grid gap-3">
+                          <div className="rounded-[6px] border border-black/10 bg-black/[0.02] p-3 dark:border-white/10 dark:bg-white/[0.01]">
+                            <div className="text-[0.68rem] font-medium uppercase tracking-[0.1em] text-[#6b7174] dark:text-[#8d9192]">
+                              Traditional Agent
+                            </div>
+                            <div
+                              className={cn(
+                                'mt-2 text-[0.82rem] leading-6 text-[#4f5457] dark:text-white/60',
+                                row.traditionalClassName,
+                              )}
+                            >
+                              {row.traditional}
+                            </div>
+                          </div>
+
+                          <div className="rounded-[6px] border border-[#28809A]/20 bg-[#28809A]/8 p-3 dark:border-[#67d1e3]/20 dark:bg-[#67d1e3]/10">
+                            <div className="text-[0.68rem] font-medium uppercase tracking-[0.1em] text-[#28809A] dark:text-[#67d1e3]">
+                              PataSpace
+                            </div>
+                            <div
+                              className={cn(
+                                'mt-2 text-[0.82rem] leading-6 text-[#4f5457] dark:text-white/70',
+                                row.pataspaceClassName,
+                              )}
+                            >
+                              {row.pataspace}
+                            </div>
+                          </div>
+                        </div>
+                      </article>
+                    ))}
                   </div>
 
-                  <div className="overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                    <div className={cn(cardClass, 'min-w-[640px] overflow-hidden rounded-[8px]')}>
+                  <div className="hidden md:block">
+                    <div className={cn(cardClass, 'overflow-hidden rounded-[8px]')}>
                       <div className="border-b border-black/10 bg-black/[0.02] px-5 py-4 text-[0.7rem] uppercase tracking-[0.15em] text-[#6b7174] dark:border-white/10 dark:bg-white/[0.01] dark:text-[#8d9192]">
                         The old way vs. the PataSpace way
                       </div>
@@ -583,11 +619,16 @@ export function LandingHomePage() {
             </Reveal>
 
             <Reveal className="lg:pt-1">
-              <div className={cn(cardClass, 'rounded-[8px] p-8 lg:sticky lg:top-28')}>
+              <div className={cn(cardClass, 'rounded-[8px] p-6 sm:p-8 lg:sticky lg:top-28')}>
                 <div className="mb-6 text-[0.72rem] uppercase tracking-[0.15em] text-[#6b7174] dark:text-[#8d9192]">
                   Vacancy Cost Estimator
                 </div>
-                <div className={cn(displayFontClass, 'mb-1 text-[4rem] leading-none font-black text-[#d04f4f] dark:text-[#ef7a7a]')}>
+                <div
+                  className={cn(
+                    displayFontClass,
+                    'mb-1 text-[3.2rem] leading-none font-black text-[#d04f4f] sm:text-[4rem] dark:text-[#ef7a7a]',
+                  )}
+                >
                   21
                 </div>
                 <div className="mb-8 text-[0.85rem] text-[#6b7174] dark:text-[#8d9192]">

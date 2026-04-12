@@ -30,8 +30,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body className={`${dmSans.variable} ${playfairDisplay.variable}`}>
+    <html lang="en" className={`${dmSans.variable} ${playfairDisplay.variable}`}>
+      <body className="font-sans antialiased">
         <TooltipProvider>
           <a
             href="#main-content"
