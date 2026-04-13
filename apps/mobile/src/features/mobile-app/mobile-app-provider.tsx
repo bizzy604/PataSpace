@@ -142,17 +142,20 @@ function toInitials(name: string) {
   return initials || 'PS';
 }
 
-function readUnsafeMetadataPhone(value: unknown) {
+function readUnsafeMetadataString(value: unknown, key: string) {
   if (!value || typeof value !== 'object') {
     return null;
   }
 
-  const phone = (value as Record<string, unknown>).phone;
+  const metadataValue = (value as Record<string, unknown>)[key];
 
-  return typeof phone === 'string' && phone.trim() ? normalizePhone(phone) : null;
+  return typeof metadataValue === 'string' && metadataValue.trim() ? metadataValue.trim() : null;
 }
 
-function resolveDisplayName(value: { fullName?: string | null; firstName?: string | null; lastName?: string | null }) {
+function resolveDisplayName(
+  value: { fullName?: string | null; firstName?: string | null; lastName?: string | null },
+  metadataName?: string | null,
+) {
   const fullName = value.fullName?.trim();
 
   if (fullName) {
@@ -161,7 +164,7 @@ function resolveDisplayName(value: { fullName?: string | null; firstName?: strin
 
   const fallback = [value.firstName, value.lastName].filter(Boolean).join(' ').trim();
 
-  return fallback || initialUserProfile.name;
+  return fallback || metadataName || initialUserProfile.name;
 }
 
 function buildSubmittedListingDraftData(draft: ListingDraft, listingIndex: number) {
@@ -273,8 +276,11 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const displayName = resolveDisplayName(clerkUser);
-    const metadataPhone = readUnsafeMetadataPhone(clerkUser.unsafeMetadata);
+    const metadataFirstName = readUnsafeMetadataString(clerkUser.unsafeMetadata, 'firstName');
+    const metadataLastName = readUnsafeMetadataString(clerkUser.unsafeMetadata, 'lastName');
+    const metadataName = [metadataFirstName, metadataLastName].filter(Boolean).join(' ').trim();
+    const displayName = resolveDisplayName(clerkUser, metadataName);
+    const metadataPhone = readUnsafeMetadataString(clerkUser.unsafeMetadata, 'phone');
     const primaryPhoneNumber =
       clerkUser.primaryPhoneNumber?.phoneNumber && clerkUser.primaryPhoneNumber.phoneNumber.trim()
         ? normalizePhone(clerkUser.primaryPhoneNumber.phoneNumber)
@@ -284,7 +290,11 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
       ...current,
       name: displayName,
       initials: toInitials(displayName),
-      phone: metadataPhone ?? primaryPhoneNumber ?? current.phone ?? initialUserProfile.phone,
+      phone:
+        (metadataPhone ? normalizePhone(metadataPhone) : null) ??
+        primaryPhoneNumber ??
+        current.phone ??
+        initialUserProfile.phone,
     }));
   }, [clerkUser, isAuthenticated]);
 

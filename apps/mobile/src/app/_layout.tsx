@@ -7,7 +7,7 @@ import { AppLaunchScreen } from '@/components/ui/app-launch-screen';
 import { MobileAppProvider, useMobileApp } from '@/features/mobile-app/mobile-app-provider';
 
 const publicPaths = ['/', '/onboarding', '/register', '/verify-otp', '/login'];
-const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? '';
 
 if (!publishableKey) {
   throw new Error('Add your Clerk Publishable Key to apps/mobile/.env as EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY');
@@ -18,7 +18,7 @@ function RootNavigator() {
   const pathname = usePathname();
   const router = useRouter();
   const { isLoaded, isSignedIn } = useAuth();
-  const { isAuthenticated, theme } = useMobileApp();
+  const { theme } = useMobileApp();
 
   useEffect(() => {
     const timeout = setTimeout(() => {

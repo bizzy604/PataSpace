@@ -22,7 +22,6 @@ import { cn } from '@/lib/cn';
 import { appRoutes } from '@/lib/routes';
 
 type IconName = ComponentProps<typeof AppIcon>['name'];
-type LoginMode = 'phone' | 'email';
 const pataspaceLogo = require('../../assets/PataSpace Logo.png');
 
 function AuthShell({
@@ -118,102 +117,6 @@ function AuthShell({
         </View>
       </KeyboardAvoidingView>
     </Screen>
-  );
-}
-
-function SocialButton({
-  provider,
-}: {
-  provider: 'google' | 'apple' | 'x';
-}) {
-  const { theme } = useMobileApp();
-
-  return (
-    <Pressable
-      className="h-12 w-12 items-center justify-center rounded-full border active:opacity-85"
-      disabled
-      style={{
-        backgroundColor: theme.mode === 'dark' ? theme.surfaceSubtle : theme.surfaceSubtle,
-        borderColor: theme.border,
-      }}
-    >
-      {provider === 'x' ? (
-        <Text className="text-[18px] font-semibold text-foreground">X</Text>
-      ) : (
-        <AppIcon
-          color={
-            provider === 'google'
-              ? '#4285F4'
-              : theme.mode === 'dark'
-                ? theme.primaryForeground
-                : theme.foreground
-          }
-          name={provider === 'google' ? 'logo-google' : 'logo-apple'}
-          size={18}
-        />
-      )}
-    </Pressable>
-  );
-}
-
-function SocialRow() {
-  return (
-    <View className="items-center gap-4">
-      <View className="flex-row items-center justify-center gap-3">
-        <SocialButton provider="google" />
-        <SocialButton provider="apple" />
-        <SocialButton provider="x" />
-      </View>
-    </View>
-  );
-}
-
-function DividerLabel({ label }: { label: string }) {
-  return (
-    <View className="flex-row items-center gap-3">
-      <View className="h-px flex-1 bg-border" />
-      <Text className="text-sm font-medium text-muted-foreground">{label}</Text>
-      <View className="h-px flex-1 bg-border" />
-    </View>
-  );
-}
-
-function AuthTabs({
-  active,
-  onChange,
-}: {
-  active: LoginMode;
-  onChange: (mode: LoginMode) => void;
-}) {
-  return (
-    <View className="flex-row rounded-[18px] border border-border bg-background p-1">
-      {([
-        ['email', 'Mail'],
-        ['phone', 'Phone number'],
-      ] as const).map(([mode, label]) => {
-        const selected = active === mode;
-
-        return (
-          <Pressable
-            key={mode}
-            className={cn(
-              'min-h-12 flex-1 items-center justify-center rounded-[14px] px-3',
-              selected ? 'bg-secondary' : 'bg-transparent',
-            )}
-            onPress={() => onChange(mode)}
-          >
-            <Text
-              className={cn(
-                'text-sm font-semibold',
-                selected ? 'text-foreground' : 'text-muted-foreground',
-              )}
-            >
-              {label}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
   );
 }
 
@@ -430,22 +333,28 @@ export function OnboardingScreen() {
 }
 
 export function RegisterScreen() {
-  const [firstName, setFirstName] = useState('Amina');
-  const [lastName, setLastName] = useState('Kamau');
-  const [phone, setPhone] = useState('0712345678');
-  const [pin, setPin] = useState('1234');
-  const [confirmPin, setConfirmPin] = useState('1234');
-  const [showPin, setShowPin] = useState(false);
-  const [showConfirmPin, setShowConfirmPin] = useState(false);
+  const { isSignedIn } = useAuth();
+  const { signUp, fetchStatus } = useSignUp();
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [emailAddress, setEmailAddress] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
-  const { beginRegistration } = useMobileApp();
   const router = useRouter();
+
+  if (!signUp || isSignedIn || signUp.status === 'complete') {
+    return null;
+  }
 
   return (
     <AuthShell
       eyebrow="Create your account"
       title="Join PataSpace"
-      description="Start with your Kenyan phone number, secure your PIN, and keep every move under one profile."
+      description="Use Clerk email sign-up for access, then keep your Kenyan number attached to your profile for marketplace activity."
       footer={
         <AuthFooterLink
           action="Log in"
@@ -454,8 +363,11 @@ export function RegisterScreen() {
         />
       }
     >
-      <SocialRow />
-      <DividerLabel label="or" />
+      <View className="rounded-[22px] border border-border bg-secondary px-4 py-4">
+        <Text className="text-sm leading-6 text-muted-foreground">
+          Your email handles authentication. Your Kenyan phone number is saved with the account metadata for tenant workflows.
+        </Text>
+      </View>
 
       <View className="flex-row gap-3">
         <AuthField
@@ -489,37 +401,43 @@ export function RegisterScreen() {
       />
 
       <AuthField
-        icon="lock-closed-outline"
-        keyboardType="number-pad"
-        label="PIN"
-        onChangeText={setPin}
-        placeholder="1234"
-        rightIcon={showPin ? 'eye-outline' : 'eye-off-outline'}
-        secureTextEntry={!showPin}
-        value={pin}
-        onRightPress={() => setShowPin((current) => !current)}
+        autoCapitalize="none"
+        icon="mail-outline"
+        keyboardType="email-address"
+        label="Email address"
+        onChangeText={setEmailAddress}
+        placeholder="name@example.com"
+        value={emailAddress}
       />
 
       <AuthField
         icon="lock-closed-outline"
-        keyboardType="number-pad"
-        label="Confirm PIN"
-        onChangeText={setConfirmPin}
-        placeholder="1234"
-        rightIcon={showConfirmPin ? 'eye-outline' : 'eye-off-outline'}
-        secureTextEntry={!showConfirmPin}
-        value={confirmPin}
-        onRightPress={() => setShowConfirmPin((current) => !current)}
+        label="Password"
+        onChangeText={setPassword}
+        placeholder="Create a password"
+        rightIcon={showPassword ? 'eye-outline' : 'eye-off-outline'}
+        secureTextEntry={!showPassword}
+        value={password}
+        onRightPress={() => setShowPassword((current) => !current)}
+      />
+
+      <AuthField
+        icon="lock-closed-outline"
+        label="Confirm password"
+        onChangeText={setConfirmPassword}
+        placeholder="Repeat your password"
+        rightIcon={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'}
+        secureTextEntry={!showConfirmPassword}
+        value={confirmPassword}
+        onRightPress={() => setShowConfirmPassword((current) => !current)}
       />
 
       <AuthError message={error} />
 
       <Button
         className="min-h-14 rounded-[18px]"
-        label="Create account"
-        onPress={() => {
-          const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
-
+        label={fetchStatus === 'fetching' ? 'Creating account...' : 'Create account'}
+        onPress={async () => {
           if (!firstName.trim() || !lastName.trim()) {
             setError('Enter your full name.');
             return;
@@ -530,48 +448,114 @@ export function RegisterScreen() {
             return;
           }
 
-          if (pin.trim().length < 4) {
-            setError('Use a 4-digit PIN or longer.');
+          if (!isValidEmail(emailAddress)) {
+            setError('Enter a valid email address.');
             return;
           }
 
-          if (pin !== confirmPin) {
-            setError('PINs do not match.');
+          if (password.trim().length < 8) {
+            setError('Use a password with at least 8 characters.');
+            return;
+          }
+
+          if (password !== confirmPassword) {
+            setError('Passwords do not match.');
+            return;
+          }
+
+          const { error: signUpError } = await signUp.password({
+            emailAddress: emailAddress.trim(),
+            password,
+            unsafeMetadata: {
+              phone: normalizePhoneForMetadata(phone),
+              firstName: firstName.trim(),
+              lastName: lastName.trim(),
+            },
+          });
+
+          if (signUpError) {
+            setError(getClerkErrorMessage(signUpError, 'Could not create your account.'));
+            return;
+          }
+
+          const { error: verificationError } = await signUp.verifications.sendEmailCode();
+
+          if (verificationError) {
+            setError(getClerkErrorMessage(verificationError, 'Could not send the verification code.'));
             return;
           }
 
           setError('');
-          beginRegistration(fullName, phone);
           router.push(appRoutes.verifyOtp);
         }}
+        disabled={fetchStatus === 'fetching'}
       />
+
+      <View nativeID="clerk-captcha" />
     </AuthShell>
   );
 }
 
 export function VerifyOtpScreen() {
-  const [otp, setOtp] = useState('123456');
+  const { isSignedIn } = useAuth();
+  const { signUp, fetchStatus } = useSignUp();
+  const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
-  const { beginRegistration, pendingAuth, verifyOtp } = useMobileApp();
   const router = useRouter();
+
+  if (!signUp || isSignedIn || signUp.status === 'complete') {
+    return null;
+  }
+
+  const awaitingEmailVerification =
+    signUp.status === 'missing_requirements' &&
+    signUp.unverifiedFields.includes('email_address') &&
+    signUp.missingFields.length === 0;
+
+  if (!awaitingEmailVerification) {
+    return (
+      <AuthShell
+        eyebrow="Complete registration"
+        title="Start your sign-up again"
+        description="There is no pending Clerk email verification in progress for this device right now."
+        footer={
+          <Pressable
+            onPress={async () => {
+              await signUp.reset();
+              router.replace(appRoutes.register);
+            }}
+          >
+            <Text className="text-center text-sm font-semibold text-foreground">Back to sign up</Text>
+          </Pressable>
+        }
+      >
+        <View className="rounded-[22px] border border-border bg-secondary px-4 py-4">
+          <Text className="text-sm leading-6 text-muted-foreground">
+            Create an account first, then Clerk will send a verification code to your email address.
+          </Text>
+        </View>
+      </AuthShell>
+    );
+  }
 
   return (
     <AuthShell
-      eyebrow="Secure sign-in"
-      title="Verify your phone"
-      description={`Enter the code sent to ${pendingAuth?.phone ?? 'your phone number'}.`}
+      eyebrow="Secure sign-up"
+      title="Verify your email"
+      description={`Enter the code Clerk sent to ${signUp.emailAddress ?? 'your email address'}.`}
       footer={
         <View className="items-center gap-4">
           <Pressable
-            onPress={() => {
-              if (!pendingAuth) {
-                setError('Start with sign up or login first.');
+            onPress={async () => {
+              const { error: resendError } = await signUp.verifications.sendEmailCode();
+
+              if (resendError) {
+                setError(getClerkErrorMessage(resendError, 'Could not resend the verification code.'));
                 setNotice('');
                 return;
               }
 
-              beginRegistration(pendingAuth.name, pendingAuth.phone);
               setError('');
               setNotice('Code sent again.');
             }}
@@ -579,15 +563,20 @@ export function VerifyOtpScreen() {
             <Text className="text-sm font-semibold text-foreground">Resend code</Text>
           </Pressable>
 
-          <Pressable onPress={() => router.replace(appRoutes.register)}>
-            <Text className="text-sm text-muted-foreground">Change number</Text>
+          <Pressable
+            onPress={async () => {
+              await signUp.reset();
+              router.replace(appRoutes.register);
+            }}
+          >
+            <Text className="text-sm text-muted-foreground">Change email</Text>
           </Pressable>
         </View>
       }
     >
       <View className="rounded-[22px] border border-border bg-secondary px-4 py-4">
         <Text className="text-sm leading-6 text-muted-foreground">
-          Verification keeps listings, credits, and unlock activity tied to the right account.
+          Verification keeps listings, credits, unlock activity, and support history attached to the right account.
         </Text>
       </View>
 
@@ -595,9 +584,9 @@ export function VerifyOtpScreen() {
         autoFocus
         icon="key-outline"
         keyboardType="number-pad"
-        label="Verification code"
+        label="Email verification code"
         onChangeText={setOtp}
-        placeholder="123456"
+        placeholder="Enter code"
         value={otp}
       />
 
@@ -606,60 +595,213 @@ export function VerifyOtpScreen() {
 
       <Button
         className="min-h-14 rounded-[18px]"
-        label="Verify and continue"
-        onPress={() => {
-          if (!verifyOtp(otp)) {
+        label={fetchStatus === 'fetching' ? 'Verifying...' : 'Verify and continue'}
+        onPress={async () => {
+          if (!otp.trim()) {
             setError('Enter the code to continue.');
             setNotice('');
             return;
           }
 
+          const { error: verifyError } = await signUp.verifications.verifyEmailCode({ code: otp.trim() });
+
+          if (verifyError) {
+            setError(getClerkErrorMessage(verifyError, 'That verification code is not valid.'));
+            setNotice('');
+            return;
+          }
+
+          if (signUp.status !== 'complete') {
+            setError('Your sign-up is not complete yet. Check your Clerk sign-up settings.');
+            setNotice('');
+            return;
+          }
+
+          const { error: finalizeError } = await signUp.finalize();
+
+          if (finalizeError) {
+            setError(getClerkErrorMessage(finalizeError, 'Could not finish signing you in.'));
+            return;
+          }
+
           setError('');
+          setNotice('');
           router.replace(appRoutes.home);
         }}
+        disabled={fetchStatus === 'fetching'}
       />
     </AuthShell>
   );
 }
 
 export function LoginScreen() {
-  const [loginMode, setLoginMode] = useState<LoginMode>('phone');
-  const [phone, setPhone] = useState('0712345678');
-  const [email, setEmail] = useState('amina@pataspace.co.ke');
-  const [pin, setPin] = useState('1234');
-  const [showPin, setShowPin] = useState(false);
+  const { signIn, fetchStatus } = useSignIn();
+  const [emailAddress, setEmailAddress] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [code, setCode] = useState('');
   const [error, setError] = useState('');
-  const { beginRegistration, login } = useMobileApp();
+  const [notice, setNotice] = useState('');
   const router = useRouter();
 
-  function submitLogin() {
-    if (loginMode === 'phone') {
-      if (phone.replace(/\D/g, '').length < 10 || pin.trim().length < 4) {
-        setError('Enter a valid phone number and PIN.');
+  if (!signIn) {
+    return null;
+  }
+
+  async function finalizeSignIn() {
+    const { error: finalizeError } = await signIn.finalize();
+
+    if (finalizeError) {
+      setError(getClerkErrorMessage(finalizeError, 'Could not finish signing you in.'));
+      return false;
+    }
+
+    router.replace(appRoutes.home);
+
+    return true;
+  }
+
+  async function submitLogin() {
+    if (!isValidEmail(emailAddress) || !password.trim()) {
+      setError('Enter a valid email address and password.');
+      return;
+    }
+
+    const { error: signInError } = await signIn.password({
+      emailAddress: emailAddress.trim(),
+      password,
+    });
+
+    if (signInError) {
+      setError(getClerkErrorMessage(signInError, 'Could not sign you in.'));
+      setNotice('');
+      return;
+    }
+
+    if (signIn.status === 'complete') {
+      setError('');
+      setNotice('');
+      await finalizeSignIn();
+      return;
+    }
+
+    if (signIn.status === 'needs_client_trust') {
+      const { error: sendCodeError } = await signIn.mfa.sendEmailCode();
+
+      if (sendCodeError) {
+        setError(getClerkErrorMessage(sendCodeError, 'Could not send the sign-in verification code.'));
         return;
       }
 
       setError('');
-      login(phone);
-      router.replace(appRoutes.home);
+      setNotice('Clerk sent a verification code to your email.');
       return;
     }
 
-    if (!isValidEmail(email) || pin.trim().length < 4) {
-      setError('Enter a valid email address and PIN.');
+    if (signIn.status === 'needs_second_factor') {
+      setError('This account requires a second factor that is not configured in the mobile app yet.');
       return;
     }
 
-    setError('');
-    login(email);
-    router.replace(appRoutes.home);
+    setError('Sign-in is not complete yet. Check your Clerk sign-in settings.');
+  }
+
+  if (signIn.status === 'needs_client_trust') {
+    return (
+      <AuthShell
+        eyebrow="Confirm this device"
+        title="Verify your sign-in"
+        description={`Enter the code Clerk sent to ${
+          typeof signIn.identifier === 'string' && signIn.identifier.trim()
+            ? signIn.identifier
+            : emailAddress || 'your email address'
+        }.`}
+        footer={
+          <View className="items-center gap-4">
+            <Pressable
+              onPress={async () => {
+                const { error: resendError } = await signIn.mfa.sendEmailCode();
+
+                if (resendError) {
+                  setError(getClerkErrorMessage(resendError, 'Could not resend the sign-in code.'));
+                  return;
+                }
+
+                setError('');
+                setNotice('Code sent again.');
+              }}
+            >
+              <Text className="text-sm font-semibold text-foreground">Resend code</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={async () => {
+                await signIn.reset();
+                setCode('');
+                setError('');
+                setNotice('');
+              }}
+            >
+              <Text className="text-sm text-muted-foreground">Start over</Text>
+            </Pressable>
+          </View>
+        }
+      >
+        <View className="rounded-[22px] border border-border bg-secondary px-4 py-4">
+          <Text className="text-sm leading-6 text-muted-foreground">
+            Clerk is asking for an email code to trust this device before opening the tenant workspace.
+          </Text>
+        </View>
+
+        <AuthField
+          autoFocus
+          icon="key-outline"
+          keyboardType="number-pad"
+          label="Verification code"
+          onChangeText={setCode}
+          placeholder="Enter code"
+          value={code}
+        />
+
+        {notice ? <Text className="text-sm font-medium text-muted-foreground">{notice}</Text> : null}
+        <AuthError message={error} />
+
+        <Button
+          className="min-h-14 rounded-[18px]"
+          label={fetchStatus === 'fetching' ? 'Verifying...' : 'Verify and continue'}
+          onPress={async () => {
+            if (!code.trim()) {
+              setError('Enter the verification code.');
+              return;
+            }
+
+            const { error: verifyError } = await signIn.mfa.verifyEmailCode({ code: code.trim() });
+
+            if (verifyError) {
+              setError(getClerkErrorMessage(verifyError, 'That verification code is not valid.'));
+              return;
+            }
+
+            if (signIn.status !== 'complete') {
+              setError('Sign-in is still waiting on another step.');
+              return;
+            }
+
+            setError('');
+            setNotice('');
+            await finalizeSignIn();
+          }}
+          disabled={fetchStatus === 'fetching'}
+        />
+      </AuthShell>
+    );
   }
 
   return (
     <AuthShell
       eyebrow="Welcome back"
       title="Log in to your account"
-      description="Pick up saved homes, unlock history, and your last verified actions without starting over."
+      description="Use the same Clerk account across mobile browsing, wallet activity, unlocks, confirmations, and support."
       footer={
         <AuthFooterLink
           action="Sign up"
@@ -668,69 +810,40 @@ export function LoginScreen() {
         />
       }
     >
-      <SocialRow />
-      <DividerLabel label="or" />
-      <AuthTabs active={loginMode} onChange={setLoginMode} />
+      <View className="rounded-[22px] border border-border bg-secondary px-4 py-4">
+        <Text className="text-sm leading-6 text-muted-foreground">
+          Mobile now uses Clerk authentication, matching the new web sign-in flow.
+        </Text>
+      </View>
 
       <AuthField
         autoCapitalize="none"
-        icon={loginMode === 'phone' ? 'call-outline' : 'mail-outline'}
-        keyboardType={loginMode === 'phone' ? 'phone-pad' : 'email-address'}
-        label={loginMode === 'phone' ? 'Phone number' : 'Email'}
-        onChangeText={loginMode === 'phone' ? setPhone : setEmail}
-        placeholder={loginMode === 'phone' ? '0712345678' : 'name@example.com'}
-        value={loginMode === 'phone' ? phone : email}
+        icon="mail-outline"
+        keyboardType="email-address"
+        label="Email address"
+        onChangeText={setEmailAddress}
+        placeholder="name@example.com"
+        value={emailAddress}
       />
 
       <AuthField
         icon="lock-closed-outline"
-        keyboardType="number-pad"
-        label="PIN"
-        onChangeText={setPin}
-        placeholder="1234"
-        rightIcon={showPin ? 'eye-outline' : 'eye-off-outline'}
-        secureTextEntry={!showPin}
-        value={pin}
-        onRightPress={() => setShowPin((current) => !current)}
+        label="Password"
+        onChangeText={setPassword}
+        placeholder="Enter password"
+        rightIcon={showPassword ? 'eye-outline' : 'eye-off-outline'}
+        secureTextEntry={!showPassword}
+        value={password}
+        onRightPress={() => setShowPassword((current) => !current)}
       />
-
-      <View className="items-end">
-        <Pressable
-          onPress={() => {
-            if (loginMode !== 'phone') {
-              setError('Switch to phone login to reset your PIN.');
-              return;
-            }
-
-            if (phone.replace(/\D/g, '').length < 10) {
-              setError('Enter your phone number first.');
-              return;
-            }
-
-            setError('');
-            beginRegistration('PataSpace User', phone);
-            router.push(appRoutes.verifyOtp);
-          }}
-        >
-          <Text className="text-sm font-semibold text-foreground">
-            {loginMode === 'phone' ? 'Forgot PIN?' : 'Use phone to reset PIN'}
-          </Text>
-        </Pressable>
-      </View>
 
       <AuthError message={error} />
 
       <Button
         className="min-h-14 rounded-[18px]"
-        label="Log in"
+        label={fetchStatus === 'fetching' ? 'Logging in...' : 'Log in'}
         onPress={submitLogin}
-      />
-
-      <Button
-        className="min-h-14 rounded-[18px]"
-        label="Face or fingerprint login"
-        variant="secondary"
-        onPress={submitLogin}
+        disabled={fetchStatus === 'fetching'}
       />
     </AuthShell>
   );
