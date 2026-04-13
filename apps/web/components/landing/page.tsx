@@ -5,16 +5,9 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { ArrowRight, Check, ClipboardList, Clock3, Moon, Repeat2, RotateCcw, Sun } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const noiseStyle = {
+const darkNoiseStyle = {
   backgroundImage:
     'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\' opacity=\'0.04\'/%3E%3C/svg%3E")',
-} satisfies CSSProperties;
-
-const lightGridStyle = {
-  backgroundImage:
-    'linear-gradient(rgba(23,23,23,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(23,23,23,0.08) 1px, transparent 1px)',
-  backgroundSize: '60px 60px',
-  maskImage: 'radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%)',
 } satisfies CSSProperties;
 
 const darkGridStyle = {
@@ -230,6 +223,14 @@ const riskReducers = [
 ];
 
 const areaTags = ['Westlands', 'Kilimani', 'Kasarani', 'Eastlands', '+ surrounding areas'];
+const heroHouseImages = [
+  '/mock/houses/photo1.jpg',
+  '/mock/houses/photo2.jpg',
+  '/mock/houses/photo3.jpg',
+  '/mock/houses/photo4.jpg',
+  '/mock/houses/photo5.jpg',
+  '/mock/houses/photo6.jpg',
+];
 
 function BrandLogo({ compact = false }: { compact?: boolean }) {
   return (
@@ -274,6 +275,49 @@ function SectionLabel({
 
 function Divider() {
   return <hr className="mx-6 border-0 border-t border-black/10 md:mx-10 lg:mx-16 dark:border-white/10" />;
+}
+
+function HeroMarqueeRow({ images, className }: { images: string[]; className?: string }) {
+  const trackImages = [...images, ...images];
+
+  return (
+    <div className="landing-hero-marquee-stage">
+      <div className={cn('landing-hero-marquee-track', className)}>
+        {trackImages.map((src, index) => (
+          <div key={`${src}-${index}`} className="landing-hero-marquee-card">
+            <Image
+              src={src}
+              alt=""
+              fill
+              sizes="(max-width: 768px) 42vw, (max-width: 1280px) 20vw, 16vw"
+              className="object-cover saturate-[0.9] contrast-[1.02] dark:brightness-[0.72] dark:contrast-[1.08]"
+              quality={60}
+            />
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.06)_0%,rgba(255,255,255,0.02)_40%,rgba(17,17,17,0.2)_100%)] dark:bg-[linear-gradient(180deg,rgba(13,13,13,0.08)_0%,rgba(13,13,13,0.04)_45%,rgba(13,13,13,0.42)_100%)]"
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function HeroBackgroundMarquee() {
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(40,128,154,0.12),transparent_28%)] dark:bg-[radial-gradient(circle_at_top_right,rgba(103,209,227,0.16),transparent_32%)]" />
+
+      <div className="absolute inset-y-0 -right-24 left-[8%] flex flex-col justify-center gap-4 opacity-85 md:left-[28%] md:gap-6 lg:left-[34%]">
+        <HeroMarqueeRow images={heroHouseImages} />
+        <HeroMarqueeRow images={[...heroHouseImages].reverse()} className="landing-hero-marquee-track-slow" />
+      </div>
+
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.99)_0%,rgba(255,255,255,0.97)_28%,rgba(255,255,255,0.82)_52%,rgba(255,255,255,0.72)_72%,rgba(255,255,255,0.84)_100%)] dark:bg-[linear-gradient(90deg,rgba(13,13,13,0.96)_0%,rgba(13,13,13,0.9)_28%,rgba(13,13,13,0.58)_58%,rgba(13,13,13,0.72)_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.78)_0%,rgba(255,255,255,0.08)_24%,rgba(255,255,255,0.18)_74%,rgba(255,255,255,0.9)_100%)] dark:bg-[linear-gradient(180deg,rgba(13,13,13,0.52)_0%,rgba(13,13,13,0.12)_24%,rgba(13,13,13,0.22)_72%,rgba(13,13,13,0.68)_100%)]" />
+    </div>
+  );
 }
 
 export function LandingHomePage() {
@@ -375,14 +419,10 @@ export function LandingHomePage() {
       id="top"
       className={cn(
         isDark && 'dark',
-        'relative isolate overflow-x-hidden bg-[#f7f3ea] text-[#171717] transition-colors duration-300 dark:bg-[#0d0d0d] dark:text-white',
+        'relative isolate overflow-x-hidden bg-white text-[#171717] transition-colors duration-300 dark:bg-[#0d0d0d] dark:text-white',
       )}
     >
-      <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 dark:hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,#faf6ee_0%,#efe6d8_100%)]" />
-        <div className="absolute -right-28 -top-20 h-[42rem] w-[42rem] rounded-full bg-[#28809A]/12 blur-[130px]" />
-        <div className="absolute left-[-10rem] top-[28rem] h-[26rem] w-[26rem] rounded-full bg-[#171717]/6 blur-[110px]" />
-      </div>
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 bg-white dark:hidden" />
 
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 hidden dark:block">
         <div className="absolute inset-0 bg-[linear-gradient(180deg,#0d0d0d_0%,#111417_100%)]" />
@@ -390,10 +430,14 @@ export function LandingHomePage() {
         <div className="absolute left-[-10rem] top-[28rem] h-[26rem] w-[26rem] rounded-full bg-white/5 blur-[110px]" />
       </div>
 
-      <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 opacity-20 dark:opacity-40" style={noiseStyle} />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 z-0 hidden opacity-40 dark:block"
+        style={darkNoiseStyle}
+      />
 
       <div className="relative z-10">
-        <nav className="fixed inset-x-0 top-0 z-50 border-b border-black/10 bg-[#f7f3ea]/75 px-6 py-5 backdrop-blur-xl md:px-10 lg:px-16 dark:border-white/10 dark:bg-[#0d0d0d]/70">
+        <nav className="fixed inset-x-0 top-0 z-50 border-b border-black/10 bg-white/75 px-6 py-5 backdrop-blur-xl md:px-10 lg:px-16 dark:border-white/10 dark:bg-[#0d0d0d]/70">
           <div className={cn(pageShell, 'flex items-center justify-between gap-4')}>
             <a href="#top" className="inline-flex items-center">
               <BrandLogo />
@@ -420,11 +464,11 @@ export function LandingHomePage() {
         </nav>
 
         <section className="relative flex min-h-screen items-center overflow-hidden px-6 pb-24 pt-32 md:px-10 lg:px-16 lg:pb-28">
-          <div aria-hidden="true" className="absolute inset-0 dark:hidden" style={lightGridStyle} />
+          <HeroBackgroundMarquee />
           <div aria-hidden="true" className="absolute inset-0 hidden dark:block" style={darkGridStyle} />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -right-24 -top-24 h-[38rem] w-[38rem] rounded-full bg-[radial-gradient(circle,rgba(40,128,154,0.18)_0%,transparent_70%)] dark:bg-[radial-gradient(circle,rgba(40,128,154,0.26)_0%,transparent_70%)]"
+            className="pointer-events-none absolute -right-24 -top-24 hidden h-[38rem] w-[38rem] rounded-full dark:block dark:bg-[radial-gradient(circle,rgba(40,128,154,0.26)_0%,transparent_70%)]"
           />
 
           <div className={pageShell}>
@@ -491,7 +535,7 @@ export function LandingHomePage() {
         <section className={sectionShell}>
           <SectionLabel>The Real Cost of Vacancy</SectionLabel>
 
-          <div className="mt-16 grid gap-10 lg:grid-cols-2 lg:items-start">
+          <div className="grid gap-10 lg:grid-cols-2 lg:items-start">
             <Reveal>
               <h2 className={sectionTitleClass}>Every day a unit sits empty, you are paying for it.</h2>
               <p className={cn(bodyTextClass, 'max-w-[600px]')}>
@@ -695,7 +739,7 @@ export function LandingHomePage() {
         <section className={sectionShell}>
           <SectionLabel>The Network Effect</SectionLabel>
 
-          <div className="mt-16 grid gap-12 lg:grid-cols-2 lg:items-center">
+          <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
             <Reveal>
               <h2 className={sectionTitleClass}>The more landlords who join, the faster every unit fills.</h2>
               <p className={cn(bodyTextClass, 'max-w-[620px]')}>
@@ -759,7 +803,7 @@ export function LandingHomePage() {
         <section className={sectionShell}>
           <SectionLabel>What You Gain</SectionLabel>
 
-          <div className="mt-16 grid gap-12 lg:grid-cols-[1.1fr_1fr] lg:items-center">
+          <div className="grid gap-12 lg:grid-cols-[1.1fr_1fr] lg:items-center">
             <Reveal>
               <h2 className={sectionTitleClass}>Less vacancy. No agents. No cost to you.</h2>
 
