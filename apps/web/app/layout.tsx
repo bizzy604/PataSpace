@@ -1,5 +1,7 @@
 import './globals.css';
 import type { Metadata } from 'next';
+import { ClerkProvider } from '@clerk/nextjs';
+import { shadcn } from '@clerk/ui/themes';
 import { DM_Sans, Playfair_Display } from 'next/font/google';
 import { ReactNode } from 'react';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -32,17 +34,24 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${dmSans.variable} ${playfairDisplay.variable}`}>
       <body className="font-sans antialiased">
-        <TooltipProvider>
-          <a
-            href="#main-content"
-            className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-card focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-foreground"
-          >
-            Skip to content
-          </a>
-          <main id="main-content" className="min-h-screen">
-            {children}
-          </main>
-        </TooltipProvider>
+        <ClerkProvider
+          appearance={{ theme: shadcn }}
+          afterSignOutUrl="/"
+          signInUrl="/auth/sign-in"
+          signUpUrl="/auth/register"
+        >
+          <TooltipProvider>
+            <a
+              href="#main-content"
+              className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-card focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-foreground"
+            >
+              Skip to content
+            </a>
+            <main id="main-content" className="min-h-screen">
+              {children}
+            </main>
+          </TooltipProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

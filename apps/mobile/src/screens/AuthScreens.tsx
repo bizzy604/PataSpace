@@ -1,3 +1,4 @@
+import { useAuth, useSignIn, useSignUp } from '@clerk/expo';
 import type { ComponentProps, ReactNode } from 'react';
 import { useState } from 'react';
 import { Link, useRouter } from 'expo-router';
@@ -285,6 +286,48 @@ function AuthFooterLink({
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+function normalizePhoneForMetadata(phone: string) {
+  const digits = phone.replace(/\D/g, '');
+
+  if (digits.startsWith('254')) {
+    return `+${digits}`;
+  }
+
+  if (digits.startsWith('0')) {
+    return `+254${digits.slice(1)}`;
+  }
+
+  if (digits.startsWith('7') && digits.length === 9) {
+    return `+254${digits}`;
+  }
+
+  return phone.trim();
+}
+
+function getClerkErrorMessage(
+  error: unknown,
+  fallback: string,
+) {
+  if (!error || typeof error !== 'object') {
+    return fallback;
+  }
+
+  const apiErrors = (error as { errors?: Array<{ longMessage?: string; message?: string }> }).errors;
+  const firstError = Array.isArray(apiErrors) ? apiErrors[0] : null;
+
+  if (firstError?.longMessage) {
+    return firstError.longMessage;
+  }
+
+  if (firstError?.message) {
+    return firstError.message;
+  }
+
+  const message = (error as { message?: string }).message;
+
+  return typeof message === 'string' && message.trim() ? message : fallback;
 }
 
 export function WelcomeScreen() {

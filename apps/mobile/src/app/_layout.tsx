@@ -1,15 +1,23 @@
 import '../../global.css';
+import { ClerkProvider, useAuth } from '@clerk/expo';
+import { tokenCache } from '@clerk/expo/token-cache';
 import { useEffect, useState } from 'react';
 import { Stack, usePathname, useRouter } from 'expo-router';
 import { AppLaunchScreen } from '@/components/ui/app-launch-screen';
 import { MobileAppProvider, useMobileApp } from '@/features/mobile-app/mobile-app-provider';
 
 const publicPaths = ['/', '/onboarding', '/register', '/verify-otp', '/login'];
+const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+if (!publishableKey) {
+  throw new Error('Add your Clerk Publishable Key to apps/mobile/.env as EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY');
+}
 
 function RootNavigator() {
   const [showLaunch, setShowLaunch] = useState(true);
   const pathname = usePathname();
   const router = useRouter();
+  const { isLoaded, isSignedIn } = useAuth();
   const { isAuthenticated, theme } = useMobileApp();
 
   useEffect(() => {
@@ -21,20 +29,24 @@ function RootNavigator() {
   }, []);
 
   useEffect(() => {
+    if (!isLoaded) {
+      return;
+    }
+
     const isPublicPath = publicPaths.includes(pathname);
     const isAuthOnlyPath = pathname !== '/' && publicPaths.includes(pathname);
 
-    if (!isAuthenticated && !isPublicPath) {
+    if (!isSignedIn && !isPublicPath) {
       router.replace('/');
       return;
     }
 
-    if (isAuthenticated && isAuthOnlyPath) {
+    if (isSignedIn && isAuthOnlyPath) {
       router.replace('/');
     }
-  }, [isAuthenticated, pathname, router]);
+  }, [isLoaded, isSignedIn, pathname, router]);
 
-  if (showLaunch) {
+  if (showLaunch || !isLoaded) {
     return <AppLaunchScreen />;
   }
 
@@ -52,8 +64,10 @@ function RootNavigator() {
 
 export default function RootLayout() {
   return (
-    <MobileAppProvider>
-      <RootNavigator />
-    </MobileAppProvider>
+    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+      <MobileAppProvider>
+        <RootNavigator />
+      </MobileAppProvider>
+    </ClerkProvider>
   );
 }

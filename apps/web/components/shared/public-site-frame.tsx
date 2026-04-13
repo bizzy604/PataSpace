@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { Phone, Search, Wallet } from 'lucide-react';
+import { Show, SignInButton, SignOutButton, SignUpButton, UserButton } from '@clerk/nextjs';
+import { LogIn, LogOut, Phone, UserPlus, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { linkButtonClass } from '@/lib/link-button';
 
@@ -26,7 +27,6 @@ const footerColumns = [
     links: [
       { label: 'Register', href: '/auth/register' },
       { label: 'Sign in', href: '/auth/sign-in' },
-      { label: 'Verify OTP', href: '/auth/verify-otp' },
     ],
   },
   {
@@ -83,10 +83,35 @@ export function PublicSiteFrame({
               <Wallet className="size-4" />
               Wallet
             </Link>
-            <Link href="/auth/sign-in" className={linkButtonClass({ size: 'sm' })}>
-              <Search className="size-4" />
-              Sign in
-            </Link>
+            <Show when="signed-out">
+              <SignUpButton mode="redirect">
+                <button type="button" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
+                  <UserPlus className="size-4" />
+                  Register
+                </button>
+              </SignUpButton>
+            </Show>
+            <Show when="signed-out">
+              <SignInButton mode="redirect">
+                <button type="button" className={linkButtonClass({ size: 'sm' })}>
+                  <LogIn className="size-4" />
+                  Sign in
+                </button>
+              </SignInButton>
+            </Show>
+            <Show when="signed-in">
+              <div className="rounded-full border border-black/8 bg-white p-1 shadow-soft-sm">
+                <UserButton />
+              </div>
+            </Show>
+            <Show when="signed-in">
+              <SignOutButton>
+                <button type="button" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
+                  <LogOut className="size-4" />
+                  Sign out
+                </button>
+              </SignOutButton>
+            </Show>
           </div>
         </div>
       </header>

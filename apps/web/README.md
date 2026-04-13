@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`apps/web` is the public web experience for browsing listings, viewing details, and supporting future web-based authentication and unlock flows.
+`apps/web` is the public web experience for browsing listings, viewing details, Clerk authentication, and future unlock flows.
 
 ## Stack
 
@@ -33,9 +33,8 @@ pnpm --filter @pataspace/web start
 - `/listings/[id]`: Stitch-backed listing details
 - `/listings/[id]/gallery`: media review
 - `/listings/[id]/unlock`: unlock confirmation
-- `/auth/register`: account creation
-- `/auth/verify-otp`: OTP verification
-- `/auth/sign-in`: Stitch-backed sign-in flow
+- `/auth/register`: Clerk sign-up flow
+- `/auth/sign-in`: Clerk sign-in flow
 - `/wallet`: Stitch-backed wallet overview
 - `/wallet/buy`: Stitch-backed M-Pesa payment flow
 - `/wallet/processing`: M-Pesa pending state
@@ -73,4 +72,4 @@ pnpm --filter @pataspace/web start
 
 - Several user-facing routes now render committed Stitch HTML exports through local iframe-backed shells for design fidelity. They are integrated into the app route surface, but they are not yet native React/Tailwind rewrites.
 - The app still relies on local mock data for most route content and route gating.
-- API integration, auth session persistence, and real mutation wiring are the next major steps.
+- Protected-route decisions, API session handoff, and real mutation wiring are the next major steps.

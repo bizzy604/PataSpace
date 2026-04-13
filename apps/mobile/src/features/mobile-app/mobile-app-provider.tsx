@@ -1,3 +1,4 @@
+import { useAuth, useClerk, useUser } from '@clerk/expo';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { UnlockContactInfo } from '@pataspace/contracts';
 import { useColorScheme as useNativeWindColorScheme } from 'nativewind';
@@ -47,11 +48,6 @@ import {
 } from '@/data/mock-listings';
 import { mobileThemes, type AppColorScheme, type MobileThemePalette } from '@/lib/theme';
 
-type PendingAuth = {
-  name: string;
-  phone: string;
-};
-
 type PendingTopUp = {
   packageId: string;
   phone: string;
@@ -75,7 +71,6 @@ type MobileAppContextValue = {
   latestTopUp?: TransactionRecord;
   latestSubmittedListing?: MyListingRow;
   notifications: NotificationRecord[];
-  pendingAuth: PendingAuth | null;
   pendingTopUp: PendingTopUp | null;
   draft: ListingDraft;
   searchFilters: SearchFilters;
@@ -97,9 +92,6 @@ type MobileAppContextValue = {
   getUnlockRecord: (listingId?: string | string[]) => UnlockRecord | undefined;
   isListingSaved: (listingId: string) => boolean;
   isListingUnlocked: (listingId: string) => boolean;
-  beginRegistration: (name: string, phone: string) => void;
-  verifyOtp: (code: string) => boolean;
-  login: (phone: string) => void;
   logout: () => void;
   updateProfile: (profile: Partial<UserProfile>) => void;
   updateSettings: (settings: Partial<AppSettings>) => void;
@@ -148,6 +140,28 @@ function toInitials(name: string) {
     .join('');
 
   return initials || 'PS';
+}
+
+function readUnsafeMetadataPhone(value: unknown) {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const phone = (value as Record<string, unknown>).phone;
+
+  return typeof phone === 'string' && phone.trim() ? normalizePhone(phone) : null;
+}
+
+function resolveDisplayName(value: { fullName?: string | null; firstName?: string | null; lastName?: string | null }) {
+  const fullName = value.fullName?.trim();
+
+  if (fullName) {
+    return fullName;
+  }
+
+  const fallback = [value.firstName, value.lastName].filter(Boolean).join(' ').trim();
+
+  return fallback || initialUserProfile.name;
 }
 
 function buildSubmittedListingDraftData(draft: ListingDraft, listingIndex: number) {
@@ -220,9 +234,11 @@ function buildSubmittedListingDraftData(draft: ListingDraft, listingIndex: numbe
 }
 
 export function MobileAppProvider({ children }: { children: ReactNode }) {
+  const { isLoaded: isAuthLoaded, isSignedIn } = useAuth();
+  const { signOut } = useClerk();
+  const { user: clerkUser } = useUser();
   const { colorScheme: nativeWindColorScheme, setColorScheme: setNativeWindColorScheme } =
     useNativeWindColorScheme();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(initialUserProfile);
   const [settings, setSettings] = useState(initialSettings);
   const [listings, setListings] = useState(featuredListings);
@@ -234,12 +250,12 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
   const [listingContactInfoById, setListingContactInfoById] =
     useState<Record<string, UnlockContactInfo>>(initialUnlockContactInfoByListingId);
   const [notifications, setNotifications] = useState(initialNotifications);
-  const [pendingAuth, setPendingAuth] = useState<PendingAuth | null>(null);
   const [pendingTopUp, setPendingTopUp] = useState<PendingTopUp | null>(null);
   const [draft, setDraft] = useState(initialDraft);
   const [searchFilters, setSearchFilters] = useState(initialSearchFilters);
   const colorScheme: AppColorScheme = nativeWindColorScheme === 'dark' ? 'dark' : 'light';
   const theme = mobileThemes[colorScheme];
+  const isAuthenticated = isAuthLoaded && !!isSignedIn;
 
   const browseListings = listings.filter((listing) => listing.status !== 'Review' && listing.status !== 'Closed');
   const savedListings = browseListings.filter((listing) => savedListingIds.includes(listing.id));
@@ -250,6 +266,27 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setNativeWindColorScheme(settings.colorScheme);
   }, [setNativeWindColorScheme, settings.colorScheme]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !clerkUser) {
+      setUser(initialUserProfile);
+      return;
+    }
+
+    const displayName = resolveDisplayName(clerkUser);
+    const metadataPhone = readUnsafeMetadataPhone(clerkUser.unsafeMetadata);
+    const primaryPhoneNumber =
+      clerkUser.primaryPhoneNumber?.phoneNumber && clerkUser.primaryPhoneNumber.phoneNumber.trim()
+        ? normalizePhone(clerkUser.primaryPhoneNumber.phoneNumber)
+        : null;
+
+    setUser((current) => ({
+      ...current,
+      name: displayName,
+      initials: toInitials(displayName),
+      phone: metadataPhone ?? primaryPhoneNumber ?? current.phone ?? initialUserProfile.phone,
+    }));
+  }, [clerkUser, isAuthenticated]);
 
   function pushNotification(notification: NotificationRecord) {
     setNotifications((current) => [notification, ...current]);
@@ -265,42 +302,9 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
     return unlocks.find((unlock) => unlock.listingId === resolvedId);
   }
 
-  function beginRegistration(name: string, phone: string) {
-    setPendingAuth({
-      name: name.trim() || 'PataSpace User',
-      phone: normalizePhone(phone),
-    });
-  }
-
-  function verifyOtp(code: string) {
-    if (code.trim().length < 4 || !pendingAuth) {
-      return false;
-    }
-
-    setIsAuthenticated(true);
-    setUser((current) => ({
-      ...current,
-      name: pendingAuth.name,
-      initials: toInitials(pendingAuth.name),
-      phone: pendingAuth.phone,
-    }));
-    setPendingAuth(null);
-
-    return true;
-  }
-
-  function login(identifier: string) {
-    const normalizedPhone = normalizePhone(identifier);
-
-    setIsAuthenticated(true);
-    setUser((current) => ({
-      ...current,
-      phone: identifier.includes('@') ? current.phone : normalizedPhone || current.phone,
-    }));
-  }
-
   function logout() {
-    setIsAuthenticated(false);
+    void signOut();
+    setUser(initialUserProfile);
   }
 
   function updateProfile(profile: Partial<UserProfile>) {
@@ -598,7 +602,6 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
         latestTopUp,
         latestSubmittedListing,
         notifications,
-        pendingAuth,
         pendingTopUp,
         draft,
         searchFilters,
@@ -621,9 +624,6 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
         isListingSaved: (listingId: string) => savedListingIds.includes(listingId),
         isListingUnlocked: (listingId: string) =>
           unlocks.some((unlock) => unlock.listingId === listingId),
-        beginRegistration,
-        verifyOtp,
-        login,
         logout,
         updateProfile,
         updateSettings,
