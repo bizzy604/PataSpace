@@ -2,30 +2,28 @@ import Link from 'next/link';
 import { ArrowRight, Flag, MessageCircle, PlayCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PublicSiteFrame } from '@/components/shared/public-site-frame';
-import { ScreenHero } from '@/components/shared/screen-hero';
+import { TenantWorkspaceShell } from '@/components/workspace/page';
 import { mockSupportRequests, supportTopics } from '@/lib/mock-app-state';
 import { formatDateLabel } from '@/lib/format';
 import { linkButtonClass } from '@/lib/link-button';
 
 export function HelpCenterPage() {
   return (
-    <PublicSiteFrame>
-      <ScreenHero
-        eyebrow="Help center"
-        title="Get answers before or after an unlock"
-        description="The support route now mirrors the Stitch help-center intent with searchable guidance, quick escalation paths, and live thread context."
-        actions={
-          <>
-            <Link href="/support" className={linkButtonClass({ size: 'sm' })}>
-              Contact support
-            </Link>
-            <Link href="/wallet/transactions" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
-              Review wallet history
-            </Link>
-          </>
-        }
-      />
-
+    <TenantWorkspaceShell
+      pathname="/support"
+      title="Support"
+      description="Guidance, escalation paths, and active support threads in one workspace."
+      actions={
+        <>
+          <Link href="/support" className={linkButtonClass({ size: 'sm' })}>
+            Contact support
+          </Link>
+          <Link href="/wallet/transactions" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
+            Review wallet history
+          </Link>
+        </>
+      }
+    >
       <section className="px-4 pb-10 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-6 xl:grid-cols-[1.05fr_0.95fr]">
           <div className="space-y-6">
@@ -39,9 +37,9 @@ export function HelpCenterPage() {
                 {[
                   { title: 'Contact support', body: 'Reach the team for urgent handover or payment questions.', Icon: MessageCircle },
                   { title: 'Report a problem', body: 'Open the dispute path if a listing or unlock outcome breaks down.', Icon: Flag },
-                  { title: 'Video walkthroughs', body: 'Short explainers for wallet, unlock, and confirmation flows.', Icon: PlayCircle },
+                  { title: 'Video guides', body: 'Short explainers for wallet, unlock, and confirmation flows.', Icon: PlayCircle },
                 ].map(({ title, body, Icon }) => (
-                  <div key={title} className="rounded-[24px] border border-black/8 bg-[#fbfaf7] p-5">
+                  <div key={title} className="rounded-[24px] border border-black/8 bg-[#f8fafc] p-5">
                     <span className="flex size-11 items-center justify-center rounded-2xl bg-[#28809A]/10 text-[#28809A]">
                       <Icon className="size-5" />
                     </span>
@@ -58,12 +56,12 @@ export function HelpCenterPage() {
                   Frequently asked questions
                 </CardTitle>
                 <CardDescription className="text-sm leading-7 text-[#62686a]">
-                  These topics come from the current mock support knowledge base.
+                  Common answers from the current support knowledge base.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {supportTopics.map((topic) => (
-                  <div key={topic.title} className="rounded-[24px] border border-black/8 bg-[#fbfaf7] p-5">
+                  <div key={topic.title} className="rounded-[24px] border border-black/8 bg-[#f8fafc] p-5">
                     <p className="font-medium text-[#252525]">{topic.title}</p>
                     <p className="mt-2 text-sm leading-7 text-[#62686a]">{topic.body}</p>
                   </div>
@@ -78,7 +76,7 @@ export function HelpCenterPage() {
                 Open support threads
               </CardTitle>
               <CardDescription className="text-sm leading-7 text-white/70">
-                Ongoing support work stays visible beside the FAQ guidance.
+                Active support work stays visible beside the FAQ guidance.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -93,7 +91,7 @@ export function HelpCenterPage() {
           </Card>
         </div>
       </section>
-    </PublicSiteFrame>
+    </TenantWorkspaceShell>
   );
 }
 

@@ -1,8 +1,7 @@
 import Link from 'next/link';
 import { Calculator, Wallet } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { PublicSiteFrame } from '@/components/shared/public-site-frame';
-import { ScreenHero } from '@/components/shared/screen-hero';
+import { TenantWorkspaceShell } from '@/components/workspace/page';
 import { creditPackages } from '@/lib/mock-app-state';
 import { mockListings } from '@/lib/mock-listings';
 import { formatKes } from '@/lib/format';
@@ -10,23 +9,21 @@ import { linkButtonClass } from '@/lib/link-button';
 
 export default function Page() {
   return (
-    <PublicSiteFrame>
-      <ScreenHero
-        eyebrow="Pricing"
-        title="Clear economics for unlocking and wallet funding"
-        description="PataSpace separates wallet funding from listing-specific unlock cost. Credits are topped up in packages, while each listing reveal follows the marketplace formula tied to rent."
-        actions={
-          <>
-            <Link href="/wallet/buy" className={linkButtonClass({ size: 'sm' })}>
-              Buy credits
-            </Link>
-            <Link href="/listings" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
-              Compare listings
-            </Link>
-          </>
-        }
-      />
-
+    <TenantWorkspaceShell
+      pathname="/pricing"
+      title="Pricing"
+      description="Credits are bought in packages, while each unlock follows the listing-based marketplace formula."
+      actions={
+        <>
+          <Link href="/wallet/buy" className={linkButtonClass({ size: 'sm' })}>
+            Buy credits
+          </Link>
+          <Link href="/listings" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
+            Compare listings
+          </Link>
+        </>
+      }
+    >
       <section className="px-4 pb-6 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[1fr_1fr]">
           <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
@@ -35,7 +32,7 @@ export default function Page() {
                 Listing unlock formula
               </CardTitle>
               <CardDescription className="text-sm leading-7 text-[#62686a]">
-                Unlock cost = 10% of monthly rent. Owner commission = 30% of the unlock cost after both sides confirm.
+                Unlock cost = 10% of monthly rent. Owner commission = 30% of the unlock cost after confirmation.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -45,7 +42,7 @@ export default function Page() {
                 return (
                   <div
                     key={listing.id}
-                    className="rounded-[24px] border border-black/8 bg-[#fbfaf7] p-5"
+                    className="rounded-[24px] border border-black/8 bg-[#f8fafc] p-5"
                   >
                     <p className="font-display text-xl font-semibold tracking-[-0.04em] text-[#252525]">
                       {listing.title}
@@ -114,20 +111,20 @@ export default function Page() {
                     Pricing intent
                   </CardTitle>
                   <CardDescription className="text-sm leading-7 text-[#62686a]">
-                    Wallet packages are about browsing runway. Unlock pricing is about the value of the specific listing you decide to pursue.
+                    Wallet packages cover browsing runway. Unlock pricing reflects the listing you decide to pursue.
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-3">
               {[
-                'Browse is free so renters can compare before paying.',
-                'Unlocks are idempotent and should not bill twice for the same listing.',
-                'Refund paths remain explicit when disputes prove the reveal was invalid.',
+                'Browse stays free so renters can compare before paying.',
+                'Unlocks should not bill twice for the same listing.',
+                'Refunds stay explicit when a dispute proves the reveal was invalid.',
               ].map((item) => (
                 <div
                   key={item}
-                  className="rounded-[24px] border border-black/8 bg-[#fbfaf7] p-5 text-sm leading-7 text-[#62686a]"
+                  className="rounded-[24px] border border-black/8 bg-[#f8fafc] p-5 text-sm leading-7 text-[#62686a]"
                 >
                   {item}
                 </div>
@@ -136,6 +133,6 @@ export default function Page() {
           </Card>
         </div>
       </section>
-    </PublicSiteFrame>
+    </TenantWorkspaceShell>
   );
 }

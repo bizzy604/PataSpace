@@ -15,32 +15,32 @@ import { linkButtonClass } from '@/lib/link-button';
 const steps = [
   {
     title: 'Outgoing tenant posts from mobile',
-    body: 'Listings are created through the mobile capture flow with GPS-backed media, structured details, and verification notes.',
+    body: 'Listings are created with GPS-backed media, structured details, and verification notes.',
     Icon: Camera,
   },
   {
     title: 'Incoming tenant browses for free',
-    body: 'The web app exposes the listing context, media, location preview, pricing, and amenities before any paid action is required.',
+    body: 'Renters see the listing context, media, map preview, pricing, and amenities before any paid action.',
     Icon: Wallet,
   },
   {
     title: 'Credits are funded through M-Pesa',
-    body: 'Wallet top-ups create pending purchase records first, then settle after callback or reconciliation completes.',
+    body: 'Wallet top-ups create pending records first, then settle after callback or reconciliation.',
     Icon: CircleDollarSign,
   },
   {
     title: 'Unlock reveals direct contact',
-    body: 'A valid unlock reveals the exact address and phone number and notifies the outgoing tenant that someone is serious.',
+    body: 'A valid unlock reveals the exact address and phone number and signals serious intent.',
     Icon: MessageSquareText,
   },
   {
     title: 'Both sides confirm the outcome',
-    body: 'Confirmation makes the move-in outcome explicit and is part of the audited unlock timeline.',
+    body: 'Confirmation records the move-in outcome inside the audited unlock timeline.',
     Icon: BadgeCheck,
   },
   {
     title: 'Disputes and refunds remain available',
-    body: 'If the listing or handover outcome is invalid, the dispute path can block or change the financial result.',
+    body: 'If the listing or handover outcome is invalid, the dispute path can adjust the result.',
     Icon: ShieldAlert,
   },
 ] as const;
@@ -50,8 +50,8 @@ export default function Page() {
     <PublicSiteFrame>
       <ScreenHero
         eyebrow="How It Works"
-        title="The tenant flow, end to end"
-        description="The web app is designed around the incoming-tenant journey: discovery, wallet funding, contact reveal, confirmation, and dispute handling when something breaks."
+        title="The renter journey, end to end"
+        description="Browse, fund credits, unlock direct contact, confirm the outcome, and resolve issues in one flow."
         actions={
           <>
             <Link href="/listings" className={linkButtonClass({ size: 'sm' })}>

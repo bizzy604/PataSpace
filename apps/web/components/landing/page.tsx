@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { ArrowRight, Check, ClipboardList, Clock3, Moon, Repeat2, RotateCcw, Sun } from 'lucide-react';
+import { BrandLogo } from '@/components/shared/brand-logo';
 import { cn } from '@/lib/utils';
 
 const darkNoiseStyle = {
@@ -232,23 +233,6 @@ const heroHouseImages = [
   '/mock/houses/photo6.jpg',
 ];
 
-function BrandLogo({ compact = false }: { compact?: boolean }) {
-  return (
-    <Image
-      src="/brand/pataspace-logo.png"
-      alt="PataSpace"
-      width={compact ? 112 : 144}
-      height={compact ? 32 : 40}
-      priority
-      className={cn(
-        'w-auto object-contain',
-        compact ? 'h-8 md:h-9' : 'h-9 md:h-10',
-        'brightness-95 contrast-125 dark:brightness-105 dark:contrast-110',
-      )}
-    />
-  );
-}
-
 function Reveal({ children, className }: { children: ReactNode; className?: string }) {
   return <div data-owner-reveal className={cn('landing-reveal', className)}>{children}</div>;
 }
@@ -309,12 +293,12 @@ function HeroBackgroundMarquee() {
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(40,128,154,0.12),transparent_28%)] dark:bg-[radial-gradient(circle_at_top_right,rgba(103,209,227,0.16),transparent_32%)]" />
 
-      <div className="absolute inset-y-0 -right-24 left-[8%] flex flex-col justify-center gap-4 opacity-85 md:left-[28%] md:gap-6 lg:left-[34%]">
+      <div className="absolute inset-y-0 -right-24 left-[-4%] flex flex-col justify-center gap-4 opacity-85 md:left-[6%] md:gap-6 lg:left-[12%]">
         <HeroMarqueeRow images={heroHouseImages} />
         <HeroMarqueeRow images={[...heroHouseImages].reverse()} className="landing-hero-marquee-track-slow" />
       </div>
 
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.99)_0%,rgba(255,255,255,0.97)_28%,rgba(255,255,255,0.82)_52%,rgba(255,255,255,0.72)_72%,rgba(255,255,255,0.84)_100%)] dark:bg-[linear-gradient(90deg,rgba(13,13,13,0.96)_0%,rgba(13,13,13,0.9)_28%,rgba(13,13,13,0.58)_58%,rgba(13,13,13,0.72)_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.88)_0%,rgba(255,255,255,0.74)_24%,rgba(255,255,255,0.92)_50%,rgba(255,255,255,0.74)_76%,rgba(255,255,255,0.88)_100%)] dark:bg-[linear-gradient(90deg,rgba(13,13,13,0.84)_0%,rgba(13,13,13,0.62)_24%,rgba(13,13,13,0.9)_50%,rgba(13,13,13,0.62)_76%,rgba(13,13,13,0.84)_100%)]" />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.78)_0%,rgba(255,255,255,0.08)_24%,rgba(255,255,255,0.18)_74%,rgba(255,255,255,0.9)_100%)] dark:bg-[linear-gradient(180deg,rgba(13,13,13,0.52)_0%,rgba(13,13,13,0.12)_24%,rgba(13,13,13,0.22)_72%,rgba(13,13,13,0.68)_100%)]" />
     </div>
   );
@@ -439,8 +423,8 @@ export function LandingHomePage() {
       <div className="relative z-10">
         <nav className="fixed inset-x-0 top-0 z-50 border-b border-black/10 bg-white/75 px-6 py-5 backdrop-blur-xl md:px-10 lg:px-16 dark:border-white/10 dark:bg-[#0d0d0d]/70">
           <div className={cn(pageShell, 'flex items-center justify-between gap-4')}>
-            <a href="#top" className="inline-flex items-center">
-              <BrandLogo />
+            <a href="#top" aria-label="PataSpace home" className="inline-flex items-center">
+              <BrandLogo priority className="dark:brightness-105 dark:contrast-110" />
             </a>
 
             <div className="flex items-center gap-3">
@@ -471,14 +455,19 @@ export function LandingHomePage() {
             className="pointer-events-none absolute -right-24 -top-24 hidden h-[38rem] w-[38rem] rounded-full dark:block dark:bg-[radial-gradient(circle,rgba(40,128,154,0.26)_0%,transparent_70%)]"
           />
 
-          <div className={pageShell}>
-            <div className="relative z-10 max-w-[780px]">
-              <div className="mb-8 inline-flex items-center gap-2 text-[0.72rem] font-medium uppercase tracking-[0.18em] text-[#28809A] dark:text-[#67d1e3]">
+          <div className={cn(pageShell, 'relative flex justify-center')}>
+            <div className="relative z-10 mx-auto flex max-w-[880px] flex-col items-center text-center">
+              <div className="mb-8 inline-flex items-center justify-center gap-2 text-[0.72rem] font-medium uppercase tracking-[0.18em] text-[#28809A] dark:text-[#67d1e3]">
                 <span className="h-px w-6 bg-current" />
                 For Property Owners in Kenya
               </div>
 
-              <h1 className={cn(displayFontClass, 'mb-7 text-[clamp(2.8rem,6vw,5rem)] font-black leading-[1.08] tracking-[-0.03em] text-[#111111] dark:text-white')}>
+              <h1
+                className={cn(
+                  displayFontClass,
+                  'mb-7 max-w-[12ch] text-[clamp(2.8rem,6vw,5rem)] font-black leading-[1.08] tracking-[-0.03em] text-[#111111] dark:text-white',
+                )}
+              >
                 Your units should never
                 <br />
                 sit <span className="text-[#28809A] dark:text-[#67d1e3]">empty</span> between tenants.
@@ -488,18 +477,18 @@ export function LandingHomePage() {
                 We believe the best person to find your next tenant is the one who just lived there.
               </p>
 
-              <p className="mb-12 max-w-[520px] text-[1.1rem] leading-8 text-[#4e5457] dark:text-white/60">
+              <p className="mb-12 max-w-[620px] text-[1.1rem] leading-8 text-[#4e5457] dark:text-white/60">
                 PataSpace connects your outgoing tenants directly with verified renters in your area -
                 before the unit even goes cold.
               </p>
 
-              <div className="mb-12 flex flex-wrap gap-x-12 gap-y-6">
+              <div className="mb-12 flex flex-wrap justify-center gap-x-12 gap-y-6">
                 {[
                   ['50+', 'Properties already listed'],
                   ['0', 'Cost to property owners'],
                   ['15 min', 'Demo, no commitment'],
                 ].map(([value, label]) => (
-                  <div key={label} className="min-w-[8rem]">
+                  <div key={label} className="min-w-[8rem] text-center">
                     <div className={cn(displayFontClass, 'text-[2.2rem] font-bold leading-none text-[#111111] dark:text-white')}>
                       {value}
                     </div>
@@ -510,7 +499,7 @@ export function LandingHomePage() {
                 ))}
               </div>
 
-              <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
+              <div className="flex flex-col items-center gap-5 sm:flex-row sm:justify-center">
                 <a
                   href="#cta"
                   className="inline-flex items-center gap-2 rounded-[4px] bg-[#28809A] px-8 py-3.5 text-[0.9rem] font-medium tracking-[0.02em] text-white transition hover:-translate-y-0.5 hover:bg-[#1c5f73]"
@@ -984,7 +973,7 @@ export function LandingHomePage() {
 
         <footer className="flex flex-col gap-4 border-t border-black/10 px-6 py-10 text-center md:flex-row md:items-center md:justify-between md:px-10 lg:px-16 dark:border-white/10">
           <div className="inline-flex items-center justify-center md:justify-start">
-            <BrandLogo compact />
+            <BrandLogo compact className="dark:brightness-105 dark:contrast-110" />
           </div>
           <div className="text-[0.78rem] text-[#171717]/35 dark:text-white/20">
             &copy; 2026 PataSpace. Built for Kenya.

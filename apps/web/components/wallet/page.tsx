@@ -34,135 +34,137 @@ export function WalletOverviewPage() {
         </>
       }
     >
-      <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-        <Card className="border border-black/8 bg-[linear-gradient(135deg,#28809A_0%,#252525_100%)] text-white shadow-[0_24px_80px_rgba(37,37,37,0.18)]">
-          <CardHeader>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/60">Available balance</p>
-            <CardTitle className="font-display text-5xl font-semibold tracking-[-0.08em] text-white">
-              {formatKes(mockCreditBalance.balance)}
-            </CardTitle>
-            <CardDescription className="max-w-xl text-sm leading-7 text-white/74">
-              Roughly {coverage} serious unlocks at the current average spend, with refunds and purchases preserved in the same ledger.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-3">
-            {[
-              { label: 'Lifetime funded', value: formatKes(mockCreditBalance.lifetimeEarned) },
-              { label: 'Lifetime spent', value: formatKes(mockCreditBalance.lifetimeSpent) },
-              { label: 'Completed top-ups', value: `${completedPurchases}` },
-            ].map((item) => (
-              <div key={item.label} className="rounded-[24px] border border-white/10 bg-white/8 p-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-white/54">{item.label}</p>
-                <p className="mt-3 font-display text-2xl font-semibold tracking-[-0.05em] text-white">
-                  {item.value}
-                </p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr] xl:items-start">
+        <div className="space-y-6">
+          <Card className="h-fit border border-black/8 bg-[linear-gradient(135deg,#28809A_0%,#252525_100%)] text-white shadow-[0_20px_60px_rgba(15,23,42,0.16)]">
+            <CardHeader className="pb-4">
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-white/60">Available balance</p>
+              <CardTitle className="font-display text-4xl font-semibold tracking-[-0.07em] text-white">
+                {formatKes(mockCreditBalance.balance)}
+              </CardTitle>
+              <CardDescription className="max-w-xl text-sm leading-6 text-white/74">
+                Roughly {coverage} serious unlocks at the current average spend, with refunds and purchases preserved in the same ledger.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3 md:grid-cols-3">
+              {[
+                { label: 'Lifetime funded', value: formatKes(mockCreditBalance.lifetimeEarned) },
+                { label: 'Lifetime spent', value: formatKes(mockCreditBalance.lifetimeSpent) },
+                { label: 'Completed top-ups', value: `${completedPurchases}` },
+              ].map((item) => (
+                <div key={item.label} className="rounded-[18px] border border-white/10 bg-white/8 p-3.5">
+                  <p className="text-[0.68rem] uppercase tracking-[0.16em] text-white/54">{item.label}</p>
+                  <p className="mt-2 font-display text-xl font-semibold tracking-[-0.04em] text-white">
+                    {item.value}
+                  </p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
 
-        <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-1">
-          <MetricCard
-            label="Unlock-ready"
-            value={`${coverage}`}
-            hint="Approximate number of unlocks the current balance can cover at the recent average spend."
-            Icon={Wallet2}
-          />
-          <MetricCard
-            label="Protected refunds"
-            value={`${mockTransactions.filter((transaction) => transaction.type === 'REFUND').length}`}
-            hint="Refunds flow back into the same wallet balance without breaking the ledger history."
-            Icon={ShieldCheck}
-          />
-          <MetricCard
-            label="Mobile-first funding"
-            value="M-Pesa"
-            hint="Wallet top-ups stay aligned with the M-Pesa-first purchase flow documented in the wireframes."
-            Icon={Smartphone}
-          />
-        </div>
-      </div>
+          <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+            <CardHeader>
+              <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
+                Top-up packages
+              </CardTitle>
+              <CardDescription className="text-sm leading-7 text-[#62686a]">
+                Choose a package, then continue to the M-Pesa payment screen. Unlock charges still follow the 10% of monthly rent rule.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {creditPackages.map((pkg) => {
+                const isRecommended = 'recommended' in pkg && Boolean(pkg.recommended);
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
-          <CardHeader>
-            <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
-              Top-up packages
-            </CardTitle>
-            <CardDescription className="text-sm leading-7 text-[#62686a]">
-              Choose a package, then continue to the M-Pesa payment screen. Unlock charges still follow the 10% of monthly rent rule.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {creditPackages.map((pkg) => {
-              const isRecommended = 'recommended' in pkg && Boolean(pkg.recommended);
-
-              return (
-                <div
-                  key={pkg.id}
-                  className={`rounded-[24px] border p-5 ${
-                    isRecommended
-                      ? 'border-[#28809A]/30 bg-[#28809A]/8'
-                      : 'border-black/8 bg-[#fbfaf7]'
-                  }`}
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="font-display text-2xl font-semibold tracking-[-0.05em] text-[#252525]">
-                        {pkg.name}
-                      </p>
-                      <p className="mt-1 text-sm leading-7 text-[#62686a]">{pkg.description}</p>
+                return (
+                  <div
+                    key={pkg.id}
+                    className={`rounded-[24px] border p-5 ${
+                      isRecommended
+                        ? 'border-[#28809A]/30 bg-[#28809A]/8'
+                        : 'border-black/8 bg-[#fbfaf7]'
+                    }`}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="font-display text-2xl font-semibold tracking-[-0.05em] text-[#252525]">
+                          {pkg.name}
+                        </p>
+                        <p className="mt-1 text-sm leading-7 text-[#62686a]">{pkg.description}</p>
+                      </div>
+                      {isRecommended ? <StatusBadge label="Recommended" tone="brand" /> : null}
                     </div>
-                    {isRecommended ? <StatusBadge label="Recommended" tone="brand" /> : null}
+                    <div className="mt-4 grid gap-3 text-sm text-[#4b4f50] sm:grid-cols-2">
+                      <p className="rounded-[18px] bg-white px-4 py-3">Amount: {formatKes(pkg.amount)}</p>
+                      <p className="rounded-[18px] bg-white px-4 py-3">Credits: {pkg.credits}</p>
+                    </div>
                   </div>
-                  <div className="mt-4 grid gap-3 text-sm text-[#4b4f50] sm:grid-cols-2">
-                    <p className="rounded-[18px] bg-white px-4 py-3">Amount: {formatKes(pkg.amount)}</p>
-                    <p className="rounded-[18px] bg-white px-4 py-3">Credits: {pkg.credits}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
+                );
+              })}
+            </CardContent>
+          </Card>
+        </div>
 
-        <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
-          <CardHeader>
-            <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
-              Recent ledger activity
-            </CardTitle>
-            <CardDescription className="text-sm leading-7 text-[#62686a]">
-              Purchases, unlock deductions, and refunds all stay visible from one wallet surface.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {recentTransactions.map((transaction) => {
-              const type = transactionTypeMeta(transaction.type);
-              const status = transactionStatusMeta(transaction.status);
+        <div className="space-y-6">
+          <div className="grid auto-rows-min gap-3 self-start md:grid-cols-3 xl:grid-cols-1">
+            <MetricCard
+              label="Unlock-ready"
+              value={`${coverage}`}
+              hint="Approximate number of unlocks the current balance can cover at the recent average spend."
+              Icon={Wallet2}
+            />
+            <MetricCard
+              label="Protected refunds"
+              value={`${mockTransactions.filter((transaction) => transaction.type === 'REFUND').length}`}
+              hint="Refunds flow back into the same wallet balance without breaking the ledger history."
+              Icon={ShieldCheck}
+            />
+            <MetricCard
+              label="Mobile-first funding"
+              value="M-Pesa"
+              hint="Wallet top-ups stay aligned with the M-Pesa-first purchase flow documented in the wireframes."
+              Icon={Smartphone}
+            />
+          </div>
 
-              return (
-                <div key={transaction.id} className="rounded-[24px] border border-black/8 bg-[#fbfaf7] p-4">
-                  <div className="flex flex-wrap gap-2">
-                    <StatusBadge label={type.label} tone={type.tone} />
-                    <StatusBadge label={status.label} tone={status.tone} />
-                  </div>
-                  <p className="mt-3 font-medium text-[#252525]">{transaction.description}</p>
-                  <div className="mt-3 flex items-center justify-between gap-3 text-sm text-[#62686a]">
-                    <span>{formatDateLabel(transaction.createdAt)}</span>
-                    <span className={transaction.amount < 0 ? 'font-semibold text-rose-700' : 'font-semibold text-emerald-700'}>
-                      {transaction.amount < 0 ? '-' : '+'}
-                      {formatKes(Math.abs(transaction.amount))}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+          <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+            <CardHeader>
+              <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
+                Recent ledger activity
+              </CardTitle>
+              <CardDescription className="text-sm leading-7 text-[#62686a]">
+                Purchases, unlock deductions, and refunds all stay visible from one wallet surface.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {recentTransactions.map((transaction) => {
+                const type = transactionTypeMeta(transaction.type);
+                const status = transactionStatusMeta(transaction.status);
 
-            <Link href="/wallet/transactions" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
-              Open full history
-              <History className="size-4" />
-            </Link>
-          </CardContent>
-        </Card>
+                return (
+                  <div key={transaction.id} className="rounded-[24px] border border-black/8 bg-[#fbfaf7] p-4">
+                    <div className="flex flex-wrap gap-2">
+                      <StatusBadge label={type.label} tone={type.tone} />
+                      <StatusBadge label={status.label} tone={status.tone} />
+                    </div>
+                    <p className="mt-3 font-medium text-[#252525]">{transaction.description}</p>
+                    <div className="mt-3 flex items-center justify-between gap-3 text-sm text-[#62686a]">
+                      <span>{formatDateLabel(transaction.createdAt)}</span>
+                      <span className={transaction.amount < 0 ? 'font-semibold text-rose-700' : 'font-semibold text-emerald-700'}>
+                        {transaction.amount < 0 ? '-' : '+'}
+                        {formatKes(Math.abs(transaction.amount))}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+
+              <Link href="/wallet/transactions" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
+                Open full history
+                <History className="size-4" />
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </TenantWorkspaceShell>
   );

@@ -20,7 +20,7 @@ export function ListingPreviewCard({ listing }: { listing: MockListing }) {
   const visual = getListingVisual(listing.id);
 
   return (
-    <Card className="overflow-hidden border border-black/8 bg-white shadow-[0_18px_60px_rgba(37,37,37,0.08)]">
+    <Card className="overflow-hidden border border-black/8 bg-white shadow-[0_16px_48px_rgba(15,23,42,0.06)]">
       <div className="relative h-60 overflow-hidden">
         <Image
           src={visual.hero}
@@ -55,7 +55,7 @@ export function ListingPreviewCard({ listing }: { listing: MockListing }) {
           </p>
         </div>
 
-        <div className="grid gap-3 rounded-[24px] bg-[#f7f4ee] p-4 text-sm text-[#4b4f50] sm:grid-cols-3">
+        <div className="grid gap-3 rounded-[20px] border border-black/8 bg-[#f8fafc] p-4 text-sm text-[#4b4f50] sm:grid-cols-3">
           <p className="inline-flex items-center gap-2">
             <BedDouble className="size-4 text-[#28809A]" />
             {bedroomLabel(listing.bedrooms)}
@@ -67,7 +67,7 @@ export function ListingPreviewCard({ listing }: { listing: MockListing }) {
           <p>Available {formatDateLabel(listing.availableFrom)}</p>
         </div>
 
-        <p className="text-sm leading-7 text-[#62686a]">{listing.description}</p>
+        <p className="text-sm leading-6 text-[#667085]">{listing.description}</p>
 
         <div className="flex flex-wrap gap-2">
           {listing.amenities.slice(0, 4).map((item) => (

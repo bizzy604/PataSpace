@@ -68,19 +68,19 @@
   --page-shadow-strong: 0 42px 120px rgba(37, 37, 37, 0.18);
   --page-grid-color: rgba(37, 37, 37, 0.04);
   --page-grid-opacity: 0.18;
-  --page-bg-start: #f8f6ef;
-  --page-bg-mid: #f2eee6;
-  --page-bg-end: #ece5da;
+  --page-bg-start: #ffffff;
+  --page-bg-mid: #ffffff;
+  --page-bg-end: #f7f9fb;
   --page-bg-glow-a: rgba(40, 128, 154, 0.14);
   --page-bg-glow-b: rgba(103, 209, 227, 0.12);
   --page-bg-glow-c: rgba(37, 37, 37, 0.05);
   --page-bottom-glow: rgba(40, 128, 154, 0.12);
-  --sidebar: #f8f4eb;
+  --sidebar: #ffffff;
   --sidebar-foreground: #252525;
   --sidebar-primary: #28809a;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: rgba(40, 128, 154, 0.12);
-  --sidebar-accent-foreground: #1f5f73;
+  --sidebar-accent: rgba(15, 23, 42, 0.04);
+  --sidebar-accent-foreground: #252525;
   --sidebar-border: rgba(37, 37, 37, 0.08);
   --sidebar-ring: rgba(40, 128, 154, 0.3);
 }

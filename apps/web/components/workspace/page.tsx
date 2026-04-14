@@ -4,15 +4,16 @@ import Link from 'next/link';
 import {
   BadgeHelp,
   Bookmark,
-  ChevronRight,
   CircleDollarSign,
-  CreditCard,
   House,
+  KeyRound,
   LogOut,
+  Search,
   ShieldCheck,
   UserCircle2,
   Wallet,
 } from 'lucide-react';
+import { BrandLogo } from '@/components/shared/brand-logo';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Sidebar,
@@ -35,21 +36,34 @@ import { mockCreditBalance, mockCurrentUser } from '@/lib/mock-app-state';
 import { formatKes } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
-const navigation = [
-  { title: 'Saved', href: '/saved', icon: Bookmark },
-  { title: 'Wallet overview', href: '/wallet', icon: Wallet },
-  { title: 'Buy credits', href: '/wallet/buy', icon: CircleDollarSign },
-  { title: 'Transactions', href: '/wallet/transactions', icon: CreditCard },
-  { title: 'My unlocks', href: '/unlocks', icon: House },
-  { title: 'Profile', href: '/profile', icon: UserCircle2 },
-  { title: 'Support', href: '/support', icon: BadgeHelp },
+const navigationGroups = [
+  {
+    label: 'Explore',
+    items: [
+      { title: 'Listings', href: '/listings', icon: House },
+      { title: 'Search', href: '/search', icon: Search },
+      { title: 'Pricing', href: '/pricing', icon: CircleDollarSign },
+    ],
+  },
+  {
+    label: 'Workspace',
+    items: [
+      { title: 'Saved', href: '/saved', icon: Bookmark },
+      { title: 'Wallet', href: '/wallet', icon: Wallet },
+      { title: 'Unlocks', href: '/unlocks', icon: KeyRound },
+      { title: 'Profile', href: '/profile', icon: UserCircle2 },
+    ],
+  },
+  {
+    label: 'Company',
+    items: [
+      { title: 'About', href: '/about', icon: ShieldCheck },
+      { title: 'Support', href: '/support', icon: BadgeHelp },
+    ],
+  },
 ] as const;
 
 function isActivePath(currentPath: string, href: string) {
-  if (href === '/wallet') {
-    return currentPath === href;
-  }
-
   return currentPath === href || currentPath.startsWith(`${href}/`);
 }
 
@@ -72,30 +86,23 @@ export function TenantWorkspaceShell({
         <SidebarHeader className="gap-4 px-3 py-4">
           <Link
             href="/"
-            className="flex items-center gap-2 rounded-2xl border border-sidebar-border bg-white/80 px-3 py-3 shadow-soft-sm"
+            className="flex items-center rounded-2xl px-2 py-2"
           >
-            <span className="flex size-9 items-center justify-center rounded-2xl bg-sidebar-primary text-sidebar-primary-foreground">
+            <BrandLogo priority className="group-data-[collapsible=icon]:hidden" />
+            <span className="hidden size-9 items-center justify-center rounded-2xl bg-sidebar-primary text-sidebar-primary-foreground group-data-[collapsible=icon]:flex">
               <ShieldCheck className="size-4" />
             </span>
-            <div className="min-w-0 group-data-[collapsible=icon]:hidden">
-              <p className="font-display text-base font-semibold tracking-[-0.04em] text-sidebar-foreground">
-                PataSpace
-              </p>
-              <p className="text-xs uppercase tracking-[0.2em] text-sidebar-foreground/60">
-                Tenant workspace
-              </p>
-            </div>
           </Link>
 
-          <div className="rounded-[24px] border border-sidebar-border bg-white/80 p-4 shadow-soft-sm group-data-[collapsible=icon]:hidden">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sidebar-foreground/60">
-              Wallet balance
+          <div className="rounded-2xl border border-sidebar-border bg-[#f8fafc] p-4 shadow-soft-sm group-data-[collapsible=icon]:hidden">
+            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-sidebar-foreground/55">
+              Available balance
             </p>
-            <p className="mt-2 font-display text-3xl font-semibold tracking-[-0.06em] text-sidebar-foreground">
+            <p className="mt-2 font-display text-2xl font-semibold tracking-[-0.05em] text-sidebar-foreground">
               {formatKes(mockCreditBalance.balance)}
             </p>
-            <p className="mt-2 text-sm leading-6 text-sidebar-foreground/70">
-              Enough for active browsing, unlocks, and follow-through actions.
+            <p className="mt-1 text-sm text-sidebar-foreground/65">
+              Ready for browsing and unlocks.
             </p>
           </div>
         </SidebarHeader>
@@ -103,34 +110,35 @@ export function TenantWorkspaceShell({
         <SidebarSeparator />
 
         <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupLabel>Workspace</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {navigation.map((item) => {
-                  const active = isActivePath(pathname, item.href);
+          {navigationGroups.map((group) => (
+            <SidebarGroup key={group.label}>
+              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {group.items.map((item) => {
+                    const active = isActivePath(pathname, item.href);
 
-                  return (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton
-                        tooltip={item.title}
-                        isActive={active}
-                        render={<Link href={item.href} />}
-                      >
-                        <item.icon className="size-4" />
-                        <span>{item.title}</span>
-                        {active ? <ChevronRight className="ml-auto size-4" /> : null}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
+                          tooltip={item.title}
+                          isActive={active}
+                          render={<Link href={item.href} />}
+                        >
+                          <item.icon className="size-4" />
+                          <span>{item.title}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
         </SidebarContent>
 
         <SidebarFooter className="px-3 pb-4">
-          <div className="rounded-[24px] border border-sidebar-border bg-white/80 p-3 shadow-soft-sm">
+          <div className="rounded-2xl border border-sidebar-border bg-[#f8fafc] p-3 shadow-soft-sm">
             <div className="flex items-center gap-3">
               <Avatar size="lg">
                 <AvatarFallback>
@@ -153,29 +161,24 @@ export function TenantWorkspaceShell({
         <SidebarRail />
       </Sidebar>
 
-      <SidebarInset className="bg-[#f7f4ee]">
-        <header className="sticky top-0 z-30 border-b border-black/6 bg-[rgba(247,244,238,0.86)] px-4 py-3 backdrop-blur-xl sm:px-6 lg:px-8">
-          <div className="mx-auto flex max-w-7xl flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <SidebarInset className="bg-white">
+        <header className="sticky top-0 z-30 border-b border-black/8 bg-white/95 px-4 py-4 backdrop-blur-xl sm:px-6 lg:px-8">
+          <div className="mx-auto flex max-w-[1400px] flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-start gap-3">
-              <SidebarTrigger className="mt-1" />
+              <SidebarTrigger className="mt-0.5 shrink-0" />
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#28809A]">
-                  Tenant workspace
-                </p>
-                <h1 className="mt-1 font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
+                <h1 className="font-display text-[1.9rem] font-semibold tracking-[-0.05em] text-[#252525]">
                   {title}
                 </h1>
-                <p className="mt-2 max-w-2xl text-sm leading-7 text-[#62686a]">
-                  {description}
-                </p>
+                <p className="mt-1 max-w-xl text-sm leading-6 text-[#667085]">{description}</p>
               </div>
             </div>
-            {actions ? <div className="flex flex-wrap gap-3">{actions}</div> : null}
+            {actions ? <div className="flex flex-wrap gap-3 lg:justify-end">{actions}</div> : null}
           </div>
         </header>
 
         <div className={cn('px-4 py-6 sm:px-6 lg:px-8')}>
-          <div className="mx-auto max-w-7xl">{children}</div>
+          <div className="mx-auto max-w-[1400px]">{children}</div>
         </div>
       </SidebarInset>
     </SidebarProvider>
