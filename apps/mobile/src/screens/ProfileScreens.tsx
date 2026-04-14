@@ -44,7 +44,20 @@ function ToggleRow({
 
 export function ProfileScreen() {
   const { user, walletBalance, savedListings, notifications, logout } = useMobileApp();
-  const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  async function handleLogout() {
+    if (isLoggingOut) {
+      return;
+    }
+
+    try {
+      setIsLoggingOut(true);
+      await logout();
+    } finally {
+      setIsLoggingOut(false);
+    }
+  }
 
   return (
     <Screen withTabBar>
@@ -100,11 +113,11 @@ export function ProfileScreen() {
 
       <Button
         variant="secondary"
-        label="Logout"
+        label={isLoggingOut ? 'Logging out...' : 'Logout'}
         onPress={() => {
-          logout();
-          router.replace(appRoutes.home);
+          void handleLogout();
         }}
+        disabled={isLoggingOut}
       />
     </Screen>
   );

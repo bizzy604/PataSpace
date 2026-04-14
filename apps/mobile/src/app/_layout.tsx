@@ -5,8 +5,16 @@ import { useEffect, useState } from 'react';
 import { Stack, usePathname, useRouter } from 'expo-router';
 import { AppLaunchScreen } from '@/components/ui/app-launch-screen';
 import { MobileAppProvider, useMobileApp } from '@/features/mobile-app/mobile-app-provider';
+import { appRoutes } from '@/lib/routes';
 
-const publicPaths = ['/', '/onboarding', '/register', '/verify-otp', '/login'];
+const publicPaths = new Set<string>([
+  appRoutes.home,
+  appRoutes.onboarding,
+  appRoutes.register,
+  appRoutes.verifyOtp,
+  appRoutes.login,
+  appRoutes.ssoCallback,
+]);
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? '';
 
 if (!publishableKey) {
@@ -33,16 +41,16 @@ function RootNavigator() {
       return;
     }
 
-    const isPublicPath = publicPaths.includes(pathname);
-    const isAuthOnlyPath = pathname !== '/' && publicPaths.includes(pathname);
+    const isPublicPath = publicPaths.has(pathname);
+    const isAuthOnlyPath = pathname !== appRoutes.home && publicPaths.has(pathname);
 
     if (!isSignedIn && !isPublicPath) {
-      router.replace('/');
+      router.replace(appRoutes.login);
       return;
     }
 
     if (isSignedIn && isAuthOnlyPath) {
-      router.replace('/');
+      router.replace(appRoutes.home);
     }
   }, [isLoaded, isSignedIn, pathname, router]);
 

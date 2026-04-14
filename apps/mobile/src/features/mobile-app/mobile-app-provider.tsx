@@ -92,7 +92,7 @@ type MobileAppContextValue = {
   getUnlockRecord: (listingId?: string | string[]) => UnlockRecord | undefined;
   isListingSaved: (listingId: string) => boolean;
   isListingUnlocked: (listingId: string) => boolean;
-  logout: () => void;
+  logout: () => Promise<void>;
   updateProfile: (profile: Partial<UserProfile>) => void;
   updateSettings: (settings: Partial<AppSettings>) => void;
   setColorSchemePreference: (scheme: AppColorScheme) => void;
@@ -312,9 +312,8 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
     return unlocks.find((unlock) => unlock.listingId === resolvedId);
   }
 
-  function logout() {
-    void signOut();
-    setUser(initialUserProfile);
+  async function logout() {
+    await signOut();
   }
 
   function updateProfile(profile: Partial<UserProfile>) {

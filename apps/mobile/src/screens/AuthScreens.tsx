@@ -1,7 +1,8 @@
-import { useAuth, useSignIn, useSignUp } from '@clerk/expo';
+import { useAuth, useSSO, useSignIn, useSignUp } from '@clerk/expo';
 import type { ComponentProps, ReactNode } from 'react';
-import { useState } from 'react';
-import { Link, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import * as AuthSession from 'expo-auth-session';
+import { Link, useRouter, type Href } from 'expo-router';
 import {
   Image,
   KeyboardAvoidingView,
@@ -12,6 +13,7 @@ import {
   View,
   type TextInputProps,
 } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Button } from '@/components/ui/button';
 import { ColorSchemeToggle } from '@/components/ui/color-scheme-toggle';
@@ -22,7 +24,30 @@ import { cn } from '@/lib/cn';
 import { appRoutes } from '@/lib/routes';
 
 type IconName = ComponentProps<typeof AppIcon>['name'];
+type SocialStrategy = 'oauth_google' | 'oauth_apple';
+
 const pataspaceLogo = require('../../assets/PataSpace Logo.png');
+const ssoRedirectUrl = AuthSession.makeRedirectUri({ path: 'sso-callback' });
+const socialProviderConfig: Record<
+  SocialStrategy,
+  {
+    icon: IconName;
+    label: string;
+    inverse?: boolean;
+  }
+> = {
+  oauth_google: {
+    icon: 'logo-google',
+    label: 'Google',
+  },
+  oauth_apple: {
+    icon: 'logo-apple',
+    label: 'Apple',
+    inverse: true,
+  },
+};
+
+WebBrowser.maybeCompleteAuthSession();
 
 function AuthShell({
   eyebrow = 'PataSpace',
@@ -187,6 +212,60 @@ function AuthFooterLink({
   );
 }
 
+function AuthDivider({ label }: { label: string }) {
+  return (
+    <View className="flex-row items-center gap-3">
+      <View className="h-px flex-1 bg-border" />
+      <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-muted-foreground">
+        {label}
+      </Text>
+      <View className="h-px flex-1 bg-border" />
+    </View>
+  );
+}
+
+function SocialAuthButton({
+  strategy,
+  pendingStrategy,
+  disabled,
+  onPress,
+}: {
+  strategy: SocialStrategy;
+  pendingStrategy: SocialStrategy | null;
+  disabled?: boolean;
+  onPress: () => void;
+}) {
+  const { theme } = useMobileApp();
+  const provider = socialProviderConfig[strategy];
+  const isPending = pendingStrategy === strategy;
+  const isInverse = !!provider.inverse;
+
+  return (
+    <Pressable
+      className="min-h-14 flex-row items-center justify-center gap-3 rounded-[18px] border px-4 active:opacity-90"
+      style={{
+        backgroundColor: isInverse ? theme.surfaceInverse : theme.surface,
+        borderColor: isInverse ? theme.surfaceInverse : theme.border,
+        opacity: disabled ? 0.6 : 1,
+      }}
+      disabled={disabled}
+      onPress={onPress}
+    >
+      <AppIcon
+        name={provider.icon}
+        size={18}
+        color={isInverse ? theme.primaryForeground : theme.foreground}
+      />
+      <Text
+        className="text-[15px] font-semibold tracking-[-0.2px]"
+        style={{ color: isInverse ? theme.primaryForeground : theme.foreground }}
+      >
+        {isPending ? `Connecting to ${provider.label}...` : `Continue with ${provider.label}`}
+      </Text>
+    </Pressable>
+  );
+}
+
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
@@ -207,6 +286,36 @@ function normalizePhoneForMetadata(phone: string) {
   }
 
   return phone.trim();
+}
+
+function buildSocialMetadata({
+  firstName,
+  lastName,
+  phone,
+}: {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+}) {
+  const metadata: Record<string, string> = {};
+
+  if (phone?.trim()) {
+    metadata.phone = normalizePhoneForMetadata(phone);
+  }
+
+  if (firstName?.trim()) {
+    metadata.firstName = firstName.trim();
+  }
+
+  if (lastName?.trim()) {
+    metadata.lastName = lastName.trim();
+  }
+
+  return metadata;
+}
+
+function getSocialProviderLabel(strategy: SocialStrategy) {
+  return socialProviderConfig[strategy].label;
 }
 
 function getClerkErrorMessage(
@@ -231,6 +340,77 @@ function getClerkErrorMessage(
   const message = (error as { message?: string }).message;
 
   return typeof message === 'string' && message.trim() ? message : fallback;
+}
+
+function useSocialAuthFlow() {
+  const { startSSOFlow } = useSSO();
+  const router = useRouter();
+  const [pendingStrategy, setPendingStrategy] = useState<SocialStrategy | null>(null);
+
+  useEffect(() => {
+    if (Platform.OS !== 'android') {
+      return;
+    }
+
+    void WebBrowser.warmUpAsync();
+
+    return () => {
+      void WebBrowser.coolDownAsync();
+    };
+  }, []);
+
+  async function authenticateWithSocial({
+    strategy,
+    fallbackRoute,
+    unsafeMetadata,
+  }: {
+    strategy: SocialStrategy;
+    fallbackRoute: Href;
+    unsafeMetadata?: Record<string, unknown>;
+  }) {
+    const providerLabel = getSocialProviderLabel(strategy);
+
+    try {
+      setPendingStrategy(strategy);
+
+      const { createdSessionId, setActive, authSessionResult } = await startSSOFlow({
+        strategy,
+        redirectUrl: ssoRedirectUrl,
+        unsafeMetadata,
+      });
+
+      if (createdSessionId && setActive) {
+        await setActive({ session: createdSessionId });
+        router.replace(appRoutes.home);
+        return { ok: true as const };
+      }
+
+      router.replace(fallbackRoute);
+
+      if (authSessionResult?.type === 'cancel' || authSessionResult?.type === 'dismiss') {
+        return { ok: false as const, cancelled: true as const };
+      }
+
+      return {
+        ok: false as const,
+        message: `Could not complete ${providerLabel} sign-in. Check the Clerk social connection settings.`,
+      };
+    } catch (error) {
+      router.replace(fallbackRoute);
+
+      return {
+        ok: false as const,
+        message: getClerkErrorMessage(error, `Could not continue with ${providerLabel}.`),
+      };
+    } finally {
+      setPendingStrategy(null);
+    }
+  }
+
+  return {
+    pendingStrategy,
+    authenticateWithSocial,
+  };
 }
 
 export function WelcomeScreen() {
@@ -335,6 +515,7 @@ export function OnboardingScreen() {
 export function RegisterScreen() {
   const { isSignedIn } = useAuth();
   const { signUp, fetchStatus } = useSignUp();
+  const { pendingStrategy, authenticateWithSocial } = useSocialAuthFlow();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
@@ -348,6 +529,27 @@ export function RegisterScreen() {
 
   if (!signUp || isSignedIn || signUp.status === 'complete') {
     return null;
+  }
+
+  const isBusy = fetchStatus === 'fetching' || pendingStrategy !== null;
+
+  async function continueWithSocial(strategy: SocialStrategy) {
+    if (phone.replace(/\D/g, '').length < 10) {
+      setError(`Enter a valid Kenyan phone number before continuing with ${getSocialProviderLabel(strategy)}.`);
+      return;
+    }
+
+    setError('');
+
+    const result = await authenticateWithSocial({
+      strategy,
+      fallbackRoute: appRoutes.register,
+      unsafeMetadata: buildSocialMetadata({ firstName, lastName, phone }),
+    });
+
+    if (!result.ok && !result.cancelled) {
+      setError(result.message);
+    }
   }
 
   return (
@@ -399,6 +601,30 @@ export function RegisterScreen() {
         placeholder="0712345678"
         value={phone}
       />
+
+      <View className="gap-3">
+        <SocialAuthButton
+          strategy="oauth_google"
+          pendingStrategy={pendingStrategy}
+          disabled={isBusy}
+          onPress={() => {
+            void continueWithSocial('oauth_google');
+          }}
+        />
+
+        {Platform.OS === 'ios' ? (
+          <SocialAuthButton
+            strategy="oauth_apple"
+            pendingStrategy={pendingStrategy}
+            disabled={isBusy}
+            onPress={() => {
+              void continueWithSocial('oauth_apple');
+            }}
+          />
+        ) : null}
+      </View>
+
+      <AuthDivider label="Or use email and password" />
 
       <AuthField
         autoCapitalize="none"
@@ -488,7 +714,7 @@ export function RegisterScreen() {
           setError('');
           router.push(appRoutes.verifyOtp);
         }}
-        disabled={fetchStatus === 'fetching'}
+        disabled={isBusy}
       />
 
       <View nativeID="clerk-captcha" />
@@ -636,6 +862,7 @@ export function VerifyOtpScreen() {
 
 export function LoginScreen() {
   const { signIn, fetchStatus } = useSignIn();
+  const { pendingStrategy, authenticateWithSocial } = useSocialAuthFlow();
   const [emailAddress, setEmailAddress] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -647,6 +874,8 @@ export function LoginScreen() {
   if (!signIn) {
     return null;
   }
+
+  const isBusy = fetchStatus === 'fetching' || pendingStrategy !== null;
 
   async function finalizeSignIn() {
     const { error: finalizeError } = await signIn.finalize();
@@ -704,6 +933,20 @@ export function LoginScreen() {
     }
 
     setError('Sign-in is not complete yet. Check your Clerk sign-in settings.');
+  }
+
+  async function continueWithSocial(strategy: SocialStrategy) {
+    setError('');
+    setNotice('');
+
+    const result = await authenticateWithSocial({
+      strategy,
+      fallbackRoute: appRoutes.login,
+    });
+
+    if (!result.ok && !result.cancelled) {
+      setError(result.message);
+    }
   }
 
   if (signIn.status === 'needs_client_trust') {
@@ -816,6 +1059,30 @@ export function LoginScreen() {
         </Text>
       </View>
 
+      <View className="gap-3">
+        <SocialAuthButton
+          strategy="oauth_google"
+          pendingStrategy={pendingStrategy}
+          disabled={isBusy}
+          onPress={() => {
+            void continueWithSocial('oauth_google');
+          }}
+        />
+
+        {Platform.OS === 'ios' ? (
+          <SocialAuthButton
+            strategy="oauth_apple"
+            pendingStrategy={pendingStrategy}
+            disabled={isBusy}
+            onPress={() => {
+              void continueWithSocial('oauth_apple');
+            }}
+          />
+        ) : null}
+      </View>
+
+      <AuthDivider label="Or use email and password" />
+
       <AuthField
         autoCapitalize="none"
         icon="mail-outline"
@@ -843,7 +1110,7 @@ export function LoginScreen() {
         className="min-h-14 rounded-[18px]"
         label={fetchStatus === 'fetching' ? 'Logging in...' : 'Log in'}
         onPress={submitLogin}
-        disabled={fetchStatus === 'fetching'}
+        disabled={isBusy}
       />
     </AuthShell>
   );

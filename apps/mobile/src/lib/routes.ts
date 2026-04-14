@@ -8,6 +8,7 @@ export const appRoutes = {
   register: '/register',
   verifyOtp: '/verify-otp',
   login: '/login',
+  ssoCallback: '/sso-callback',
   browse: '/browse',
   search: '/search',
   filters: '/filters',
