@@ -30,6 +30,16 @@ const config: ExpoConfig = {
     'expo-font',
     'expo-web-browser',
     [
+      'expo-build-properties',
+      {
+        android: {
+          packagingOptions: {
+            exclude: ['META-INF/versions/9/OSGI-INF/MANIFEST.MF'],
+          },
+        },
+      },
+    ],
+    [
       'expo-camera',
       {
         cameraPermission: 'Allow PataSpace to capture listing photos.',
