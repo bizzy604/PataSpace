@@ -4,12 +4,14 @@
  * Used by: UnlockDetailPage, unlock history page, listing detail unlock button.
  */
 import type {
+  CreateConfirmationResponse,
   CreateUnlockRequest,
   CreateUnlockResponse,
   MyUnlocksFilters,
   PaginatedMyUnlocksResponse,
 } from '@pataspace/contracts';
-import { clientFetch } from './client';
+import { ConfirmationSide } from '@pataspace/contracts';
+import { clientFetch, serverFetch } from './client';
 
 export async function createUnlock(
   getToken: () => Promise<string | null>,
@@ -39,9 +41,21 @@ export async function fetchMyUnlocks(
 export async function confirmUnlock(
   getToken: () => Promise<string | null>,
   unlockId: string,
-): Promise<{ message: string }> {
-  return clientFetch<{ message: string }>(`/confirmations`, getToken, {
+): Promise<CreateConfirmationResponse> {
+  return clientFetch<CreateConfirmationResponse>(`/confirmations`, getToken, {
     method: 'POST',
-    body: JSON.stringify({ unlockId, side: 'BUYER' }),
+    body: JSON.stringify({ unlockId, side: ConfirmationSide.INCOMING_TENANT }),
   });
+}
+
+/** Server component — fetch unlock history for the authenticated user. */
+export async function getMyUnlocks(
+  token: string | null,
+  page = 1,
+  limit = 50,
+): Promise<PaginatedMyUnlocksResponse> {
+  return serverFetch<PaginatedMyUnlocksResponse>(
+    `/unlocks/my-unlocks?page=${page}&limit=${limit}`,
+    token,
+  );
 }

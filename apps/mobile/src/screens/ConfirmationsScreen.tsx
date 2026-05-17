@@ -90,13 +90,13 @@ export function ConfirmationsScreen() {
         <Button
           label={latestUnlock.incomingConfirmed ? 'Incoming side already confirmed' : 'Confirm incoming tenant side'}
           disabled={latestUnlock.incomingConfirmed}
-          onPress={() => confirmIncoming(listing.id)}
+          onPress={() => void confirmIncoming(listing.id)}
         />
         <Button
           variant="outline"
           label={latestUnlock.outgoingConfirmed ? 'Outgoing side already confirmed' : 'Confirm outgoing tenant side'}
           disabled={latestUnlock.outgoingConfirmed}
-          onPress={() => confirmOutgoing(listing.id)}
+          onPress={() => void confirmOutgoing(listing.id)}
         />
         {bothConfirmed ? (
           <Button

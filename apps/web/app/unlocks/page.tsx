@@ -1,15 +1,35 @@
 import Link from 'next/link';
 import { MessageSquareWarning, ShieldCheck, Wallet2 } from 'lucide-react';
+import { auth } from '@clerk/nextjs/server';
+import type { MyUnlockRecord } from '@pataspace/contracts';
 import { TenantWorkspaceShell } from '@/components/workspace/page';
 import { MetricCard } from '@/components/shared/metric-card';
 import { UnlocksDataTable } from '@/components/tables/unlocks-data-table';
-import { mockUnlocks } from '@/lib/mock-app-state';
+import { getMyUnlocks } from '@/lib/api/unlocks';
 import { linkButtonClass } from '@/lib/link-button';
 
-export default function Page() {
-  const pending = mockUnlocks.filter((unlock) => unlock.status === 'pending_confirmation').length;
-  const confirmed = mockUnlocks.filter((unlock) => unlock.status === 'confirmed').length;
-  const refunded = mockUnlocks.filter((unlock) => unlock.status === 'refunded').length;
+const EMPTY_PAGINATION = {
+  page: 1,
+  limit: 50,
+  total: 0,
+  totalPages: 0,
+  hasNext: false,
+  hasPrev: false,
+};
+
+export default async function Page() {
+  const { getToken } = await auth();
+  const token = await getToken();
+
+  const response = await getMyUnlocks(token).catch(() => ({
+    data: [] as MyUnlockRecord[],
+    pagination: EMPTY_PAGINATION,
+  }));
+
+  const unlocks = response.data;
+  const pending = unlocks.filter((u) => u.status === 'pending_confirmation').length;
+  const confirmed = unlocks.filter((u) => u.status === 'confirmed').length;
+  const refunded = unlocks.filter((u) => u.status === 'refunded').length;
 
   return (
     <TenantWorkspaceShell
@@ -49,7 +69,7 @@ export default function Page() {
       </div>
 
       <div className="mt-6">
-        <UnlocksDataTable data={mockUnlocks} />
+        <UnlocksDataTable data={unlocks} />
       </div>
     </TenantWorkspaceShell>
   );

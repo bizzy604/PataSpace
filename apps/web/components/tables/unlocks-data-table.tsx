@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import type { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
+import type { MyUnlockRecord } from '@pataspace/contracts';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -13,21 +14,29 @@ import {
 import { AppDataTable } from '@/components/tables/app-data-table';
 import { StatusBadge, unlockStatusMeta } from '@/components/shared/status-badge';
 import { formatDateLabel, formatKes } from '@/lib/format';
-import { getMockListingById } from '@/lib/mock-listings';
-import type { MockUnlock } from '@/lib/mock-app-state';
 
-const columns: ColumnDef<MockUnlock>[] = [
+function confirmationLabel(myConfirmation: string | null, tenantConfirmation: string | null): string {
+  if (myConfirmation && tenantConfirmation) return 'Both sides confirmed';
+  if (myConfirmation) return 'Your confirmation recorded — awaiting tenant';
+  if (tenantConfirmation) return 'Tenant confirmed — awaiting your confirmation';
+  return 'Awaiting both confirmations';
+}
+
+const columns: ColumnDef<MyUnlockRecord>[] = [
   {
     accessorKey: 'unlockId',
     header: 'Listing',
     cell: ({ row }) => {
-      const listing = getMockListingById(row.original.listingId);
+      const { listing } = row.original;
+      const title = listing.bedrooms === 0
+        ? `Studio · ${listing.neighborhood}`
+        : `${listing.bedrooms}BR · ${listing.neighborhood}`;
 
       return (
         <div className="space-y-2">
-          <p className="font-medium text-[#252525]">{listing?.title ?? row.original.listingId}</p>
+          <p className="font-medium text-[#252525]">{title}</p>
           <p className="text-sm text-[#62686a]">
-            {listing?.neighborhood} • {listing ? formatKes(listing.monthlyRent) : 'Listing unavailable'}
+            {listing.neighborhood} • {formatKes(listing.monthlyRent)}
           </p>
         </div>
       );
@@ -38,14 +47,15 @@ const columns: ColumnDef<MockUnlock>[] = [
     header: 'Status',
     cell: ({ row }) => {
       const status = unlockStatusMeta(row.original.status);
-
       return <StatusBadge label={status.label} tone={status.tone} />;
     },
   },
   {
     accessorKey: 'creditsSpent',
     header: 'Credits spent',
-    cell: ({ row }) => <p className="font-medium text-[#252525]">{formatKes(row.original.creditsSpent)}</p>,
+    cell: ({ row }) => (
+      <p className="font-medium text-[#252525]">{formatKes(row.original.creditsSpent)}</p>
+    ),
   },
   {
     accessorKey: 'createdAt',
@@ -53,7 +63,9 @@ const columns: ColumnDef<MockUnlock>[] = [
     cell: ({ row }) => (
       <div>
         <p className="font-medium text-[#252525]">{formatDateLabel(row.original.createdAt)}</p>
-        <p className="text-sm text-[#62686a]">{row.original.nextStep}</p>
+        <p className="text-sm text-[#62686a]">
+          {confirmationLabel(row.original.myConfirmation, row.original.tenantConfirmation)}
+        </p>
       </div>
     ),
   },
@@ -70,10 +82,14 @@ const columns: ColumnDef<MockUnlock>[] = [
           <DropdownMenuItem render={<Link href={`/unlocks/${row.original.unlockId}`} />}>
             View contact and timeline
           </DropdownMenuItem>
-          <DropdownMenuItem render={<Link href={`/unlocks/${row.original.unlockId}/confirm`} />}>
+          <DropdownMenuItem
+            render={<Link href={`/unlocks/${row.original.unlockId}/confirm`} />}
+          >
             Confirm move-in
           </DropdownMenuItem>
-          <DropdownMenuItem render={<Link href={`/unlocks/${row.original.unlockId}/dispute`} />}>
+          <DropdownMenuItem
+            render={<Link href={`/unlocks/${row.original.unlockId}/dispute`} />}
+          >
             Report issue
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -82,7 +98,7 @@ const columns: ColumnDef<MockUnlock>[] = [
   },
 ];
 
-export function UnlocksDataTable({ data }: { data: MockUnlock[] }) {
+export function UnlocksDataTable({ data }: { data: MyUnlockRecord[] }) {
   return (
     <AppDataTable
       title="Unlock history"

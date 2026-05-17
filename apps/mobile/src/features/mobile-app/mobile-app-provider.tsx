@@ -47,6 +47,9 @@ import {
   type WalletPackage,
 } from '@/data/mock-listings';
 import { mobileThemes, type AppColorScheme, type MobileThemePalette } from '@/lib/theme';
+import { createUnlock as createUnlockApi, confirmUnlock as confirmUnlockApi } from '@/lib/api/unlocks';
+import { ConfirmationSide } from '@pataspace/contracts';
+import { useMobileApiSync } from './use-mobile-api-sync';
 
 type PendingTopUp = {
   packageId: string;
@@ -106,9 +109,9 @@ type MobileAppContextValue = {
   submitDraft: () => MyListingRow;
   selectTopUp: (packageId: string, phone: string) => void;
   completeTopUp: () => TransactionRecord | undefined;
-  unlockListing: (listingId: string) => 'success' | 'already_unlocked' | 'insufficient';
-  confirmIncoming: (listingId: string) => void;
-  confirmOutgoing: (listingId: string) => void;
+  unlockListing: (listingId: string) => Promise<'success' | 'already_unlocked' | 'insufficient'>;
+  confirmIncoming: (listingId: string) => Promise<void>;
+  confirmOutgoing: (listingId: string) => Promise<void>;
   submitSupportMessage: (topic: string, message: string) => void;
   submitReview: (rating: number, comment: string) => void;
   submitDispute: (subject: string, detail: string) => void;
@@ -237,7 +240,7 @@ function buildSubmittedListingDraftData(draft: ListingDraft, listingIndex: numbe
 }
 
 export function MobileAppProvider({ children }: { children: ReactNode }) {
-  const { isLoaded: isAuthLoaded, isSignedIn } = useAuth();
+  const { isLoaded: isAuthLoaded, isSignedIn, getToken } = useAuth();
   const { signOut } = useClerk();
   const { user: clerkUser } = useUser();
   const { colorScheme: nativeWindColorScheme, setColorScheme: setNativeWindColorScheme } =
@@ -259,6 +262,8 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
   const colorScheme: AppColorScheme = nativeWindColorScheme === 'dark' ? 'dark' : 'light';
   const theme = mobileThemes[colorScheme];
   const isAuthenticated = isAuthLoaded && !!isSignedIn;
+
+  useMobileApiSync(isAuthenticated, getToken, setListings, setWalletBalance, setTransactions, setUnlocks, setMyListings);
 
   const browseListings = listings.filter((listing) => listing.status !== 'Review' && listing.status !== 'Closed');
   const savedListings = browseListings.filter((listing) => savedListingIds.includes(listing.id));
@@ -462,60 +467,39 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
     return transaction;
   }
 
-  function unlockListing(listingId: string) {
+  async function unlockListing(listingId: string): Promise<'success' | 'already_unlocked' | 'insufficient'> {
     const listing = getListing(listingId);
+    if (!listing) return 'insufficient';
+    if (unlocks.some((unlock) => unlock.listingId === listingId)) return 'already_unlocked';
+    if (walletBalance < listing.unlockCostCredits) return 'insufficient';
 
-    if (!listing) {
+    try {
+      const response = await createUnlockApi(getToken, listingId);
+      const contactInfo = response.contactInfo;
+      const unlock: UnlockRecord = {
+        id: response.unlockId,
+        listingId,
+        creditsSpent: response.creditsSpent,
+        contactInfo,
+        incomingConfirmed: false,
+        outgoingConfirmed: false,
+        createdAt: new Date().toISOString(),
+        holdUntil: '7 days after both confirmations',
+      };
+      setWalletBalance(response.newBalance);
+      setUnlocks((current) => [unlock, ...current]);
+      setListingContactInfoById((current) => ({ ...current, [listingId]: contactInfo }));
+      pushNotification({
+        id: `notif-unlock-${Date.now()}`,
+        title: 'Contact revealed',
+        detail: `You can now contact the outgoing tenant for ${listing.title}.`,
+        time: 'Just now',
+        target: { route: 'confirmations' },
+      });
+      return 'success';
+    } catch {
       return 'insufficient';
     }
-
-    if (unlocks.some((unlock) => unlock.listingId === listingId)) {
-      return 'already_unlocked';
-    }
-
-    if (walletBalance < listing.unlockCostCredits) {
-      return 'insufficient';
-    }
-
-    const contactInfo = listingContactInfoById[listingId];
-
-    if (!contactInfo) {
-      return 'insufficient';
-    }
-
-    const unlock: UnlockRecord = {
-      id: `unlock-${Date.now()}`,
-      listingId,
-      creditsSpent: listing.unlockCostCredits,
-      contactInfo,
-      incomingConfirmed: false,
-      outgoingConfirmed: false,
-      createdAt: 'Just now',
-      holdUntil: '7 days after both confirmations',
-    };
-    const transaction: TransactionRecord = {
-      id: `txn-unlock-${Date.now()}`,
-      type: 'unlock',
-      title: `Unlock: ${listing.area}`,
-      status: 'Completed',
-      amount: listing.price,
-      credits: `-${listing.unlockCostCredits.toLocaleString()} credits`,
-      date: 'Just now',
-      detail: `Contact details revealed for ${listing.title}.`,
-    };
-
-    setWalletBalance((current) => current - listing.unlockCostCredits);
-    setUnlocks((current) => [unlock, ...current]);
-    setTransactions((current) => [transaction, ...current]);
-    pushNotification({
-      id: `notif-unlock-${Date.now()}`,
-      title: 'Contact revealed',
-      detail: `You can now contact the outgoing tenant for ${listing.title}.`,
-      time: 'Just now',
-      target: { route: 'confirmations' },
-    });
-
-    return 'success';
   }
 
   function updateUnlock(listingId: string, updates: Partial<UnlockRecord>) {
@@ -531,11 +515,19 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
     );
   }
 
-  function confirmIncoming(listingId: string) {
+  async function confirmIncoming(listingId: string) {
+    const unlock = unlocks.find((u) => u.listingId === listingId);
+    if (unlock) {
+      await confirmUnlockApi(getToken, unlock.id, ConfirmationSide.INCOMING_TENANT).catch(() => {});
+    }
     updateUnlock(listingId, { incomingConfirmed: true });
   }
 
-  function confirmOutgoing(listingId: string) {
+  async function confirmOutgoing(listingId: string) {
+    const unlock = unlocks.find((u) => u.listingId === listingId);
+    if (unlock) {
+      await confirmUnlockApi(getToken, unlock.id, ConfirmationSide.OUTGOING_TENANT).catch(() => {});
+    }
     updateUnlock(listingId, { outgoingConfirmed: true });
   }
 

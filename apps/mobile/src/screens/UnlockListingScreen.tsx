@@ -41,7 +41,7 @@ export function UnlockListingScreen() {
                   ? `Unlock for ${listing.unlockCost}`
                   : 'Top up credits first'
             }
-            onPress={() => {
+            onPress={async () => {
               if (alreadyUnlocked) {
                 router.push(contactRevealedHref(listing.id));
                 return;
@@ -52,7 +52,7 @@ export function UnlockListingScreen() {
                 return;
               }
 
-              const result = unlockListing(listing.id);
+              const result = await unlockListing(listing.id);
 
               if (result === 'success' || result === 'already_unlocked') {
                 router.push(contactRevealedHref(listing.id));
