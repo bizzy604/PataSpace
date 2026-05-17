@@ -12,6 +12,7 @@ import { StoredUser } from '../user/user.service';
 describe('AuthService', () => {
   const createStoredUser = async (overrides: Partial<StoredUser> = {}): Promise<StoredUser> => ({
     id: 'user_1',
+    clerkId: null,
     phoneNumberEncrypted: 'encrypted-phone',
     phoneVerified: true,
     email: 'user@example.com',

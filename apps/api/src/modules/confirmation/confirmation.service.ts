@@ -447,12 +447,12 @@ export class ConfirmationService {
     side: ContractConfirmationSide,
     commission: { amountKES: number; eligibleAt: Date } | null,
   ) {
-    const buyerPhoneNumber = this.userService.decryptPhoneNumber(
-      unlock.buyer.phoneNumberEncrypted,
-    );
-    const outgoingTenantPhoneNumber = this.userService.decryptPhoneNumber(
-      unlock.listing.user.phoneNumberEncrypted,
-    );
+    const buyerPhoneNumber = unlock.buyer.phoneNumberEncrypted
+      ? this.userService.decryptPhoneNumber(unlock.buyer.phoneNumberEncrypted)
+      : null;
+    const outgoingTenantPhoneNumber = unlock.listing.user.phoneNumberEncrypted
+      ? this.userService.decryptPhoneNumber(unlock.listing.user.phoneNumberEncrypted)
+      : null;
 
     if (commission) {
       await Promise.all([
@@ -485,7 +485,10 @@ export class ConfirmationService {
     );
   }
 
-  private async sendSmsQuietly(phoneNumber: string, message: string) {
+  private async sendSmsQuietly(phoneNumber: string | null, message: string) {
+    if (!phoneNumber) {
+      return;
+    }
     try {
       await this.smsService.sendMessage(phoneNumber, message);
     } catch {

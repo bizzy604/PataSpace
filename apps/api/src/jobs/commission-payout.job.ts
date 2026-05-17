@@ -214,9 +214,12 @@ export class CommissionPayoutJob {
       return 'skipped';
     }
 
-    const phoneNumber = this.userService.decryptPhoneNumber(
-      commission.unlock.listing.user.phoneNumberEncrypted,
-    );
+    const encryptedPhone = commission.unlock.listing.user.phoneNumberEncrypted;
+    if (!encryptedPhone) {
+      this.logger.warn(`Commission ${commission.id}: tenant has no phone number, skipping payout`);
+      return 'skipped';
+    }
+    const phoneNumber = this.userService.decryptPhoneNumber(encryptedPhone);
 
     try {
       const payout = await this.mpesaClient.b2c({

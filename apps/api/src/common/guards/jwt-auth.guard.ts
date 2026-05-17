@@ -1,10 +1,16 @@
+/**
+ * Purpose: Global authentication guard that accepts both backend-issued JWTs and Clerk JWTs.
+ * Why important: Protects all non-public routes while supporting two auth paths —
+ *   the phone/OTP backend flow and Clerk SSO used by mobile and web clients.
+ * Used by: AppModule as APP_GUARD (applied to every route by default).
+ */
 import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 @Injectable()
-export class JwtAuthGuard extends AuthGuard('jwt') {
+export class JwtAuthGuard extends AuthGuard(['jwt', 'clerk-jwt']) {
   constructor(private readonly reflector: Reflector) {
     super();
   }

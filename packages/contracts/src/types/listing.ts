@@ -61,7 +61,7 @@ export type ListingTenantDetails = ListingTenantPreview & {
 
 export type ListingContactInfo = {
   address: string;
-  phoneNumber: string;
+  phoneNumber: string | null;
   latitude: number;
   longitude: number;
 };

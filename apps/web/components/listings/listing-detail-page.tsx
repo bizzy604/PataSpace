@@ -1,3 +1,8 @@
+/**
+ * Purpose: Listing detail page — renders full property information from a fetched ListingDetails record.
+ * Why important: Central browse-to-unlock screen; must render correctly for both locked and unlocked states.
+ * Used by: app/listings/[id]/page.tsx (server-fetched data passed as prop).
+ */
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -9,23 +14,27 @@ import { ScreenHero } from '@/components/shared/screen-hero';
 import { formatDateLabel, formatKes } from '@/lib/format';
 import { linkButtonClass } from '@/lib/link-button';
 import { getListingVisual } from '@/lib/listing-visuals';
-import { getMockListingById } from '@/lib/mock-listings';
+import type { ListingDetails } from '@pataspace/contracts';
 
-export function ListingDetailPage({ id }: { id: string }) {
-  const listing = getMockListingById(id);
+function composeTitle(listing: ListingDetails): string {
+  const bed = listing.bedrooms === 0 ? 'Studio' : `${listing.bedrooms}BR`;
+  return `${bed} ${listing.neighborhood}`;
+}
 
+export function ListingDetailPage({ listing }: { listing: ListingDetails | null }) {
   if (!listing) {
     notFound();
   }
 
   const visual = getListingVisual(listing.id);
+  const title = composeTitle(listing);
 
   return (
     <PublicSiteFrame>
       <ScreenHero
         eyebrow="Listing details"
-        title={listing.title}
-        description="This native page replaces the Stitch listing detail screen with a full property summary, protected map preview, tenant context, and unlock call to action."
+        title={title}
+        description="Full property summary with protected map preview, tenant context, and unlock call to action."
         actions={
           <>
             <Link href={`/listings/${listing.id}/gallery`} className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
@@ -43,32 +52,25 @@ export function ListingDetailPage({ id }: { id: string }) {
           <div className="space-y-6">
             <div className="overflow-hidden rounded-[36px] border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
               <div className="relative h-[420px]">
-                <Image
-                  src={visual.hero}
-                  alt={visual.alt}
-                  fill
-                  className="object-cover"
-                  sizes="(min-width: 1280px) 65vw, 100vw"
-                />
+                <Image src={visual.hero} alt={visual.alt} fill className="object-cover" sizes="(min-width: 1280px) 65vw, 100vw" />
                 <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(37,37,37,0.04),rgba(37,37,37,0.42))]" />
                 <div className="absolute left-6 right-6 top-6 flex flex-wrap items-center justify-between gap-3">
                   <StatusBadge label="GPS verified" tone="positive" />
                   <StatusBadge label={`${listing.unlockCount} unlocks`} tone="brand" className="bg-white/90 text-[#252525]" />
                 </div>
               </div>
-
               <div className="grid gap-4 p-6 md:grid-cols-4">
-                {visual.gallery.map((image, index) => (
-                  <div key={image} className="relative h-28 overflow-hidden rounded-[20px]">
-                    <Image
-                      src={image}
-                      alt={`${listing.title} media ${index + 1}`}
-                      fill
-                      className="object-cover"
-                      sizes="(min-width: 768px) 160px, 100vw"
-                    />
+                {listing.photos.slice(0, 4).map((photo, index) => (
+                  <div key={photo.url} className="relative h-28 overflow-hidden rounded-[20px]">
+                    <Image src={photo.url} alt={`${title} photo ${index + 1}`} fill className="object-cover" sizes="160px" />
                   </div>
                 ))}
+                {listing.photos.length === 0 &&
+                  visual.gallery.map((image, index) => (
+                    <div key={image} className="relative h-28 overflow-hidden rounded-[20px]">
+                      <Image src={image} alt={`${title} media ${index + 1}`} fill className="object-cover" sizes="160px" />
+                    </div>
+                  ))}
               </div>
             </div>
 
@@ -81,20 +83,13 @@ export function ListingDetailPage({ id }: { id: string }) {
                   </p>
                   <p className="mt-3 flex items-center gap-2 text-sm text-[#62686a]">
                     <MapPinned className="size-4 text-[#28809A]" />
-                    {listing.address}
+                    {listing.contactInfo?.address ?? listing.neighborhood}
                   </p>
                   <p className="mt-4 text-sm leading-7 text-[#62686a]">{listing.description}</p>
                 </div>
-
                 <div className="grid gap-3 rounded-[28px] bg-[#f7f4ee] p-5 text-sm text-[#4b4f50]">
-                  <p className="inline-flex items-center gap-2">
-                    <BedDouble className="size-4 text-[#28809A]" />
-                    {listing.bedrooms === 0 ? 'Studio' : `${listing.bedrooms} bedrooms`}
-                  </p>
-                  <p className="inline-flex items-center gap-2">
-                    <Bath className="size-4 text-[#28809A]" />
-                    {listing.bathrooms} bathrooms
-                  </p>
+                  <p className="inline-flex items-center gap-2"><BedDouble className="size-4 text-[#28809A]" />{listing.bedrooms === 0 ? 'Studio' : `${listing.bedrooms} bedrooms`}</p>
+                  <p className="inline-flex items-center gap-2"><Bath className="size-4 text-[#28809A]" />{listing.bathrooms} bathrooms</p>
                   <p>Available from {formatDateLabel(listing.availableFrom)}</p>
                   <p>{listing.propertyType}</p>
                   <p>{listing.furnished ? 'Furnished' : 'Unfurnished'}</p>
@@ -102,45 +97,30 @@ export function ListingDetailPage({ id }: { id: string }) {
               </CardContent>
             </Card>
 
-            <div className="grid gap-6 lg:grid-cols-2">
+            {listing.amenities.length > 0 && (
               <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
                 <CardContent className="space-y-4 p-6">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#28809A]">Amenities</p>
                   <div className="grid gap-3">
                     {listing.amenities.map((item) => (
-                      <div key={item} className="rounded-[20px] border border-black/8 bg-[#fbfaf7] px-4 py-3 text-sm text-[#4b4f50]">
-                        {item}
-                      </div>
+                      <div key={item} className="rounded-[20px] border border-black/8 bg-[#fbfaf7] px-4 py-3 text-sm text-[#4b4f50]">{item}</div>
                     ))}
                   </div>
                 </CardContent>
               </Card>
+            )}
 
+            {listing.propertyNotes && (
               <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
                 <CardContent className="space-y-4 p-6">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#28809A]">Verification</p>
-                  <div className="grid gap-3">
-                    {listing.verification.map((item) => (
-                      <div key={item} className="rounded-[20px] border border-black/8 bg-[#fbfaf7] px-4 py-3 text-sm text-[#4b4f50]">
-                        {item}
-                      </div>
-                    ))}
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#28809A]">From the current tenant</p>
+                  <div className="rounded-[24px] border-l-4 border-[#28809A] bg-[#f7f4ee] p-5">
+                    <p className="text-sm leading-7 text-[#4b4f50]">{listing.propertyNotes}</p>
+                    <p className="mt-4 font-medium text-[#252525]">{listing.tenant.firstName}</p>
                   </div>
                 </CardContent>
               </Card>
-            </div>
-
-            <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
-              <CardContent className="space-y-4 p-6">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#28809A]">From the current tenant</p>
-                <div className="rounded-[24px] border-l-4 border-[#28809A] bg-[#f7f4ee] p-5">
-                  <p className="text-sm leading-7 text-[#4b4f50]">{listing.propertyNotes}</p>
-                  <p className="mt-4 font-medium text-[#252525]">
-                    {listing.tenant.firstName} {listing.tenant.lastName}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            )}
           </div>
 
           <div className="space-y-6">
@@ -153,12 +133,10 @@ export function ListingDetailPage({ id }: { id: string }) {
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <Link href={`/listings/${listing.id}/unlock`} className={linkButtonClass({ size: 'sm' })}>
-                    Reveal contact
-                    <ArrowRight className="size-4" />
+                    Reveal contact <ArrowRight className="size-4" />
                   </Link>
                   <Link href="/wallet" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
-                    <Wallet className="size-4" />
-                    Review wallet
+                    <Wallet className="size-4" /> Review wallet
                   </Link>
                 </div>
               </CardContent>
@@ -170,7 +148,7 @@ export function ListingDetailPage({ id }: { id: string }) {
                 <div className="rounded-[28px] border border-black/8 bg-[radial-gradient(circle_at_top,rgba(40,128,154,0.14),transparent_38%),linear-gradient(180deg,#eef2ee_0%,#dce4da_100%)] p-6">
                   <p className="font-medium text-[#252525]">{visual.mapLabel}</p>
                   <p className="mt-3 text-sm leading-7 text-[#62686a]">
-                    Exact address and direct coordinates remain hidden until unlock, but the approximate area and transport context are visible first.
+                    Exact address and GPS coordinates remain hidden until unlock.
                   </p>
                 </div>
               </CardContent>
@@ -179,8 +157,7 @@ export function ListingDetailPage({ id }: { id: string }) {
             <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
               <CardContent className="space-y-4 p-6">
                 <p className="inline-flex items-center gap-2 font-medium text-[#252525]">
-                  <ShieldCheck className="size-4 text-[#28809A]" />
-                  Before you unlock
+                  <ShieldCheck className="size-4 text-[#28809A]" /> Before you unlock
                 </p>
                 <div className="space-y-3 text-sm leading-7 text-[#4b4f50]">
                   <p>Review gallery media and tenant notes first.</p>

@@ -266,7 +266,7 @@ export class UnlockService {
             listingId: lockedListing.id,
             revealedAddressEncrypted: lockedListing.addressEncrypted,
             revealedGPS: `${lockedListing.latitude},${lockedListing.longitude}`,
-            revealedPhoneEncrypted: lockedListing.user.phoneNumberEncrypted,
+            revealedPhoneEncrypted: lockedListing.user.phoneNumberEncrypted ?? '',
           },
           include: {
             confirmations: {
@@ -325,7 +325,9 @@ export class UnlockService {
           },
         });
 
-        notificationPhoneNumber = this.decrypt(lockedListing.user.phoneNumberEncrypted);
+        notificationPhoneNumber = lockedListing.user.phoneNumberEncrypted
+          ? this.decrypt(lockedListing.user.phoneNumberEncrypted)
+          : null;
         notificationNeighborhood = lockedListing.neighborhood;
 
         return {
@@ -585,7 +587,9 @@ export class UnlockService {
       }
 
       buyerId = unlock.buyerId;
-      buyerPhoneNumber = this.decrypt(unlock.buyer.phoneNumberEncrypted);
+      buyerPhoneNumber = unlock.buyer.phoneNumberEncrypted
+        ? this.decrypt(unlock.buyer.phoneNumberEncrypted)
+        : null;
       listingId = unlock.listingId;
     });
 
@@ -676,7 +680,9 @@ export class UnlockService {
       tenant: {
         firstName: unlock.listing.user.firstName,
         lastName: unlock.listing.user.lastName,
-        phoneNumber: this.decrypt(unlock.listing.user.phoneNumberEncrypted),
+        phoneNumber: unlock.listing.user.phoneNumberEncrypted
+          ? this.decrypt(unlock.listing.user.phoneNumberEncrypted)
+          : null,
       },
       message,
     };

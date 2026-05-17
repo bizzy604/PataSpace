@@ -386,7 +386,7 @@ export class PaymentService {
 
     if (!notificationPhoneNumber) {
       const user = await this.userService.findStoredById(notificationTargetUserId);
-      notificationPhoneNumber = user
+      notificationPhoneNumber = user?.phoneNumberEncrypted
         ? this.userService.decryptPhoneNumber(user.phoneNumberEncrypted)
         : null;
     }

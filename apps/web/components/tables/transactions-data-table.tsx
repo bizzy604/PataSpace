@@ -12,10 +12,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { AppDataTable } from '@/components/tables/app-data-table';
 import { StatusBadge, transactionStatusMeta, transactionTypeMeta } from '@/components/shared/status-badge';
-import type { MockTransaction } from '@/lib/mock-app-state';
 import { formatDateLabel, formatKes } from '@/lib/format';
+import type { CreditTransaction } from '@pataspace/contracts';
 
-const columns: ColumnDef<MockTransaction>[] = [
+const columns: ColumnDef<CreditTransaction>[] = [
   {
     accessorKey: 'description',
     header: 'Transaction',
@@ -26,7 +26,7 @@ const columns: ColumnDef<MockTransaction>[] = [
 
       return (
         <div className="space-y-2">
-          <p className="font-medium text-[#252525]">{transaction.description}</p>
+          <p className="font-medium text-[#252525]">{transaction.description ?? '—'}</p>
           <div className="flex flex-wrap gap-2">
             <StatusBadge label={type.label} tone={type.tone} />
             <StatusBadge label={status.label} tone={status.tone} />
@@ -89,7 +89,7 @@ const columns: ColumnDef<MockTransaction>[] = [
   },
 ];
 
-export function TransactionsDataTable({ data }: { data: MockTransaction[] }) {
+export function TransactionsDataTable({ data }: { data: CreditTransaction[] }) {
   return (
     <AppDataTable
       title="Transaction history"

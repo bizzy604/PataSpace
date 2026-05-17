@@ -1,3 +1,9 @@
+/**
+ * Purpose: User lookup, creation, and profile transformation for the user module.
+ * Why important: Central source of truth for resolving a request principal to a DB record,
+ *   supporting both phone-based (OTP) and Clerk SSO user creation paths.
+ * Used by: JwtStrategy, ClerkJwtStrategy, UserController, and any module that needs user data.
+ */
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { Role as ContractRole, UserProfile } from '@pataspace/contracts';
@@ -11,6 +17,7 @@ import {
 
 const userSelect = {
   id: true,
+  clerkId: true,
   phoneNumberEncrypted: true,
   phoneVerified: true,
   email: true,
@@ -28,10 +35,11 @@ const userSelect = {
 
 export type StoredUser = {
   id: string;
-  phoneNumberEncrypted: string;
+  clerkId: string | null;
+  phoneNumberEncrypted: string | null;
   phoneVerified: boolean;
   email: string | null;
-  passwordHash: string;
+  passwordHash: string | null;
   firstName: string;
   lastName: string;
   role: Role;
@@ -72,8 +80,33 @@ export class UserService {
 
   async findStoredByEmail(email: string) {
     return this.prismaService.user.findUnique({
-      where: {
-        email: email.trim().toLowerCase(),
+      where: { email: email.trim().toLowerCase() },
+      select: userSelect,
+    });
+  }
+
+  async findStoredByClerkId(clerkId: string) {
+    return this.prismaService.user.findUnique({
+      where: { clerkId },
+      select: userSelect,
+    });
+  }
+
+  async createFromClerk(data: {
+    clerkId: string;
+    email?: string;
+    firstName: string;
+    lastName: string;
+  }): Promise<StoredUser> {
+    return this.prismaService.user.create({
+      data: {
+        clerkId: data.clerkId,
+        email: data.email ?? null,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        role: Role.USER,
+        isActive: true,
+        credit: { create: { balance: 0 } },
       },
       select: userSelect,
     });
@@ -81,21 +114,21 @@ export class UserService {
 
   async getProfileOrThrow(userId: string): Promise<UserProfile> {
     const user = await this.findStoredById(userId);
-
     if (!user) {
       throw new NotFoundException({
         code: 'USER_NOT_FOUND',
         message: 'User profile was not found',
       });
     }
-
     return this.toUserProfile(user);
   }
 
   toAuthUser(user: StoredUser) {
     return {
       id: user.id,
-      phoneNumber: this.decryptPhoneNumber(user.phoneNumberEncrypted),
+      phoneNumber: user.phoneNumberEncrypted
+        ? this.decryptPhoneNumber(user.phoneNumberEncrypted)
+        : null,
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role as unknown as ContractRole,

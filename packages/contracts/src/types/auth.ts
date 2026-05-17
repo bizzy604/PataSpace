@@ -2,7 +2,7 @@ import { Role } from '../enums';
 
 export type AuthUser = {
   id: string;
-  phoneNumber: string;
+  phoneNumber: string | null;
   firstName: string;
   lastName: string;
   role: Role;

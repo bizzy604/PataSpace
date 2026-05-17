@@ -313,6 +313,13 @@ export class AuthService {
 
     this.assertUserCanAuthenticate(user, true);
 
+    if (!user.passwordHash) {
+      throw new UnauthorizedException({
+        code: 'INVALID_CREDENTIALS',
+        message: 'Phone number or password is incorrect',
+      });
+    }
+
     const passwordMatches = await bcrypt.compare(input.password, user.passwordHash);
 
     if (!passwordMatches) {
@@ -406,7 +413,9 @@ export class AuthService {
       {
         sub: user.id,
         role: user.role,
-        phoneNumber: this.userService.decryptPhoneNumber(user.phoneNumberEncrypted),
+        phoneNumber: user.phoneNumberEncrypted
+          ? this.userService.decryptPhoneNumber(user.phoneNumberEncrypted)
+          : null,
         phoneVerified: user.phoneVerified,
         firstName: user.firstName,
         lastName: user.lastName,
@@ -472,6 +481,7 @@ export class AuthService {
   private getStoredUserSelect() {
     return {
       id: true,
+      clerkId: true,
       phoneNumberEncrypted: true,
       phoneVerified: true,
       email: true,

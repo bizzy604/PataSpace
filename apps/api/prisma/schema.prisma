@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 enum Role {
@@ -75,11 +76,12 @@ enum UploadMediaType {
 
 model User {
   id                   String              @id @default(cuid())
-  phoneNumberHash      String              @unique
-  phoneNumberEncrypted String
+  clerkId              String?             @unique
+  phoneNumberHash      String?             @unique
+  phoneNumberEncrypted String?
   phoneVerified        Boolean             @default(false)
   email                String?             @unique
-  passwordHash         String
+  passwordHash         String?
   firstName            String
   lastName             String
   role                 Role                @default(USER)

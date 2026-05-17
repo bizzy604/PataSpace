@@ -350,7 +350,9 @@ export class ListingService {
       contactInfo: canViewContactInfo
         ? {
             address: decryptField(listing.addressEncrypted, this.encryptionKey),
-            phoneNumber: this.userService.decryptPhoneNumber(listing.user.phoneNumberEncrypted),
+            phoneNumber: listing.user.phoneNumberEncrypted
+              ? this.userService.decryptPhoneNumber(listing.user.phoneNumberEncrypted)
+              : null,
             latitude: listing.latitude,
             longitude: listing.longitude,
           }
@@ -1403,7 +1405,10 @@ export class ListingService {
     };
   }
 
-  private async sendListingNotification(phoneNumberEncrypted: string, message: string) {
+  private async sendListingNotification(phoneNumberEncrypted: string | null, message: string) {
+    if (!phoneNumberEncrypted) {
+      return;
+    }
     try {
       const phoneNumber = this.userService.decryptPhoneNumber(phoneNumberEncrypted);
       await this.smsService.sendMessage(phoneNumber, message);
@@ -1412,7 +1417,10 @@ export class ListingService {
     }
   }
 
-  private safeDecryptPhoneNumberForAdmin(phoneNumberEncrypted: string) {
+  private safeDecryptPhoneNumberForAdmin(phoneNumberEncrypted: string | null) {
+    if (!phoneNumberEncrypted) {
+      return 'Unavailable';
+    }
     try {
       return this.userService.decryptPhoneNumber(phoneNumberEncrypted);
     } catch {

@@ -81,6 +81,9 @@ export class NotificationJob {
 
       for (const adminUser of adminUsers) {
         try {
+          if (!adminUser.phoneNumberEncrypted) {
+            continue;
+          }
           await this.smsService.sendMessage(
             this.userService.decryptPhoneNumber(adminUser.phoneNumberEncrypted),
             message,

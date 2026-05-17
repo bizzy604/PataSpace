@@ -1,5 +1,5 @@
 export type UnlockContactInfo = {
-  phoneNumber: string;
+  phoneNumber: string | null;
   address: string;
   latitude?: number;
   longitude?: number;
@@ -12,7 +12,7 @@ export type CreateUnlockRequest = {
 export type UnlockTenantContact = {
   firstName: string;
   lastName: string;
-  phoneNumber: string;
+  phoneNumber: string | null;
 };
 
 export type CreateUnlockResponse = {

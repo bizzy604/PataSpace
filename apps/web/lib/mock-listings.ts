@@ -1,3 +1,5 @@
+import { ListingHouseType } from '@pataspace/contracts';
+
 export type MediaTone =
   | "lagoon"
   | "midnight"
@@ -24,6 +26,7 @@ export type MockListing = {
   monthlyRent: number;
   bedrooms: number;
   bathrooms: number;
+  houseType: ListingHouseType;
   propertyType: string;
   furnished: boolean;
   availableFrom: string;
@@ -35,7 +38,9 @@ export type MockListing = {
   verification: string[];
   viewCount: number;
   unlockCount: number;
+  isUnlocked: boolean;
   createdAt: string;
+  thumbnailUrl?: string;
   tenant: {
     firstName: string;
     lastName: string;
@@ -72,8 +77,10 @@ export const mockListings: MockListing[] = [
     monthlyRent: 25000,
     bedrooms: 2,
     bathrooms: 1,
+    houseType: ListingHouseType.TWO_BEDROOM,
     propertyType: "Apartment",
     furnished: false,
+    isUnlocked: false,
     availableFrom: "2026-05-01",
     unlockCostCredits: 2500,
     description:
@@ -145,8 +152,10 @@ export const mockListings: MockListing[] = [
     monthlyRent: 14500,
     bedrooms: 0,
     bathrooms: 1,
+    houseType: ListingHouseType.STUDIO,
     propertyType: "Studio",
     furnished: false,
+    isUnlocked: false,
     availableFrom: "2026-04-12",
     unlockCostCredits: 1450,
     description:
@@ -218,8 +227,10 @@ export const mockListings: MockListing[] = [
     monthlyRent: 42000,
     bedrooms: 1,
     bathrooms: 1,
+    houseType: ListingHouseType.ONE_BEDROOM,
     propertyType: "Apartment",
     furnished: true,
+    isUnlocked: false,
     availableFrom: "2026-06-01",
     availableTo: "2027-06-01",
     unlockCostCredits: 4200,
