@@ -1,6 +1,6 @@
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { formatCredits } from '@/data/mock-listings';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -105,23 +105,32 @@ export function CreditsScreen() {
 }
 
 export function BuyCreditsScreen() {
-  const { walletPackages, pendingTopUp, selectTopUp, user } = useMobileApp();
+  const { walletPackages, pendingTopUp, initiatePurchase, user } = useMobileApp();
   const [selectedPackageId, setSelectedPackageId] = useState(pendingTopUp?.packageId ?? walletPackages[0]?.id);
   const [phone, setPhone] = useState(pendingTopUp?.phone ?? user.phone);
+  const [isLoading, setIsLoading] = useState(false);
+  const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const router = useRouter();
 
   return (
     <Screen
       bottomBar={
         <Button
-          label="Continue to M-Pesa"
-          onPress={() => {
-            if (!selectedPackageId) {
-              return;
+          label={isLoading ? 'Sending STK push…' : 'Continue to M-Pesa'}
+          onPress={async () => {
+            if (!selectedPackageId || isLoading) return;
+            setPurchaseError(null);
+            setIsLoading(true);
+            try {
+              await initiatePurchase(selectedPackageId, phone);
+              router.push(appRoutes.mpesaProcessing);
+            } catch (err) {
+              setPurchaseError(
+                err instanceof Error ? err.message : 'Could not send payment request. Try again.',
+              );
+            } finally {
+              setIsLoading(false);
             }
-
-            selectTopUp(selectedPackageId, phone);
-            router.push(appRoutes.mpesaProcessing);
           }}
         />
       }
@@ -151,12 +160,26 @@ export function BuyCreditsScreen() {
         <Text className="text-sm font-semibold text-foreground">M-Pesa phone number</Text>
         <Input className="mt-3" value={phone} onChangeText={setPhone} placeholder="+254 712 345 678" />
       </Card>
+
+      {isLoading ? (
+        <View className="items-center py-2">
+          <ActivityIndicator />
+          <Text className="mt-2 text-sm text-muted-foreground">Sending STK push to your phone…</Text>
+        </View>
+      ) : null}
+
+      {purchaseError ? (
+        <Card>
+          <CardDescription className="text-destructive">{purchaseError}</CardDescription>
+        </Card>
+      ) : null}
     </Screen>
   );
 }
 
 export function MpesaProcessingScreen() {
-  const { pendingTopUp, walletPackages, completeTopUp } = useMobileApp();
+  const { pendingTopUp, walletPackages, completeTopUp, refreshWallet } = useMobileApp();
+  const [isConfirming, setIsConfirming] = useState(false);
   const router = useRouter();
   const selectedPackage = walletPackages.find((item) => item.id === pendingTopUp?.packageId);
 
@@ -177,8 +200,11 @@ export function MpesaProcessingScreen() {
 
       <View className="gap-3">
         <Button
-          label="Confirm payment received"
-          onPress={() => {
+          label={isConfirming ? 'Refreshing wallet…' : 'Confirm payment received'}
+          onPress={async () => {
+            if (isConfirming) return;
+            setIsConfirming(true);
+            await refreshWallet();
             completeTopUp();
             router.replace(appRoutes.paymentSuccess);
           }}

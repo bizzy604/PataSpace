@@ -20,11 +20,16 @@ async function handleResponse<T>(res: Response): Promise<T> {
     let code = 'UNKNOWN_ERROR';
     let message = `Request failed: ${res.status}`;
     try {
-      const body = (await res.json()) as { code?: string; message?: string };
-      code = body.code ?? code;
-      message = body.message ?? message;
+      // API wraps errors as { error: { code, message }, meta: {...} }
+      const body = (await res.json()) as {
+        error?: { code?: string; message?: string };
+        code?: string;
+        message?: string;
+      };
+      code = body.error?.code ?? body.code ?? code;
+      message = body.error?.message ?? body.message ?? message;
     } catch {
-      // ignore parse errors
+      // ignore parse errors — keep the generic fallback
     }
     throw new ApiRequestError(res.status, code, message);
   }

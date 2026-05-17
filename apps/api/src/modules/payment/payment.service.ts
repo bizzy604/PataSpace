@@ -85,7 +85,9 @@ export class PaymentService {
       );
     }
 
-    if (!user.phoneVerified) {
+    // Clerk-authenticated users supply their M-Pesa number at purchase time,
+    // so the profile phoneVerified flag is not required for them.
+    if (!user.phoneVerified && !user.clerkId) {
       throw new ForbiddenException({
         code: 'PHONE_NOT_VERIFIED',
         message: 'Verify your phone number before purchasing credits',

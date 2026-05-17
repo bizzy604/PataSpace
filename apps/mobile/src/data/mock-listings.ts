@@ -520,27 +520,27 @@ export const confirmationStages = [
 
 export const walletPackages: WalletPackage[] = [
   {
-    id: 'starter',
-    label: 'Starter',
-    credits: 2500,
-    price: 'KES 2,500',
-    bonus: '+0 bonus credits',
-    description: 'Best for one verified unlock in the KES 20k to 25k range.',
-  },
-  {
-    id: 'mover',
-    label: 'Mover',
+    id: '5_credits',
+    label: 'Value',
     credits: 5000,
     price: 'KES 5,000',
-    bonus: '+250 bonus credits',
+    bonus: '+0 bonus credits',
+    description: 'Best for one verified unlock in the KES 20k to 50k range.',
+  },
+  {
+    id: '10_credits',
+    label: 'Popular',
+    credits: 10000,
+    price: 'KES 10,000',
+    bonus: '+500 bonus credits',
     description: 'Good if you want enough balance for two unlocks and confirmation follow-up.',
   },
   {
-    id: 'power',
+    id: '20_credits',
     label: 'Power',
-    credits: 10000,
-    price: 'KES 10,000',
-    bonus: '+700 bonus credits',
+    credits: 20000,
+    price: 'KES 20,000',
+    bonus: '+2,000 bonus credits',
     description: 'For heavy browsing across several neighborhoods without topping up again.',
   },
 ];

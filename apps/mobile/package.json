@@ -12,10 +12,10 @@
     "build:ios": "pnpm dlx eas-cli build --platform ios --profile preview"
   },
   "dependencies": {
-    "@pataspace/contracts": "workspace:*",
     "@clerk/expo": "^3.1.10",
     "@expo/metro-runtime": "~6.1.2",
     "@expo/vector-icons": "^15.0.3",
+    "@pataspace/contracts": "workspace:*",
     "@shopify/flash-list": "^2.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -25,6 +25,7 @@
     "expo-camera": "~17.0.10",
     "expo-constants": "~18.0.13",
     "expo-dev-client": "^6.0.20",
+    "expo-file-system": "^55.0.20",
     "expo-font": "~14.0.11",
     "expo-linking": "~8.0.11",
     "expo-location": "~19.0.8",

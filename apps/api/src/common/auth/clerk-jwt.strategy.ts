@@ -61,6 +61,12 @@ export class ClerkJwtStrategy extends PassportStrategy(Strategy, 'clerk-jwt') {
       });
     }
 
+    // Elevate to 'internal' before any DB access. The middleware only marks
+    // auth paths (e.g. /auth/login) as internal; Clerk validation runs on
+    // every protected route, so without this the SELECT is hidden by RLS and
+    // the INSERT is blocked by the users_insert_policy.
+    this.requestContext.set({ databaseAccessMode: 'internal' });
+
     let user = await this.userService.findStoredByClerkId(clerkId);
 
     if (!user) {

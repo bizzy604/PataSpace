@@ -47,7 +47,8 @@ import { mobileThemes, type AppColorScheme, type MobileThemePalette } from '@/li
 import { createUnlock as createUnlockApi, confirmUnlock as confirmUnlockApi } from '@/lib/api/unlocks';
 import { uploadAndConfirmPhoto, uploadAndConfirmVideo } from '@/lib/api/uploads';
 import { createListing as createListingApi } from '@/lib/api/listings';
-import { ConfirmationSide, ListingHouseType, ListingStatus } from '@pataspace/contracts';
+import { fetchCreditBalance, purchaseCredits } from '@/lib/api/credits';
+import { ConfirmationSide, ListingHouseType, ListingStatus, type CreditPurchasePackage } from '@pataspace/contracts';
 import { useMobileApiSync } from './use-mobile-api-sync';
 
 type PendingTopUp = {
@@ -108,6 +109,8 @@ type MobileAppContextValue = {
   submitDraft: () => Promise<MyListingRow>;
   selectTopUp: (packageId: string, phone: string) => void;
   completeTopUp: () => TransactionRecord | undefined;
+  initiatePurchase: (packageId: string, phone: string) => Promise<void>;
+  refreshWallet: () => Promise<void>;
   unlockListing: (listingId: string) => Promise<'success' | 'already_unlocked' | 'insufficient'>;
   confirmIncoming: (listingId: string) => Promise<void>;
   confirmOutgoing: (listingId: string) => Promise<void>;
@@ -428,6 +431,24 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
     });
   }
 
+  async function initiatePurchase(packageId: string, phone: string): Promise<void> {
+    const normalizedPhone = normalizePhone(phone) || user.phone;
+    setPendingTopUp({ packageId, phone: normalizedPhone });
+    await purchaseCredits(getToken, {
+      package: packageId as CreditPurchasePackage,
+      phoneNumber: normalizedPhone,
+    });
+  }
+
+  async function refreshWallet(): Promise<void> {
+    try {
+      const balance = await fetchCreditBalance(getToken);
+      setWalletBalance(balance.balance);
+    } catch {
+      // Silently ignore — stale balance stays in place
+    }
+  }
+
   function completeTopUp() {
     if (!pendingTopUp) {
       return undefined;
@@ -639,6 +660,8 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
         submitDraft,
         selectTopUp,
         completeTopUp,
+        initiatePurchase,
+        refreshWallet,
         unlockListing,
         confirmIncoming,
         confirmOutgoing,
