@@ -178,13 +178,25 @@ async function buildLocationLabel(position: Location.LocationObject) {
 export function CreateListingScreen() {
   const cameraViewManagerAvailable = hasExpoCameraViewManager();
   const cameraRef = useRef<CameraView | null>(null);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [cameraPermissionGranted, setCameraPermissionGranted] = useState<boolean | null>(null);
   const [locationPermissionGranted, setLocationPermissionGranted] = useState<boolean | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [captureError, setCaptureError] = useState('');
-  const { draft, addDraftPhoto } = useMobileApp();
+  const [cameraMode, setCameraMode] = useState<'picture' | 'video'>('picture');
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const { draft, addDraftPhoto, updateDraft } = useMobileApp();
   const nextPrompt = photoCapturePrompts[draft.photos.length] ?? `Extra angle ${draft.photos.length + 1}`;
+
+  useEffect(() => {
+    return () => {
+      if (isRecording) cameraRef.current?.stopRecording();
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -320,8 +332,34 @@ export function CreateListingScreen() {
     }
   }
 
+  async function handleStartRecording() {
+    if (!cameraRef.current || isRecording || !cameraReady) return;
+    setIsRecording(true);
+    setRecordingSeconds(0);
+    recordingTimerRef.current = setInterval(() => setRecordingSeconds((s) => s + 1), 1000);
+    try {
+      const result = await cameraRef.current.recordAsync({
+        maxDuration: 30,
+        maxFileSize: 10 * 1024 * 1024,
+      });
+      if (result?.uri) updateDraft({ video: { uri: result.uri } });
+    } catch {
+      // recording stopped externally
+    } finally {
+      setIsRecording(false);
+      if (recordingTimerRef.current) { clearInterval(recordingTimerRef.current); recordingTimerRef.current = null; }
+    }
+  }
+
+  function handleStopRecording() {
+    cameraRef.current?.stopRecording();
+  }
+
   const previewStrip = draft.photos.slice(-3).reverse();
   const canRenderLiveCamera = cameraViewManagerAvailable && cameraPermissionGranted;
+  const recordingLabel = isRecording
+    ? `Stop  ${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, '0')}`
+    : draft.video?.uri ? 'Re-record walkthrough' : 'Record walkthrough (optional)';
   const captureLabel = !cameraViewManagerAvailable
     ? 'Camera unavailable in this build'
     : isCapturing
@@ -332,16 +370,31 @@ export function CreateListingScreen() {
     <Screen
       bottomBar={
         <View className="gap-3">
-          <Button
-            disabled={isCapturing || !cameraReady || !cameraViewManagerAvailable}
-            label={captureLabel}
-            onPress={() => {
-              void handleCapture();
-            }}
-          />
-          <Link href={appRoutes.createListingPhotos} asChild>
-            <Button variant="outline" label={`Review ${draft.photos.length} photos`} />
-          </Link>
+          {cameraMode === 'picture' ? (
+            <Button
+              disabled={isCapturing || !cameraReady || !cameraViewManagerAvailable}
+              label={captureLabel}
+              onPress={() => void handleCapture()}
+            />
+          ) : (
+            <Button
+              disabled={!cameraReady || !cameraViewManagerAvailable}
+              variant={isRecording ? 'dark' : 'default'}
+              label={recordingLabel}
+              onPress={isRecording ? handleStopRecording : () => void handleStartRecording()}
+            />
+          )}
+          <View className="flex-row gap-3">
+            <Button
+              className="flex-1"
+              variant="outline"
+              label={cameraMode === 'picture' ? '🎥 Video' : '📷 Photos'}
+              onPress={() => { if (!isRecording) setCameraMode((m) => m === 'picture' ? 'video' : 'picture'); }}
+            />
+            <Link href={appRoutes.createListingPhotos} asChild>
+              <Button className="flex-1" variant="outline" label={`Review ${draft.photos.length}`} />
+            </Link>
+          </View>
         </View>
       }
     >
@@ -352,7 +405,8 @@ export function CreateListingScreen() {
           <CameraView
             ref={cameraRef}
             facing="back"
-            mode="picture"
+            mode={cameraMode}
+            videoQuality="480p"
             mute={false}
             onCameraReady={() => setCameraReady(true)}
             onMountError={() => setCaptureError('Camera preview failed to load.')}
@@ -377,10 +431,21 @@ export function CreateListingScreen() {
             </View>
 
             <View className="gap-2">
-              <Text className="text-[32px] font-semibold tracking-[-0.8px] text-white">{nextPrompt}</Text>
-              <Text className="text-sm text-white/75">
-                {locationPermissionGranted ? 'GPS ready' : 'Enable GPS to capture'}
-              </Text>
+              {cameraMode === 'video' ? (
+                <>
+                  <Text className="text-[32px] font-semibold tracking-[-0.8px] text-white">
+                    {isRecording ? `Recording ${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, '0')}` : 'Walkthrough video'}
+                  </Text>
+                  <Text className="text-sm text-white/75">Max 30 seconds · 10MB · 480p</Text>
+                </>
+              ) : (
+                <>
+                  <Text className="text-[32px] font-semibold tracking-[-0.8px] text-white">{nextPrompt}</Text>
+                  <Text className="text-sm text-white/75">
+                    {locationPermissionGranted ? 'GPS ready' : 'Enable GPS to capture'}
+                  </Text>
+                </>
+              )}
             </View>
           </View>
         </View>
@@ -458,7 +523,7 @@ export function CreateListingScreen() {
 }
 
 export function PhotoReviewScreen() {
-  const { draft, removeDraftPhoto } = useMobileApp();
+  const { draft, removeDraftPhoto, updateDraft } = useMobileApp();
 
   return (
     <Screen
@@ -517,6 +582,25 @@ export function PhotoReviewScreen() {
           </View>
         </Card>
       ))}
+
+      <Card>
+        <CardTitle className="text-xl">Video walkthrough</CardTitle>
+        {draft.video?.uri ? (
+          <>
+            <CardDescription>Walkthrough recorded · uploads with listing · max 10MB</CardDescription>
+            <Button
+              className="mt-4"
+              variant="secondary"
+              label="Remove video"
+              onPress={() => updateDraft({ video: undefined })}
+            />
+          </>
+        ) : (
+          <CardDescription>
+            Optional. Switch to video mode on the camera screen to record a short walkthrough (max 30s / 10MB).
+          </CardDescription>
+        )}
+      </Card>
     </Screen>
   );
 }
@@ -625,6 +709,8 @@ export function ListingDetailsFormScreen() {
 export function ListingReviewScreen() {
   const { draft, submitDraft } = useMobileApp();
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const monthlyRent = Number(draft.monthlyRent) || 0;
   const unlockEstimate = Math.round(monthlyRent * 0.1);
   const heroPhoto = draft.photos[0];
@@ -633,11 +719,24 @@ export function ListingReviewScreen() {
     <Screen
       bottomBar={
         <Button
-          disabled={draft.photos.length === 0}
-          label={draft.photos.length === 0 ? 'Capture a photo first' : 'Submit listing'}
-          onPress={() => {
-            submitDraft();
-            router.replace(appRoutes.listingSubmitted);
+          disabled={draft.photos.length === 0 || isSubmitting}
+          label={
+            draft.photos.length === 0
+              ? 'Capture a photo first'
+              : isSubmitting
+                ? 'Uploading photos…'
+                : 'Submit listing'
+          }
+          onPress={async () => {
+            setSubmitError('');
+            setIsSubmitting(true);
+            try {
+              await submitDraft();
+              router.replace(appRoutes.listingSubmitted);
+            } catch (err) {
+              setSubmitError(err instanceof Error ? err.message : 'Upload failed. Check your connection and try again.');
+              setIsSubmitting(false);
+            }
           }}
         />
       }
@@ -702,6 +801,12 @@ export function ListingReviewScreen() {
           {formatListingHouseType(draft.houseType)} | {draft.landlordPhone}
         </Text>
       </Card>
+
+      {submitError ? (
+        <Card>
+          <Text className="text-sm font-semibold text-primary">{submitError}</Text>
+        </Card>
+      ) : null}
     </Screen>
   );
 }

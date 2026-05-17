@@ -34,7 +34,7 @@ export type CreateListingRequest = {
   availableFrom: string;
   availableTo?: string;
   photos: ListingPhotoInput[];
-  video: ListingVideoInput;
+  video?: ListingVideoInput;
 };
 
 export type UpdateListingRequest = Partial<CreateListingRequest>;

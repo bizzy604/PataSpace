@@ -41,6 +41,7 @@ export async function apiFetch<T>(
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(init?.headers as Record<string, string> | undefined),
   };
   const res = await fetch(`${API_BASE}${path}`, { ...init, headers });
   return handleResponse<T>(res);

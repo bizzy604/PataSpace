@@ -92,7 +92,7 @@ const createListingShape = z.object({
   availableFrom: isoDateStringSchema,
   availableTo: isoDateStringSchema.optional(),
   photos: z.array(listingPhotoInputSchema).min(5).max(15),
-  video: listingVideoInputSchema,
+  video: listingVideoInputSchema.optional(),
 });
 
 export const createListingSchema = createListingShape.superRefine(

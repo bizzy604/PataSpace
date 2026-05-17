@@ -198,6 +198,7 @@ export type ListingDraft = {
   landlordPhone: string;
   moveReason: string;
   photos: ListingDraftPhoto[];
+  video?: { uri: string };
 };
 
 export type SearchFilters = {

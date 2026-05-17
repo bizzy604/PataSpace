@@ -3,10 +3,8 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import type { UnlockContactInfo } from '@pataspace/contracts';
 import { useColorScheme as useNativeWindColorScheme } from 'nativewind';
 import {
-  buildUnlockContactInfo,
   confirmationStages,
   defaultReferralCode,
-  draftCameraSequence,
   featuredListings,
   filterBudgetOptions,
   filterSizeOptions,
@@ -29,7 +27,6 @@ import {
   onboardingSlides,
   photoCapturePrompts,
   referralHighlights,
-  resolveApproximateMapLocation,
   reviewPrompts,
   supportTopics,
   updateNotes,
@@ -48,7 +45,9 @@ import {
 } from '@/data/mock-listings';
 import { mobileThemes, type AppColorScheme, type MobileThemePalette } from '@/lib/theme';
 import { createUnlock as createUnlockApi, confirmUnlock as confirmUnlockApi } from '@/lib/api/unlocks';
-import { ConfirmationSide } from '@pataspace/contracts';
+import { uploadAndConfirmPhoto, uploadAndConfirmVideo } from '@/lib/api/uploads';
+import { createListing as createListingApi } from '@/lib/api/listings';
+import { ConfirmationSide, ListingHouseType, ListingStatus } from '@pataspace/contracts';
 import { useMobileApiSync } from './use-mobile-api-sync';
 
 type PendingTopUp = {
@@ -106,7 +105,7 @@ type MobileAppContextValue = {
   removeDraftPhoto: (photoId: string) => void;
   updateDraft: (draft: Partial<ListingDraft>) => void;
   resetDraft: () => void;
-  submitDraft: () => MyListingRow;
+  submitDraft: () => Promise<MyListingRow>;
   selectTopUp: (packageId: string, phone: string) => void;
   completeTopUp: () => TransactionRecord | undefined;
   unlockListing: (listingId: string) => Promise<'success' | 'already_unlocked' | 'insufficient'>;
@@ -170,73 +169,25 @@ function resolveDisplayName(
   return fallback || metadataName || initialUserProfile.name;
 }
 
-function buildSubmittedListingDraftData(draft: ListingDraft, listingIndex: number) {
-  const monthlyRent = Number(draft.monthlyRent) || 0;
-  const listingId = `draft-listing-${Date.now()}`;
-  const coverPhoto = draft.photos[0];
-  const galleryMedia = draft.photos.map((photo) => ({
-    id: photo.id,
-    label: photo.label,
-    source: photo.source,
-  }));
-  const unlockCostCredits = Math.round(monthlyRent * 0.1);
-  const fallbackMapLocation = resolveApproximateMapLocation(draft.area || 'Kilimani', coverPhoto?.gps);
-  const contactInfo = buildUnlockContactInfo(
-    `${draft.location || 'Location pending'}, ${draft.county || 'Nairobi'}`,
-    draft.landlordPhone || '+254 700 000 000',
-    coverPhoto?.gps?.latitude,
-    coverPhoto?.gps?.longitude,
-  );
+function houseTypeToBedrooms(houseType: ListingHouseType): number {
+  if (houseType === ListingHouseType.STUDIO) return 0;
+  if (houseType === ListingHouseType.BEDSITTER || houseType === ListingHouseType.ONE_BEDROOM) return 1;
+  if (houseType === ListingHouseType.TWO_BEDROOM) return 2;
+  if (houseType === ListingHouseType.THREE_BEDROOM) return 3;
+  if (houseType === ListingHouseType.FOUR_BEDROOM_PLUS) return 4;
+  return 5;
+}
 
-  const listingPreview = {
-    id: listingId,
-    title: draft.title || `Draft listing ${listingIndex}`,
-    monthlyRent,
-    price: `KES ${monthlyRent.toLocaleString()}/mo`,
-    unlockCostCredits,
-    unlockCost: formatCredits(unlockCostCredits),
-    commissionAmount: `KES ${Math.round(unlockCostCredits * 0.3).toLocaleString()}`,
-    county: draft.county || 'Nairobi',
-    houseType: draft.houseType,
-    area: draft.area || 'Nairobi',
-    location: draft.location
-      ? `${draft.location}, ${draft.county || 'Nairobi'}`
-      : `Location pending, ${draft.county || 'Nairobi'}`,
-    directions: 'Directions will appear after the listing is approved and unlocked.',
-    meta: `${formatListingHouseType(draft.houseType)}  |  ${draft.county || 'Nairobi'}  |  Pending review`,
-    blurb: draft.description || 'New listing draft awaiting review.',
-    status: listingIndex <= 3 ? 'Review' : 'Live',
-    coverImage: galleryMedia[0]?.source ?? draftCameraSequence[0].source,
-    photoCount: `${galleryMedia.length} photos`,
-    imageHint: galleryMedia[0]?.label ?? 'Awaiting final upload review.',
-    availableFrom: draft.availableFrom || 'Available soon',
-    deposit: draft.deposit ? `KES ${Number(draft.deposit).toLocaleString()}` : 'Deposit not set',
-    moveReason: draft.moveReason || 'Move reason not provided',
-    tags: (draft.amenities || 'New')
-      .split(',')
-      .map((item) => item.trim())
-      .filter(Boolean)
-      .slice(0, 3),
-    amenities: (draft.amenities || '')
-      .split(',')
-      .map((item) => item.trim())
-      .filter(Boolean),
-    galleryMedia,
-    mapLocation: fallbackMapLocation,
-    quote: 'Listing draft submitted from mobile.',
-    quoteAuthor: 'Outgoing tenant',
-    stats: {
-      views: '0',
-      unlocks: '0',
-      saves: '0',
-      freshness: 'Just now',
-    },
-  } satisfies ListingPreview;
-
-  return {
-    listingPreview,
-    contactInfo,
-  };
+function houseTypeToBathrooms(houseType: ListingHouseType): number {
+  if (
+    houseType === ListingHouseType.STUDIO ||
+    houseType === ListingHouseType.BEDSITTER ||
+    houseType === ListingHouseType.ONE_BEDROOM ||
+    houseType === ListingHouseType.TWO_BEDROOM
+  ) {
+    return 1;
+  }
+  return 2;
 }
 
 export function MobileAppProvider({ children }: { children: ReactNode }) {
@@ -384,35 +335,84 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
     setDraft(initialDraft);
   }
 
-  function submitDraft() {
-    const { listingPreview, contactInfo } = buildSubmittedListingDraftData(draft, myListings.length + 1);
+  async function submitDraft(): Promise<MyListingRow> {
+    const coverPhoto = draft.photos[0];
+    if (!coverPhoto) throw new Error('At least one photo is required');
+
+    const listingGps = coverPhoto.gps;
+    if (!listingGps) throw new Error('GPS data is required. Retake the cover photo with location enabled.');
+
+    const confirmedPhotos: Array<{ s3Key: string; url: string; gps: NonNullable<typeof listingGps>; index: number }> = [];
+    for (let i = 0; i < draft.photos.length; i++) {
+      const photo = draft.photos[i]!;
+      const uri = typeof photo.source === 'object' && 'uri' in photo.source ? photo.source.uri : null;
+      if (!uri) continue;
+      const confirmed = await uploadAndConfirmPhoto(getToken, uri, i);
+      confirmedPhotos.push({ s3Key: confirmed.s3Key, url: confirmed.url, gps: photo.gps ?? listingGps, index: i });
+    }
+    if (confirmedPhotos.length === 0) throw new Error('No photos could be uploaded');
+
+    let videoInput: { s3Key: string; url: string } | undefined;
+    if (draft.video?.uri) {
+      const confirmed = await uploadAndConfirmVideo(getToken, draft.video.uri);
+      videoInput = { s3Key: confirmed.s3Key, url: confirmed.url };
+    }
+
+    const monthlyRent = Number(draft.monthlyRent) || 0;
+    const amenities = (draft.amenities || '').split(',').map((a) => a.trim()).filter(Boolean);
+    const parsedDate = draft.availableFrom ? new Date(draft.availableFrom) : null;
+    const availableFrom = parsedDate && !isNaN(parsedDate.getTime())
+      ? parsedDate.toISOString()
+      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    const description = draft.description.trim().length >= 20
+      ? draft.description.trim()
+      : `${formatListingHouseType(draft.houseType)} in ${draft.area || 'Nairobi'}, available from ${draft.availableFrom || 'soon'}.`;
+
+    const response = await createListingApi(getToken, {
+      county: draft.county || 'Nairobi',
+      neighborhood: draft.area || 'Nairobi',
+      address: draft.location || `${draft.area || 'Nairobi'}, ${draft.county || 'Nairobi'}`,
+      latitude: listingGps.latitude,
+      longitude: listingGps.longitude,
+      monthlyRent,
+      bedrooms: houseTypeToBedrooms(draft.houseType),
+      bathrooms: houseTypeToBathrooms(draft.houseType),
+      houseType: draft.houseType,
+      propertyType: 'Apartment',
+      furnished: false,
+      description,
+      amenities: amenities.length > 0 ? amenities : ['To be confirmed'],
+      availableFrom,
+      photos: confirmedPhotos.map((p, i) => ({
+        s3Key: p.s3Key,
+        url: p.url,
+        order: i + 1,
+        latitude: p.gps.latitude,
+        longitude: p.gps.longitude,
+        takenAt: p.gps.timestamp ? new Date(p.gps.timestamp).toISOString() : undefined,
+      })),
+      video: videoInput,
+    });
+
+    const isLive = response.status === ListingStatus.ACTIVE;
     const myListing: MyListingRow = {
-      id: listingPreview.id,
-      title: listingPreview.title,
-      status: listingPreview.status === 'Live' ? 'Live' : 'Review',
+      id: response.id,
+      title: draft.title || `${formatListingHouseType(draft.houseType)} in ${draft.area}`,
+      status: isLive ? 'Live' : 'Review',
       views: '0',
       unlocks: '0',
-      payout: listingPreview.status === 'Live' ? 'KES 0 pending' : 'Waiting for publish',
+      payout: isLive ? 'KES 0 pending' : 'Waiting for publish',
       updated: 'Submitted just now',
-      reviewNote:
-        listingPreview.status === 'Live'
-          ? 'Listing is live and ready for incoming tenants.'
-          : 'Your first three listings stay in admin review before going live.',
+      reviewNote: isLive
+        ? 'Listing is live and ready for incoming tenants.'
+        : 'Your listing is in review and will publish after media checks.',
     };
 
-    setListings((current) => [listingPreview, ...current]);
     setMyListings((current) => [myListing, ...current]);
-    setListingContactInfoById((current) => ({
-      ...current,
-      [listingPreview.id]: contactInfo,
-    }));
     pushNotification({
       id: `notif-submit-${Date.now()}`,
       title: 'Listing submitted',
-      detail:
-        listingPreview.status === 'Live'
-          ? 'Your listing is now live in the feed.'
-          : 'Your listing is in review and will publish after media checks.',
+      detail: myListing.reviewNote,
       time: 'Just now',
       target: { route: 'my-listings' },
     });

@@ -130,7 +130,7 @@ export class ListingService {
         thumbnailUrl: media.photoByKey.get(input.photos[0].s3Key)?.cdnUrl,
         unlockCostCredits,
         userId,
-        videoUrl: media.video.cdnUrl,
+        videoUrl: media.video?.cdnUrl ?? null,
       },
       select: {
         id: true,
@@ -1095,7 +1095,7 @@ export class ListingService {
     video: CreateListingRequest['video'],
   ) {
     const photoByKey = await this.resolvePhotoAssets(userId, photos);
-    const resolvedVideo = await this.resolveVideoAsset(userId, video);
+    const resolvedVideo = video ? await this.resolveVideoAsset(userId, video) : null;
 
     return {
       photoByKey,

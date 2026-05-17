@@ -18,7 +18,7 @@ import { StorageService } from '../../infrastructure/storage/storage.service';
 const IMAGE_CONTENT_TYPES = new Set(['image/jpeg', 'image/png']);
 const VIDEO_CONTENT_TYPES = new Set(['video/mp4']);
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
-const MAX_VIDEO_SIZE_BYTES = 50 * 1024 * 1024;
+const MAX_VIDEO_SIZE_BYTES = 10 * 1024 * 1024;
 
 @Injectable()
 export class UploadService {
@@ -147,7 +147,7 @@ export class UploadService {
       if (fileSize > MAX_VIDEO_SIZE_BYTES) {
         throw new BadRequestException({
           code: 'INVALID_UPLOAD_FILE',
-          message: 'Video uploads must be 50MB or smaller',
+          message: 'Video uploads must be 10MB or smaller',
           details: {
             contentType,
             maxSizeBytes: MAX_VIDEO_SIZE_BYTES,

@@ -1,9 +1,11 @@
 /**
  * Purpose: Listing API functions for the mobile app.
  * Why important: Centralises listing HTTP calls so screens don't embed fetch logic.
- * Used by: use-mobile-api-sync, ListingDetailsScreen.
+ * Used by: use-mobile-api-sync, ListingDetailsScreen, mobile-app-provider (submitDraft).
  */
 import type {
+  CreateListingRequest,
+  CreateListingResponse,
   ListingDetails,
   ListingFilters,
   MyListing,
@@ -36,4 +38,15 @@ export async function fetchMyListings(
 ): Promise<MyListing[]> {
   const result = await apiFetch<PaginatedMyListingsResponse>('/listings/my-listings', getToken);
   return result.data;
+}
+
+export async function createListing(
+  getToken: () => Promise<string | null>,
+  payload: CreateListingRequest,
+): Promise<CreateListingResponse> {
+  return apiFetch<CreateListingResponse>('/listings', getToken, {
+    method: 'POST',
+    headers: { 'x-device-type': 'mobile' },
+    body: JSON.stringify(payload),
+  });
 }
