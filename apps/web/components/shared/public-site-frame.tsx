@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { Show, SignInButton, SignOutButton, SignUpButton, UserButton } from '@clerk/nextjs';
 import { LayoutDashboard, LogIn, LogOut, UserPlus } from 'lucide-react';

@@ -71,12 +71,25 @@ export class ClerkJwtStrategy extends PassportStrategy(Strategy, 'clerk-jwt') {
 
     if (!user) {
       const clerkUser = await this.clerk.users.getUser(clerkId);
-      user = await this.userService.createFromClerk({
-        clerkId,
-        email: clerkUser.primaryEmailAddress?.emailAddress,
-        firstName: clerkUser.firstName ?? 'User',
-        lastName: clerkUser.lastName ?? '',
-      });
+      const email = clerkUser.primaryEmailAddress?.emailAddress;
+
+      // Account linking: if a phone-OTP account already owns this email, attach
+      // the Clerk ID to it rather than failing with a unique constraint on email.
+      if (email) {
+        const existing = await this.userService.findStoredByEmail(email);
+        if (existing) {
+          user = await this.userService.linkClerkId(existing.id, clerkId);
+        }
+      }
+
+      if (!user) {
+        user = await this.userService.createFromClerk({
+          clerkId,
+          email,
+          firstName: clerkUser.firstName ?? 'User',
+          lastName: clerkUser.lastName ?? '',
+        });
+      }
     }
 
     if (!user.isActive) {

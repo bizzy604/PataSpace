@@ -1,3 +1,8 @@
+/**
+ * Purpose: M-Pesa STK processing page — shown immediately after a purchase is initiated.
+ * Why important: Gives the user real feedback about the pending transaction instead of a generic screen.
+ * Used by: WalletBuyPage redirects here with txn, pkg, amount, and credits in search params.
+ */
 import Link from 'next/link';
 import { Clock3, CircleCheck, Smartphone } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -5,7 +10,16 @@ import { TenantWorkspaceShell } from '@/components/workspace/page';
 import { formatKes } from '@/lib/format';
 import { linkButtonClass } from '@/lib/link-button';
 
-export default function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ txn?: string; pkg?: string; amount?: string; credits?: string }>;
+}) {
+  const params = await searchParams;
+  const pkgName = params.pkg ?? 'Credit package';
+  const amount = params.amount ? Number(params.amount) : null;
+  const credits = params.credits ?? null;
+
   return (
     <TenantWorkspaceShell
       pathname="/wallet/buy"
@@ -29,16 +43,13 @@ export default function Page() {
           </CardHeader>
           <CardContent className="space-y-4">
             {[
-              { title: 'Purchase record created', body: 'Transaction state is stored as PENDING with the package amount and phone number.' },
-              { title: 'User prompt issued', body: 'The STK request is on the supplied number and waits for PIN entry on the phone.' },
-              { title: 'Reconciliation safety net', body: 'If the callback is slow, the backend checks status again so successful payments still land.' },
-            ].map((step, index) => (
-              <div
-                key={step.title}
-                className="flex gap-4 rounded-[24px] border border-black/8 bg-[#fbfaf7] p-4"
-              >
-                <span className="mt-1 flex size-8 items-center justify-center rounded-full bg-[#28809A]/12 text-[#28809A]">
-                  {index < 2 ? <CircleCheck className="size-4" /> : <Clock3 className="size-4" />}
+              { title: 'Purchase record created', body: 'Transaction state is stored as PENDING with the package amount and phone number.', done: true },
+              { title: 'User prompt issued', body: 'The STK request is on the supplied number and waits for PIN entry on the phone.', done: true },
+              { title: 'Reconciliation safety net', body: 'If the callback is slow, the backend checks status again so successful payments still land.', done: false },
+            ].map((step) => (
+              <div key={step.title} className="flex gap-4 rounded-[24px] border border-black/8 bg-[#fbfaf7] p-4">
+                <span className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-[#28809A]/12 text-[#28809A]">
+                  {step.done ? <CircleCheck className="size-4" /> : <Clock3 className="size-4" />}
                 </span>
                 <div>
                   <p className="font-medium text-[#252525]">{step.title}</p>
@@ -58,15 +69,16 @@ export default function Page() {
           <CardContent className="space-y-4 text-sm leading-7 text-white/78">
             <p className="inline-flex items-center gap-2">
               <Smartphone className="size-4 text-[#8ed7e7]" />
-              Search Sprint package
+              {pkgName}
             </p>
-            <p>Amount: {formatKes(1000)}</p>
+            {amount !== null ? <p>Amount: {formatKes(amount)}</p> : null}
+            {credits ? <p>Credits: {credits}</p> : null}
             <p>Status: Pending callback confirmation</p>
             <div className="rounded-[24px] border border-white/10 bg-white/6 p-4">
               If the prompt stalls, the transaction history keeps the pending state visible until the system retries or marks the payment as failed.
             </div>
-            <Link href="/wallet/success" className={linkButtonClass({ size: 'sm' })}>
-              Preview success state
+            <Link href="/wallet/transactions" className={linkButtonClass({ size: 'sm' })}>
+              View transaction history
             </Link>
           </CardContent>
         </Card>

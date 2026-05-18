@@ -69,3 +69,6 @@ docker compose -f infra/docker/docker-compose.yml up -d
 - Several modules are still scaffold shells and need real implementations.
 - Some services are too large and need to be split into smaller collaborators.
 - Empty `dto/` directories exist and should be replaced by real module-local transport code or removed.
+
+# For local Mpesa Testing use Ngrok
+- ngrok http 3001

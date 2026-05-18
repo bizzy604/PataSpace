@@ -11,7 +11,7 @@ async function bootstrap() {
   const { globalPrefix } = configureApp(app);
   setupSwagger(app, configService, globalPrefix);
 
-  const port = configService.get<number>('app.port') ?? 3000;
+  const port = configService.get<number>('app.port') ?? 3001;
   await app.listen(port);
 
   Logger.log(`PataSpace API listening on http://localhost:${port}/${globalPrefix}`);

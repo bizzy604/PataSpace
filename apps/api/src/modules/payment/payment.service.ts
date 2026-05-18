@@ -3,6 +3,7 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { Prisma, TransactionStatus, TransactionType } from '@prisma/client';
@@ -43,24 +44,26 @@ const CANCELLED_CALLBACK_CODES = new Set([1032, 2032]);
 
 const CREDIT_PACKAGES: Record<CreditPurchasePackage, PurchasePackageConfig> = {
   '5_credits': {
-    amountKES: 5000,
-    credits: 5000,
+    amountKES: 500,
+    credits: 5,
     label: '5 credits package',
   },
   '10_credits': {
-    amountKES: 10000,
-    credits: 10500,
+    amountKES: 1000,
+    credits: 10,
     label: '10 credits package',
   },
   '20_credits': {
-    amountKES: 20000,
-    credits: 22000,
+    amountKES: 2000,
+    credits: 20,
     label: '20 credits package',
   },
 };
 
 @Injectable()
 export class PaymentService {
+  private readonly logger = new Logger(PaymentService.name);
+
   constructor(
     private readonly prismaService: PrismaService,
     private readonly creditService: CreditService,
@@ -180,6 +183,11 @@ export class PaymentService {
         },
       });
     } catch (error) {
+      const axiosBody = (error as { response?: { data?: unknown } }).response?.data;
+      const failureReason = error instanceof Error ? error.message : 'M-Pesa STK push request failed';
+
+      this.logger.error('STK push failed', JSON.stringify({ failureReason, safaricomResponse: axiosBody }));
+
       await this.prismaService.creditTransaction.update({
         where: {
           id: transaction.id,
@@ -187,8 +195,8 @@ export class PaymentService {
         data: {
           status: TransactionStatus.FAILED,
           metadata: this.mergeMetadata(transaction.metadata, {
-            failureReason:
-              error instanceof Error ? error.message : 'M-Pesa STK push request failed',
+            failureReason,
+            safaricomResponse: axiosBody ?? null,
           }),
         },
       });

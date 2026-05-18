@@ -36,9 +36,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="font-sans antialiased">
         <ClerkProvider
           appearance={{ theme: shadcn }}
-          afterSignOutUrl="/"
           signInUrl="/auth/sign-in"
           signUpUrl="/auth/register"
+          signInFallbackRedirectUrl="/wallet"
+          signUpFallbackRedirectUrl="/wallet"
+          afterSignOutUrl="/"
         >
           <TooltipProvider>
             <a

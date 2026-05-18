@@ -32,7 +32,7 @@ export async function purchaseCredits(
   getToken: () => Promise<string | null>,
   payload: PurchaseCreditsRequest,
 ): Promise<PurchaseCreditsResponse> {
-  return clientFetch<PurchaseCreditsResponse>('/payments/purchase', getToken, {
+  return clientFetch<PurchaseCreditsResponse>('/credits/purchase', getToken, {
     method: 'POST',
     body: JSON.stringify(payload),
   });

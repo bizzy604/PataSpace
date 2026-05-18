@@ -51,9 +51,9 @@ export class LiveMpesaProvider implements MpesaProvider {
         Timestamp: timestamp,
         TransactionType: 'CustomerPayBillOnline',
         Amount: Math.round(payload.amount),
-        PartyA: payload.phoneNumber,
+        PartyA: this.toMpesaPhone(payload.phoneNumber),
         PartyB: this.config.shortcode,
-        PhoneNumber: payload.phoneNumber,
+        PhoneNumber: this.toMpesaPhone(payload.phoneNumber),
         CallBackURL: this.config.callbackUrl,
         AccountReference: payload.accountReference,
         TransactionDesc: `PataSpace credits for ${payload.accountReference}`,
@@ -84,7 +84,7 @@ export class LiveMpesaProvider implements MpesaProvider {
         CommandID: 'BusinessPayment',
         Amount: Math.round(payload.amount),
         PartyA: this.config.shortcode,
-        PartyB: payload.phoneNumber,
+        PartyB: this.toMpesaPhone(payload.phoneNumber),
         Remarks: payload.remarks ?? 'PataSpace commission payout',
         QueueTimeOutURL: this.config.timeoutUrl,
         ResultURL: this.config.resultUrl,
@@ -183,5 +183,10 @@ export class LiveMpesaProvider implements MpesaProvider {
 
   private pad(value: number) {
     return String(value).padStart(2, '0');
+  }
+
+  // Daraja requires 2547XXXXXXXX — strip leading '+' if present.
+  private toMpesaPhone(phoneNumber: string): string {
+    return phoneNumber.startsWith('+') ? phoneNumber.slice(1) : phoneNumber;
   }
 }

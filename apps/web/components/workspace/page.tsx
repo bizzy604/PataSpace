@@ -1,6 +1,12 @@
 "use client";
-
+/**
+ * Purpose: Authenticated workspace layout shell — sidebar nav, balance display, and user identity.
+ * Why important: Wraps every authenticated screen; provides consistent chrome and real-time balance.
+ * Used by: All pages under /wallet, /profile, /unlocks, /saved, /notifications, /settings, /post.
+ */
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useAuth, useUser, SignOutButton } from '@clerk/nextjs';
 import {
   BadgeHelp,
   Bookmark,
@@ -32,7 +38,7 @@ import {
   SidebarSeparator,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import { mockCreditBalance, mockCurrentUser } from '@/lib/mock-app-state';
+import { fetchCreditBalance } from '@/lib/api/credits';
 import { formatKes } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
@@ -80,6 +86,20 @@ export function TenantWorkspaceShell({
   children: React.ReactNode;
   actions?: React.ReactNode;
 }) {
+  const { user } = useUser();
+  const { getToken } = useAuth();
+  const [balance, setBalance] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetchCreditBalance(getToken)
+      .then((b) => setBalance(b.balance))
+      .catch(() => null);
+  }, [getToken]);
+
+  const initials = `${user?.firstName?.[0] ?? ''}${user?.lastName?.[0] ?? ''}`;
+  const displayName = user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() : '—';
+  const displaySub = user?.primaryEmailAddress?.emailAddress ?? user?.primaryPhoneNumber?.phoneNumber ?? '';
+
   return (
     <SidebarProvider defaultOpen>
       <Sidebar variant="inset" collapsible="icon">
@@ -99,7 +119,7 @@ export function TenantWorkspaceShell({
               Available balance
             </p>
             <p className="mt-2 font-display text-2xl font-semibold tracking-[-0.05em] text-sidebar-foreground">
-              {formatKes(mockCreditBalance.balance)}
+              {balance !== null ? formatKes(balance) : '—'}
             </p>
             <p className="mt-1 text-sm text-sidebar-foreground/65">
               Ready for browsing and unlocks.
@@ -141,20 +161,21 @@ export function TenantWorkspaceShell({
           <div className="rounded-2xl border border-sidebar-border bg-[#f8fafc] p-3 shadow-soft-sm">
             <div className="flex items-center gap-3">
               <Avatar size="lg">
-                <AvatarFallback>
-                  {mockCurrentUser.firstName[0]}
-                  {mockCurrentUser.lastName[0]}
-                </AvatarFallback>
+                <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
               <div className="min-w-0 group-data-[collapsible=icon]:hidden">
-                <p className="font-medium text-sidebar-foreground">
-                  {mockCurrentUser.firstName} {mockCurrentUser.lastName}
-                </p>
-                <p className="truncate text-xs text-sidebar-foreground/60">
-                  {mockCurrentUser.phoneNumber}
-                </p>
+                <p className="font-medium text-sidebar-foreground">{displayName}</p>
+                <p className="truncate text-xs text-sidebar-foreground/60">{displaySub}</p>
               </div>
-              <LogOut className="ml-auto size-4 text-sidebar-foreground/50 group-data-[collapsible=icon]:hidden" />
+              <SignOutButton>
+                <button
+                  type="button"
+                  aria-label="Sign out"
+                  className="ml-auto group-data-[collapsible=icon]:hidden"
+                >
+                  <LogOut className="size-4 text-sidebar-foreground/50 transition hover:text-sidebar-foreground" />
+                </button>
+              </SignOutButton>
             </div>
           </div>
         </SidebarFooter>

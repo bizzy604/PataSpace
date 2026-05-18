@@ -109,10 +109,15 @@ export const envSchema = z.object({
       'MPESA_TIMEOUT_URL',
     ]);
 
+    // Daraja API itself must always be HTTPS.
+    // Callback/result/timeout URLs only enforce HTTPS in production — in development
+    // they typically point at a localhost or ngrok address.
     requireHttps(context, value.MPESA_BASE_URL, 'MPESA_BASE_URL');
-    requireHttps(context, value.MPESA_CALLBACK_URL, 'MPESA_CALLBACK_URL');
-    requireHttps(context, value.MPESA_RESULT_URL, 'MPESA_RESULT_URL');
-    requireHttps(context, value.MPESA_TIMEOUT_URL, 'MPESA_TIMEOUT_URL');
+    if (value.NODE_ENV === 'production') {
+      requireHttps(context, value.MPESA_CALLBACK_URL, 'MPESA_CALLBACK_URL');
+      requireHttps(context, value.MPESA_RESULT_URL, 'MPESA_RESULT_URL');
+      requireHttps(context, value.MPESA_TIMEOUT_URL, 'MPESA_TIMEOUT_URL');
+    }
   }
 });
 

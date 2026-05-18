@@ -98,8 +98,12 @@ export class UserService {
     firstName: string;
     lastName: string;
   }): Promise<StoredUser> {
-    return this.prismaService.user.create({
-      data: {
+    // Upsert instead of create — guards against the TOCTOU race where concurrent
+    // requests from the same first-time Clerk user all pass the findStoredByClerkId
+    // check before any of them complete the insert, causing P2002 unique violations.
+    return this.prismaService.user.upsert({
+      where: { clerkId: data.clerkId },
+      create: {
         clerkId: data.clerkId,
         email: data.email ?? null,
         firstName: data.firstName,
@@ -108,6 +112,15 @@ export class UserService {
         isActive: true,
         credit: { create: { balance: 0 } },
       },
+      update: {},
+      select: userSelect,
+    });
+  }
+
+  async linkClerkId(userId: string, clerkId: string): Promise<StoredUser> {
+    return this.prismaService.user.update({
+      where: { id: userId },
+      data: { clerkId },
       select: userSelect,
     });
   }
