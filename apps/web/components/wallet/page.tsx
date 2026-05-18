@@ -58,7 +58,7 @@ export function WalletBuyPage() {
     setLoading(true);
     setError(null);
     try {
-      const result = await purchaseCredits(getToken, { package: selectedId, phoneNumber: normalized });
+      const result = await purchaseCredits(getToken, { package: selectedId, paymentMethod: 'mpesa', phoneNumber: normalized });
       router.push(
         `/wallet/processing?txn=${result.transactionId}&pkg=${encodeURIComponent(selectedPkg?.name ?? '')}&amount=${result.amount}&credits=${result.credits}`,
       );

@@ -1,3 +1,9 @@
+/**
+ * Purpose: HTTP transport layer for credit purchases and M-Pesa webhook callbacks.
+ * Why important: Routes requests to PaymentService; handles auth and webhook signature verification.
+ * Used by: NestJS router (AppModule → PaymentModule)
+ */
+
 import {
   Body,
   Controller,
@@ -44,12 +50,12 @@ import { PaymentService } from './payment.service';
 export class CreditPurchaseController {
   constructor(private readonly paymentService: PaymentService) {}
 
-  @ApiOperation({ summary: 'Create a pending M-Pesa credit purchase and trigger STK push' })
-  @ApiBody({ type: PurchaseCreditsRequestDto })
-  @ApiAcceptedResponse({
-    type: PurchaseCreditsResponseDto,
-    description: 'Purchase request accepted and awaiting callback.',
+  @ApiOperation({
+    summary: 'Initiate a credit purchase via M-Pesa STK push or Stellar payment request',
+    description: 'For mpesa: triggers STK push to the provided phone number. For stellar: returns a treasury address and memo — the client sends XLM from their own wallet.',
   })
+  @ApiBody({ type: PurchaseCreditsRequestDto })
+  @ApiAcceptedResponse({ type: PurchaseCreditsResponseDto, description: 'Purchase request accepted.' })
   @ApiRateLimit('creditPurchase')
   @HttpCode(202)
   @Post('purchase')
@@ -70,54 +76,36 @@ export class PaymentWebhookController {
   ) {}
 
   @Public()
-  @ApiOperation({ summary: 'Receive M-Pesa STK callback events' })
+  @ApiOperation({ summary: 'Receive M-Pesa STK callback events from Safaricom Daraja' })
   @ApiHeader({
     name: 'x-mpesa-callback-secret',
     required: false,
-    description:
-      'Optional shared secret for authenticating callbacks. Required when MPESA_CALLBACK_SECRET is configured.',
+    description: 'Shared secret to authenticate Safaricom callbacks when MPESA_CALLBACK_SECRET is set.',
   })
   @ApiBody({ type: MpesaCallbackRequestDto })
-  @ApiOkResponse({
-    type: MpesaCallbackAckResponseDto,
-    description: 'Callback accepted for processing.',
-  })
+  @ApiOkResponse({ type: MpesaCallbackAckResponseDto, description: 'Callback accepted.' })
   @HttpCode(200)
   @Post('mpesa-callback')
   handleMpesaCallback(
-    @Headers('x-mpesa-callback-secret') callbackSecretHeader: string | undefined,
-    @Query('token') callbackSecretQuery: string | undefined,
+    @Headers('x-mpesa-callback-secret') headerSecret: string | undefined,
+    @Query('token') querySecret: string | undefined,
     @Body(new ZodValidationPipe(mpesaCallbackSchema)) input: MpesaCallbackRequest,
   ): Promise<MpesaCallbackAckResponse> {
-    this.assertCallbackAuthorized(callbackSecretHeader ?? callbackSecretQuery);
-
+    this.assertCallbackAuthorized(headerSecret ?? querySecret);
     return this.paymentService.handleMpesaCallback(input);
   }
 
-  private assertCallbackAuthorized(providedSecret: string | undefined) {
-    const expectedSecret =
-      this.configService.get<string>('infrastructure.mpesa.callbackSecret') ?? '';
-
-    if (!expectedSecret) {
-      return;
-    }
-
-    if (!providedSecret || !secretsMatch(providedSecret, expectedSecret)) {
-      throw new UnauthorizedException({
-        code: 'INVALID_CALLBACK_SIGNATURE',
-        message: 'Payment callback authentication failed',
-      });
+  private assertCallbackAuthorized(provided: string | undefined) {
+    const expected = this.configService.get<string>('infrastructure.mpesa.callbackSecret') ?? '';
+    if (!expected) return;
+    if (!provided || !secretsMatch(provided, expected)) {
+      throw new UnauthorizedException({ code: 'INVALID_CALLBACK_SIGNATURE', message: 'Payment callback authentication failed' });
     }
   }
 }
 
-function secretsMatch(providedSecret: string, expectedSecret: string) {
-  const providedBuffer = Buffer.from(providedSecret, 'utf8');
-  const expectedBuffer = Buffer.from(expectedSecret, 'utf8');
-
-  if (providedBuffer.length !== expectedBuffer.length) {
-    return false;
-  }
-
-  return timingSafeEqual(providedBuffer, expectedBuffer);
+function secretsMatch(provided: string, expected: string): boolean {
+  const a = Buffer.from(provided, 'utf8');
+  const b = Buffer.from(expected, 'utf8');
+  return a.length === b.length && timingSafeEqual(a, b);
 }

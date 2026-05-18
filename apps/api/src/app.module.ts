@@ -31,6 +31,7 @@ import { QueueModule } from './infrastructure/queue/queue.module';
 import { SmsModule } from './infrastructure/sms/sms.module';
 import { StorageModule } from './infrastructure/storage/storage.module';
 import { MpesaModule } from './infrastructure/payment/mpesa.module';
+import { StellarModule } from './infrastructure/stellar/stellar.module';
 
 @Module({
   imports: [
@@ -77,6 +78,7 @@ import { MpesaModule } from './infrastructure/payment/mpesa.module';
     SmsModule,
     StorageModule,
     MpesaModule,
+    StellarModule,
     AuthModule,
     UserModule,
     ListingModule,

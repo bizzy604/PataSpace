@@ -2,6 +2,8 @@ import { TransactionStatus, TransactionType } from '../enums';
 
 export type CreditPurchasePackage = '5_credits' | '10_credits' | '20_credits';
 
+export type PaymentMethod = 'mpesa' | 'stellar';
+
 export type CreditBalance = {
   balance: number;
   lifetimeEarned: number;
@@ -43,10 +45,17 @@ export type PaginatedCreditTransactionsResponse = {
   pagination: CreditTransactionPagination;
 };
 
-export type PurchaseCreditsRequest = {
-  package: CreditPurchasePackage;
-  phoneNumber: string;
-};
+export type PurchaseCreditsRequest =
+  | {
+      package: CreditPurchasePackage;
+      paymentMethod: 'mpesa';
+      phoneNumber: string;
+    }
+  | {
+      package: CreditPurchasePackage;
+      paymentMethod: 'stellar';
+      phoneNumber?: string;
+    };
 
 export type PurchaseCreditsResponse = {
   transactionId: string;
@@ -54,7 +63,11 @@ export type PurchaseCreditsResponse = {
   amount: number;
   credits: number;
   message: string;
+  paymentMethod: PaymentMethod;
   estimatedCompletion?: string;
+  stellarDestinationAddress?: string;
+  stellarMemo?: string;
+  stellarAmountXLM?: string;
 };
 
 export type MpesaCallbackMetadataItem = {

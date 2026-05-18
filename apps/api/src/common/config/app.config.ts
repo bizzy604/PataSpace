@@ -124,6 +124,15 @@ export default () => ({
         failDeleteObject: process.env.SANDBOX_STORAGE_FAIL_DELETE_OBJECT === 'true',
       },
     },
+    stellar: {
+      mode: process.env.STELLAR_MODE ?? 'disabled',
+      horizonUrl: process.env.STELLAR_HORIZON_URL ?? 'https://horizon-testnet.stellar.org',
+      treasuryPublicKey: process.env.STELLAR_TREASURY_PUBLIC_KEY,
+      xlmKesRate: Number(process.env.STELLAR_XLM_KES_RATE ?? 17),
+      sandbox: {
+        failPayment: process.env.SANDBOX_STELLAR_FAIL_PAYMENT === 'true',
+      },
+    },
     mpesa: {
       mode: process.env.MPESA_MODE ?? 'sandbox',
       baseUrl: process.env.MPESA_BASE_URL,

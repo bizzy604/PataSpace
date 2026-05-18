@@ -37,10 +37,20 @@ export const paginatedCreditTransactionsResponseSchema = z.object({
   }),
 });
 
-export const purchaseCreditsSchema = z.object({
-  package: creditPurchasePackageSchema,
-  phoneNumber: phoneNumberSchema,
-});
+export const paymentMethodSchema = z.enum(['mpesa', 'stellar']);
+
+export const purchaseCreditsSchema = z.discriminatedUnion('paymentMethod', [
+  z.object({
+    package: creditPurchasePackageSchema,
+    paymentMethod: z.literal('mpesa'),
+    phoneNumber: phoneNumberSchema,
+  }),
+  z.object({
+    package: creditPurchasePackageSchema,
+    paymentMethod: z.literal('stellar'),
+    phoneNumber: phoneNumberSchema.optional(),
+  }),
+]);
 
 export const purchaseCreditsResponseSchema = z.object({
   transactionId: z.string().min(1),
@@ -48,7 +58,11 @@ export const purchaseCreditsResponseSchema = z.object({
   amount: z.number().int().positive(),
   credits: z.number().int().positive(),
   message: z.string().min(1),
+  paymentMethod: paymentMethodSchema,
   estimatedCompletion: z.string().min(1).optional(),
+  stellarDestinationAddress: z.string().optional(),
+  stellarMemo: z.string().optional(),
+  stellarAmountXLM: z.string().optional(),
 });
 
 export const mpesaCallbackMetadataItemSchema = z.object({

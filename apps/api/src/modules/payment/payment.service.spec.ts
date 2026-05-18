@@ -1,14 +1,19 @@
-import {
-  ForbiddenException,
-  HttpException,
-  ServiceUnavailableException,
-} from '@nestjs/common';
-import { TransactionStatus } from '@prisma/client';
+/**
+ * Purpose: Unit tests for the PaymentService orchestrator — covers user validation,
+ *          transaction creation, and correct routing to M-Pesa or Stellar sub-services.
+ * Why important: Ensures the orchestrator guards, routes, and delegates correctly without
+ *               re-testing the internals of MpesaPurchaseService or StellarPurchaseService.
+ * Used by: Jest test runner
+ */
+
+import { ForbiddenException, HttpException } from '@nestjs/common';
+import { TransactionStatus, TransactionType } from '@prisma/client';
 import { PaymentService } from './payment.service';
 
-describe('PaymentService', () => {
+describe('PaymentService (orchestrator)', () => {
   const createStoredUser = (overrides = {}) => ({
     id: 'user_1',
+    clerkId: null,
     phoneVerified: true,
     isActive: true,
     isBanned: false,
@@ -25,661 +30,187 @@ describe('PaymentService', () => {
     ...overrides,
   });
 
-  const createPaymentService = () => {
+  const createService = () => {
     const prismaService = {
       $transaction: jest.fn(),
       creditTransaction: {
-        updateMany: jest.fn(),
-        findFirst: jest.fn(),
+        findFirst: jest.fn().mockResolvedValue(null),
         findMany: jest.fn().mockResolvedValue([]),
-        update: jest.fn(),
+        update: jest.fn().mockResolvedValue({}),
+        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
       },
     };
+
     const creditService = {
-      getCurrentBalanceValue: jest.fn(),
-      createTransaction: jest.fn(),
+      getCurrentBalanceValue: jest.fn().mockResolvedValue(0),
+      createTransaction: jest.fn().mockResolvedValue({ id: 'txn_1', metadata: {} }),
       applyBalanceIncrement: jest.fn(),
       invalidateBalanceCache: jest.fn(),
     };
+
     const userService = {
       findStoredById: jest.fn(),
       decryptPhoneNumber: jest.fn().mockReturnValue('+254712345678'),
     };
-    const mpesaClient = {
-      stkPush: jest.fn(),
-      queryStkPush: jest.fn(),
-    };
-    const smsService = {
-      sendMessage: jest.fn(),
+
+    const mpesaPurchaseService = {
+      executeStkPush: jest.fn().mockResolvedValue({ checkoutRequestId: 'ws_CO_123' }),
+      handleCallback: jest.fn().mockResolvedValue({ ResultCode: 0, ResultDesc: 'Accepted' }),
+      reconcilePending: jest.fn().mockResolvedValue(0),
     };
 
-    return {
-      prismaService,
-      creditService,
-      userService,
-      mpesaClient,
-      smsService,
-      service: new PaymentService(
-        prismaService as never,
-        creditService as never,
-        userService as never,
-        mpesaClient as never,
-        smsService as never,
-      ),
+    const stellarPurchaseService = {
+      createPaymentRequest: jest.fn().mockResolvedValue({
+        stellarDestinationAddress: 'GABC...TREASURY',
+        stellarMemo: 'txn_1',
+        stellarAmountXLM: '29.4117647',
+        network: 'testnet',
+      }),
+      reconcilePending: jest.fn().mockResolvedValue(0),
     };
+
+    const service = new PaymentService(
+      prismaService as never,
+      creditService as never,
+      userService as never,
+      mpesaPurchaseService as never,
+      stellarPurchaseService as never,
+    );
+
+    return { prismaService, creditService, userService, mpesaPurchaseService, stellarPurchaseService, service };
   };
 
-  it('marks a purchase as failed when sandbox STK push fails', async () => {
-    const { creditService, mpesaClient, prismaService, service, userService } =
-      createPaymentService();
+  describe('createPurchase — M-Pesa path', () => {
+    it('rejects when user is not found', async () => {
+      const { service, userService } = createService();
+      userService.findStoredById.mockResolvedValue(null);
 
-    userService.findStoredById.mockResolvedValue(createStoredUser());
-    prismaService.creditTransaction.updateMany.mockResolvedValue({ count: 0 });
-    prismaService.creditTransaction.findFirst.mockResolvedValue(null);
-    creditService.getCurrentBalanceValue.mockResolvedValue(1000);
-    creditService.createTransaction.mockResolvedValue({
-      id: 'txn_1',
-      metadata: {
-        paymentAmountKES: 10000,
-      },
-    });
-    mpesaClient.stkPush.mockRejectedValue(new Error('gateway unavailable'));
-
-    await expect(
-      service.createPurchase('user_1', {
-        package: '10_credits',
-        phoneNumber: '+254712345678',
-      }),
-    ).rejects.toBeInstanceOf(ServiceUnavailableException);
-    expect(prismaService.creditTransaction.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          status: TransactionStatus.FAILED,
-        }),
-        where: {
-          id: 'txn_1',
-        },
-      }),
-    );
-  });
-
-  it('rejects duplicate pending purchases after reconciliation', async () => {
-    const { creditService, prismaService, service, userService } = createPaymentService();
-
-    userService.findStoredById.mockResolvedValue(createStoredUser());
-    prismaService.creditTransaction.findFirst.mockResolvedValue({
-      id: 'txn_pending',
+      await expect(
+        service.createPurchase('user_1', { package: '5_credits', paymentMethod: 'mpesa', phoneNumber: '+254712345678' }),
+      ).rejects.toBeInstanceOf(HttpException);
     });
 
-    await expect(
-      service.createPurchase('user_1', {
-        package: '10_credits',
-        phoneNumber: '+254712345678',
-      }),
-    ).rejects.toBeInstanceOf(HttpException);
-    expect(creditService.createTransaction).not.toHaveBeenCalled();
-  });
+    it('rejects when phone is not verified for mpesa purchases', async () => {
+      const { service, userService } = createService();
+      userService.findStoredById.mockResolvedValue(createStoredUser({ phoneVerified: false }));
 
-  it('rejects purchases when the phone number is not verified', async () => {
-    const { service, userService } = createPaymentService();
+      await expect(
+        service.createPurchase('user_1', { package: '5_credits', paymentMethod: 'mpesa', phoneNumber: '+254712345678' }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
 
-    userService.findStoredById.mockResolvedValue(
-      createStoredUser({
-        phoneVerified: false,
-      }),
-    );
+    it('rejects when the account is inactive', async () => {
+      const { service, userService } = createService();
+      userService.findStoredById.mockResolvedValue(createStoredUser({ isActive: false }));
 
-    await expect(
-      service.createPurchase('user_1', {
+      await expect(
+        service.createPurchase('user_1', { package: '5_credits', paymentMethod: 'mpesa', phoneNumber: '+254712345678' }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('rejects when the account is banned', async () => {
+      const { service, userService } = createService();
+      userService.findStoredById.mockResolvedValue(createStoredUser({ isBanned: true, banReason: 'Policy violation' }));
+
+      await expect(
+        service.createPurchase('user_1', { package: '5_credits', paymentMethod: 'mpesa', phoneNumber: '+254712345678' }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('rejects when a purchase is already pending', async () => {
+      const { service, userService, prismaService, creditService } = createService();
+      userService.findStoredById.mockResolvedValue(createStoredUser());
+      prismaService.creditTransaction.findFirst.mockResolvedValue({ id: 'txn_pending' });
+
+      await expect(
+        service.createPurchase('user_1', { package: '10_credits', paymentMethod: 'mpesa', phoneNumber: '+254712345678' }),
+      ).rejects.toBeInstanceOf(HttpException);
+
+      expect(creditService.createTransaction).not.toHaveBeenCalled();
+    });
+
+    it('delegates STK push to MpesaPurchaseService and returns pending response', async () => {
+      const { service, userService, mpesaPurchaseService } = createService();
+      userService.findStoredById.mockResolvedValue(createStoredUser());
+
+      const result = await service.createPurchase('user_1', {
         package: '5_credits',
+        paymentMethod: 'mpesa',
         phoneNumber: '+254712345678',
-      }),
-    ).rejects.toBeInstanceOf(ForbiddenException);
+      });
+
+      expect(mpesaPurchaseService.executeStkPush).toHaveBeenCalled();
+      expect(result.paymentMethod).toBe('mpesa');
+      expect(result.status).toBe(TransactionStatus.PENDING);
+      expect(result.credits).toBe(5);
+      expect(result.amount).toBe(500);
+    });
   });
 
-  it('rejects purchases when the account is inactive', async () => {
-    const { service, userService } = createPaymentService();
+  describe('createPurchase — Stellar path', () => {
+    it('does not require phoneVerified for stellar purchases', async () => {
+      const { service, userService } = createService();
+      userService.findStoredById.mockResolvedValue(createStoredUser({ phoneVerified: false, clerkId: null }));
 
-    userService.findStoredById.mockResolvedValue(
-      createStoredUser({
-        isActive: false,
-      }),
-    );
-
-    await expect(
-      service.createPurchase('user_1', {
+      const result = await service.createPurchase('user_1', {
         package: '5_credits',
-        phoneNumber: '+254712345678',
-      }),
-    ).rejects.toBeInstanceOf(ForbiddenException);
-  });
+        paymentMethod: 'stellar',
+      });
 
-  it('rejects purchases when the account is banned', async () => {
-    const { service, userService } = createPaymentService();
+      expect(result.paymentMethod).toBe('stellar');
+    });
 
-    userService.findStoredById.mockResolvedValue(
-      createStoredUser({
-        banReason: 'Manual review',
-        isBanned: true,
-      }),
-    );
+    it('delegates to StellarPurchaseService and returns address + memo', async () => {
+      const { service, userService, stellarPurchaseService, mpesaPurchaseService } = createService();
+      userService.findStoredById.mockResolvedValue(createStoredUser());
 
-    await expect(
-      service.createPurchase('user_1', {
+      const result = await service.createPurchase('user_1', {
         package: '5_credits',
-        phoneNumber: '+254712345678',
-      }),
-    ).rejects.toBeInstanceOf(ForbiddenException);
+        paymentMethod: 'stellar',
+      });
+
+      expect(stellarPurchaseService.createPaymentRequest).toHaveBeenCalled();
+      expect(mpesaPurchaseService.executeStkPush).not.toHaveBeenCalled();
+      expect(result.stellarDestinationAddress).toBe('GABC...TREASURY');
+      expect(result.stellarMemo).toBe('txn_1');
+      expect(result.stellarAmountXLM).toBe('29.4117647');
+      expect(result.status).toBe(TransactionStatus.PENDING);
+    });
   });
 
-  it('credits the user balance when a sandbox callback succeeds', async () => {
-    const { creditService, prismaService, service, smsService } = createPaymentService();
-    const currentTransaction = {
-      id: 'txn_1',
-      amount: 5000,
-      userId: 'user_1',
-      metadata: {
-        paymentAmountKES: 5000,
-        requestedPhoneNumber: '+254712345678',
-      },
-      phoneNumberHash: null,
-      mpesaTransactionId: 'ws_CO_123',
-      status: TransactionStatus.PENDING,
-    };
-    const transactionClient = {
-      creditTransaction: {
-        findUnique: jest.fn().mockResolvedValue(currentTransaction),
-        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-        update: jest.fn().mockResolvedValue({}),
-      },
-    };
-
-    prismaService.creditTransaction.findFirst.mockResolvedValue({
-      id: 'txn_1',
-      status: TransactionStatus.PENDING,
-    });
-    prismaService.$transaction.mockImplementation(async (callback: Function) =>
-      callback(transactionClient),
-    );
-    creditService.applyBalanceIncrement.mockResolvedValue({
-      balanceBefore: 0,
-      balanceAfter: 5000,
-    });
-    smsService.sendMessage.mockResolvedValue({
-      accepted: true,
-      messageId: 'sms_1',
-      provider: 'sandbox',
-    });
-
-    await expect(
-      service.handleMpesaCallback({
+  describe('handleMpesaCallback', () => {
+    it('delegates to MpesaPurchaseService and returns ack', async () => {
+      const { service, mpesaPurchaseService } = createService();
+      const payload = {
         Body: {
           stkCallback: {
             MerchantRequestID: 'ws_MR_123',
             CheckoutRequestID: 'ws_CO_123',
             ResultCode: 0,
             ResultDesc: 'Success',
-            CallbackMetadata: {
-              Item: [
-                { Name: 'Amount', Value: 5000 },
-                { Name: 'MpesaReceiptNumber', Value: 'PSPACE5000' },
-                { Name: 'PhoneNumber', Value: 254712345678 },
-              ],
-            },
           },
         },
-      }),
-    ).resolves.toEqual({
-      ResultCode: 0,
-      ResultDesc: 'Accepted',
+      };
+
+      const result = await service.handleMpesaCallback(payload);
+
+      expect(mpesaPurchaseService.handleCallback).toHaveBeenCalledWith(payload);
+      expect(result).toEqual({ ResultCode: 0, ResultDesc: 'Accepted' });
     });
-    expect(creditService.applyBalanceIncrement).toHaveBeenCalled();
-    expect(creditService.invalidateBalanceCache).toHaveBeenCalledWith('user_1');
-    expect(smsService.sendMessage).toHaveBeenCalledWith(
-      '+254712345678',
-      'Your PataSpace balance has been credited with 5000 credits.',
-    );
   });
 
-  it('marks cancelled callbacks without crediting the user', async () => {
-    const { creditService, prismaService, service, smsService } = createPaymentService();
-    const currentTransaction = {
-      id: 'txn_1',
-      amount: 5000,
-      userId: 'user_1',
-      metadata: {
-        requestedPhoneNumber: '+254712345678',
-      },
-      phoneNumberHash: null,
-      mpesaTransactionId: 'ws_CO_123',
-      status: TransactionStatus.PENDING,
-    };
-    const transactionClient = {
-      creditTransaction: {
-        findUnique: jest.fn().mockResolvedValue(currentTransaction),
-        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-        update: jest.fn().mockResolvedValue({}),
-      },
-    };
+  describe('reconcilePendingPurchases', () => {
+    it('delegates to both sub-services and returns combined count', async () => {
+      const { service, mpesaPurchaseService, stellarPurchaseService } = createService();
+      mpesaPurchaseService.reconcilePending.mockResolvedValue(2);
+      stellarPurchaseService.reconcilePending.mockResolvedValue(1);
 
-    prismaService.creditTransaction.findFirst.mockResolvedValue({
-      id: 'txn_1',
-      status: TransactionStatus.PENDING,
+      const now = new Date();
+      const result = await service.reconcilePendingPurchases(now);
+
+      expect(mpesaPurchaseService.reconcilePending).toHaveBeenCalledWith(now, undefined);
+      expect(stellarPurchaseService.reconcilePending).toHaveBeenCalledWith(now, undefined);
+      expect(result).toBe(3);
     });
-    prismaService.$transaction.mockImplementation(async (callback: Function) =>
-      callback(transactionClient),
-    );
-    smsService.sendMessage.mockResolvedValue({
-      accepted: true,
-      messageId: 'sms_1',
-      provider: 'sandbox',
-    });
-
-    await service.handleMpesaCallback({
-      Body: {
-        stkCallback: {
-          MerchantRequestID: 'ws_MR_123',
-          CheckoutRequestID: 'ws_CO_123',
-          ResultCode: 1032,
-          ResultDesc: 'Request cancelled by user',
-        },
-      },
-    });
-
-    expect(creditService.applyBalanceIncrement).not.toHaveBeenCalled();
-    expect(transactionClient.creditTransaction.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          status: TransactionStatus.CANCELLED,
-        }),
-      }),
-    );
-    expect(smsService.sendMessage).toHaveBeenCalledWith(
-      '+254712345678',
-      'Your PataSpace credit purchase failed: Request cancelled by user',
-    );
-  });
-
-  it('marks amount-mismatched callbacks as failed without crediting the user', async () => {
-    const { creditService, prismaService, service, smsService } = createPaymentService();
-    const currentTransaction = {
-      id: 'txn_1',
-      amount: 5000,
-      userId: 'user_1',
-      metadata: {
-        paymentAmountKES: 5000,
-        requestedPhoneNumber: '+254712345678',
-      },
-      phoneNumberHash: null,
-      mpesaTransactionId: 'ws_CO_123',
-      status: TransactionStatus.PENDING,
-    };
-    const transactionClient = {
-      creditTransaction: {
-        findUnique: jest.fn().mockResolvedValue(currentTransaction),
-        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-        update: jest.fn().mockResolvedValue({}),
-      },
-    };
-
-    prismaService.creditTransaction.findFirst.mockResolvedValue({
-      id: 'txn_1',
-      status: TransactionStatus.PENDING,
-    });
-    prismaService.$transaction.mockImplementation(async (callback: Function) =>
-      callback(transactionClient),
-    );
-    smsService.sendMessage.mockResolvedValue({
-      accepted: true,
-      messageId: 'sms_1',
-      provider: 'sandbox',
-    });
-
-    await service.handleMpesaCallback({
-      Body: {
-        stkCallback: {
-          MerchantRequestID: 'ws_MR_123',
-          CheckoutRequestID: 'ws_CO_123',
-          ResultCode: 0,
-          ResultDesc: 'Success',
-          CallbackMetadata: {
-            Item: [
-              { Name: 'Amount', Value: 4900 },
-              { Name: 'MpesaReceiptNumber', Value: 'PSPACE4900' },
-              { Name: 'PhoneNumber', Value: 254712345678 },
-            ],
-          },
-        },
-      },
-    });
-
-    expect(creditService.applyBalanceIncrement).not.toHaveBeenCalled();
-    expect(creditService.invalidateBalanceCache).not.toHaveBeenCalled();
-    expect(transactionClient.creditTransaction.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          status: TransactionStatus.FAILED,
-        }),
-      }),
-    );
-    expect(smsService.sendMessage).not.toHaveBeenCalled();
-  });
-
-  it('marks non-cancelled failed callbacks without crediting the user', async () => {
-    const { creditService, prismaService, service, smsService } = createPaymentService();
-    const currentTransaction = {
-      id: 'txn_1',
-      amount: 5000,
-      userId: 'user_1',
-      metadata: {
-        requestedPhoneNumber: '+254712345678',
-      },
-      phoneNumberHash: null,
-      mpesaTransactionId: 'ws_CO_123',
-      status: TransactionStatus.PENDING,
-    };
-    const transactionClient = {
-      creditTransaction: {
-        findUnique: jest.fn().mockResolvedValue(currentTransaction),
-        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-        update: jest.fn().mockResolvedValue({}),
-      },
-    };
-
-    prismaService.creditTransaction.findFirst.mockResolvedValue({
-      id: 'txn_1',
-      status: TransactionStatus.PENDING,
-    });
-    prismaService.$transaction.mockImplementation(async (callback: Function) =>
-      callback(transactionClient),
-    );
-    smsService.sendMessage.mockResolvedValue({
-      accepted: true,
-      messageId: 'sms_1',
-      provider: 'sandbox',
-    });
-
-    await service.handleMpesaCallback({
-      Body: {
-        stkCallback: {
-          MerchantRequestID: 'ws_MR_123',
-          CheckoutRequestID: 'ws_CO_123',
-          ResultCode: 2001,
-          ResultDesc: 'Insufficient funds',
-        },
-      },
-    });
-
-    expect(creditService.applyBalanceIncrement).not.toHaveBeenCalled();
-    expect(transactionClient.creditTransaction.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          status: TransactionStatus.FAILED,
-        }),
-      }),
-    );
-    expect(smsService.sendMessage).toHaveBeenCalledWith(
-      '+254712345678',
-      'Your PataSpace credit purchase failed: Insufficient funds',
-    );
-  });
-
-  it('ignores callbacks for transactions that are already non-pending', async () => {
-    const { creditService, prismaService, service } = createPaymentService();
-
-    prismaService.creditTransaction.findFirst.mockResolvedValue({
-      id: 'txn_1',
-      status: TransactionStatus.COMPLETED,
-    });
-
-    await expect(
-      service.handleMpesaCallback({
-        Body: {
-          stkCallback: {
-            MerchantRequestID: 'ws_MR_123',
-            CheckoutRequestID: 'ws_CO_123',
-            ResultCode: 0,
-            ResultDesc: 'Success',
-            CallbackMetadata: {
-              Item: [
-                { Name: 'Amount', Value: 5000 },
-                { Name: 'MpesaReceiptNumber', Value: 'PSPACE5000' },
-              ],
-            },
-          },
-        },
-      }),
-    ).resolves.toEqual({
-      ResultCode: 0,
-      ResultDesc: 'Accepted',
-    });
-
-    expect(creditService.applyBalanceIncrement).not.toHaveBeenCalled();
-    expect(prismaService.$transaction).not.toHaveBeenCalled();
-  });
-
-  it('reconciles successful stale pending purchases when the callback is missed', async () => {
-    const { creditService, mpesaClient, prismaService, service, smsService } =
-      createPaymentService();
-    const currentTransaction = {
-      id: 'txn_1',
-      amount: 5000,
-      userId: 'user_1',
-      metadata: {
-        merchantRequestId: 'ws_MR_123',
-        paymentAmountKES: 5000,
-        requestedPhoneNumber: '+254712345678',
-      },
-      phoneNumberHash: null,
-      mpesaTransactionId: 'ws_CO_123',
-      status: TransactionStatus.PENDING,
-    };
-    const transactionClient = {
-      creditTransaction: {
-        findUnique: jest.fn().mockResolvedValue(currentTransaction),
-        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-        update: jest.fn().mockResolvedValue({}),
-      },
-    };
-
-    prismaService.creditTransaction.findMany.mockResolvedValue([
-      {
-        id: 'txn_1',
-        metadata: currentTransaction.metadata,
-        mpesaTransactionId: 'ws_CO_123',
-      },
-    ]);
-    prismaService.$transaction.mockImplementation(async (callback: Function) =>
-      callback(transactionClient),
-    );
-    mpesaClient.queryStkPush.mockResolvedValue({
-      checkoutRequestId: 'ws_CO_123',
-      resultCode: 0,
-      resultDesc: 'Success',
-      mpesaReceiptNumber: 'PSPACE5000',
-      phoneNumber: '+254712345678',
-    });
-    creditService.applyBalanceIncrement.mockResolvedValue({
-      balanceBefore: 0,
-      balanceAfter: 5000,
-    });
-    smsService.sendMessage.mockResolvedValue({
-      accepted: true,
-      messageId: 'sms_1',
-      provider: 'sandbox',
-    });
-
-    await expect(
-      service.reconcilePendingPurchases(new Date('2026-03-24T08:10:00.000Z')),
-    ).resolves.toBe(1);
-    expect(mpesaClient.queryStkPush).toHaveBeenCalledWith({
-      checkoutRequestId: 'ws_CO_123',
-    });
-    expect(creditService.applyBalanceIncrement).toHaveBeenCalledWith(
-      transactionClient,
-      expect.objectContaining({
-        amount: 5000,
-        userId: 'user_1',
-      }),
-    );
-    expect(transactionClient.creditTransaction.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          mpesaReceiptNumber: 'PSPACE5000',
-          status: TransactionStatus.COMPLETED,
-        }),
-        where: {
-          id: 'txn_1',
-        },
-      }),
-    );
-  });
-
-  it('reconciles stale pending purchases to failed when STK status reports a non-cancelled failure', async () => {
-    const { creditService, mpesaClient, prismaService, service, smsService } =
-      createPaymentService();
-    const currentTransaction = {
-      id: 'txn_1',
-      amount: 5000,
-      userId: 'user_1',
-      metadata: {
-        merchantRequestId: 'ws_MR_123',
-        paymentAmountKES: 5000,
-        requestedPhoneNumber: '+254712345678',
-      },
-      phoneNumberHash: null,
-      mpesaTransactionId: 'ws_CO_123',
-      status: TransactionStatus.PENDING,
-    };
-    const transactionClient = {
-      creditTransaction: {
-        findUnique: jest.fn().mockResolvedValue(currentTransaction),
-        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-        update: jest.fn().mockResolvedValue({}),
-      },
-    };
-
-    prismaService.creditTransaction.findMany.mockResolvedValue([
-      {
-        id: 'txn_1',
-        metadata: currentTransaction.metadata,
-        mpesaTransactionId: 'ws_CO_123',
-      },
-    ]);
-    prismaService.$transaction.mockImplementation(async (callback: Function) =>
-      callback(transactionClient),
-    );
-    mpesaClient.queryStkPush.mockResolvedValue({
-      checkoutRequestId: 'ws_CO_123',
-      resultCode: 2001,
-      resultDesc: 'Insufficient funds',
-      mpesaReceiptNumber: null,
-      phoneNumber: '+254712345678',
-    });
-    smsService.sendMessage.mockResolvedValue({
-      accepted: true,
-      messageId: 'sms_1',
-      provider: 'sandbox',
-    });
-
-    await expect(
-      service.reconcilePendingPurchases(new Date('2026-03-24T08:10:00.000Z')),
-    ).resolves.toBe(1);
-    expect(creditService.applyBalanceIncrement).not.toHaveBeenCalled();
-    expect(transactionClient.creditTransaction.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          status: TransactionStatus.FAILED,
-        }),
-      }),
-    );
-    expect(smsService.sendMessage).toHaveBeenCalledWith(
-      '+254712345678',
-      'Your PataSpace credit purchase failed: Insufficient funds',
-    );
-  });
-
-  it('reconciles stale pending purchases to cancelled when STK status reports cancellation', async () => {
-    const { creditService, mpesaClient, prismaService, service, smsService } =
-      createPaymentService();
-    const currentTransaction = {
-      id: 'txn_1',
-      amount: 5000,
-      userId: 'user_1',
-      metadata: {
-        merchantRequestId: 'ws_MR_123',
-        paymentAmountKES: 5000,
-        requestedPhoneNumber: '+254712345678',
-      },
-      phoneNumberHash: null,
-      mpesaTransactionId: 'ws_CO_123',
-      status: TransactionStatus.PENDING,
-    };
-    const transactionClient = {
-      creditTransaction: {
-        findUnique: jest.fn().mockResolvedValue(currentTransaction),
-        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-        update: jest.fn().mockResolvedValue({}),
-      },
-    };
-
-    prismaService.creditTransaction.findMany.mockResolvedValue([
-      {
-        id: 'txn_1',
-        metadata: currentTransaction.metadata,
-        mpesaTransactionId: 'ws_CO_123',
-      },
-    ]);
-    prismaService.$transaction.mockImplementation(async (callback: Function) =>
-      callback(transactionClient),
-    );
-    mpesaClient.queryStkPush.mockResolvedValue({
-      checkoutRequestId: 'ws_CO_123',
-      resultCode: 1032,
-      resultDesc: 'Request cancelled by user',
-      mpesaReceiptNumber: null,
-      phoneNumber: '+254712345678',
-    });
-    smsService.sendMessage.mockResolvedValue({
-      accepted: true,
-      messageId: 'sms_1',
-      provider: 'sandbox',
-    });
-
-    await expect(
-      service.reconcilePendingPurchases(new Date('2026-03-24T08:10:00.000Z')),
-    ).resolves.toBe(1);
-    expect(creditService.applyBalanceIncrement).not.toHaveBeenCalled();
-    expect(transactionClient.creditTransaction.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          status: TransactionStatus.CANCELLED,
-        }),
-      }),
-    );
-    expect(smsService.sendMessage).toHaveBeenCalledWith(
-      '+254712345678',
-      'Your PataSpace credit purchase failed: Request cancelled by user',
-    );
-  });
-
-  it('skips reconciliation updates when the STK status query fails', async () => {
-    const { mpesaClient, prismaService, service } = createPaymentService();
-
-    prismaService.creditTransaction.findMany.mockResolvedValue([
-      {
-        id: 'txn_1',
-        metadata: {
-          requestedPhoneNumber: '+254712345678',
-        },
-        mpesaTransactionId: 'ws_CO_123',
-      },
-    ]);
-    mpesaClient.queryStkPush.mockRejectedValue(new Error('query timeout'));
-
-    await expect(
-      service.reconcilePendingPurchases(new Date('2026-03-24T08:10:00.000Z')),
-    ).resolves.toBe(0);
-    expect(prismaService.$transaction).not.toHaveBeenCalled();
   });
 });

@@ -40,6 +40,11 @@ enum TransactionType {
   BONUS
 }
 
+enum PaymentMethod {
+  MPESA
+  STELLAR
+}
+
 enum TransactionStatus {
   PENDING
   COMPLETED
@@ -148,26 +153,29 @@ model Credit {
 }
 
 model CreditTransaction {
-  id                 String            @id @default(cuid())
-  userId             String
-  type               TransactionType
-  amount             Int
-  balanceBefore      Int
-  balanceAfter       Int
-  status             TransactionStatus @default(PENDING)
-  mpesaReceiptNumber String?           @unique
-  mpesaTransactionId String?           @unique
-  phoneNumberHash    String?
-  unlockId           String?           @unique
-  metadata           Json?
-  description        String?
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
-  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  unlock             Unlock?           @relation(fields: [unlockId], references: [id])
+  id                     String            @id @default(cuid())
+  userId                 String
+  type                   TransactionType
+  amount                 Int
+  balanceBefore          Int
+  balanceAfter           Int
+  status                 TransactionStatus @default(PENDING)
+  paymentMethod          PaymentMethod     @default(MPESA)
+  mpesaReceiptNumber     String?           @unique
+  mpesaTransactionId     String?           @unique
+  stellarTransactionHash String?           @unique
+  phoneNumberHash        String?
+  unlockId               String?           @unique
+  metadata               Json?
+  description            String?
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+  user                   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unlock                 Unlock?           @relation(fields: [unlockId], references: [id])
 
   @@index([userId, createdAt])
   @@index([status])
+  @@index([paymentMethod, status])
   @@index([mpesaTransactionId])
   @@index([phoneNumberHash])
   @@map("credit_transactions")
