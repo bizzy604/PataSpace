@@ -41,20 +41,20 @@ export default async function Page({
       }
     >
       <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-        <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+        <Card className="border border-border bg-card shadow-sm">
           <CardHeader>
-            <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
+            <CardTitle className="text-3xl font-semibold text-foreground">
               Dispute form
             </CardTitle>
-            <CardDescription className="text-sm leading-7 text-[#62686a]">
+            <CardDescription className="text-sm leading-7 text-muted-foreground">
               Report listing mismatch, access problems, or landlord outcome issues tied to this unlock.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="space-y-2">
-              <p className="text-sm font-medium text-[#252525]">Reason category</p>
+              <p className="text-sm font-medium text-foreground">Reason category</p>
               <Select defaultValue="listing_mismatch">
-                <SelectTrigger className="h-11 w-full rounded-2xl">
+                <SelectTrigger className="h-11 w-full">
                   <SelectValue placeholder="Choose a dispute reason" />
                 </SelectTrigger>
                 <SelectContent>
@@ -66,43 +66,43 @@ export default async function Page({
             </div>
 
             <div className="space-y-2">
-              <p className="text-sm font-medium text-[#252525]">What happened?</p>
+              <p className="text-sm font-medium text-foreground">What happened?</p>
               <Textarea
-                className="min-h-36 rounded-[24px]"
+                className="min-h-36"
                 defaultValue={`Issue linked to ${listing.title}. Include what changed from the listing evidence, the tenant conversation, and the timeline.`}
               />
             </div>
 
-            <Button className="h-11 rounded-full bg-[#28809A] px-6 text-white hover:bg-[#21687d]">
+            <Button className="h-11 bg-primary px-6 text-primary-foreground hover:bg-primary/90">
               Submit dispute
             </Button>
           </CardContent>
         </Card>
 
-        <Card className="border border-black/8 bg-[#252525] text-white shadow-[0_24px_80px_rgba(37,37,37,0.18)]">
+        <Card className="border border-border bg-foreground text-background shadow-sm">
           <CardHeader>
-            <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-white">
+            <CardTitle className="text-3xl font-semibold text-background">
               Current dispute state
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 text-sm leading-7 text-white/76">
-            <p className="inline-flex items-center gap-2 font-medium text-white">
-              <MessageSquareWarning className="size-4 text-[#8ed7e7]" />
+          <CardContent className="space-y-4 text-sm leading-7 text-background/76">
+            <p className="inline-flex items-center gap-2 font-medium text-background">
+              <MessageSquareWarning className="size-4 text-primary" />
               {listing.title}
             </p>
             {dispute ? (
-              <div className="rounded-[24px] border border-white/10 bg-white/6 p-4">
-                <p className="font-medium text-white">{dispute.status}</p>
+              <div className="border border-background/10 bg-background/6 p-4">
+                <p className="font-medium text-background">{dispute.status}</p>
                 <p className="mt-2">{dispute.reason}</p>
                 {dispute.resolution ? <p className="mt-2">{dispute.resolution}</p> : null}
               </div>
             ) : (
-              <div className="rounded-[24px] border border-white/10 bg-white/6 p-4">
+              <div className="border border-background/10 bg-background/6 p-4">
                 No dispute has been filed yet for this unlock.
               </div>
             )}
-            <p className="inline-flex items-center gap-2 font-medium text-white">
-              <ShieldAlert className="size-4 text-[#8ed7e7]" />
+            <p className="inline-flex items-center gap-2 font-medium text-background">
+              <ShieldAlert className="size-4 text-primary" />
               Admin review path
             </p>
             <p>

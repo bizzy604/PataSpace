@@ -104,21 +104,18 @@ export function TenantWorkspaceShell({
     <SidebarProvider defaultOpen>
       <Sidebar variant="inset" collapsible="icon">
         <SidebarHeader className="gap-4 px-3 py-4">
-          <Link
-            href="/"
-            className="flex items-center rounded-2xl px-2 py-2"
-          >
+          <Link href="/" className="flex items-center px-2 py-2">
             <BrandLogo priority className="group-data-[collapsible=icon]:hidden" />
-            <span className="hidden size-9 items-center justify-center rounded-2xl bg-sidebar-primary text-sidebar-primary-foreground group-data-[collapsible=icon]:flex">
+            <span className="hidden size-9 items-center justify-center bg-sidebar-primary text-sidebar-primary-foreground group-data-[collapsible=icon]:flex">
               <ShieldCheck className="size-4" />
             </span>
           </Link>
 
-          <div className="rounded-2xl border border-sidebar-border bg-[#f8fafc] p-4 shadow-soft-sm group-data-[collapsible=icon]:hidden">
+          <div className="border border-sidebar-border bg-sidebar-accent p-4 shadow-sm group-data-[collapsible=icon]:hidden">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-sidebar-foreground/55">
               Available balance
             </p>
-            <p className="mt-2 font-display text-2xl font-semibold tracking-[-0.05em] text-sidebar-foreground">
+            <p className="mt-2 text-2xl font-semibold text-sidebar-foreground">
               {balance !== null ? formatKes(balance) : '—'}
             </p>
             <p className="mt-1 text-sm text-sidebar-foreground/65">
@@ -158,7 +155,7 @@ export function TenantWorkspaceShell({
         </SidebarContent>
 
         <SidebarFooter className="px-3 pb-4">
-          <div className="rounded-2xl border border-sidebar-border bg-[#f8fafc] p-3 shadow-soft-sm">
+          <div className="border border-sidebar-border bg-sidebar-accent p-3 shadow-sm">
             <div className="flex items-center gap-3">
               <Avatar size="lg">
                 <AvatarFallback>{initials}</AvatarFallback>
@@ -182,16 +179,16 @@ export function TenantWorkspaceShell({
         <SidebarRail />
       </Sidebar>
 
-      <SidebarInset className="bg-white">
-        <header className="sticky top-0 z-30 border-b border-black/8 bg-white/95 px-4 py-4 backdrop-blur-xl sm:px-6 lg:px-8">
+      <SidebarInset className="bg-background">
+        <header className="sticky top-0 z-30 border-b border-border bg-background px-4 py-4 sm:px-6 lg:px-8">
           <div className="mx-auto flex max-w-[1400px] flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-start gap-3">
               <SidebarTrigger className="mt-0.5 shrink-0" />
               <div>
-                <h1 className="font-display text-[1.9rem] font-semibold tracking-[-0.05em] text-[#252525]">
+                <h1 className="text-[1.9rem] font-semibold text-foreground">
                   {title}
                 </h1>
-                <p className="mt-1 max-w-xl text-sm leading-6 text-[#667085]">{description}</p>
+                <p className="mt-1 max-w-xl text-sm leading-6 text-muted-foreground">{description}</p>
               </div>
             </div>
             {actions ? <div className="flex flex-wrap gap-3 lg:justify-end">{actions}</div> : null}

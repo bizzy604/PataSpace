@@ -34,12 +34,12 @@ export default async function Page({
       }
     >
       <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-        <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+        <Card className="border border-border bg-card shadow-sm">
           <CardHeader>
-            <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
+            <CardTitle className="text-3xl font-semibold text-foreground">
               Confirmation checklist
             </CardTitle>
-            <CardDescription className="text-sm leading-7 text-[#62686a]">
+            <CardDescription className="text-sm leading-7 text-muted-foreground">
               Confirm only after you have spoken to the outgoing tenant and validated the handover outcome.
             </CardDescription>
           </CardHeader>
@@ -51,30 +51,30 @@ export default async function Page({
             ].map((item) => (
               <div
                 key={item}
-                className="flex gap-4 rounded-[24px] border border-black/8 bg-[#fbfaf7] p-4 text-sm leading-7 text-[#4b4f50]"
+                className="flex gap-4 border border-border bg-muted p-4 text-sm leading-7 text-muted-foreground"
               >
-                <span className="mt-1 flex size-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                <span className="mt-1 flex size-8 items-center justify-center border border-primary/30 bg-primary/10 text-primary">
                   <CheckCircle2 className="size-4" />
                 </span>
                 <p>{item}</p>
               </div>
             ))}
 
-            <Button className="h-11 rounded-full bg-[#28809A] px-6 text-white hover:bg-[#21687d]">
+            <Button className="h-11 bg-primary px-6 text-primary-foreground hover:bg-primary/90">
               Confirm move-in
             </Button>
           </CardContent>
         </Card>
 
-        <Card className="border border-black/8 bg-[#252525] text-white shadow-[0_24px_80px_rgba(37,37,37,0.18)]">
+        <Card className="border border-border bg-foreground text-background shadow-sm">
           <CardHeader>
-            <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-white">
+            <CardTitle className="text-3xl font-semibold text-background">
               Unlock context
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 text-sm leading-7 text-white/76">
-            <p className="inline-flex items-center gap-2 font-medium text-white">
-              <ClipboardCheck className="size-4 text-[#8ed7e7]" />
+          <CardContent className="space-y-4 text-sm leading-7 text-background/76">
+            <p className="inline-flex items-center gap-2 font-medium text-background">
+              <ClipboardCheck className="size-4 text-primary" />
               {listing.title}
             </p>
             <p>Unlocked on {formatDateLabel(unlock.createdAt)}</p>

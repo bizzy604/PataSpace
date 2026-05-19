@@ -27,9 +27,9 @@ export function HelpCenterPage() {
       <section className="px-4 pb-10 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-6 xl:grid-cols-[1.05fr_0.95fr]">
           <div className="space-y-6">
-            <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+            <Card className="border border-border bg-card shadow-sm">
               <CardHeader>
-                <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
+                <CardTitle className="text-3xl font-semibold text-foreground">
                   Quick actions
                 </CardTitle>
               </CardHeader>
@@ -39,52 +39,52 @@ export function HelpCenterPage() {
                   { title: 'Report a problem', body: 'Open the dispute path if a listing or unlock outcome breaks down.', Icon: Flag },
                   { title: 'Video guides', body: 'Short explainers for wallet, unlock, and confirmation flows.', Icon: PlayCircle },
                 ].map(({ title, body, Icon }) => (
-                  <div key={title} className="rounded-[24px] border border-black/8 bg-[#f8fafc] p-5">
-                    <span className="flex size-11 items-center justify-center rounded-2xl bg-[#28809A]/10 text-[#28809A]">
+                  <div key={title} className="border border-border bg-muted p-5">
+                    <span className="flex size-11 items-center justify-center border border-border bg-card text-primary">
                       <Icon className="size-5" />
                     </span>
-                    <p className="mt-4 font-medium text-[#252525]">{title}</p>
-                    <p className="mt-2 text-sm leading-7 text-[#62686a]">{body}</p>
+                    <p className="mt-4 font-medium text-foreground">{title}</p>
+                    <p className="mt-2 text-sm leading-7 text-muted-foreground">{body}</p>
                   </div>
                 ))}
               </CardContent>
             </Card>
 
-            <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+            <Card className="border border-border bg-card shadow-sm">
               <CardHeader>
-                <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
+                <CardTitle className="text-3xl font-semibold text-foreground">
                   Frequently asked questions
                 </CardTitle>
-                <CardDescription className="text-sm leading-7 text-[#62686a]">
+                <CardDescription className="text-sm leading-7 text-muted-foreground">
                   Common answers from the current support knowledge base.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {supportTopics.map((topic) => (
-                  <div key={topic.title} className="rounded-[24px] border border-black/8 bg-[#f8fafc] p-5">
-                    <p className="font-medium text-[#252525]">{topic.title}</p>
-                    <p className="mt-2 text-sm leading-7 text-[#62686a]">{topic.body}</p>
+                  <div key={topic.title} className="border border-border bg-muted p-5">
+                    <p className="font-medium text-foreground">{topic.title}</p>
+                    <p className="mt-2 text-sm leading-7 text-muted-foreground">{topic.body}</p>
                   </div>
                 ))}
               </CardContent>
             </Card>
           </div>
 
-          <Card className="border border-black/8 bg-[#252525] text-white shadow-[0_24px_80px_rgba(37,37,37,0.18)]">
+          <Card className="border border-border bg-foreground text-background shadow-sm">
             <CardHeader>
-              <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-white">
+              <CardTitle className="text-3xl font-semibold text-background">
                 Open support threads
               </CardTitle>
-              <CardDescription className="text-sm leading-7 text-white/70">
+              <CardDescription className="text-sm leading-7 text-background/60">
                 Active support work stays visible beside the FAQ guidance.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {mockSupportRequests.map((request) => (
-                <div key={request.id} className="rounded-[24px] border border-white/10 bg-white/6 p-4 text-sm leading-7 text-white/76">
-                  <p className="font-medium text-white">{request.subject}</p>
+                <div key={request.id} className="border border-background/10 bg-background/6 p-4 text-sm leading-7 text-background/76">
+                  <p className="font-medium text-background">{request.subject}</p>
                   <p className="mt-2">{request.summary}</p>
-                  <p className="mt-2 text-white/56">Updated {formatDateLabel(request.updatedAt)}</p>
+                  <p className="mt-2 text-background/50">Updated {formatDateLabel(request.updatedAt)}</p>
                 </div>
               ))}
             </CardContent>
@@ -99,14 +99,14 @@ export function WhatsNewPage() {
   return (
     <PublicSiteFrame>
       <section className="px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-5xl rounded-[40px] border border-black/8 bg-[radial-gradient(circle_at_top,rgba(40,128,154,0.18),transparent_34%),linear-gradient(180deg,#ffffff_0%,#f7f4ee_100%)] p-8 shadow-[0_28px_90px_rgba(37,37,37,0.1)]">
-          <p className="mx-auto inline-flex rounded-full bg-[#28809A]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-[#28809A]">
+        <div className="mx-auto max-w-5xl border border-border bg-card p-8 shadow-sm">
+          <p className="inline-flex border border-primary/30 bg-primary/10 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-primary">
             What's new
           </p>
-          <h1 className="mt-6 font-display text-5xl font-semibold tracking-[-0.08em] text-[#252525]">
+          <h1 className="mt-6 text-5xl font-semibold text-foreground">
             Native workspace pages are replacing the missing Stitch mocks
           </h1>
-          <p className="mt-4 max-w-3xl text-sm leading-7 text-[#62686a]">
+          <p className="mt-4 max-w-3xl text-sm leading-7 text-muted-foreground">
             The latest pass brings key wallet, profile, search, support, listing-detail, and unlock-detail routes into native Next.js page components so the app no longer depends on absent local Stitch exports.
           </p>
 
@@ -125,9 +125,9 @@ export function WhatsNewPage() {
                 body: 'Discovery and help surfaces now use the repo-native design system and mock data.',
               },
             ].map((item) => (
-              <div key={item.title} className="rounded-[28px] border border-black/8 bg-white/90 p-5">
-                <p className="font-display text-2xl font-semibold tracking-[-0.05em] text-[#252525]">{item.title}</p>
-                <p className="mt-3 text-sm leading-7 text-[#62686a]">{item.body}</p>
+              <div key={item.title} className="border border-border bg-muted p-5">
+                <p className="text-2xl font-semibold text-foreground">{item.title}</p>
+                <p className="mt-3 text-sm leading-7 text-muted-foreground">{item.body}</p>
               </div>
             ))}
           </div>

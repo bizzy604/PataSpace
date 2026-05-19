@@ -40,10 +40,10 @@ export function SearchPage({ query, listings }: { query?: string; listings: List
       }
     >
       <section className="px-4 pb-6 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl rounded-[24px] border border-black/8 bg-white p-5 shadow-[0_16px_48px_rgba(15,23,42,0.06)]">
-          <div className="flex flex-wrap items-center gap-3 rounded-[18px] border border-black/8 bg-[#f8fafc] px-4 py-3">
-            <Search className="size-5 text-[#28809A]" />
-            <span className="text-sm text-[#62686a]">
+        <div className="mx-auto max-w-7xl border border-border bg-card p-5 shadow-sm">
+          <div className="flex flex-wrap items-center gap-3 border border-border bg-muted px-4 py-3">
+            <Search className="size-5 text-primary" />
+            <span className="text-sm text-muted-foreground">
               {query?.trim() || 'Search neighborhoods, cities...'}
             </span>
           </div>
@@ -51,7 +51,7 @@ export function SearchPage({ query, listings }: { query?: string; listings: List
           {!hasQuery ? (
             <div className="mt-5 grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
               <div>
-                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-[#28809A]">
+                <p className="text-[0.68rem] font-semibold uppercase tracking-widest text-primary">
                   Popular neighborhoods
                 </p>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -59,7 +59,7 @@ export function SearchPage({ query, listings }: { query?: string; listings: List
                     <Link
                       key={card.name}
                       href={`/search?q=${encodeURIComponent(card.name)}`}
-                      className="overflow-hidden rounded-[18px] border border-black/8 bg-[#f8fafc] transition hover:border-[#28809A]/24 hover:bg-white"
+                      className="overflow-hidden border border-border bg-muted transition hover:border-primary/30 hover:bg-card"
                     >
                       <div className="relative h-32">
                         <Image
@@ -71,8 +71,8 @@ export function SearchPage({ query, listings }: { query?: string; listings: List
                         />
                       </div>
                       <div className="p-3.5">
-                        <p className="font-medium text-[#252525]">{card.name}</p>
-                        <p className="mt-1 text-sm leading-6 text-[#62686a]">{card.description}</p>
+                        <p className="font-medium text-foreground">{card.name}</p>
+                        <p className="mt-1 text-sm leading-6 text-muted-foreground">{card.description}</p>
                       </div>
                     </Link>
                   ))}
@@ -80,7 +80,7 @@ export function SearchPage({ query, listings }: { query?: string; listings: List
               </div>
 
               <div>
-                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-[#28809A]">
+                <p className="text-[0.68rem] font-semibold uppercase tracking-widest text-primary">
                   Recent searches
                 </p>
                 <div className="mt-3 space-y-2.5">
@@ -88,10 +88,10 @@ export function SearchPage({ query, listings }: { query?: string; listings: List
                     <Link
                       key={item.label}
                       href={item.href}
-                      className="block rounded-[18px] border border-black/8 bg-[#f8fafc] p-3.5 transition hover:border-[#28809A]/24 hover:bg-white"
+                      className="block border border-border bg-muted p-3.5 transition hover:border-primary/30 hover:bg-card"
                     >
-                      <p className="font-medium text-[#252525]">{item.label}</p>
-                      <p className="mt-1 text-sm leading-6 text-[#62686a]">{item.note}</p>
+                      <p className="font-medium text-foreground">{item.label}</p>
+                      <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.note}</p>
                     </Link>
                   ))}
                 </div>
@@ -107,11 +107,11 @@ export function SearchPage({ query, listings }: { query?: string; listings: List
             {listings.length ? (
               listings.map((listing) => <ListingPreviewCard key={listing.id} listing={listing} />)
             ) : (
-              <div className="rounded-[24px] border border-black/8 bg-white p-8 text-center shadow-[0_16px_48px_rgba(15,23,42,0.06)] xl:col-span-2">
-                <p className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
+              <div className="border border-border bg-card p-8 text-center shadow-sm xl:col-span-2">
+                <p className="text-3xl font-semibold text-foreground">
                   No results yet
                 </p>
-                <p className="mt-3 text-sm leading-6 text-[#62686a]">
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
                   Try a different neighborhood, broader keyword, or switch to the full listings view.
                 </p>
               </div>

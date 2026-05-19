@@ -44,7 +44,7 @@ export default async function Page({
 
       <section className="px-4 pb-10 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-6">
-          <div className="relative h-[460px] overflow-hidden rounded-[36px] border border-black/8 shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+          <div className="relative h-[460px] overflow-hidden border border-border shadow-sm">
             <Image
               src={visual.gallery[0]}
               alt={visual.alt}
@@ -58,7 +58,7 @@ export default async function Page({
             {visual.gallery.map((image, index) => (
               <div
                 key={image}
-                className="overflow-hidden rounded-[28px] border border-black/8 bg-white shadow-[0_20px_60px_rgba(37,37,37,0.08)]"
+                className="overflow-hidden border border-border bg-card shadow-sm"
               >
                 <div className="relative h-64">
                   <Image
@@ -70,13 +70,13 @@ export default async function Page({
                   />
                 </div>
                 <div className="space-y-2 p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#28809A]">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-primary">
                     {listing.media[index]?.title ?? `Frame ${index + 1}`}
                   </p>
-                  <p className="font-display text-xl font-semibold tracking-[-0.04em] text-[#252525]">
+                  <p className="text-xl font-semibold text-foreground">
                     {listing.media[index]?.gpsTag ?? visual.neighborhoodTag}
                   </p>
-                  <p className="text-sm leading-7 text-[#62686a]">
+                  <p className="text-sm leading-7 text-muted-foreground">
                     {listing.media[index]?.caption ?? 'Media evidence approved before publishing.'}
                   </p>
                 </div>

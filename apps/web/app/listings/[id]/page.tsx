@@ -8,10 +8,11 @@ export default async function Page({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { getToken } = await auth();
-  const token = await getToken();
+
+  const { userId, getToken } = await auth();
+  const token = userId ? await getToken() : null;
 
   const listing = await getListingById(id, token).catch(() => null);
 
-  return <ListingDetailPage listing={listing} />;
+  return <ListingDetailPage listing={listing} isAuthenticated={!!userId} />;
 }

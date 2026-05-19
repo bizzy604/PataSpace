@@ -25,46 +25,46 @@ export function ProfileEditPage() {
       actions={<Link href="/profile" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>Back to profile</Link>}
     >
       <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-        <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+        <Card className="border border-border bg-card shadow-sm">
           <CardHeader>
-            <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">Personal details</CardTitle>
-            <CardDescription className="text-sm leading-7 text-[#62686a]">
+            <CardTitle className="text-3xl font-semibold text-foreground">Personal details</CardTitle>
+            <CardDescription className="text-sm leading-7 text-muted-foreground">
               Changes here stay consistent with wallet, unlock, and support records.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="space-y-2 text-sm font-medium text-[#252525]">
+              <label className="space-y-2 text-sm font-medium text-foreground">
                 First name
-                <Input className="h-11 rounded-2xl" defaultValue={user?.firstName ?? ''} />
+                <Input className="h-11" defaultValue={user?.firstName ?? ''} />
               </label>
-              <label className="space-y-2 text-sm font-medium text-[#252525]">
+              <label className="space-y-2 text-sm font-medium text-foreground">
                 Last name
-                <Input className="h-11 rounded-2xl" defaultValue={user?.lastName ?? ''} />
+                <Input className="h-11" defaultValue={user?.lastName ?? ''} />
               </label>
             </div>
-            <label className="space-y-2 text-sm font-medium text-[#252525]">
+            <label className="space-y-2 text-sm font-medium text-foreground">
               Email address
-              <Input className="h-11 rounded-2xl" defaultValue={user?.primaryEmailAddress?.emailAddress ?? ''} />
+              <Input className="h-11" defaultValue={user?.primaryEmailAddress?.emailAddress ?? ''} />
             </label>
-            <label className="space-y-2 text-sm font-medium text-[#252525]">
+            <label className="space-y-2 text-sm font-medium text-foreground">
               About me
-              <Textarea className="min-h-36 rounded-[24px]" defaultValue="House-hunting from the Nairobi CBD side and usually comparing commute, building management, and move-in timing before I unlock." />
+              <Textarea className="min-h-36" defaultValue="House-hunting from the Nairobi CBD side and usually comparing commute, building management, and move-in timing before I unlock." />
             </label>
-            <Button className="h-11 rounded-full bg-[#28809A] px-6 text-white hover:bg-[#21687d]">Save changes</Button>
+            <Button className="h-11 bg-primary px-6 text-primary-foreground hover:bg-primary/90">Save changes</Button>
           </CardContent>
         </Card>
 
-        <Card className="border border-black/8 bg-[#252525] text-white shadow-[0_24px_80px_rgba(37,37,37,0.18)]">
+        <Card className="border border-border bg-foreground text-background shadow-sm">
           <CardHeader>
-            <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-white">Verification and identity</CardTitle>
+            <CardTitle className="text-3xl font-semibold text-background">Verification and identity</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 text-sm leading-7 text-white/76">
-            <p className="inline-flex items-center gap-2 font-medium text-white">
-              <ShieldCheck className="size-4 text-[#8ed7e7]" /> Clerk-managed identity
+          <CardContent className="space-y-4 text-sm leading-7 text-background/76">
+            <p className="inline-flex items-center gap-2 font-medium text-background">
+              <ShieldCheck className="size-4 text-primary" /> Clerk-managed identity
             </p>
             <p>Your account is managed through Clerk. For identity changes such as phone number updates, use the account settings in your Clerk profile.</p>
-            <div className="rounded-[24px] border border-white/10 bg-white/6 p-4">
+            <div className="border border-background/10 bg-background/6 p-4">
               Uploading identity evidence is optional, but it can support future trust indicators and faster support resolution.
             </div>
             <Link href="/support" className={linkButtonClass({ size: 'sm' })}>Contact support</Link>

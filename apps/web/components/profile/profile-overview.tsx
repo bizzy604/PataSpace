@@ -54,15 +54,15 @@ export function ProfileOverviewPage() {
       }
     >
       <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-        <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+        <Card className="border border-border bg-card shadow-sm">
           <CardHeader className="items-center text-center">
             <Avatar size="lg" className="size-24">
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
-            <CardTitle className="font-display text-4xl font-semibold tracking-[-0.07em] text-[#252525]">
+            <CardTitle className="text-4xl font-semibold text-foreground">
               {user?.firstName} {user?.lastName}
             </CardTitle>
-            <CardDescription className="space-y-1 text-sm text-[#62686a]">
+            <CardDescription className="space-y-1 text-sm text-muted-foreground">
               <p>{user?.primaryEmailAddress?.emailAddress ?? '—'}</p>
               <p>Joined {joinedLabel}</p>
             </CardDescription>
@@ -73,34 +73,38 @@ export function ProfileOverviewPage() {
               <MetricCard label="Support threads" value="0" hint="Open and resolved support threads." Icon={MessageCircle} />
               <MetricCard label="Lifetime wallet" value={balance ? formatKes(balance.lifetimeEarned) : '—'} hint="Total credits funded or restored." Icon={ShieldCheck} />
             </div>
-            <div className="rounded-[24px] border border-[#28809A]/14 bg-[#28809A]/6 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#28809A]">Verification</p>
+            <div className="border border-primary/20 bg-primary/8 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Verification</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <StatusBadge label={user ? 'Account active' : 'Loading…'} tone="positive" />
               </div>
-              <p className="mt-4 text-sm leading-7 text-[#4b4f50]">
+              <p className="mt-4 text-sm leading-7 text-muted-foreground">
                 This account is the shared identity used across Clerk sign-in, wallet top-ups, unlock timelines, and support escalation.
               </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+        <Card className="border border-border bg-card shadow-sm">
           <CardHeader>
-            <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">Workspace shortcuts</CardTitle>
-            <CardDescription className="text-sm leading-7 text-[#62686a]">
+            <CardTitle className="text-3xl font-semibold text-foreground">Workspace shortcuts</CardTitle>
+            <CardDescription className="text-sm leading-7 text-muted-foreground">
               Quick links to the wallet, unlock history, and account management areas.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {profileRows.map(({ label, href, description, Icon }) => (
-              <Link key={href} href={href} className="flex items-start gap-4 rounded-[24px] border border-black/8 bg-[#fbfaf7] p-4 transition hover:border-[#28809A]/24 hover:bg-white">
-                <span className="flex size-11 items-center justify-center rounded-2xl bg-[#28809A]/10 text-[#28809A]">
+              <Link
+                key={href}
+                href={href}
+                className="flex items-start gap-4 border border-border bg-muted p-4 transition hover:border-primary hover:bg-card"
+              >
+                <span className="flex size-11 items-center justify-center border border-border bg-card text-primary">
                   <Icon className="size-5" />
                 </span>
                 <div className="min-w-0">
-                  <p className="font-medium text-[#252525]">{label}</p>
-                  <p className="mt-1 text-sm leading-7 text-[#62686a]">{description}</p>
+                  <p className="font-medium text-foreground">{label}</p>
+                  <p className="mt-1 text-sm leading-7 text-muted-foreground">{description}</p>
                 </div>
               </Link>
             ))}

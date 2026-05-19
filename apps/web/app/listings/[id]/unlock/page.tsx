@@ -50,7 +50,7 @@ export default async function Page({
 
       <section className="px-4 pb-10 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <Card className="overflow-hidden border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+          <Card className="overflow-hidden border border-border bg-card shadow-sm">
             <div className="relative h-72">
               <Image
                 src={visual.hero}
@@ -62,16 +62,16 @@ export default async function Page({
             </div>
             <CardContent className="space-y-5 pt-5">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#28809A]">
+                <p className="text-xs font-semibold uppercase tracking-widest text-primary">
                   Listing summary
                 </p>
-                <h2 className="mt-3 font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
+                <h2 className="mt-3 text-3xl font-semibold text-foreground">
                   {listing.title}
                 </h2>
-                <p className="mt-2 text-sm leading-7 text-[#62686a]">{listing.description}</p>
+                <p className="mt-2 text-sm leading-7 text-muted-foreground">{listing.description}</p>
               </div>
 
-              <div className="grid gap-3 rounded-[24px] bg-[#f7f4ee] p-4 text-sm text-[#4b4f50] sm:grid-cols-3">
+              <div className="grid gap-3 border border-border bg-muted p-4 text-sm text-muted-foreground sm:grid-cols-3">
                 <p>{listing.neighborhood}</p>
                 <p>{formatKes(listing.monthlyRent)} monthly rent</p>
                 <p>{listing.unlockCount} previous unlocks</p>
@@ -85,7 +85,7 @@ export default async function Page({
                 ].map((item) => (
                   <div
                     key={item}
-                    className="rounded-[20px] border border-black/8 bg-[#fbfaf7] p-4 text-sm leading-7 text-[#4b4f50]"
+                    className="border border-border bg-muted p-4 text-sm leading-7 text-muted-foreground"
                   >
                     {item}
                   </div>
@@ -94,24 +94,24 @@ export default async function Page({
             </CardContent>
           </Card>
 
-          <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+          <Card className="border border-border bg-card shadow-sm">
             <CardHeader>
-              <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
+              <CardTitle className="text-3xl font-semibold text-foreground">
                 Wallet checkout
               </CardTitle>
-              <CardDescription className="text-sm leading-7 text-[#62686a]">
+              <CardDescription className="text-sm leading-7 text-muted-foreground">
                 Unlock pricing follows the marketplace rule of 10% of monthly rent.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
-              <div className="rounded-[24px] border border-black/8 bg-[#252525] p-5 text-white">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/56">
+              <div className="border border-border bg-primary p-5 text-primary-foreground">
+                <p className="text-xs font-semibold uppercase tracking-widest text-primary-foreground/70">
                   Unlock cost
                 </p>
-                <p className="mt-2 font-display text-4xl font-semibold tracking-[-0.07em]">
+                <p className="mt-2 text-4xl font-semibold">
                   {formatKes(listing.unlockCostCredits)}
                 </p>
-                <div className="mt-5 grid gap-3 text-sm text-white/72">
+                <div className="mt-5 grid gap-3 text-sm text-primary-foreground/80">
                   <p className="flex items-center justify-between">
                     <span>Current balance</span>
                     <span>{formatKes(mockCreditBalance.balance)}</span>
@@ -123,9 +123,9 @@ export default async function Page({
                 </div>
               </div>
 
-              <div className="rounded-[24px] border border-[#28809A]/12 bg-[#28809A]/6 p-4 text-sm leading-7 text-[#4b4f50]">
-                <p className="inline-flex items-center gap-2 font-medium text-[#252525]">
-                  <ShieldCheck className="size-4 text-[#28809A]" />
+              <div className="border border-primary/20 bg-primary/5 p-4 text-sm leading-7 text-muted-foreground">
+                <p className="inline-flex items-center gap-2 font-medium text-foreground">
+                  <ShieldCheck className="size-4 text-primary" />
                   Protected actions after purchase
                 </p>
                 <p className="mt-2">
@@ -149,7 +149,7 @@ export default async function Page({
                 </Link>
               </div>
 
-              <Link href="/wallet" className="inline-flex items-center gap-2 text-sm font-medium text-[#28809A]">
+              <Link href="/wallet" className="inline-flex items-center gap-2 text-sm font-medium text-primary">
                 <Wallet className="size-4" />
                 Review wallet history first
               </Link>

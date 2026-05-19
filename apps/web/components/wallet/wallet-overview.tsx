@@ -48,13 +48,13 @@ export function WalletOverviewPage() {
     >
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr] xl:items-start">
         <div className="space-y-6">
-          <Card className="h-fit border border-black/8 bg-[linear-gradient(135deg,#28809A_0%,#252525_100%)] text-white shadow-[0_20px_60px_rgba(15,23,42,0.16)]">
+          <Card className="h-fit border border-primary bg-primary text-primary-foreground shadow-md">
             <CardHeader className="pb-4">
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-white/60">Available balance</p>
-              <CardTitle className="font-display text-4xl font-semibold tracking-[-0.07em] text-white">
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-primary-foreground/70">Available balance</p>
+              <CardTitle className="text-4xl font-semibold text-primary-foreground">
                 {balance ? formatKes(balance.balance) : '—'}
               </CardTitle>
-              <CardDescription className="max-w-xl text-sm leading-6 text-white/74">
+              <CardDescription className="max-w-xl text-sm leading-6 text-primary-foreground/75">
                 Roughly {coverage} serious unlocks at the current average spend, with refunds and purchases preserved in the same ledger.
               </CardDescription>
             </CardHeader>
@@ -64,18 +64,18 @@ export function WalletOverviewPage() {
                 { label: 'Lifetime spent', value: balance ? formatKes(balance.lifetimeSpent) : '—' },
                 { label: 'Completed top-ups', value: `${completedPurchases}` },
               ].map((item) => (
-                <div key={item.label} className="rounded-[18px] border border-white/10 bg-white/8 p-3.5">
-                  <p className="text-[0.68rem] uppercase tracking-[0.16em] text-white/54">{item.label}</p>
-                  <p className="mt-2 font-display text-xl font-semibold tracking-[-0.04em] text-white">{item.value}</p>
+                <div key={item.label} className="border border-primary-foreground/20 bg-primary-foreground/10 p-3.5">
+                  <p className="text-[0.68rem] uppercase tracking-[0.16em] text-primary-foreground/60">{item.label}</p>
+                  <p className="mt-2 text-xl font-semibold text-primary-foreground">{item.value}</p>
                 </div>
               ))}
             </CardContent>
           </Card>
 
-          <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+          <Card className="border border-border bg-card shadow-sm">
             <CardHeader>
-              <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">Top-up packages</CardTitle>
-              <CardDescription className="text-sm leading-7 text-[#62686a]">
+              <CardTitle className="text-3xl font-semibold text-foreground">Top-up packages</CardTitle>
+              <CardDescription className="text-sm leading-7 text-muted-foreground">
                 Choose a package, then continue to the M-Pesa payment screen.
               </CardDescription>
             </CardHeader>
@@ -83,17 +83,20 @@ export function WalletOverviewPage() {
               {creditPackages.map((pkg) => {
                 const isRecommended = 'recommended' in pkg && Boolean(pkg.recommended);
                 return (
-                  <div key={pkg.id} className={`rounded-[24px] border p-5 ${isRecommended ? 'border-[#28809A]/30 bg-[#28809A]/8' : 'border-black/8 bg-[#fbfaf7]'}`}>
+                  <div
+                    key={pkg.id}
+                    className={`border p-5 ${isRecommended ? 'border-primary bg-primary/5' : 'border-border bg-muted'}`}
+                  >
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <p className="font-display text-2xl font-semibold tracking-[-0.05em] text-[#252525]">{pkg.name}</p>
-                        <p className="mt-1 text-sm leading-7 text-[#62686a]">{pkg.description}</p>
+                        <p className="text-2xl font-semibold text-foreground">{pkg.name}</p>
+                        <p className="mt-1 text-sm leading-7 text-muted-foreground">{pkg.description}</p>
                       </div>
                       {isRecommended ? <StatusBadge label="Recommended" tone="brand" /> : null}
                     </div>
-                    <div className="mt-4 grid gap-3 text-sm text-[#4b4f50] sm:grid-cols-2">
-                      <p className="rounded-[18px] bg-white px-4 py-3">Amount: {formatKes(pkg.amount)}</p>
-                      <p className="rounded-[18px] bg-white px-4 py-3">Credits: {pkg.credits}</p>
+                    <div className="mt-4 grid gap-3 text-sm text-foreground sm:grid-cols-2">
+                      <p className="border border-border bg-card px-4 py-3">Amount: {formatKes(pkg.amount)}</p>
+                      <p className="border border-border bg-card px-4 py-3">Credits: {pkg.credits}</p>
                     </div>
                   </div>
                 );
@@ -109,24 +112,24 @@ export function WalletOverviewPage() {
             <MetricCard label="Mobile-first funding" value="M-Pesa" hint="Top-ups stay aligned with the M-Pesa-first purchase flow." Icon={Smartphone} />
           </div>
 
-          <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+          <Card className="border border-border bg-card shadow-sm">
             <CardHeader>
-              <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">Recent ledger activity</CardTitle>
+              <CardTitle className="text-3xl font-semibold text-foreground">Recent ledger activity</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {transactions.map((transaction) => {
                 const type = transactionTypeMeta(transaction.type);
                 const status = transactionStatusMeta(transaction.status);
                 return (
-                  <div key={transaction.id} className="rounded-[24px] border border-black/8 bg-[#fbfaf7] p-4">
+                  <div key={transaction.id} className="border border-border bg-muted p-4">
                     <div className="flex flex-wrap gap-2">
                       <StatusBadge label={type.label} tone={type.tone} />
                       <StatusBadge label={status.label} tone={status.tone} />
                     </div>
-                    <p className="mt-3 font-medium text-[#252525]">{transaction.description}</p>
-                    <div className="mt-3 flex items-center justify-between gap-3 text-sm text-[#62686a]">
+                    <p className="mt-3 font-medium text-foreground">{transaction.description}</p>
+                    <div className="mt-3 flex items-center justify-between gap-3 text-sm text-muted-foreground">
                       <span>{formatDateLabel(transaction.createdAt)}</span>
-                      <span className={transaction.amount < 0 ? 'font-semibold text-rose-700' : 'font-semibold text-emerald-700'}>
+                      <span className={transaction.amount < 0 ? 'font-semibold text-destructive' : 'font-semibold text-primary'}>
                         {transaction.amount < 0 ? '-' : '+'}{formatKes(Math.abs(transaction.amount))}
                       </span>
                     </div>

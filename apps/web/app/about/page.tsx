@@ -75,12 +75,12 @@ export default function Page() {
 
       <section className="px-4 pb-10 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-          <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+          <Card className="border border-border bg-card shadow-sm">
             <CardHeader>
-              <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
+              <CardTitle className="text-3xl font-semibold text-foreground">
                 Why this exists
               </CardTitle>
-              <CardDescription className="text-sm leading-7 text-[#62686a]">
+              <CardDescription className="text-sm leading-7 text-muted-foreground">
                 Traditional rental search often asks for commitment too early. PataSpace keeps discovery open and charges only at the decision point.
               </CardDescription>
             </CardHeader>
@@ -88,24 +88,24 @@ export default function Page() {
               {principles.map((item) => (
                 <div
                   key={item.title}
-                  className="rounded-[24px] border border-black/8 bg-[#f8fafc] p-5"
+                  className="border border-border bg-muted p-5"
                 >
-                  <p className="font-display text-xl font-semibold tracking-[-0.04em] text-[#252525]">
+                  <p className="text-xl font-semibold text-foreground">
                     {item.title}
                   </p>
-                <p className="mt-2 text-sm leading-7 text-[#62686a]">{item.body}</p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+                  <p className="mt-2 text-sm leading-7 text-muted-foreground">{item.body}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
 
-          <Card className="border border-black/8 bg-[#252525] text-white shadow-[0_24px_80px_rgba(37,37,37,0.18)]">
+          <Card className="border border-border bg-foreground text-background shadow-sm">
             <CardHeader>
-              <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-white">
+              <CardTitle className="text-3xl font-semibold text-background">
                 Marketplace guardrails
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 text-sm leading-7 text-white/76">
+            <CardContent className="space-y-4 text-sm leading-7 text-background/76">
               <p>Listing capture stays mobile-first so media and location proof are stronger.</p>
               <p>Unlock pricing stays tied to rent to keep reveal value predictable.</p>
               <p>Disputes, refunds, and confirmation are handled inside the product.</p>

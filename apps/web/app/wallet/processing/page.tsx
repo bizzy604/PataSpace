@@ -32,12 +32,12 @@ export default async function Page({
       }
     >
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+        <Card className="border border-border bg-card shadow-sm">
           <CardHeader>
-            <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
+            <CardTitle className="text-3xl font-semibold text-foreground">
               Waiting for STK confirmation
             </CardTitle>
-            <CardDescription className="text-sm leading-7 text-[#62686a]">
+            <CardDescription className="text-sm leading-7 text-muted-foreground">
               The purchase record has been created as pending and the mobile prompt has been issued.
             </CardDescription>
           </CardHeader>
@@ -47,34 +47,34 @@ export default async function Page({
               { title: 'User prompt issued', body: 'The STK request is on the supplied number and waits for PIN entry on the phone.', done: true },
               { title: 'Reconciliation safety net', body: 'If the callback is slow, the backend checks status again so successful payments still land.', done: false },
             ].map((step) => (
-              <div key={step.title} className="flex gap-4 rounded-[24px] border border-black/8 bg-[#fbfaf7] p-4">
-                <span className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-[#28809A]/12 text-[#28809A]">
+              <div key={step.title} className="flex gap-4 border border-border bg-muted p-4">
+                <span className="mt-1 flex size-8 shrink-0 items-center justify-center border border-border bg-card text-primary">
                   {step.done ? <CircleCheck className="size-4" /> : <Clock3 className="size-4" />}
                 </span>
                 <div>
-                  <p className="font-medium text-[#252525]">{step.title}</p>
-                  <p className="mt-1 text-sm leading-7 text-[#62686a]">{step.body}</p>
+                  <p className="font-medium text-foreground">{step.title}</p>
+                  <p className="mt-1 text-sm leading-7 text-muted-foreground">{step.body}</p>
                 </div>
               </div>
             ))}
           </CardContent>
         </Card>
 
-        <Card className="border border-black/8 bg-[#252525] text-white shadow-[0_24px_80px_rgba(37,37,37,0.18)]">
+        <Card className="border border-border bg-foreground text-background shadow-sm">
           <CardHeader>
-            <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-white">
+            <CardTitle className="text-3xl font-semibold text-background">
               Pending purchase
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 text-sm leading-7 text-white/78">
+          <CardContent className="space-y-4 text-sm leading-7 text-background/78">
             <p className="inline-flex items-center gap-2">
-              <Smartphone className="size-4 text-[#8ed7e7]" />
+              <Smartphone className="size-4 text-primary" />
               {pkgName}
             </p>
             {amount !== null ? <p>Amount: {formatKes(amount)}</p> : null}
             {credits ? <p>Credits: {credits}</p> : null}
             <p>Status: Pending callback confirmation</p>
-            <div className="rounded-[24px] border border-white/10 bg-white/6 p-4">
+            <div className="border border-background/10 bg-background/6 p-4">
               If the prompt stalls, the transaction history keeps the pending state visible until the system retries or marks the payment as failed.
             </div>
             <Link href="/wallet/transactions" className={linkButtonClass({ size: 'sm' })}>

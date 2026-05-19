@@ -79,16 +79,16 @@ export default async function Page({
 
       <section className="px-4 pb-8 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[0.78fr_2.22fr]">
-          <div className="space-y-5 rounded-[24px] border border-black/8 bg-white p-5 shadow-[0_16px_48px_rgba(15,23,42,0.06)]">
+          <div className="space-y-5 border border-border bg-card p-5 shadow-sm">
             <div>
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-[#28809A]">Active filters</p>
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-primary">Active filters</p>
               <div className="mt-3 grid gap-2">
                 {[
                   location ? `Area: ${location}` : 'Area: Any',
                   bedrooms ? `Bedrooms: ${bedrooms}` : 'Bedrooms: Any',
                   price ? `Budget: ${price}` : 'Budget: Any',
                 ].map((chip) => (
-                  <span key={chip} className="rounded-xl border border-black/8 bg-[#f8fafc] px-3 py-2 text-xs font-medium text-[#4b4f50]">
+                  <span key={chip} className="border border-border bg-muted px-3 py-2 text-xs font-medium text-foreground">
                     {chip}
                   </span>
                 ))}
@@ -96,16 +96,16 @@ export default async function Page({
             </div>
 
             <div>
-              <p className="font-display text-xl font-semibold tracking-[-0.04em] text-[#252525]">Explore neighborhoods</p>
+              <p className="text-xl font-semibold text-foreground">Explore neighborhoods</p>
               <div className="mt-3 grid gap-2.5">
                 {neighborhoodSearchCards.map((neighborhood) => (
                   <Link
                     key={neighborhood.name}
                     href={`/listings?location=${encodeURIComponent(neighborhood.name)}`}
-                    className="rounded-[18px] border border-black/8 bg-[#f8fafc] p-3.5 transition hover:border-[#28809A]/30 hover:bg-white"
+                    className="border border-border bg-muted p-3.5 transition hover:border-primary hover:bg-card"
                   >
-                    <p className="font-medium text-[#252525]">{neighborhood.name}</p>
-                    <p className="mt-1 text-sm leading-5 text-[#62686a]">{neighborhood.description}</p>
+                    <p className="font-medium text-foreground">{neighborhood.name}</p>
+                    <p className="mt-1 text-sm leading-5 text-muted-foreground">{neighborhood.description}</p>
                   </Link>
                 ))}
               </div>
@@ -117,7 +117,7 @@ export default async function Page({
               <ListingPreviewCard key={listing.id} listing={listing} />
             ))}
             {listings.length === 0 && (
-              <p className="col-span-full py-12 text-center text-[#62686a]">No listings found for the current filters.</p>
+              <p className="col-span-full py-12 text-center text-muted-foreground">No listings found for the current filters.</p>
             )}
           </div>
         </div>

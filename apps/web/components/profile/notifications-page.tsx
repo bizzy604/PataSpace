@@ -70,9 +70,9 @@ export function NotificationsPage() {
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-6">
           {notificationGroups.map((group) => (
-            <Card key={group.label} className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+            <Card key={group.label} className="border border-border bg-card shadow-sm">
               <CardHeader>
-                <CardTitle className="font-display text-2xl font-semibold tracking-[-0.05em] text-[#252525]">
+                <CardTitle className="text-2xl font-semibold text-foreground">
                   {group.label}
                 </CardTitle>
               </CardHeader>
@@ -81,7 +81,7 @@ export function NotificationsPage() {
                   <Link
                     key={item.title}
                     href={item.href}
-                    className="block rounded-[24px] border border-black/8 bg-[#fbfaf7] p-4 transition hover:border-[#28809A]/24 hover:bg-white"
+                    className="block border border-border bg-muted p-4 transition hover:border-primary/30 hover:bg-card"
                   >
                     <div className="flex flex-wrap items-center gap-2">
                       <StatusBadge
@@ -89,8 +89,8 @@ export function NotificationsPage() {
                         tone={item.tone}
                       />
                     </div>
-                    <p className="mt-3 font-medium text-[#252525]">{item.title}</p>
-                    <p className="mt-2 text-sm leading-7 text-[#62686a]">{item.body}</p>
+                    <p className="mt-3 font-medium text-foreground">{item.title}</p>
+                    <p className="mt-2 text-sm leading-7 text-muted-foreground">{item.body}</p>
                   </Link>
                 ))}
               </CardContent>
@@ -98,12 +98,12 @@ export function NotificationsPage() {
           ))}
         </div>
 
-        <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+        <Card className="border border-border bg-card shadow-sm">
           <CardHeader>
-            <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
+            <CardTitle className="text-3xl font-semibold text-foreground">
               Notification health
             </CardTitle>
-            <CardDescription className="text-sm leading-7 text-[#62686a]">
+            <CardDescription className="text-sm leading-7 text-muted-foreground">
               Signals stay focused on actions that affect wallet balance, unlock state, or next-step follow-through.
             </CardDescription>
           </CardHeader>
@@ -120,7 +120,7 @@ export function NotificationsPage() {
               hint="Combined wallet, support, and announcement notifications currently shown."
               Icon={MessageCircle}
             />
-            <div className="rounded-[24px] border border-black/8 bg-[#f7f4ee] p-4 text-sm leading-7 text-[#4b4f50]">
+            <div className="border border-border bg-muted p-4 text-sm leading-7 text-muted-foreground">
               Notification filters and destructive actions are not interactive yet, but the route now mirrors the structure of the Stitch concept as a working native web page.
             </div>
           </CardContent>

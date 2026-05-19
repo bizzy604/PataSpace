@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Calculator, Wallet } from 'lucide-react';
+import { Calculator } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { TenantWorkspaceShell } from '@/components/workspace/page';
 import { creditPackages } from '@/lib/mock-app-state';
@@ -26,12 +26,12 @@ export default function Page() {
     >
       <section className="px-4 pb-6 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[1fr_1fr]">
-          <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+          <Card className="border border-border bg-card shadow-sm">
             <CardHeader>
-              <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
+              <CardTitle className="text-3xl font-semibold text-foreground">
                 Listing unlock formula
               </CardTitle>
-              <CardDescription className="text-sm leading-7 text-[#62686a]">
+              <CardDescription className="text-sm leading-7 text-muted-foreground">
                 Unlock cost = 10% of monthly rent. Owner commission = 30% of the unlock cost after confirmation.
               </CardDescription>
             </CardHeader>
@@ -42,12 +42,12 @@ export default function Page() {
                 return (
                   <div
                     key={listing.id}
-                    className="rounded-[24px] border border-black/8 bg-[#f8fafc] p-5"
+                    className="border border-border bg-muted p-5"
                   >
-                    <p className="font-display text-xl font-semibold tracking-[-0.04em] text-[#252525]">
+                    <p className="text-xl font-semibold text-foreground">
                       {listing.title}
                     </p>
-                    <div className="mt-3 grid gap-2 text-sm leading-7 text-[#62686a]">
+                    <div className="mt-3 grid gap-2 text-sm leading-7 text-muted-foreground">
                       <p className="flex items-center justify-between">
                         <span>Monthly rent</span>
                         <span>{formatKes(listing.monthlyRent)}</span>
@@ -67,9 +67,9 @@ export default function Page() {
             </CardContent>
           </Card>
 
-          <Card className="border border-black/8 bg-[#252525] text-white shadow-[0_24px_80px_rgba(37,37,37,0.18)]">
+          <Card className="border border-border bg-foreground text-background shadow-sm">
             <CardHeader>
-              <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-white">
+              <CardTitle className="text-3xl font-semibold text-background">
                 Wallet packages
               </CardTitle>
             </CardHeader>
@@ -80,16 +80,16 @@ export default function Page() {
                 return (
                   <div
                     key={pkg.id}
-                    className={`rounded-[24px] border p-5 ${isRecommended ? 'border-white/16 bg-white/10' : 'border-white/10 bg-white/6'}`}
+                    className={`border p-5 ${isRecommended ? 'border-background/20 bg-background/12' : 'border-background/10 bg-background/6'}`}
                   >
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/54">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-background/60">
                       {pkg.name}
                     </p>
-                    <p className="mt-2 font-display text-3xl font-semibold tracking-[-0.06em] text-white">
+                    <p className="mt-2 text-3xl font-semibold text-background">
                       {formatKes(pkg.amount)}
                     </p>
-                    <p className="mt-1 text-sm text-white/72">{pkg.credits} credits</p>
-                    <p className="mt-3 text-sm leading-7 text-white/76">{pkg.description}</p>
+                    <p className="mt-1 text-sm text-background/70">{pkg.credits} credits</p>
+                    <p className="mt-3 text-sm leading-7 text-background/76">{pkg.description}</p>
                   </div>
                 );
               })}
@@ -100,17 +100,17 @@ export default function Page() {
 
       <section className="px-4 pb-10 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+          <Card className="border border-border bg-card shadow-sm">
             <CardHeader>
               <div className="flex items-center gap-3">
-                <span className="flex size-12 items-center justify-center rounded-2xl bg-[#28809A]/10 text-[#28809A]">
+                <span className="flex size-12 items-center justify-center border border-border bg-primary/10 text-primary">
                   <Calculator className="size-5" />
                 </span>
                 <div>
-                  <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
+                  <CardTitle className="text-3xl font-semibold text-foreground">
                     Pricing intent
                   </CardTitle>
-                  <CardDescription className="text-sm leading-7 text-[#62686a]">
+                  <CardDescription className="text-sm leading-7 text-muted-foreground">
                     Wallet packages cover browsing runway. Unlock pricing reflects the listing you decide to pursue.
                   </CardDescription>
                 </div>
@@ -124,7 +124,7 @@ export default function Page() {
               ].map((item) => (
                 <div
                   key={item}
-                  className="rounded-[24px] border border-black/8 bg-[#f8fafc] p-5 text-sm leading-7 text-[#62686a]"
+                  className="border border-border bg-muted p-5 text-sm leading-7 text-muted-foreground"
                 >
                   {item}
                 </div>

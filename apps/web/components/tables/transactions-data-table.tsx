@@ -26,7 +26,7 @@ const columns: ColumnDef<CreditTransaction>[] = [
 
       return (
         <div className="space-y-2">
-          <p className="font-medium text-[#252525]">{transaction.description ?? '—'}</p>
+          <p className="font-medium text-foreground">{transaction.description ?? '—'}</p>
           <div className="flex flex-wrap gap-2">
             <StatusBadge label={type.label} tone={type.tone} />
             <StatusBadge label={status.label} tone={status.tone} />
@@ -40,8 +40,8 @@ const columns: ColumnDef<CreditTransaction>[] = [
     header: 'Date',
     cell: ({ row }) => (
       <div>
-        <p className="font-medium text-[#252525]">{formatDateLabel(row.original.createdAt)}</p>
-        <p className="text-sm text-[#62686a]">
+        <p className="font-medium text-foreground">{formatDateLabel(row.original.createdAt)}</p>
+        <p className="text-sm text-muted-foreground">
           {new Date(row.original.createdAt).toLocaleTimeString('en-KE', {
             hour: 'numeric',
             minute: '2-digit',
@@ -54,7 +54,7 @@ const columns: ColumnDef<CreditTransaction>[] = [
     accessorKey: 'amount',
     header: 'Amount',
     cell: ({ row }) => (
-      <p className={row.original.amount < 0 ? 'font-semibold text-rose-700' : 'font-semibold text-emerald-700'}>
+      <p className={row.original.amount < 0 ? 'font-semibold text-destructive' : 'font-semibold text-primary'}>
         {row.original.amount < 0 ? '-' : '+'}
         {formatKes(Math.abs(row.original.amount))}
       </p>
@@ -63,7 +63,7 @@ const columns: ColumnDef<CreditTransaction>[] = [
   {
     accessorKey: 'balanceAfter',
     header: 'Balance after',
-    cell: ({ row }) => <p className="font-medium text-[#252525]">{formatKes(row.original.balanceAfter)}</p>,
+    cell: ({ row }) => <p className="font-medium text-foreground">{formatKes(row.original.balanceAfter)}</p>,
   },
   {
     id: 'actions',

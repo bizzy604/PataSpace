@@ -59,26 +59,26 @@ export function AppDataTable<TData, TValue>({
   const filterTarget = filterColumn ? table.getColumn(filterColumn) : undefined;
 
   return (
-    <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+    <Card className="border border-border bg-card shadow-sm">
       <CardHeader className="gap-4">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <CardTitle className="font-display text-2xl font-semibold tracking-[-0.05em] text-[#252525]">
+            <CardTitle className="text-2xl font-semibold text-foreground">
               {title}
             </CardTitle>
-            <CardDescription className="mt-2 max-w-2xl text-sm leading-7 text-[#62686a]">
+            <CardDescription className="mt-2 max-w-2xl text-sm leading-7 text-muted-foreground">
               {description}
             </CardDescription>
           </div>
 
           {filterTarget ? (
             <div className="relative w-full max-w-sm">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#7b8081]" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={(filterTarget.getFilterValue() as string) ?? ''}
                 onChange={(event) => filterTarget.setFilterValue(event.target.value)}
                 placeholder={filterPlaceholder}
-                className="h-10 rounded-full border-black/10 pl-9"
+                className="h-10 border-border pl-9"
               />
             </div>
           ) : null}
@@ -86,13 +86,13 @@ export function AppDataTable<TData, TValue>({
       </CardHeader>
 
       <CardContent className="space-y-5">
-        <div className="rounded-[28px] border border-black/8 bg-[#fbfaf7] p-2">
+        <div className="border border-border bg-muted p-2">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id} className="px-4 py-3 text-xs uppercase tracking-[0.18em] text-[#7b8081]">
+                    <TableHead key={header.id} className="px-4 py-3 text-xs uppercase tracking-widest text-muted-foreground">
                       {header.isPlaceholder
                         ? null
                         : flexRender(header.column.columnDef.header, header.getContext())}
@@ -105,7 +105,7 @@ export function AppDataTable<TData, TValue>({
             <TableBody>
               {table.getRowModel().rows.length ? (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id} className="border-black/6 bg-white">
+                  <TableRow key={row.id} className="border-border bg-card">
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id} className="px-4 py-4 align-top">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -117,7 +117,7 @@ export function AppDataTable<TData, TValue>({
                 <TableRow>
                   <TableCell
                     colSpan={columns.length}
-                    className="px-4 py-12 text-center text-sm text-[#62686a]"
+                    className="px-4 py-12 text-center text-sm text-muted-foreground"
                   >
                     {emptyMessage}
                   </TableCell>
@@ -128,7 +128,7 @@ export function AppDataTable<TData, TValue>({
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-[#62686a]">
+          <p className="text-sm text-muted-foreground">
             Showing {table.getRowModel().rows.length} of {data.length} items.
           </p>
           <div className="flex items-center gap-2">

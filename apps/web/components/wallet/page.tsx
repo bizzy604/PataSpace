@@ -76,30 +76,30 @@ export function WalletBuyPage() {
       actions={<Link href="/wallet" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>Back to wallet</Link>}
     >
       <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-        <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+        <Card className="border border-border bg-card shadow-sm">
           <CardHeader>
-            <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">Payment summary</CardTitle>
-            <CardDescription className="text-sm leading-7 text-[#62686a]">
+            <CardTitle className="text-3xl font-semibold text-foreground">Payment summary</CardTitle>
+            <CardDescription className="text-sm leading-7 text-muted-foreground">
               Confirm the package and phone number before the STK prompt is issued to your device.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="rounded-[28px] border border-black/8 bg-[#252525] p-5 text-white">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/56">Selected package</p>
-                <p className="mt-3 font-display text-3xl font-semibold tracking-[-0.06em]">{selectedPkg?.name}</p>
-                <div className="mt-4 grid gap-3 text-sm text-white/74 sm:grid-cols-2">
-                  <p className="rounded-[18px] border border-white/10 bg-white/6 px-4 py-3">Amount: {formatKes(selectedPkg?.amount ?? 0)}</p>
-                  <p className="rounded-[18px] border border-white/10 bg-white/6 px-4 py-3">Credits: {selectedPkg?.credits}</p>
+              <div className="border border-border bg-foreground p-5 text-background">
+                <p className="text-xs font-semibold uppercase tracking-widest text-background/60">Selected package</p>
+                <p className="mt-3 text-3xl font-semibold">{selectedPkg?.name}</p>
+                <div className="mt-4 grid gap-3 text-sm text-background/70 sm:grid-cols-2">
+                  <p className="border border-background/10 bg-background/10 px-4 py-3">Amount: {formatKes(selectedPkg?.amount ?? 0)}</p>
+                  <p className="border border-background/10 bg-background/10 px-4 py-3">Credits: {selectedPkg?.credits}</p>
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-[#252525]">
+                <label className="text-sm font-medium text-foreground">
                   M-Pesa phone number
                 </label>
                 <Input
-                  className="h-11 rounded-2xl"
+                  className="h-11"
                   placeholder="0712 345 678 or +254712345678"
                   type="tel"
                   value={phone}
@@ -107,18 +107,18 @@ export function WalletBuyPage() {
                   required
                   disabled={loading}
                 />
-                <p className="text-xs text-[#62686a]">Kenyan number — local (07…) or international (+254…) format accepted.</p>
+                <p className="text-xs text-muted-foreground">Kenyan number — local (07…) or international (+254…) format accepted.</p>
               </div>
 
               {error ? (
-                <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p>
+                <p className="border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</p>
               ) : null}
 
-              <div className="rounded-[24px] border border-[#28809A]/14 bg-[#28809A]/7 p-5">
-                <p className="inline-flex items-center gap-2 font-medium text-[#252525]">
-                  <Smartphone className="size-4 text-[#28809A]" /> How it works
+              <div className="border border-primary/20 bg-primary/5 p-5">
+                <p className="inline-flex items-center gap-2 font-medium text-foreground">
+                  <Smartphone className="size-4 text-primary" /> How it works
                 </p>
-                <div className="mt-4 space-y-3 text-sm leading-7 text-[#4b4f50]">
+                <div className="mt-4 space-y-3 text-sm leading-7 text-muted-foreground">
                   <p>1. Confirm the phone number that should receive the STK prompt.</p>
                   <p>2. Approve the payment on your device using your M-Pesa PIN.</p>
                   <p>3. The wallet ledger updates immediately when the callback completes.</p>
@@ -142,10 +142,10 @@ export function WalletBuyPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+        <Card className="border border-border bg-card shadow-sm">
           <CardHeader>
-            <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">Available packages</CardTitle>
-            <CardDescription className="text-sm leading-7 text-[#62686a]">
+            <CardTitle className="text-3xl font-semibold text-foreground">Available packages</CardTitle>
+            <CardDescription className="text-sm leading-7 text-muted-foreground">
               Click a package to select it, then enter your phone number above.
             </CardDescription>
           </CardHeader>
@@ -159,26 +159,26 @@ export function WalletBuyPage() {
                   type="button"
                   onClick={() => setSelectedId(pkg.id)}
                   className={cn(
-                    'w-full rounded-[24px] border p-4 text-left transition',
+                    'w-full border p-4 text-left transition',
                     isSelected
-                      ? 'border-[#28809A] bg-[#28809A]/8 ring-1 ring-[#28809A]/40'
-                      : 'border-black/8 bg-[#fbfaf7] hover:border-[#28809A]/30 hover:bg-white',
+                      ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
+                      : 'border-border bg-muted hover:border-primary/30 hover:bg-card',
                   )}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <p className="font-medium text-[#252525]">{pkg.name}</p>
-                      <p className="text-sm leading-7 text-[#62686a]">{pkg.description}</p>
+                      <p className="font-medium text-foreground">{pkg.name}</p>
+                      <p className="text-sm leading-7 text-muted-foreground">{pkg.description}</p>
                     </div>
                     {isSelected ? (
-                      <CheckCircle2 className="size-5 text-[#28809A]" />
+                      <CheckCircle2 className="size-5 text-primary" />
                     ) : isRecommended ? (
-                      <span className="rounded-full bg-[#28809A]/10 px-2.5 py-1 text-xs font-semibold text-[#28809A]">Recommended</span>
+                      <span className="border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">Recommended</span>
                     ) : null}
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-2 text-sm text-[#4b4f50]">
-                    <span className="rounded-full border border-black/8 bg-white px-3 py-1">{formatKes(pkg.amount)}</span>
-                    <span className="rounded-full border border-black/8 bg-white px-3 py-1">{pkg.credits} credits</span>
+                  <div className="mt-3 flex flex-wrap gap-2 text-sm text-muted-foreground">
+                    <span className="border border-border bg-card px-3 py-1">{formatKes(pkg.amount)}</span>
+                    <span className="border border-border bg-card px-3 py-1">{pkg.credits} credits</span>
                   </div>
                 </button>
               );

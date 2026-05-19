@@ -7,7 +7,7 @@ import {
   ShieldAlert,
   Wallet,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { PublicSiteFrame } from '@/components/shared/public-site-frame';
 import { ScreenHero } from '@/components/shared/screen-hero';
 import { linkButtonClass } from '@/lib/link-button';
@@ -69,21 +69,21 @@ export default function Page() {
           {steps.map((step, index) => (
             <Card
               key={step.title}
-              className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]"
+              className="border border-border bg-card shadow-sm"
             >
               <CardHeader>
                 <div className="flex items-center justify-between gap-4">
-                  <span className="flex size-12 items-center justify-center rounded-2xl bg-[#28809A]/10 text-[#28809A]">
+                  <span className="flex size-12 items-center justify-center border border-border bg-primary/10 text-primary">
                     <step.Icon className="size-5" />
                   </span>
-                  <span className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7b8081]">
+                  <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                     Step {index + 1}
                   </span>
                 </div>
-                <CardTitle className="font-display text-2xl font-semibold tracking-[-0.05em] text-[#252525]">
+                <CardTitle className="text-2xl font-semibold text-foreground">
                   {step.title}
                 </CardTitle>
-                <CardDescription className="text-sm leading-7 text-[#62686a]">
+                <CardDescription className="text-sm leading-7 text-muted-foreground">
                   {step.body}
                 </CardDescription>
               </CardHeader>

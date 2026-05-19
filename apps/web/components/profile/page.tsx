@@ -31,28 +31,28 @@ export function SettingsPage() {
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-6">
           {settingsSections.map((section) => (
-            <Card key={section.title} className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+            <Card key={section.title} className="border border-border bg-card shadow-sm">
               <CardHeader>
-                <CardTitle className="font-display text-2xl font-semibold tracking-[-0.05em] text-[#252525]">{section.title}</CardTitle>
+                <CardTitle className="text-2xl font-semibold text-foreground">{section.title}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {section.rows.map(([label, value]) => (
-                  <div key={label} className="flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-black/8 bg-[#fbfaf7] px-4 py-3 text-sm">
-                    <span className="font-medium text-[#252525]">{label}</span>
-                    <span className="text-[#62686a]">{value}</span>
+                  <div key={label} className="flex flex-wrap items-center justify-between gap-3 border border-border bg-muted px-4 py-3 text-sm">
+                    <span className="font-medium text-foreground">{label}</span>
+                    <span className="text-muted-foreground">{value}</span>
                   </div>
                 ))}
               </CardContent>
             </Card>
           ))}
         </div>
-        <Card className="border border-black/8 bg-[#252525] text-white shadow-[0_24px_80px_rgba(37,37,37,0.18)]">
+        <Card className="border border-border bg-foreground text-background shadow-sm">
           <CardHeader>
-            <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-white">Security notes</CardTitle>
+            <CardTitle className="text-3xl font-semibold text-background">Security notes</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 text-sm leading-7 text-white/76">
-            <p className="inline-flex items-center gap-2 font-medium text-white">
-              <LockKeyhole className="size-4 text-[#8ed7e7]" /> Sensitive contact stays protected
+          <CardContent className="space-y-4 text-sm leading-7 text-background/76">
+            <p className="inline-flex items-center gap-2 font-medium text-background">
+              <LockKeyhole className="size-4 text-primary" /> Sensitive contact stays protected
             </p>
             <p>Address, phone number, and exact map data are protected behind the unlock step.</p>
             <p>Settings here support that same privacy model while keeping notifications useful for payments, unlocks, and support follow-up.</p>

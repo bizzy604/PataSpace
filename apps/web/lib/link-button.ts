@@ -2,15 +2,15 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 export const linkButtonVariants = cva(
-  'inline-flex shrink-0 items-center justify-center rounded-full border border-transparent text-sm font-semibold tracking-[-0.01em] whitespace-nowrap transition-[transform,background-color,border-color,color,box-shadow] duration-200 active:translate-y-px',
+  'inline-flex shrink-0 items-center justify-center border text-sm font-semibold whitespace-nowrap transition-[transform,background-color,border-color,color,box-shadow] duration-150 active:translate-y-px',
   {
     variants: {
       variant: {
         default:
-          'bg-primary text-primary-foreground shadow-soft-sm hover:-translate-y-px hover:bg-[var(--hig-color-accent-hover)] hover:shadow-soft-md',
+          'border-transparent bg-primary text-primary-foreground shadow-sm hover:-translate-y-px hover:shadow-md',
         outline:
-          'border-separator bg-card text-foreground shadow-soft-sm backdrop-blur-xl hover:-translate-y-px hover:border-separator-strong hover:bg-surface-elevated',
-        ghost: 'text-foreground-secondary hover:bg-fill-soft hover:text-foreground',
+          'border-border bg-card text-foreground shadow-sm hover:-translate-y-px hover:shadow-md hover:bg-muted',
+        ghost: 'border-transparent text-muted-foreground hover:bg-muted hover:text-foreground',
       },
       size: {
         default: 'h-12 gap-2 px-6',

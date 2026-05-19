@@ -34,8 +34,8 @@ const columns: ColumnDef<MyUnlockRecord>[] = [
 
       return (
         <div className="space-y-2">
-          <p className="font-medium text-[#252525]">{title}</p>
-          <p className="text-sm text-[#62686a]">
+          <p className="font-medium text-foreground">{title}</p>
+          <p className="text-sm text-muted-foreground">
             {listing.neighborhood} • {formatKes(listing.monthlyRent)}
           </p>
         </div>
@@ -54,7 +54,7 @@ const columns: ColumnDef<MyUnlockRecord>[] = [
     accessorKey: 'creditsSpent',
     header: 'Credits spent',
     cell: ({ row }) => (
-      <p className="font-medium text-[#252525]">{formatKes(row.original.creditsSpent)}</p>
+      <p className="font-medium text-foreground">{formatKes(row.original.creditsSpent)}</p>
     ),
   },
   {
@@ -62,8 +62,8 @@ const columns: ColumnDef<MyUnlockRecord>[] = [
     header: 'Unlocked on',
     cell: ({ row }) => (
       <div>
-        <p className="font-medium text-[#252525]">{formatDateLabel(row.original.createdAt)}</p>
-        <p className="text-sm text-[#62686a]">
+        <p className="font-medium text-foreground">{formatDateLabel(row.original.createdAt)}</p>
+        <p className="text-sm text-muted-foreground">
           {confirmationLabel(row.original.myConfirmation, row.original.tenantConfirmation)}
         </p>
       </div>

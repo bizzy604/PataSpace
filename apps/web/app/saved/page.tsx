@@ -60,12 +60,12 @@ export default function Page() {
           ))}
         </div>
       ) : (
-        <Card className="mt-6 border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+        <Card className="mt-6 border border-border bg-card shadow-sm">
           <CardHeader>
-            <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
+            <CardTitle className="text-3xl font-semibold text-foreground">
               No saved listings yet
             </CardTitle>
-            <CardDescription className="text-sm leading-7 text-[#62686a]">
+            <CardDescription className="text-sm leading-7 text-muted-foreground">
               Use browse or search to build a shortlist before spending credits.
             </CardDescription>
           </CardHeader>

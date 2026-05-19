@@ -35,22 +35,22 @@ export default async function Page({
       }
     >
       <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-        <Card className="border border-black/8 bg-white shadow-[0_24px_80px_rgba(37,37,37,0.08)]">
+        <Card className="border border-border bg-card shadow-sm">
           <CardHeader>
             <div className="flex flex-wrap items-center gap-3">
               <StatusBadge label={type.label} tone={type.tone} />
               <StatusBadge label={status.label} tone={status.tone} />
             </div>
-            <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#252525]">
+            <CardTitle className="text-3xl font-semibold text-foreground">
               {transaction.description}
             </CardTitle>
-            <CardDescription className="text-sm leading-7 text-[#62686a]">
+            <CardDescription className="text-sm leading-7 text-muted-foreground">
               Created on {formatDateLabel(transaction.createdAt)}.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 text-sm leading-7 text-[#62686a]">
-            <div className="rounded-[24px] border border-black/8 bg-[#f7f4ee] p-5">
-              <p className="font-display text-4xl font-semibold tracking-[-0.07em] text-[#252525]">
+          <CardContent className="space-y-4 text-sm leading-7 text-muted-foreground">
+            <div className="border border-border bg-muted p-5">
+              <p className="text-4xl font-semibold text-foreground">
                 {transaction.amount < 0 ? '-' : '+'}
                 {formatKes(Math.abs(transaction.amount))}
               </p>
@@ -58,9 +58,9 @@ export default async function Page({
               <p>Balance after: {formatKes(transaction.balanceAfter)}</p>
             </div>
 
-            <div className="rounded-[24px] border border-black/8 bg-[#fbfaf7] p-5">
-              <p className="inline-flex items-center gap-2 font-medium text-[#252525]">
-                <ReceiptText className="size-4 text-[#28809A]" />
+            <div className="border border-border bg-muted p-5">
+              <p className="inline-flex items-center gap-2 font-medium text-foreground">
+                <ReceiptText className="size-4 text-primary" />
                 Payment metadata
               </p>
               <p className="mt-3">Transaction id: {transaction.id}</p>
@@ -70,15 +70,15 @@ export default async function Page({
           </CardContent>
         </Card>
 
-        <Card className="border border-black/8 bg-[#252525] text-white shadow-[0_24px_80px_rgba(37,37,37,0.18)]">
+        <Card className="border border-border bg-foreground text-background shadow-sm">
           <CardHeader>
-            <CardTitle className="font-display text-3xl font-semibold tracking-[-0.06em] text-white">
+            <CardTitle className="text-3xl font-semibold text-background">
               Ledger context
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 text-sm leading-7 text-white/76">
-            <p className="inline-flex items-center gap-2 font-medium text-white">
-              <Wallet2 className="size-4 text-[#8ed7e7]" />
+          <CardContent className="space-y-4 text-sm leading-7 text-background/76">
+            <p className="inline-flex items-center gap-2 font-medium text-background">
+              <Wallet2 className="size-4 text-primary" />
               Why this matters
             </p>
             <p>

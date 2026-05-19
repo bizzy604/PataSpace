@@ -2,22 +2,14 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { ClerkProvider } from '@clerk/nextjs';
 import { shadcn } from '@clerk/ui/themes';
-import { DM_Sans, Playfair_Display } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import { ReactNode } from 'react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
-const dmSans = DM_Sans({
+const inter = Inter({
   subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700', '800'],
+  variable: '--font-inter',
   display: 'swap',
-  variable: '--font-dm-sans',
-});
-
-const playfairDisplay = Playfair_Display({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800', '900'],
-  display: 'swap',
-  variable: '--font-playfair-display',
 });
 
 export const metadata: Metadata = {
@@ -32,7 +24,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${playfairDisplay.variable}`}>
+    <html lang="en" className={inter.variable}>
       <body className="font-sans antialiased">
         <ClerkProvider
           appearance={{ theme: shadcn }}
@@ -45,7 +37,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <TooltipProvider>
             <a
               href="#main-content"
-              className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-card focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-foreground"
+              className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-card focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-foreground"
             >
               Skip to content
             </a>
