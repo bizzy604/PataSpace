@@ -138,6 +138,14 @@ export function UnlockDetailPage({
           >
             Confirm move-in
           </Link>
+          {unlock.status === 'confirmed' ? (
+            <Link
+              href={`/unlocks/${unlock.unlockId}/review`}
+              className={linkButtonClass({ size: 'sm' })}
+            >
+              Rate experience
+            </Link>
+          ) : null}
           <Link
             href={`/unlocks/${unlock.unlockId}/dispute`}
             className={linkButtonClass({ variant: 'outline', size: 'sm' })}

@@ -73,6 +73,30 @@ export class ReferralService {
     }
   }
 
+  /**
+   * Marks any INVITED referrals for this phone hash as JOINED with the
+   * verified user attached. Returns the number of rows linked (0 or 1 in
+   * practice — the unique index on (referrerId, inviteePhoneHash) keeps a
+   * tenant from being double-invited by the same referrer, and we only
+   * promote rows that are still in INVITED state).
+   */
+  async linkPendingReferral(phoneNumberHash: string, refereeUserId: string) {
+    const result = await this.prismaService.referral.updateMany({
+      where: {
+        inviteePhoneHash: phoneNumberHash,
+        status: PrismaReferralStatus.INVITED,
+        refereeUserId: null,
+        NOT: { referrerId: refereeUserId },
+      },
+      data: {
+        status: PrismaReferralStatus.JOINED,
+        refereeUserId,
+        joinedAt: new Date(),
+      },
+    });
+    return result.count;
+  }
+
   async listMyReferrals(
     referrerId: string,
     page: number,

@@ -16,10 +16,12 @@ describe('CommissionPayoutJob', () => {
       auditLog: {
         create: jest.fn(),
       },
+      $queryRaw: jest.fn(),
       $transaction: jest.fn(async (callback: (tx: any) => unknown) => callback(prismaService)),
     };
     const mpesaClient = {
       b2c: jest.fn(),
+      queryB2CTransaction: jest.fn().mockResolvedValue({ outcome: 'pending' }),
     };
     const smsService = {
       sendMessage: jest.fn(),
@@ -55,6 +57,7 @@ describe('CommissionPayoutJob', () => {
         id: 'commission_1',
         amountKES: 750,
         paymentAttempts: 0,
+        originatorConversationId: null,
         unlock: {
           dispute: null,
           listing: {
@@ -96,10 +99,70 @@ describe('CommissionPayoutJob', () => {
         paidAt: now,
       }),
     });
+    expect(prismaService.commission.update).toHaveBeenCalledWith({
+      where: { id: 'commission_1' },
+      data: expect.objectContaining({
+        originatorConversationId: expect.stringMatching(/^pataspace-/),
+      }),
+    });
+    expect(mpesaClient.b2c).toHaveBeenCalledWith(
+      expect.objectContaining({
+        originatorConversationId: expect.stringMatching(/^pataspace-/),
+      }),
+    );
     expect(smsService.sendMessage).toHaveBeenCalledWith(
       '+254700000001',
       expect.stringContaining("You've received 750 KES"),
     );
+  });
+
+  it('reuses an existing OriginatorConversationID on retry so Safaricom can dedupe', async () => {
+    const { job, mpesaClient, prismaService } = createJob();
+    const now = new Date('2026-04-02T06:00:00.000Z');
+
+    prismaService.commission.updateMany
+      .mockResolvedValueOnce({ count: 0 })
+      .mockResolvedValueOnce({ count: 0 })
+      .mockResolvedValueOnce({ count: 1 });
+    prismaService.commission.findMany.mockResolvedValue([
+      {
+        id: 'commission_retry',
+        unlockId: 'unlock_retry',
+        amountKES: 750,
+        paymentAttempts: 1,
+        originatorConversationId: 'pataspace-existing-id',
+        unlock: {
+          dispute: null,
+          listing: {
+            id: 'listing_retry',
+            neighborhood: 'Kilimani',
+            user: {
+              phoneNumberEncrypted: 'encrypted-phone',
+            },
+          },
+        },
+      },
+    ]);
+    mpesaClient.b2c.mockResolvedValue({
+      conversationId: 'conv_retry',
+      originatorConversationId: 'pataspace-existing-id',
+      responseCode: '0',
+      responseDescription: 'ok',
+    });
+
+    await job.processCommissionPayouts(now);
+
+    expect(mpesaClient.b2c).toHaveBeenCalledWith(
+      expect.objectContaining({
+        originatorConversationId: 'pataspace-existing-id',
+      }),
+    );
+    const idAssignmentCall = prismaService.commission.update.mock.calls.find(
+      ([arg]: [{ data?: Record<string, unknown> }]) =>
+        typeof arg.data?.originatorConversationId === 'string' &&
+        arg.data?.status === undefined,
+    );
+    expect(idAssignmentCall).toBeUndefined();
   });
 
   it('requeues transient payout failures and dead-letters terminal ones', async () => {
@@ -116,6 +179,7 @@ describe('CommissionPayoutJob', () => {
         id: 'commission_retry',
         amountKES: 750,
         paymentAttempts: 1,
+        originatorConversationId: 'pataspace-existing-retry',
         unlock: {
           dispute: null,
           listing: {
@@ -131,6 +195,7 @@ describe('CommissionPayoutJob', () => {
         id: 'commission_dead',
         amountKES: 900,
         paymentAttempts: 2,
+        originatorConversationId: 'pataspace-existing-dead',
         unlock: {
           dispute: null,
           listing: {
@@ -151,8 +216,7 @@ describe('CommissionPayoutJob', () => {
 
     expect(summary.retried).toBe(1);
     expect(summary.deadLettered).toBe(1);
-    expect(prismaService.commission.update).toHaveBeenNthCalledWith(
-      1,
+    expect(prismaService.commission.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
           id: 'commission_retry',
@@ -163,8 +227,7 @@ describe('CommissionPayoutJob', () => {
         }),
       }),
     );
-    expect(prismaService.commission.update).toHaveBeenNthCalledWith(
-      2,
+    expect(prismaService.commission.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
           id: 'commission_dead',
@@ -292,5 +355,181 @@ describe('CommissionPayoutJob', () => {
         }),
       }),
     );
+  });
+
+  describe('B2C query on retry', () => {
+    it('short-circuits to PAID when Safaricom confirms a previous successful payout', async () => {
+      const { job, prismaService, mpesaClient, smsService } = createJob();
+      const now = new Date('2026-04-02T09:00:00.000Z');
+
+      prismaService.commission.updateMany
+        .mockResolvedValueOnce({ count: 0 })
+        .mockResolvedValueOnce({ count: 0 })
+        .mockResolvedValueOnce({ count: 1 });
+      prismaService.commission.findMany.mockResolvedValue([
+        {
+          id: 'commission_recovered',
+          unlockId: 'unlock_1',
+          amountKES: 750,
+          paymentAttempts: 1,
+          originatorConversationId: 'pataspace-existing',
+          unlock: {
+            dispute: null,
+            listing: {
+              id: 'listing_1',
+              neighborhood: 'Kilimani',
+              user: { phoneNumberEncrypted: 'encrypted-phone' },
+            },
+          },
+        },
+      ]);
+      mpesaClient.queryB2CTransaction.mockResolvedValue({
+        outcome: 'success',
+        conversationId: 'conv_from_query',
+        mpesaReceiptNumber: 'RCK123ABC',
+      });
+
+      const summary = await job.processCommissionPayouts(now);
+
+      expect(mpesaClient.b2c).not.toHaveBeenCalled();
+      expect(summary.paid).toBe(1);
+      expect(prismaService.commission.update).toHaveBeenCalledWith({
+        where: { id: 'commission_recovered' },
+        data: expect.objectContaining({
+          status: CommissionStatus.PAID,
+          mpesaTransactionId: 'conv_from_query',
+          mpesaReceiptNumber: 'RCK123ABC',
+          paidAt: now,
+        }),
+      });
+      expect(smsService.sendMessage).toHaveBeenCalledWith(
+        '+254700000001',
+        expect.stringContaining("You've received 750 KES"),
+      );
+    });
+
+    it('dead-letters immediately when the query confirms a terminal failure', async () => {
+      const { job, prismaService, mpesaClient } = createJob();
+      const now = new Date('2026-04-02T09:00:00.000Z');
+
+      prismaService.commission.updateMany
+        .mockResolvedValueOnce({ count: 0 })
+        .mockResolvedValueOnce({ count: 0 })
+        .mockResolvedValueOnce({ count: 1 });
+      prismaService.commission.findMany.mockResolvedValue([
+        {
+          id: 'commission_failed_via_query',
+          unlockId: 'unlock_1',
+          amountKES: 750,
+          paymentAttempts: 1,
+          originatorConversationId: 'pataspace-existing',
+          unlock: {
+            dispute: null,
+            listing: {
+              id: 'listing_1',
+              neighborhood: 'Kilimani',
+              user: { phoneNumberEncrypted: 'encrypted-phone' },
+            },
+          },
+        },
+      ]);
+      mpesaClient.queryB2CTransaction.mockResolvedValue({
+        outcome: 'failed',
+        resultDesc: 'Account closed',
+      });
+
+      const summary = await job.processCommissionPayouts(now);
+
+      expect(mpesaClient.b2c).not.toHaveBeenCalled();
+      expect(summary.deadLettered).toBe(1);
+      expect(prismaService.commission.update).toHaveBeenCalledWith({
+        where: { id: 'commission_failed_via_query' },
+        data: expect.objectContaining({
+          status: CommissionStatus.FAILED,
+          lastAttemptError: 'Account closed',
+        }),
+      });
+    });
+
+    it('falls through to B2C re-issue when the query is pending', async () => {
+      const { job, prismaService, mpesaClient } = createJob();
+      const now = new Date('2026-04-02T09:00:00.000Z');
+
+      prismaService.commission.updateMany
+        .mockResolvedValueOnce({ count: 0 })
+        .mockResolvedValueOnce({ count: 0 })
+        .mockResolvedValueOnce({ count: 1 });
+      prismaService.commission.findMany.mockResolvedValue([
+        {
+          id: 'commission_pending',
+          unlockId: 'unlock_1',
+          amountKES: 750,
+          paymentAttempts: 1,
+          originatorConversationId: 'pataspace-existing',
+          unlock: {
+            dispute: null,
+            listing: {
+              id: 'listing_1',
+              neighborhood: 'Kilimani',
+              user: { phoneNumberEncrypted: 'encrypted-phone' },
+            },
+          },
+        },
+      ]);
+      mpesaClient.queryB2CTransaction.mockResolvedValue({ outcome: 'pending' });
+      mpesaClient.b2c.mockResolvedValue({
+        conversationId: 'conv_reissued',
+        originatorConversationId: 'pataspace-existing',
+        responseCode: '0',
+        responseDescription: 'ok',
+      });
+
+      const summary = await job.processCommissionPayouts(now);
+
+      expect(mpesaClient.b2c).toHaveBeenCalledWith(
+        expect.objectContaining({ originatorConversationId: 'pataspace-existing' }),
+      );
+      expect(summary.paid).toBe(1);
+    });
+  });
+
+  describe('handleCommissionPayouts (advisory-lock gated entry point)', () => {
+    it('skips processing when the advisory lock is held by another replica', async () => {
+      const { job, prismaService } = createJob();
+      prismaService.$queryRaw.mockResolvedValueOnce([{ pg_try_advisory_lock: false }]);
+
+      const result = await job.handleCommissionPayouts();
+
+      expect(result).toBeNull();
+      expect(prismaService.commission.findMany).not.toHaveBeenCalled();
+      expect(prismaService.commission.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('acquires the lock, processes the batch, and releases the lock on completion', async () => {
+      const { job, prismaService } = createJob();
+      prismaService.$queryRaw
+        .mockResolvedValueOnce([{ pg_try_advisory_lock: true }])
+        .mockResolvedValueOnce([{ pg_advisory_unlock: true }]);
+      prismaService.commission.updateMany
+        .mockResolvedValueOnce({ count: 0 })
+        .mockResolvedValueOnce({ count: 0 });
+      prismaService.commission.findMany.mockResolvedValue([]);
+
+      const result = await job.handleCommissionPayouts();
+
+      expect(result).not.toBeNull();
+      expect(prismaService.$queryRaw).toHaveBeenCalledTimes(2);
+    });
+
+    it('releases the lock even if the inner run throws', async () => {
+      const { job, prismaService } = createJob();
+      prismaService.$queryRaw
+        .mockResolvedValueOnce([{ pg_try_advisory_lock: true }])
+        .mockResolvedValueOnce([{ pg_advisory_unlock: true }]);
+      prismaService.commission.updateMany.mockRejectedValue(new Error('db down'));
+
+      await expect(job.handleCommissionPayouts()).rejects.toThrow('db down');
+      expect(prismaService.$queryRaw).toHaveBeenCalledTimes(2);
+    });
   });
 });

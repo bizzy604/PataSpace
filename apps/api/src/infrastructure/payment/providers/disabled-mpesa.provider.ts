@@ -1,4 +1,6 @@
 import {
+  MpesaB2CQueryRequest,
+  MpesaB2CQueryResponse,
   MpesaB2CRequest,
   MpesaB2CResponse,
   MpesaProvider,
@@ -21,6 +23,10 @@ export class DisabledMpesaProvider implements MpesaProvider {
 
   async queryStkPush(_payload: MpesaStkQueryRequest): Promise<MpesaStkQueryResponse> {
     throw new Error(`${this.provider} M-Pesa provider cannot query STK status yet.`);
+  }
+
+  async queryB2CTransaction(_payload: MpesaB2CQueryRequest): Promise<MpesaB2CQueryResponse> {
+    return { outcome: 'unsupported' };
   }
 
   async healthCheck() {

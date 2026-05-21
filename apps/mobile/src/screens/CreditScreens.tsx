@@ -406,11 +406,25 @@ export function DisputeScreen() {
   );
 }
 
+function referralStatusLabel(status: string): string {
+  if (status === 'INVITED') return 'Invite sent';
+  if (status === 'JOINED') return 'Joined — reward pending purchase';
+  if (status === 'REWARDED') return 'Rewarded';
+  return status;
+}
+
 export function ReferralScreen() {
   const [phone, setPhone] = useState('0700123456');
   const [sent, setSent] = useState(false);
   const [errorText, setErrorText] = useState<string | null>(null);
-  const { referralCode, referralHighlights, sendReferralInvite } = useMobileApp();
+  const {
+    referralCode,
+    referralHighlights,
+    sendReferralInvite,
+    referrals,
+    rewardedReferralCount,
+    refreshReferrals,
+  } = useMobileApp();
 
   return (
     <Screen>
@@ -424,6 +438,17 @@ export function ReferralScreen() {
         <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">Referral code</Text>
         <Text className="mt-2 text-[28px] font-semibold tracking-[1px] text-foreground">{referralCode}</Text>
       </Card>
+
+      <View className="flex-row gap-3">
+        <Card className="flex-1">
+          <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">Invites</Text>
+          <Text className="mt-2 text-[24px] font-semibold text-foreground">{referrals.length}</Text>
+        </Card>
+        <Card className="flex-1">
+          <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">Rewarded</Text>
+          <Text className="mt-2 text-[24px] font-semibold text-foreground">{rewardedReferralCount}</Text>
+        </Card>
+      </View>
 
       <View className="gap-3">
         {referralHighlights.map((item) => (
@@ -468,6 +493,39 @@ export function ReferralScreen() {
           }
         }}
       />
+
+      <View className="flex-row items-center justify-between gap-3">
+        <Text className="text-sm font-semibold text-foreground">Your invites</Text>
+        <Pressable onPress={() => refreshReferrals()}>
+          <Text className="text-sm text-primary">Refresh</Text>
+        </Pressable>
+      </View>
+
+      {referrals.length === 0 ? (
+        <Card>
+          <CardDescription>
+            No invites yet. Use the form above to invite a friend.
+          </CardDescription>
+        </Card>
+      ) : (
+        <View className="gap-2">
+          {referrals.map((entry) => (
+            <Card key={entry.id} className="px-4 py-3">
+              <View className="flex-row items-center justify-between gap-3">
+                <Text className="text-sm font-semibold text-foreground">
+                  {entry.inviteePhoneMasked}
+                </Text>
+                <Badge variant={entry.status === 'REWARDED' ? 'dark' : 'secondary'}>
+                  {entry.status}
+                </Badge>
+              </View>
+              <Text className="mt-1 text-xs text-muted-foreground">
+                {referralStatusLabel(entry.status)}
+              </Text>
+            </Card>
+          ))}
+        </View>
+      )}
     </Screen>
   );
 }

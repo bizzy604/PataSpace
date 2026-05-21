@@ -1,6 +1,8 @@
 import { Buffer } from 'buffer';
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, isAxiosError } from 'axios';
 import {
+  MpesaB2CQueryRequest,
+  MpesaB2CQueryResponse,
   MpesaB2CRequest,
   MpesaB2CResponse,
   MpesaProvider,
@@ -75,10 +77,12 @@ export class LiveMpesaProvider implements MpesaProvider {
 
   async b2c(payload: MpesaB2CRequest): Promise<MpesaB2CResponse> {
     const accessToken = await this.getAccessToken();
+    const originatorConversationId =
+      payload.originatorConversationId ?? `pataspace_${Date.now()}`;
     const response = await this.httpClient.post(
       '/mpesa/b2c/v3/paymentrequest',
       {
-        OriginatorConversationID: `pataspace_${Date.now()}`,
+        OriginatorConversationID: originatorConversationId,
         InitiatorName: this.config.initiatorName,
         SecurityCredential: this.config.securityCredential,
         CommandID: 'BusinessPayment',
@@ -99,10 +103,58 @@ export class LiveMpesaProvider implements MpesaProvider {
 
     return {
       conversationId: response.data.ConversationID,
-      originatorConversationId: response.data.OriginatorConversationID,
+      originatorConversationId:
+        response.data.OriginatorConversationID ?? originatorConversationId,
       responseCode: response.data.ResponseCode,
       responseDescription: response.data.ResponseDescription,
     };
+  }
+
+  async queryB2CTransaction(
+    payload: MpesaB2CQueryRequest,
+  ): Promise<MpesaB2CQueryResponse> {
+    try {
+      const accessToken = await this.getAccessToken();
+      const response = await this.httpClient.post(
+        '/mpesa/transactionstatus/v1/query',
+        {
+          Initiator: this.config.initiatorName,
+          SecurityCredential: this.config.securityCredential,
+          CommandID: 'TransactionStatusQuery',
+          OriginatorConversationID: payload.originatorConversationId,
+          PartyA: this.config.shortcode,
+          IdentifierType: '4',
+          Remarks: 'PataSpace payout status check',
+          QueueTimeOutURL: this.config.timeoutUrl,
+          ResultURL: this.config.resultUrl,
+          Occasion: 'PataSpace payout status check',
+        },
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        },
+      );
+
+      const resultCode = Number(response.data?.ResultCode ?? -1);
+      // Daraja returns 0 only when the transaction was located AND completed.
+      // Any other code means it's still in flight, missing, or failed —
+      // safer to surface as pending so the caller retries or re-queries.
+      const outcome: MpesaB2CQueryResponse['outcome'] = resultCode === 0 ? 'success' : 'pending';
+
+      return {
+        outcome,
+        conversationId: response.data?.ConversationID,
+        mpesaReceiptNumber: response.data?.TransactionID ?? response.data?.MpesaReceiptNumber,
+        resultDesc:
+          response.data?.ResultDesc ?? response.data?.ResponseDescription,
+      };
+    } catch (error) {
+      // 404-style failures from Daraja mean "not found", which we cannot
+      // distinguish from a B2C that was never accepted — caller should retry.
+      if (isAxiosError(error) && error.response?.status === 404) {
+        return { outcome: 'pending' };
+      }
+      throw error;
+    }
   }
 
   async queryStkPush(payload: MpesaStkQueryRequest) {

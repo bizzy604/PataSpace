@@ -131,15 +131,21 @@ describe('AuthService', () => {
       }),
     };
 
+    const referralService = {
+      linkPendingReferral: jest.fn().mockResolvedValue(0),
+    };
+
     return {
       jwtService,
       prismaService,
+      referralService,
       service: new AuthService(
         prismaService as never,
         jwtService as never,
         configService as never,
         smsService as never,
         userService as never,
+        referralService as never,
       ),
       smsService,
       transactionClient,

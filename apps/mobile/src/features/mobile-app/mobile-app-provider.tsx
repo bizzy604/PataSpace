@@ -51,8 +51,19 @@ import { fetchCreditBalance, purchaseCredits } from '@/lib/api/credits';
 import { createDispute as createDisputeApi } from '@/lib/api/disputes';
 import { createSupportTicket as createSupportTicketApi } from '@/lib/api/support';
 import { createReview as createReviewApi } from '@/lib/api/reviews';
-import { createReferral as createReferralApi } from '@/lib/api/referrals';
-import { ConfirmationSide, ListingHouseType, ListingStatus, type CreditPurchasePackage } from '@pataspace/contracts';
+import { createReferral as createReferralApi, fetchMyReferrals } from '@/lib/api/referrals';
+import {
+  fetchMySavedListings,
+  saveListing as saveListingApi,
+  unsaveListing as unsaveListingApi,
+} from '@/lib/api/saved-listings';
+import {
+  ConfirmationSide,
+  ListingHouseType,
+  ListingStatus,
+  type CreditPurchasePackage,
+  type ReferralRecord,
+} from '@pataspace/contracts';
 import { useMobileApiSync } from './use-mobile-api-sync';
 
 type PendingTopUp = {
@@ -95,6 +106,8 @@ type MobileAppContextValue = {
   referralHighlights: string[];
   confirmationStages: typeof confirmationStages;
   referralCode: string;
+  referrals: ReferralRecord[];
+  rewardedReferralCount: number;
   getListingById: (id?: string | string[]) => ListingPreview | undefined;
   getUnlockRecord: (listingId?: string | string[]) => UnlockRecord | undefined;
   isListingSaved: (listingId: string) => boolean;
@@ -103,7 +116,7 @@ type MobileAppContextValue = {
   updateProfile: (profile: Partial<UserProfile>) => void;
   updateSettings: (settings: Partial<AppSettings>) => void;
   setColorSchemePreference: (scheme: AppColorScheme) => void;
-  toggleSaved: (listingId: string) => void;
+  toggleSaved: (listingId: string) => Promise<void>;
   updateSearchFilters: (filters: Partial<SearchFilters>) => void;
   resetSearchFilters: () => void;
   addDraftPhoto: (photo: ListingDraftPhoto) => void;
@@ -124,6 +137,7 @@ type MobileAppContextValue = {
   submitDispute: (subject: string, detail: string) => void;
   submitDisputeForUnlock: (unlockId: string, subject: string, detail: string) => Promise<'success' | 'already_filed' | 'error'>;
   sendReferralInvite: (phone: string) => Promise<'success' | 'already_invited' | 'self' | 'error'>;
+  refreshReferrals: () => Promise<void>;
 };
 
 const MobileAppContext = createContext<MobileAppContextValue | null>(null);
@@ -218,12 +232,23 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState(initialNotifications);
   const [pendingTopUp, setPendingTopUp] = useState<PendingTopUp | null>(null);
   const [draft, setDraft] = useState(initialDraft);
+  const [referrals, setReferrals] = useState<ReferralRecord[]>([]);
   const [searchFilters, setSearchFilters] = useState(initialSearchFilters);
   const colorScheme: AppColorScheme = nativeWindColorScheme === 'dark' ? 'dark' : 'light';
   const theme = mobileThemes[colorScheme];
   const isAuthenticated = isAuthLoaded && !!isSignedIn;
 
-  useMobileApiSync(isAuthenticated, getToken, setListings, setWalletBalance, setTransactions, setUnlocks, setMyListings);
+  useMobileApiSync(
+    isAuthenticated,
+    getToken,
+    setListings,
+    setWalletBalance,
+    setTransactions,
+    setUnlocks,
+    setMyListings,
+    setReferrals,
+    setSavedListingIds,
+  );
 
   const browseListings = listings.filter((listing) => listing.status !== 'Review' && listing.status !== 'Closed');
   const savedListings = browseListings.filter((listing) => savedListingIds.includes(listing.id));
@@ -300,12 +325,25 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
     updateSettings({ colorScheme: scheme });
   }
 
-  function toggleSaved(listingId: string) {
+  async function toggleSaved(listingId: string) {
+    const wasSaved = savedListingIds.includes(listingId);
+    // Optimistically flip — restore on failure
     setSavedListingIds((current) =>
-      current.includes(listingId)
-        ? current.filter((id) => id !== listingId)
-        : [listingId, ...current],
+      wasSaved ? current.filter((id) => id !== listingId) : [listingId, ...current],
     );
+    try {
+      if (wasSaved) {
+        await unsaveListingApi(getToken, listingId);
+      } else {
+        await saveListingApi(getToken, listingId);
+      }
+    } catch {
+      setSavedListingIds((current) =>
+        wasSaved && !current.includes(listingId)
+          ? [listingId, ...current]
+          : current.filter((id) => id !== listingId),
+      );
+    }
   }
 
   function updateSearchFilters(filters: Partial<SearchFilters>) {
@@ -658,7 +696,8 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
   ): Promise<'success' | 'already_invited' | 'self' | 'error'> {
     const normalized = normalizePhone(phone) || phone;
     try {
-      await createReferralApi(getToken, { phoneNumber: normalized });
+      const created = await createReferralApi(getToken, { phoneNumber: normalized });
+      setReferrals((current) => [created, ...current.filter((entry) => entry.id !== created.id)]);
       pushNotification({
         id: `notif-referral-${Date.now()}`,
         title: 'Referral invite sent',
@@ -672,6 +711,15 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
       if (message.includes('already')) return 'already_invited';
       if (message.includes('refer yourself') || message.includes('cannot_refer_self')) return 'self';
       return 'error';
+    }
+  }
+
+  async function refreshReferrals(): Promise<void> {
+    try {
+      const response = await fetchMyReferrals(getToken);
+      setReferrals(response.data);
+    } catch {
+      // Silently ignore — stale list stays in place
     }
   }
 
@@ -712,6 +760,8 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
         referralHighlights,
         confirmationStages,
         referralCode: defaultReferralCode,
+        referrals,
+        rewardedReferralCount: referrals.filter((entry) => entry.status === 'REWARDED').length,
         getListingById: getListing,
         getUnlockRecord,
         isListingSaved: (listingId: string) => savedListingIds.includes(listingId),
@@ -742,6 +792,7 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
         submitDispute,
         submitDisputeForUnlock,
         sendReferralInvite,
+        refreshReferrals,
       }}
     >
       {children}

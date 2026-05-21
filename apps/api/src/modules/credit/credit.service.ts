@@ -355,6 +355,37 @@ export class CreditService {
     };
   }
 
+  async grantBonusCredits(
+    client: CreditDbClient,
+    input: {
+      userId: string;
+      amount: number;
+      description: string;
+      metadata?: Prisma.InputJsonValue | null;
+    },
+  ) {
+    const balance = await this.applyBalanceIncrement(client, {
+      userId: input.userId,
+      amount: input.amount,
+      lifetimeEarnedDelta: input.amount,
+    });
+
+    const transaction = await this.createTransaction(client, {
+      userId: input.userId,
+      type: TransactionType.BONUS,
+      amount: input.amount,
+      balanceBefore: balance.balanceBefore,
+      balanceAfter: balance.balanceAfter,
+      description: input.description,
+      metadata: input.metadata ?? undefined,
+    });
+
+    return {
+      balanceAfter: balance.balanceAfter,
+      transaction,
+    };
+  }
+
   async invalidateBalanceCache(userId: string) {
     await this.cacheService.del(this.balanceCacheKey(userId));
   }

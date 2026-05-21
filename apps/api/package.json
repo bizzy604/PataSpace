@@ -11,6 +11,7 @@
     "prisma:migrate:deploy": "ts-node prisma/bootstrap/run-prisma-with-migration-url.ts migrate deploy",
     "prisma:migrate:dev": "ts-node prisma/bootstrap/run-prisma-with-migration-url.ts migrate dev",
     "prisma:migrate:status": "ts-node prisma/bootstrap/run-prisma-with-migration-url.ts migrate status",
+    "prisma:migrate:resolve": "ts-node prisma/bootstrap/run-prisma-with-migration-url.ts migrate resolve",
     "prisma:seed": "prisma db seed",
     "start": "nest start",
     "start:dev": "nest start --watch",

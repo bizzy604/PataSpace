@@ -90,3 +90,28 @@ export const mpesaCallbackAckResponseSchema = z.object({
   ResultCode: z.literal(0),
   ResultDesc: z.literal('Accepted'),
 });
+
+export const mpesaB2CResultParameterSchema = z.object({
+  Key: z.string().min(1),
+  Value: z.union([z.string(), z.number()]).optional(),
+});
+
+/**
+ * Daraja B2C async result payload. Safaricom POSTs this to the configured
+ * ResultURL once a B2C transaction has been settled — success or failure.
+ * See: https://developer.safaricom.co.ke/docs#b2c-api
+ */
+export const mpesaB2CResultSchema = z.object({
+  Result: z.object({
+    ConversationID: z.string().min(1),
+    OriginatorConversationID: z.string().min(1),
+    ResultCode: z.coerce.number().int(),
+    ResultDesc: z.string().min(1),
+    TransactionID: z.string().optional(),
+    ResultParameters: z
+      .object({
+        ResultParameter: z.array(mpesaB2CResultParameterSchema),
+      })
+      .optional(),
+  }),
+});

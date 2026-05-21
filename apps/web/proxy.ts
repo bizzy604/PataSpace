@@ -11,6 +11,7 @@ const isProtectedRoute = createRouteMatcher([
   '/notifications(.*)',
   '/saved(.*)',
   '/unlocks(.*)',
+  '/referrals(.*)',
   '/post(.*)',
   '/listings/:id/unlock(.*)',
 ]);

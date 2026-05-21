@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { MPESA_PROVIDER } from './mpesa.constants';
 import {
+  MpesaB2CQueryRequest,
   MpesaB2CRequest,
   MpesaProvider,
   MpesaStkPushRequest,
@@ -24,6 +25,10 @@ export class MpesaClient {
 
   async queryStkPush(payload: MpesaStkQueryRequest) {
     return this.provider.queryStkPush(payload);
+  }
+
+  async queryB2CTransaction(payload: MpesaB2CQueryRequest) {
+    return this.provider.queryB2CTransaction(payload);
   }
 
   async healthCheck() {

@@ -1,8 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { randomUUID } from 'crypto';
 import { CommissionStatus, DisputeStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../common/database/prisma.service';
+import {
+  ADVISORY_LOCK_KEYS,
+  releaseAdvisoryLock,
+  tryAdvisoryLock,
+} from '../common/database/advisory-lock.util';
 import { MpesaClient } from '../infrastructure/payment/mpesa.client';
+import { MpesaB2CQueryResponse } from '../infrastructure/payment/mpesa.types';
 import { SmsService } from '../infrastructure/sms/sms.service';
 import { UserService } from '../modules/user/user.service';
 
@@ -26,7 +33,36 @@ export class CommissionPayoutJob {
 
   @Cron('0 9 * * *')
   async handleCommissionPayouts() {
-    return this.processCommissionPayouts();
+    const acquired = await tryAdvisoryLock(
+      this.prismaService,
+      ADVISORY_LOCK_KEYS.commissionPayoutJob,
+    );
+
+    if (!acquired) {
+      this.logger.log(
+        JSON.stringify({
+          event: 'job.commission-payout.skipped',
+          reason: 'another replica holds the advisory lock',
+          at: new Date().toISOString(),
+        }),
+      );
+      return null;
+    }
+
+    try {
+      return await this.processCommissionPayouts();
+    } finally {
+      await releaseAdvisoryLock(
+        this.prismaService,
+        ADVISORY_LOCK_KEYS.commissionPayoutJob,
+      ).catch((error) => {
+        this.logger.warn(
+          `Failed to release commission-payout advisory lock: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+      });
+    }
   }
 
   async processCommissionPayouts(now = new Date()) {
@@ -220,40 +256,51 @@ export class CommissionPayoutJob {
       return 'skipped';
     }
     const phoneNumber = this.userService.decryptPhoneNumber(encryptedPhone);
+    const originatorConversationId = await this.ensureOriginatorConversationId(commission);
+    const isRetry = commission.paymentAttempts > 0;
+
+    // On retries we positively confirm with Safaricom before re-issuing. A
+    // crash between a successful B2C and the local PAID write would otherwise
+    // cause a re-issue — Safaricom dedupes via OriginatorConversationID, but
+    // querying first gives us the receipt/conversation id to mark PAID
+    // immediately rather than waiting for the next reconciliation tick.
+    if (isRetry) {
+      const queryOutcome = await this.queryExistingPayout(
+        commission.id,
+        originatorConversationId,
+      );
+
+      if (queryOutcome?.outcome === 'success') {
+        await this.markCommissionPaid(commission, originatorConversationId, now, {
+          conversationId: queryOutcome.conversationId,
+          mpesaReceiptNumber: queryOutcome.mpesaReceiptNumber,
+        });
+        await this.sendSmsQuietly(
+          phoneNumber,
+          `You've received ${commission.amountKES} KES from PataSpace. Check your M-Pesa.`,
+        );
+        return 'paid';
+      }
+
+      if (queryOutcome?.outcome === 'failed') {
+        const reason = queryOutcome.resultDesc ?? 'M-Pesa reported the previous payout as failed';
+        await this.markCommissionDeadLettered(commission, reason, now);
+        return 'dead-letter';
+      }
+
+      // pending | unsupported → fall through to re-issue with the same id
+    }
 
     try {
       const payout = await this.mpesaClient.b2c({
         phoneNumber,
         amount: commission.amountKES,
         remarks: `PataSpace commission payout ${commission.id}`,
+        originatorConversationId,
       });
 
-      await this.prismaService.$transaction(async (tx) => {
-        await tx.commission.update({
-          where: {
-            id: commission.id,
-          },
-          data: {
-            status: CommissionStatus.PAID,
-            paidAt: now,
-            mpesaTransactionId: payout.conversationId,
-            lastAttemptAt: now,
-            lastAttemptError: null,
-          },
-        });
-
-        await tx.auditLog.create({
-          data: {
-            action: 'commission.paid',
-            entityType: 'Commission',
-            entityId: commission.id,
-            metadata: {
-              amountKES: commission.amountKES,
-              conversationId: payout.conversationId,
-              neighborhood: commission.unlock.listing.neighborhood,
-            } satisfies Prisma.InputJsonObject,
-          },
-        });
+      await this.markCommissionPaid(commission, originatorConversationId, now, {
+        conversationId: payout.conversationId,
       });
 
       await this.sendSmsQuietly(
@@ -267,35 +314,7 @@ export class CommissionPayoutJob {
       const terminalFailure = attempts >= this.maxAttempts;
       const errorMessage = error instanceof Error ? error.message : 'Commission payout failed';
 
-      await this.prismaService.$transaction(async (tx) => {
-        await tx.commission.update({
-          where: {
-            id: commission.id,
-          },
-          data: {
-            status: terminalFailure ? CommissionStatus.FAILED : CommissionStatus.DUE,
-            paymentAttempts: attempts,
-            lastAttemptAt: now,
-            lastAttemptError: errorMessage,
-          },
-        });
-
-        if (terminalFailure) {
-          await tx.auditLog.create({
-            data: {
-              action: 'commission.dead_lettered',
-              entityType: 'Commission',
-              entityId: commission.id,
-              metadata: {
-                amountKES: commission.amountKES,
-                error: errorMessage,
-                listingId: commission.unlock.listing.id,
-                paymentAttempts: attempts,
-              } satisfies Prisma.InputJsonObject,
-            },
-          });
-        }
-      });
+      await this.recordPayoutFailure(commission, attempts, terminalFailure, errorMessage, now);
 
       this.logger.error(
         JSON.stringify({
@@ -317,5 +336,157 @@ export class CommissionPayoutJob {
     } catch {
       return;
     }
+  }
+
+  /**
+   * Returns the stable OriginatorConversationID for this commission.
+   * On the first attempt the column is null — we generate a UUID and persist
+   * it BEFORE the B2C call so any subsequent retry passes the same id and
+   * Safaricom can dedupe instead of double-paying.
+   */
+  private async ensureOriginatorConversationId(commission: {
+    id: string;
+    originatorConversationId: string | null;
+  }): Promise<string> {
+    if (commission.originatorConversationId) {
+      return commission.originatorConversationId;
+    }
+
+    const id = `pataspace-${randomUUID()}`;
+    await this.prismaService.commission.update({
+      where: { id: commission.id },
+      data: { originatorConversationId: id },
+    });
+    return id;
+  }
+
+  /**
+   * Best-effort B2C status lookup. Swallows provider errors so they cannot
+   * crash the payout run — caller treats `null` the same as "pending"
+   * (proceed with the re-issue path).
+   */
+  private async queryExistingPayout(
+    commissionId: string,
+    originatorConversationId: string,
+  ): Promise<MpesaB2CQueryResponse | null> {
+    try {
+      return await this.mpesaClient.queryB2CTransaction({ originatorConversationId });
+    } catch (error) {
+      this.logger.warn(
+        JSON.stringify({
+          event: 'job.commission-payout.query-error',
+          commissionId,
+          originatorConversationId,
+          error: error instanceof Error ? error.message : 'unknown',
+        }),
+      );
+      return null;
+    }
+  }
+
+  private async markCommissionPaid(
+    commission: { id: string; amountKES: number; unlock: { listing: { neighborhood: string } } },
+    originatorConversationId: string,
+    now: Date,
+    payout: { conversationId?: string; mpesaReceiptNumber?: string },
+  ) {
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.commission.update({
+        where: { id: commission.id },
+        data: {
+          status: CommissionStatus.PAID,
+          paidAt: now,
+          mpesaTransactionId: payout.conversationId ?? originatorConversationId,
+          mpesaReceiptNumber: payout.mpesaReceiptNumber ?? undefined,
+          lastAttemptAt: now,
+          lastAttemptError: null,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          action: 'commission.paid',
+          entityType: 'Commission',
+          entityId: commission.id,
+          metadata: {
+            amountKES: commission.amountKES,
+            conversationId: payout.conversationId ?? null,
+            mpesaReceiptNumber: payout.mpesaReceiptNumber ?? null,
+            originatorConversationId,
+            neighborhood: commission.unlock.listing.neighborhood,
+          } satisfies Prisma.InputJsonObject,
+        },
+      });
+    });
+  }
+
+  private async markCommissionDeadLettered(
+    commission: { id: string; amountKES: number; paymentAttempts: number; unlock: { listing: { id: string } } },
+    reason: string,
+    now: Date,
+  ) {
+    const attempts = commission.paymentAttempts + 1;
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.commission.update({
+        where: { id: commission.id },
+        data: {
+          status: CommissionStatus.FAILED,
+          paymentAttempts: attempts,
+          lastAttemptAt: now,
+          lastAttemptError: reason,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          action: 'commission.dead_lettered',
+          entityType: 'Commission',
+          entityId: commission.id,
+          metadata: {
+            amountKES: commission.amountKES,
+            error: reason,
+            listingId: commission.unlock.listing.id,
+            paymentAttempts: attempts,
+            reason: 'mpesa_query_returned_failed',
+          } satisfies Prisma.InputJsonObject,
+        },
+      });
+    });
+  }
+
+  private async recordPayoutFailure(
+    commission: { id: string; amountKES: number; unlock: { listing: { id: string } } },
+    attempts: number,
+    terminalFailure: boolean,
+    errorMessage: string,
+    now: Date,
+  ) {
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.commission.update({
+        where: { id: commission.id },
+        data: {
+          status: terminalFailure ? CommissionStatus.FAILED : CommissionStatus.DUE,
+          paymentAttempts: attempts,
+          lastAttemptAt: now,
+          lastAttemptError: errorMessage,
+        },
+      });
+
+      if (terminalFailure) {
+        await tx.auditLog.create({
+          data: {
+            action: 'commission.dead_lettered',
+            entityType: 'Commission',
+            entityId: commission.id,
+            metadata: {
+              amountKES: commission.amountKES,
+              error: errorMessage,
+              listingId: commission.unlock.listing.id,
+              paymentAttempts: attempts,
+            } satisfies Prisma.InputJsonObject,
+          },
+        });
+      }
+    });
   }
 }

@@ -33,6 +33,7 @@ import {
 } from '../../common/security/encryption.util';
 import { SmsService } from '../../infrastructure/sms/sms.service';
 import { UserService, StoredUser } from '../user/user.service';
+import { ReferralService } from '../referral/referral.service';
 
 @Injectable()
 export class AuthService {
@@ -51,6 +52,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly smsService: SmsService,
     private readonly userService: UserService,
+    private readonly referralService: ReferralService,
   ) {
     this.accessTokenTtl = this.configService.get<string>('security.accessTokenTtl') ?? '15m';
     this.encryptionKey = this.configService.get<string>('security.encryptionKey') ?? '';
@@ -228,7 +230,7 @@ export class AuthService {
 
     this.assertUserCanAuthenticate(user);
 
-    return this.prismaService.$transaction(async (tx) => {
+    const session = await this.prismaService.$transaction(async (tx) => {
       await tx.oTPCode.deleteMany({
         where: {
           phoneNumberHash,
@@ -248,6 +250,14 @@ export class AuthService {
 
       return this.issueAuthSession(tx, verifiedUser);
     });
+
+    // Link any pending referral invites for this phone — best-effort, never
+    // blocks the auth response if it fails.
+    await this.referralService
+      .linkPendingReferral(phoneNumberHash, session.user.id)
+      .catch(() => undefined);
+
+    return session;
   }
 
   async resendOtp(input: ResendOtpRequest): Promise<ResendOtpResponse> {

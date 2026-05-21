@@ -70,6 +70,9 @@ export default () => ({
     ttlSeconds: Number(process.env.IDEMPOTENCY_TTL_SECONDS ?? 86_400),
     inProgressTtlSeconds: Number(process.env.IDEMPOTENCY_IN_PROGRESS_TTL_SECONDS ?? 120),
   },
+  referral: {
+    rewardCredits: Number(process.env.REFERRAL_REWARD_CREDITS ?? 500),
+  },
   rateLimit: {
     default: {
       limit: Number(process.env.RATE_LIMIT_DEFAULT_LIMIT ?? 100),

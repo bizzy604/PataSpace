@@ -7,6 +7,7 @@
 import { Module } from '@nestjs/common';
 import { CreditModule } from '../credit/credit.module';
 import { UserModule } from '../user/user.module';
+import { CommissionCallbackModule } from '../commission-callback/commission-callback.module';
 import { CreditPurchaseController, PaymentWebhookController } from './payment.controller';
 import { PaymentService } from './payment.service';
 import { MpesaPurchaseService } from './mpesa-purchase.service';
@@ -14,7 +15,7 @@ import { StellarPurchaseService } from './stellar-purchase.service';
 import { PaymentFulfillmentService } from './payment-fulfillment.service';
 
 @Module({
-  imports: [CreditModule, UserModule],
+  imports: [CreditModule, UserModule, CommissionCallbackModule],
   controllers: [CreditPurchaseController, PaymentWebhookController],
   providers: [
     PaymentService,

@@ -86,6 +86,9 @@ for the tenant-critical funnel; everything in this section is supplemental.
   `/post/details` — mirror of the mobile post flow. Use only on devices
   that can capture GPS-verified photos; the mobile flow remains the
   primary path.
+- Tenant trust loop: `/referrals` (invite + history),
+  `/unlocks/[id]/review` (rate the experience after both parties confirm).
+  Both pages call `/api/v1/referrals` and `/api/v1/reviews` respectively.
 
 If any of these routes are removed, update this section in the same change
 set rather than letting the inventory drift again.

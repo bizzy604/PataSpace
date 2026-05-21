@@ -1,18 +1,26 @@
 import { randomUUID } from 'crypto';
 import {
+  MpesaB2CQueryRequest,
+  MpesaB2CQueryResponse,
   MpesaB2CRequest,
   MpesaProvider,
   MpesaStkPushRequest,
   MpesaStkQueryRequest,
 } from '../mpesa.types';
 
+export type SandboxMpesaBehavior = {
+  failB2c?: boolean;
+  failStkPush?: boolean;
+  /**
+   * Lets tests deterministically drive queryB2CTransaction to a specific
+   * outcome — production sandbox runs default to 'success' so payouts
+   * always look idempotent and replay-safe.
+   */
+  b2cQueryOutcome?: MpesaB2CQueryResponse['outcome'];
+};
+
 export class SandboxMpesaProvider implements MpesaProvider {
-  constructor(
-    private readonly behavior: {
-      failB2c?: boolean;
-      failStkPush?: boolean;
-    } = {},
-  ) {}
+  constructor(private readonly behavior: SandboxMpesaBehavior = {}) {}
 
   async stkPush(_payload: MpesaStkPushRequest) {
     if (this.behavior.failStkPush) {
@@ -27,14 +35,15 @@ export class SandboxMpesaProvider implements MpesaProvider {
     };
   }
 
-  async b2c(_payload: MpesaB2CRequest) {
+  async b2c(payload: MpesaB2CRequest) {
     if (this.behavior.failB2c) {
       throw new Error('Sandbox M-Pesa B2C failure requested by configuration.');
     }
 
     return {
       conversationId: `b2c_CO_${randomUUID()}`,
-      originatorConversationId: `b2c_OC_${randomUUID()}`,
+      originatorConversationId:
+        payload.originatorConversationId ?? `b2c_OC_${randomUUID()}`,
       responseCode: '0',
       responseDescription: 'Sandbox B2C request accepted.',
     };
@@ -47,6 +56,19 @@ export class SandboxMpesaProvider implements MpesaProvider {
       resultCode: 0,
       resultDesc: 'Sandbox STK query completed successfully.',
       mpesaReceiptNumber: `SANDBOX${payload.checkoutRequestId.replace(/[^A-Za-z0-9]/g, '').slice(-8)}`,
+    };
+  }
+
+  async queryB2CTransaction(payload: MpesaB2CQueryRequest): Promise<MpesaB2CQueryResponse> {
+    const outcome = this.behavior.b2cQueryOutcome ?? 'success';
+    return {
+      outcome,
+      conversationId: `b2c_CO_query_${payload.originatorConversationId}`,
+      mpesaReceiptNumber:
+        outcome === 'success'
+          ? `SANDBOX${payload.originatorConversationId.replace(/[^A-Za-z0-9]/g, '').slice(-8)}`
+          : undefined,
+      resultDesc: outcome === 'success' ? 'Sandbox B2C transaction completed.' : undefined,
     };
   }
 

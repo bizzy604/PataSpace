@@ -17,6 +17,7 @@ describe('ReferralService', () => {
         create: jest.fn(),
         count: jest.fn(),
         findMany: jest.fn(),
+        updateMany: jest.fn(),
       },
       user: { findUnique: jest.fn() },
     };
@@ -114,5 +115,44 @@ describe('ReferralService', () => {
     expect(result.pagination.total).toBe(1);
     expect(result.data).toHaveLength(1);
     expect(result.data[0]!.status).toBe(ReferralStatus.JOINED);
+  });
+
+  describe('linkPendingReferral', () => {
+    it('promotes matching INVITED rows to JOINED and returns the linked count', async () => {
+      const { prismaService, service } = create();
+      prismaService.referral.updateMany.mockResolvedValue({ count: 1 });
+
+      const linked = await service.linkPendingReferral('hash_xyz', 'user_invitee');
+
+      expect(linked).toBe(1);
+      expect(prismaService.referral.updateMany).toHaveBeenCalledWith({
+        where: {
+          inviteePhoneHash: 'hash_xyz',
+          status: ReferralStatus.INVITED,
+          refereeUserId: null,
+          NOT: { referrerId: 'user_invitee' },
+        },
+        data: expect.objectContaining({
+          status: ReferralStatus.JOINED,
+          refereeUserId: 'user_invitee',
+        }),
+      });
+    });
+
+    it('does not link a referrer to a referral they sent themselves', async () => {
+      const { prismaService, service } = create();
+      prismaService.referral.updateMany.mockResolvedValue({ count: 0 });
+
+      const linked = await service.linkPendingReferral('hash_same', 'user_self');
+
+      expect(linked).toBe(0);
+      expect(prismaService.referral.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            NOT: { referrerId: 'user_self' },
+          }),
+        }),
+      );
+    });
   });
 });

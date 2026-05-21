@@ -5,7 +5,13 @@
  */
 import { useEffect } from 'react';
 import { ListingStatus, TransactionStatus, TransactionType } from '@pataspace/contracts';
-import type { CreditTransaction, ListingCard, MyListing, MyUnlockRecord } from '@pataspace/contracts';
+import type {
+  CreditTransaction,
+  ListingCard,
+  MyListing,
+  MyUnlockRecord,
+  ReferralRecord,
+} from '@pataspace/contracts';
 import { draftCameraSequence } from '@/data/media-library';
 import {
   formatCredits,
@@ -17,6 +23,8 @@ import {
 import { fetchListings, fetchMyListings } from '@/lib/api/listings';
 import { fetchCreditBalance, fetchTransactions } from '@/lib/api/credits';
 import { fetchMyUnlocks } from '@/lib/api/unlocks';
+import { fetchMyReferrals } from '@/lib/api/referrals';
+import { fetchMySavedListings } from '@/lib/api/saved-listings';
 
 function listingCardToPreview(card: ListingCard): ListingPreview {
   const bedrooms = card.bedrooms;
@@ -154,6 +162,8 @@ export function useMobileApiSync(
   setTransactions: (records: TransactionRecord[]) => void,
   setUnlocks: (records: UnlockRecord[]) => void,
   setMyListings: (rows: MyListingRow[]) => void,
+  setReferrals: (records: ReferralRecord[]) => void,
+  setSavedListingIds: (ids: string[]) => void,
 ) {
   useEffect(() => {
     fetchListings()
@@ -175,6 +185,12 @@ export function useMobileApiSync(
       .catch(() => {});
     fetchMyListings(getToken)
       .then((listings) => setMyListings(listings.map(apiMyListingToRow)))
+      .catch(() => {});
+    fetchMyReferrals(getToken)
+      .then((response) => setReferrals(response.data))
+      .catch(() => {});
+    fetchMySavedListings(getToken)
+      .then((response) => setSavedListingIds(response.data.map((entry) => entry.listing.id)))
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);

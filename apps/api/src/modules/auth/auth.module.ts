@@ -11,6 +11,7 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from '../../common/auth/jwt.strategy';
 import { ClerkJwtStrategy } from '../../common/auth/clerk-jwt.strategy';
 import { UserModule } from '../user/user.module';
+import { ReferralModule } from '../referral/referral.module';
 import { AuthCleanupService } from './auth.cleanup.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
@@ -18,6 +19,7 @@ import { AuthService } from './auth.service';
 @Module({
   imports: [
     UserModule,
+    ReferralModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       inject: [ConfigService],

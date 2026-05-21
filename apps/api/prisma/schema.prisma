@@ -128,6 +128,7 @@ model User {
   reviews              UnlockReview[]
   referralsSent        Referral[]        @relation("ReferralsSent")
   referralsReceived    Referral[]        @relation("ReferralsReceived")
+  savedListings        SavedListing[]
 
   @@index([phoneNumberHash])
   @@index([email])
@@ -241,6 +242,7 @@ model Listing {
   user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   photos            ListingPhoto[]
   unlocks           Unlock[]
+  savedBy           SavedListing[]
 
   @@index([userId])
   @@index([status, isApproved, isDeleted])
@@ -333,21 +335,22 @@ model Confirmation {
 }
 
 model Commission {
-  id                 String           @id @default(cuid())
-  unlockId           String           @unique
-  outgoingTenantId   String
-  amountKES          Int
-  status             CommissionStatus @default(PENDING)
-  mpesaTransactionId String?          @unique
-  mpesaReceiptNumber String?          @unique
-  eligibleAt         DateTime
-  paidAt             DateTime?
-  paymentAttempts    Int              @default(0)
-  lastAttemptAt      DateTime?
-  lastAttemptError   String?
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
-  unlock             Unlock           @relation(fields: [unlockId], references: [id], onDelete: Cascade)
+  id                       String           @id @default(cuid())
+  unlockId                 String           @unique
+  outgoingTenantId         String
+  amountKES                Int
+  status                   CommissionStatus @default(PENDING)
+  mpesaTransactionId       String?          @unique
+  mpesaReceiptNumber       String?          @unique
+  originatorConversationId String?          @unique
+  eligibleAt               DateTime
+  paidAt                   DateTime?
+  paymentAttempts          Int              @default(0)
+  lastAttemptAt            DateTime?
+  lastAttemptError         String?
+  createdAt                DateTime         @default(now())
+  updatedAt                DateTime         @updatedAt
+  unlock                   Unlock           @relation(fields: [unlockId], references: [id], onDelete: Cascade)
 
   @@index([status, eligibleAt])
   @@index([outgoingTenantId])
@@ -450,6 +453,20 @@ model SupportTicket {
   @@index([userId, createdAt])
   @@index([status])
   @@map("support_tickets")
+}
+
+model SavedListing {
+  id        String   @id @default(cuid())
+  userId    String
+  listingId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, listingId])
+  @@index([userId, createdAt])
+  @@index([listingId])
+  @@map("saved_listings")
 }
 
 model SystemConfig {

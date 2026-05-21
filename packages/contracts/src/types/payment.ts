@@ -93,3 +93,21 @@ export type MpesaCallbackAckResponse = {
   ResultCode: 0;
   ResultDesc: 'Accepted';
 };
+
+export type MpesaB2CResultParameter = {
+  Key: string;
+  Value?: string | number;
+};
+
+export type MpesaB2CResultRequest = {
+  Result: {
+    ConversationID: string;
+    OriginatorConversationID: string;
+    ResultCode: number;
+    ResultDesc: string;
+    TransactionID?: string;
+    ResultParameters?: {
+      ResultParameter: MpesaB2CResultParameter[];
+    };
+  };
+};

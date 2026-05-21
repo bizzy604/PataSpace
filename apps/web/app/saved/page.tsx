@@ -1,19 +1,38 @@
+/**
+ * Purpose: Server route for the tenant saved-listings workspace.
+ * Why important: Reads the authenticated user's saved listings from
+ *   /me/saved-listings and renders ListingPreviewCards for the contract
+ *   ListingCard payloads. Previously rendered mock data.
+ * Used by: Next.js routing for /saved.
+ */
 import Link from 'next/link';
 import { Bookmark, Search, Wallet2 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { auth } from '@clerk/nextjs/server';
+import type { SavedListingRecord } from '@pataspace/contracts';
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { TenantWorkspaceShell } from '@/components/workspace/page';
 import { MetricCard } from '@/components/shared/metric-card';
 import { ListingPreviewCard } from '@/components/listings/listing-preview-card';
-import { mockSavedListingIds } from '@/lib/mock-app-state';
-import { mockListings } from '@/lib/mock-listings';
+import { getMySavedListings } from '@/lib/api/saved-listings';
 import { formatKes } from '@/lib/format';
 import { linkButtonClass } from '@/lib/link-button';
 
-export default function Page() {
-  const savedListings = mockListings.filter((listing) => mockSavedListingIds.includes(listing.id));
+export default async function Page() {
+  const { getToken } = await auth();
+  const token = await getToken();
+
+  const saved: SavedListingRecord[] = await getMySavedListings(token, 1, 50)
+    .then((response) => response.data)
+    .catch(() => []);
+
   const averageUnlock = Math.round(
-    savedListings.reduce((sum, listing) => sum + listing.unlockCostCredits, 0) /
-      Math.max(savedListings.length, 1),
+    saved.reduce((sum, entry) => sum + entry.listing.unlockCostCredits, 0) /
+      Math.max(saved.length, 1),
   );
 
   return (
@@ -35,7 +54,7 @@ export default function Page() {
       <div className="grid gap-4 md:grid-cols-3">
         <MetricCard
           label="Saved homes"
-          value={`${savedListings.length}`}
+          value={`${saved.length}`}
           hint="Listings pinned for later review."
           Icon={Bookmark}
         />
@@ -53,10 +72,10 @@ export default function Page() {
         />
       </div>
 
-      {savedListings.length ? (
+      {saved.length ? (
         <div className="mt-6 grid gap-6 xl:grid-cols-2">
-          {savedListings.map((listing) => (
-            <ListingPreviewCard key={listing.id} listing={listing} />
+          {saved.map((entry) => (
+            <ListingPreviewCard key={entry.id} listing={entry.listing} />
           ))}
         </div>
       ) : (
