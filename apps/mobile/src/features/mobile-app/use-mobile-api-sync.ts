@@ -136,6 +136,13 @@ function apiMyListingToRow(listing: MyListing): MyListingRow {
         : status === 'Review'
           ? 'Awaiting admin review.'
           : 'Listing is no longer active.',
+    commissions: listing.commissions.map((commission) => ({
+      unlockId: commission.unlockId,
+      amountKES: commission.amountKES,
+      status: commission.status,
+      eligibleAt: commission.eligibleAt,
+      paidAt: commission.paidAt,
+    })),
   };
 }
 

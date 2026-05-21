@@ -24,11 +24,18 @@ export type CreateUnlockResponse = {
   message: string;
 };
 
+import type { DisputeStatus } from '../enums';
+
 export type UnlockHistoryStatus =
   | 'pending_confirmation'
   | 'confirmed'
   | 'disputed'
   | 'refunded';
+
+export type MyUnlockDisputeSummary = {
+  id: string;
+  status: DisputeStatus;
+};
 
 export type MyUnlocksFilters = {
   page?: number;
@@ -52,6 +59,7 @@ export type MyUnlockRecord = {
   myConfirmation: string | null;
   tenantConfirmation: string | null;
   createdAt: string;
+  dispute: MyUnlockDisputeSummary | null;
 };
 
 export type UnlockPagination = {

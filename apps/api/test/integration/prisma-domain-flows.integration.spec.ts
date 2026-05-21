@@ -42,6 +42,7 @@ describe('Prisma-backed domain service flows', () => {
     const buyer = await createVerifiedUser(context);
     const purchase = await paymentService.createPurchase(buyer.userId, {
       package: '5_credits',
+      paymentMethod: 'mpesa',
       phoneNumber: buyer.phoneNumber,
     });
 

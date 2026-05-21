@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ListingHouseType, ListingStatus } from '../enums';
+import { CommissionStatus, ListingHouseType, ListingStatus } from '../enums';
 import { isoDateStringSchema, paginationMetaSchema } from './common';
 
 const coordinateSchema = z.object({
@@ -249,6 +249,14 @@ export const updateListingResponseSchema = z.object({
   updatedAt: isoDateStringSchema,
 });
 
+export const myListingCommissionSummarySchema = z.object({
+  unlockId: z.string().min(1),
+  amountKES: z.number().int().nonnegative(),
+  status: z.nativeEnum(CommissionStatus),
+  eligibleAt: isoDateStringSchema.nullable(),
+  paidAt: isoDateStringSchema.nullable(),
+});
+
 export const myListingSchema = z.object({
   id: z.string().min(1),
   status: z.nativeEnum(ListingStatus),
@@ -259,6 +267,7 @@ export const myListingSchema = z.object({
   totalEarnings: z.number().int().nonnegative(),
   pendingEarnings: z.number().int().nonnegative(),
   createdAt: isoDateStringSchema,
+  commissions: z.array(myListingCommissionSummarySchema),
 });
 
 export const paginatedListingsResponseSchema = z.object({

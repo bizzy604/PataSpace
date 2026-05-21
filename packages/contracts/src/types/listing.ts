@@ -1,4 +1,4 @@
-import { ListingHouseType, ListingStatus } from '../enums';
+import { CommissionStatus, ListingHouseType, ListingStatus } from '../enums';
 
 export type ListingPhotoInput = {
   url: string;
@@ -141,6 +141,14 @@ export type MyListingsFilters = {
   status?: ListingStatus;
 };
 
+export type MyListingCommissionSummary = {
+  unlockId: string;
+  amountKES: number;
+  status: CommissionStatus;
+  eligibleAt: string | null;
+  paidAt: string | null;
+};
+
 export type MyListing = {
   id: string;
   status: ListingStatus;
@@ -151,6 +159,7 @@ export type MyListing = {
   totalEarnings: number;
   pendingEarnings: number;
   createdAt: string;
+  commissions: MyListingCommissionSummary[];
 };
 
 export type ListingPagination = {

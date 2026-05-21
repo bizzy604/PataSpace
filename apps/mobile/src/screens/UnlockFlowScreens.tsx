@@ -43,6 +43,12 @@ export function ContactRevealedScreen() {
               router.push(appRoutes.confirmations);
             }}
           />
+          <Link
+            href={{ pathname: appRoutes.dispute, params: { unlockId: unlock.id } }}
+            asChild
+          >
+            <Button variant="outline" label="Report issue with this unlock" />
+          </Link>
         </View>
       }
     >

@@ -320,10 +320,13 @@ export function TransactionDetailScreen() {
 }
 
 export function DisputeScreen() {
+  const params = useLocalSearchParams<{ unlockId?: string }>();
+  const unlockId = Array.isArray(params.unlockId) ? params.unlockId[0] : params.unlockId;
   const [subject, setSubject] = useState('Unlock issue');
   const [detail, setDetail] = useState('I need help reviewing a wallet or unlock event.');
   const [submitted, setSubmitted] = useState(false);
-  const { supportTopics, submitDispute } = useMobileApp();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { supportTopics, submitDispute, submitDisputeForUnlock } = useMobileApp();
 
   return (
     <Screen>
@@ -373,11 +376,30 @@ export function DisputeScreen() {
         </Card>
       ) : null}
 
+      {errorMessage ? (
+        <Card>
+          <CardTitle className="text-[20px]">Could not file dispute</CardTitle>
+          <CardDescription>{errorMessage}</CardDescription>
+        </Card>
+      ) : null}
+
       <Button
         label="Submit issue"
-        onPress={() => {
-          submitDispute(subject, detail);
-          setSubmitted(true);
+        onPress={async () => {
+          setErrorMessage(null);
+          if (!unlockId) {
+            submitDispute(subject, detail);
+            setSubmitted(true);
+            return;
+          }
+          const outcome = await submitDisputeForUnlock(unlockId, subject, detail);
+          if (outcome === 'success') {
+            setSubmitted(true);
+          } else if (outcome === 'already_filed') {
+            setErrorMessage('A dispute is already on file for this unlock.');
+          } else {
+            setErrorMessage('We could not reach the support backend. Try again.');
+          }
         }}
       />
     </Screen>
@@ -387,6 +409,7 @@ export function DisputeScreen() {
 export function ReferralScreen() {
   const [phone, setPhone] = useState('0700123456');
   const [sent, setSent] = useState(false);
+  const [errorText, setErrorText] = useState<string | null>(null);
   const { referralCode, referralHighlights, sendReferralInvite } = useMobileApp();
 
   return (
@@ -421,11 +444,28 @@ export function ReferralScreen() {
         </Card>
       ) : null}
 
+      {errorText ? (
+        <Card>
+          <CardDescription>{errorText}</CardDescription>
+        </Card>
+      ) : null}
+
       <Button
         label="Send invite"
-        onPress={() => {
-          sendReferralInvite(phone);
-          setSent(true);
+        onPress={async () => {
+          setErrorText(null);
+          const outcome = await sendReferralInvite(phone);
+          if (outcome === 'success') {
+            setSent(true);
+            return;
+          }
+          if (outcome === 'already_invited') {
+            setErrorText('You have already invited that number.');
+          } else if (outcome === 'self') {
+            setErrorText('You cannot refer yourself.');
+          } else {
+            setErrorText('We could not send the invite. Try again later.');
+          }
         }}
       />
     </Screen>

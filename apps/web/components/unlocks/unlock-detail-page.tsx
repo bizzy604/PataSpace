@@ -6,7 +6,8 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { CheckCircle2, MapPinned, Phone, ShieldCheck } from 'lucide-react';
-import type { MyUnlockRecord } from '@pataspace/contracts';
+import type { DisputeRecord, MyUnlockRecord } from '@pataspace/contracts';
+import { DisputeStatus } from '@pataspace/contracts';
 import { RevealedLocationMap } from '@/components/map/page';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,18 +22,79 @@ function computeTitle(listing: MyUnlockRecord['listing']): string {
     : `${listing.bedrooms}BR · ${listing.neighborhood}`;
 }
 
+const AUTO_CONFIRM_DAYS = 14;
+
 function nextStepText(record: MyUnlockRecord): string {
   if (record.status === 'confirmed') return 'Both parties have confirmed this unlock.';
-  if (record.myConfirmation) return 'Your confirmation recorded — awaiting the tenant.';
+  if (record.myConfirmation) {
+    const remaining = daysUntilAutoConfirm(record.myConfirmation);
+    if (remaining === null) {
+      return 'Your confirmation recorded — awaiting the tenant.';
+    }
+    if (remaining <= 0) {
+      return 'Your confirmation recorded — the tenant side is due to auto-confirm shortly.';
+    }
+    return `Your confirmation recorded — auto-confirm in ${remaining} day${remaining === 1 ? '' : 's'} if the tenant does not respond.`;
+  }
   return 'Contact the tenant and confirm the handover when done.';
+}
+
+function daysUntilAutoConfirm(confirmedAt: string): number | null {
+  const confirmed = new Date(confirmedAt).getTime();
+  if (Number.isNaN(confirmed)) return null;
+  const deadline = confirmed + AUTO_CONFIRM_DAYS * 24 * 60 * 60 * 1000;
+  return Math.max(0, Math.ceil((deadline - Date.now()) / (24 * 60 * 60 * 1000)));
+}
+
+const DISPUTE_TONE_BY_STATUS: Record<DisputeStatus, 'warning' | 'brand' | 'positive' | 'neutral'> = {
+  [DisputeStatus.OPEN]: 'warning',
+  [DisputeStatus.INVESTIGATING]: 'brand',
+  [DisputeStatus.RESOLVED]: 'positive',
+  [DisputeStatus.CLOSED]: 'neutral',
+};
+
+function describeDispute(record: DisputeRecord | null): {
+  body: string;
+  tone: 'warning' | 'brand' | 'positive' | 'neutral' | 'danger';
+} {
+  if (!record) {
+    return {
+      body: 'Available if the listing context does not match reality.',
+      tone: 'neutral',
+    };
+  }
+  if (record.status === DisputeStatus.RESOLVED) {
+    const refund = record.refundAmount
+      ? ` Refunded ${record.refundAmount} credits.`
+      : '';
+    return {
+      body: `Dispute resolved.${refund} ${record.resolution ?? ''}`.trim(),
+      tone: 'positive',
+    };
+  }
+  if (record.status === DisputeStatus.CLOSED) {
+    return {
+      body: `Dispute closed. ${record.resolution ?? ''}`.trim(),
+      tone: 'neutral',
+    };
+  }
+  return {
+    body:
+      record.status === DisputeStatus.INVESTIGATING
+        ? 'Admin is investigating this dispute.'
+        : 'A dispute is open and awaiting admin review.',
+    tone: DISPUTE_TONE_BY_STATUS[record.status],
+  };
 }
 
 export function UnlockDetailPage({
   unlock,
   tenantFirstName,
+  dispute,
 }: {
   unlock: MyUnlockRecord | null;
   tenantFirstName: string | null;
+  dispute: DisputeRecord | null;
 }) {
   if (!unlock) notFound();
 
@@ -180,7 +242,15 @@ export function UnlockDetailPage({
               {[
                 { title: 'Unlocked', body: `Completed on ${formatDateLabel(unlock.createdAt)}`, tone: 'positive' as const },
                 { title: 'Confirm connection', body: nextStepText(unlock), tone: unlock.status === 'pending_confirmation' ? 'warning' as const : 'brand' as const },
-                { title: 'Dispute protection', body: unlock.status === 'disputed' ? 'A dispute is open for this unlock.' : 'Available if the listing context does not match reality.', tone: unlock.status === 'disputed' ? 'danger' as const : 'neutral' as const },
+                (() => {
+                  const description = describeDispute(dispute);
+                  const titleSuffix = dispute ? ` (${dispute.status})` : '';
+                  return {
+                    title: `Dispute protection${titleSuffix}`,
+                    body: description.body,
+                    tone: description.tone,
+                  };
+                })(),
               ].map((item) => (
                 <div key={item.title} className="border border-border bg-muted p-4">
                   <StatusBadge label={item.title} tone={item.tone} />

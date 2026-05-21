@@ -19,6 +19,7 @@ import {
 import {
   CreateUnlockRequest,
   CreateUnlockResponse,
+  DisputeStatus as ContractDisputeStatus,
   MyUnlockRecord,
   MyUnlocksFilters,
   PaginatedMyUnlocksResponse,
@@ -409,6 +410,7 @@ export class UnlockService {
           },
           dispute: {
             select: {
+              id: true,
               status: true,
             },
           },
@@ -457,6 +459,12 @@ export class UnlockService {
         myConfirmation: incomingConfirmation?.confirmedAt.toISOString() ?? null,
         tenantConfirmation: outgoingConfirmation?.confirmedAt.toISOString() ?? null,
         createdAt: unlock.createdAt.toISOString(),
+        dispute: unlock.dispute
+          ? {
+              id: unlock.dispute.id,
+              status: unlock.dispute.status as unknown as ContractDisputeStatus,
+            }
+          : null,
       };
     });
 

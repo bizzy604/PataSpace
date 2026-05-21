@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { DisputeStatus } from '../enums';
 import { isoDateStringSchema, paginationMetaSchema, paginationQuerySchema } from './common';
 
 export const unlockContactSchema = z.object({
@@ -45,6 +46,11 @@ export const myUnlockListingSchema = z.object({
   bedrooms: z.number().int().nonnegative(),
 });
 
+export const myUnlockDisputeSummarySchema = z.object({
+  id: z.string().min(1),
+  status: z.nativeEnum(DisputeStatus),
+});
+
 export const myUnlockRecordSchema = z.object({
   unlockId: z.string().min(1),
   listing: myUnlockListingSchema,
@@ -54,6 +60,7 @@ export const myUnlockRecordSchema = z.object({
   myConfirmation: isoDateStringSchema.nullable(),
   tenantConfirmation: isoDateStringSchema.nullable(),
   createdAt: isoDateStringSchema,
+  dispute: myUnlockDisputeSummarySchema.nullable(),
 });
 
 export const paginatedMyUnlocksResponseSchema = z.object({

@@ -269,6 +269,7 @@ describe('UnlockService', () => {
           },
         ],
         dispute: {
+          id: 'dispute_1',
           status: DisputeStatus.OPEN,
         },
         listing: {

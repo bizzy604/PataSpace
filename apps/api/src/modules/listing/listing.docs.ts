@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { ListingHouseType } from '@pataspace/contracts';
-import { ListingStatus } from '@prisma/client';
+import { CommissionStatus, ListingStatus } from '@prisma/client';
 
 export class ListingPhotoInputDto {
   @ApiProperty({
@@ -299,6 +299,23 @@ export class UpdateListingResponseDto {
   updatedAt!: string;
 }
 
+export class MyListingCommissionSummaryDto {
+  @ApiProperty({ example: 'cm8unlock123' })
+  unlockId!: string;
+
+  @ApiProperty({ example: 750 })
+  amountKES!: number;
+
+  @ApiProperty({ enum: CommissionStatus, example: CommissionStatus.PENDING })
+  status!: CommissionStatus;
+
+  @ApiProperty({ example: '2026-04-05T09:00:00.000Z', nullable: true })
+  eligibleAt!: string | null;
+
+  @ApiProperty({ example: null, nullable: true })
+  paidAt!: string | null;
+}
+
 export class MyListingDto {
   @ApiProperty({ example: 'cm8listing123' })
   id!: string;
@@ -326,6 +343,9 @@ export class MyListingDto {
 
   @ApiProperty({ example: '2026-03-20T10:00:00.000Z' })
   createdAt!: string;
+
+  @ApiProperty({ type: () => [MyListingCommissionSummaryDto] })
+  commissions!: MyListingCommissionSummaryDto[];
 }
 
 export class MyListingsResponseDto {

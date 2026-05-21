@@ -58,3 +58,22 @@ export enum DisputeStatus {
   RESOLVED = 'RESOLVED',
   CLOSED = 'CLOSED',
 }
+
+export enum SupportTicketStatus {
+  OPEN = 'OPEN',
+  IN_REVIEW = 'IN_REVIEW',
+  RESOLVED = 'RESOLVED',
+  CLOSED = 'CLOSED',
+}
+
+export enum ReviewerSide {
+  INCOMING_TENANT = 'INCOMING_TENANT',
+  OUTGOING_TENANT = 'OUTGOING_TENANT',
+}
+
+export enum ReferralStatus {
+  INVITED = 'INVITED',
+  JOINED = 'JOINED',
+  REWARDED = 'REWARDED',
+  EXPIRED = 'EXPIRED',
+}

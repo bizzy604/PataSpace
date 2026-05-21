@@ -62,11 +62,10 @@ pnpm dlx eas-cli device:create
 
 ## Current Source Layout
 
-- `src/app`: Expo Router routes
+- `src/app`: Expo Router routes (entry is `expo-router/entry` per package.json)
 - `src/screens`: screen-level components
 - `src/components`: reusable UI
 - `src/features`: feature-specific logic
-- `src/navigation`: navigation composition
 - `src/lib`: utilities
 
 ## Dependencies

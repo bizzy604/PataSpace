@@ -1,19 +1,33 @@
+/**
+ * Purpose: Server page that renders the dispute filing surface for an unlock.
+ * Why important: Loads the unlock from the backend and delegates submission to
+ *   a client form that POSTs /disputes — replacing the previous mock-state UI.
+ * Used by: Next.js routing for /unlocks/[id]/dispute.
+ */
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { MessageSquareWarning, ShieldAlert } from 'lucide-react';
+import { auth } from '@clerk/nextjs/server';
+import type { DisputeRecord, MyUnlockRecord } from '@pataspace/contracts';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { TenantWorkspaceShell } from '@/components/workspace/page';
-import { getMockUnlockBundle } from '@/lib/mock-app-state';
+import { DisputeForm } from '@/components/disputes/dispute-form';
+import { getMyUnlocks } from '@/lib/api/unlocks';
+import { getDispute } from '@/lib/api/disputes';
+import { formatDateLabel } from '@/lib/format';
 import { linkButtonClass } from '@/lib/link-button';
+
+function describeListing(listing: MyUnlockRecord['listing']) {
+  return listing.bedrooms === 0
+    ? `Studio · ${listing.neighborhood}`
+    : `${listing.bedrooms}BR · ${listing.neighborhood}`;
+}
 
 export default async function Page({
   params,
@@ -21,13 +35,21 @@ export default async function Page({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const bundle = getMockUnlockBundle(id);
+  const { getToken } = await auth();
+  const token = await getToken();
 
-  if (!bundle) {
+  const response = await getMyUnlocks(token, 1, 100).catch(() => null);
+  const unlock = response?.data.find((entry) => entry.unlockId === id) ?? null;
+
+  if (!unlock) {
     notFound();
   }
 
-  const { unlock, listing, dispute } = bundle;
+  const listingTitle = describeListing(unlock.listing);
+  const alreadyDisputed = unlock.dispute !== null;
+  const dispute: DisputeRecord | null = unlock.dispute
+    ? await getDispute(token, unlock.dispute.id).catch(() => null)
+    : null;
 
   return (
     <TenantWorkspaceShell
@@ -35,7 +57,10 @@ export default async function Page({
       title="Dispute or report issue"
       description="File a dispute when the revealed listing context does not match the reality of the handover or the documented evidence."
       actions={
-        <Link href={`/unlocks/${unlock.unlockId}`} className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
+        <Link
+          href={`/unlocks/${unlock.unlockId}`}
+          className={linkButtonClass({ variant: 'outline', size: 'sm' })}
+        >
           Back to unlock
         </Link>
       }
@@ -50,32 +75,17 @@ export default async function Page({
               Report listing mismatch, access problems, or landlord outcome issues tied to this unlock.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-5">
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-foreground">Reason category</p>
-              <Select defaultValue="listing_mismatch">
-                <SelectTrigger className="h-11 w-full">
-                  <SelectValue placeholder="Choose a dispute reason" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="listing_mismatch">Listing did not match the property</SelectItem>
-                  <SelectItem value="contact_problem">Contact was unreachable or misleading</SelectItem>
-                  <SelectItem value="landlord_outcome">Landlord or handover outcome issue</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-foreground">What happened?</p>
-              <Textarea
-                className="min-h-36"
-                defaultValue={`Issue linked to ${listing.title}. Include what changed from the listing evidence, the tenant conversation, and the timeline.`}
-              />
-            </div>
-
-            <Button className="h-11 bg-primary px-6 text-primary-foreground hover:bg-primary/90">
-              Submit dispute
-            </Button>
+          <CardContent>
+            {alreadyDisputed ? (
+              <div className="border border-amber-300 bg-amber-50 p-4 text-sm leading-7 text-amber-900">
+                A dispute is already open against this unlock. Admins are
+                working through OPEN → INVESTIGATING → RESOLVED → CLOSED. You
+                can file an additional report from support if context has
+                changed.
+              </div>
+            ) : (
+              <DisputeForm unlockId={unlock.unlockId} listingTitle={listingTitle} />
+            )}
           </CardContent>
         </Card>
 
@@ -88,17 +98,23 @@ export default async function Page({
           <CardContent className="space-y-4 text-sm leading-7 text-background/76">
             <p className="inline-flex items-center gap-2 font-medium text-background">
               <MessageSquareWarning className="size-4 text-primary" />
-              {listing.title}
+              {listingTitle}
             </p>
             {dispute ? (
-              <div className="border border-background/10 bg-background/6 p-4">
-                <p className="font-medium text-background">{dispute.status}</p>
-                <p className="mt-2">{dispute.reason}</p>
-                {dispute.resolution ? <p className="mt-2">{dispute.resolution}</p> : null}
+              <div className="space-y-3 border border-background/10 bg-background/6 p-4">
+                <p className="font-medium text-background">Status: {dispute.status}</p>
+                <p>Reported {formatDateLabel(dispute.createdAt)}</p>
+                <p>Reason: {dispute.reason}</p>
+                {dispute.resolution ? <p>Resolution: {dispute.resolution}</p> : null}
+                {dispute.refundAmount ? (
+                  <p>Refunded {dispute.refundAmount} credits to your wallet.</p>
+                ) : null}
               </div>
             ) : (
               <div className="border border-background/10 bg-background/6 p-4">
-                No dispute has been filed yet for this unlock.
+                {alreadyDisputed
+                  ? 'A dispute is open for this unlock and will progress through admin review.'
+                  : 'No dispute has been filed yet for this unlock.'}
               </div>
             )}
             <p className="inline-flex items-center gap-2 font-medium text-background">

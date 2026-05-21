@@ -74,6 +74,7 @@ describe('Prisma-backed payment reconciliation flows', () => {
 
     const purchase = await paymentService.createPurchase(buyer.userId, {
       package: '5_credits',
+      paymentMethod: 'mpesa',
       phoneNumber: buyer.phoneNumber,
     });
 
@@ -126,6 +127,7 @@ describe('Prisma-backed payment reconciliation flows', () => {
 
     const purchase = await paymentService.createPurchase(buyer.userId, {
       package: '5_credits',
+      paymentMethod: 'mpesa',
       phoneNumber: buyer.phoneNumber,
     });
 
@@ -174,6 +176,7 @@ describe('Prisma-backed payment reconciliation flows', () => {
 
     const purchase = await paymentService.createPurchase(buyer.userId, {
       package: '5_credits',
+      paymentMethod: 'mpesa',
       phoneNumber: buyer.phoneNumber,
     });
 

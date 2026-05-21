@@ -48,6 +48,10 @@ import { createUnlock as createUnlockApi, confirmUnlock as confirmUnlockApi } fr
 import { uploadAndConfirmPhoto, uploadAndConfirmVideo } from '@/lib/api/uploads';
 import { createListing as createListingApi } from '@/lib/api/listings';
 import { fetchCreditBalance, purchaseCredits } from '@/lib/api/credits';
+import { createDispute as createDisputeApi } from '@/lib/api/disputes';
+import { createSupportTicket as createSupportTicketApi } from '@/lib/api/support';
+import { createReview as createReviewApi } from '@/lib/api/reviews';
+import { createReferral as createReferralApi } from '@/lib/api/referrals';
 import { ConfirmationSide, ListingHouseType, ListingStatus, type CreditPurchasePackage } from '@pataspace/contracts';
 import { useMobileApiSync } from './use-mobile-api-sync';
 
@@ -114,10 +118,12 @@ type MobileAppContextValue = {
   unlockListing: (listingId: string) => Promise<'success' | 'already_unlocked' | 'insufficient'>;
   confirmIncoming: (listingId: string) => Promise<void>;
   confirmOutgoing: (listingId: string) => Promise<void>;
-  submitSupportMessage: (topic: string, message: string) => void;
+  submitSupportMessage: (topic: string, message: string) => Promise<'success' | 'error'>;
   submitReview: (rating: number, comment: string) => void;
+  submitReviewForUnlock: (unlockId: string, rating: number, comment: string) => Promise<'success' | 'already_reviewed' | 'not_confirmed' | 'forbidden' | 'error'>;
   submitDispute: (subject: string, detail: string) => void;
-  sendReferralInvite: (phone: string) => void;
+  submitDisputeForUnlock: (unlockId: string, subject: string, detail: string) => Promise<'success' | 'already_filed' | 'error'>;
+  sendReferralInvite: (phone: string) => Promise<'success' | 'already_invited' | 'self' | 'error'>;
 };
 
 const MobileAppContext = createContext<MobileAppContextValue | null>(null);
@@ -409,6 +415,7 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
       reviewNote: isLive
         ? 'Listing is live and ready for incoming tenants.'
         : 'Your listing is in review and will publish after media checks.',
+      commissions: [],
     };
 
     setMyListings((current) => [myListing, ...current]);
@@ -436,6 +443,7 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
     setPendingTopUp({ packageId, phone: normalizedPhone });
     await purchaseCredits(getToken, {
       package: packageId as CreditPurchasePackage,
+      paymentMethod: 'mpesa',
       phoneNumber: normalizedPhone,
     });
   }
@@ -552,26 +560,23 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
     updateUnlock(listingId, { outgoingConfirmed: true });
   }
 
-  function submitSupportMessage(topic: string, message: string) {
-    const transaction: TransactionRecord = {
-      id: `txn-support-${Date.now()}`,
-      type: 'support',
-      title: `Support request: ${topic}`,
-      status: 'Pending',
-      amount: 'KES 0',
-      credits: '0 credits',
-      date: 'Just now',
-      detail: message,
-    };
-
-    setTransactions((current) => [transaction, ...current]);
-    pushNotification({
-      id: `notif-support-${Date.now()}`,
-      title: 'Support request logged',
-      detail: `${topic} has been sent to the team.`,
-      time: 'Just now',
-      target: { route: 'profile' },
-    });
+  async function submitSupportMessage(
+    topic: string,
+    message: string,
+  ): Promise<'success' | 'error'> {
+    try {
+      await createSupportTicketApi(getToken, { subject: topic, message });
+      pushNotification({
+        id: `notif-support-${Date.now()}`,
+        title: 'Support request logged',
+        detail: `${topic} has been sent to the team.`,
+        time: 'Just now',
+        target: { route: 'profile' },
+      });
+      return 'success';
+    } catch {
+      return 'error';
+    }
   }
 
   function submitReview(rating: number, comment: string) {
@@ -584,6 +589,35 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
     });
   }
 
+  async function submitReviewForUnlock(
+    unlockId: string,
+    rating: number,
+    comment: string,
+  ): Promise<'success' | 'already_reviewed' | 'not_confirmed' | 'forbidden' | 'error'> {
+    const trimmed = comment.trim();
+    try {
+      await createReviewApi(getToken, {
+        unlockId,
+        rating,
+        comment: trimmed.length > 0 ? trimmed : undefined,
+      });
+      pushNotification({
+        id: `notif-review-${Date.now()}`,
+        title: 'Thanks for the rating',
+        detail: `Your ${rating}/5 review is recorded.`,
+        time: 'Just now',
+        target: { route: 'profile' },
+      });
+      return 'success';
+    } catch (error) {
+      const message = error instanceof Error ? error.message.toLowerCase() : '';
+      if (message.includes('already')) return 'already_reviewed';
+      if (message.includes('confirm')) return 'not_confirmed';
+      if (message.includes('not allowed') || message.includes('forbidden')) return 'forbidden';
+      return 'error';
+    }
+  }
+
   function submitDispute(subject: string, detail: string) {
     pushNotification({
       id: `notif-dispute-${Date.now()}`,
@@ -594,14 +628,51 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
     });
   }
 
-  function sendReferralInvite(phone: string) {
-    pushNotification({
-      id: `notif-referral-${Date.now()}`,
-      title: 'Referral invite sent',
-      detail: `Invite sent to ${normalizePhone(phone) || phone}.`,
-      time: 'Just now',
-      target: { route: 'credits' },
-    });
+  async function submitDisputeForUnlock(
+    unlockId: string,
+    subject: string,
+    detail: string,
+  ): Promise<'success' | 'already_filed' | 'error'> {
+    const reason = `${subject}: ${detail.trim()}`;
+    try {
+      await createDisputeApi(getToken, { unlockId, reason });
+      pushNotification({
+        id: `notif-dispute-${Date.now()}`,
+        title: 'Dispute filed',
+        detail: `${subject} — admin review starts within 24 hours.`,
+        time: 'Just now',
+        target: { route: 'confirmations' },
+      });
+      return 'success';
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      if (message.toLowerCase().includes('already')) {
+        return 'already_filed';
+      }
+      return 'error';
+    }
+  }
+
+  async function sendReferralInvite(
+    phone: string,
+  ): Promise<'success' | 'already_invited' | 'self' | 'error'> {
+    const normalized = normalizePhone(phone) || phone;
+    try {
+      await createReferralApi(getToken, { phoneNumber: normalized });
+      pushNotification({
+        id: `notif-referral-${Date.now()}`,
+        title: 'Referral invite sent',
+        detail: `Invite recorded for ${normalized}.`,
+        time: 'Just now',
+        target: { route: 'credits' },
+      });
+      return 'success';
+    } catch (error) {
+      const message = error instanceof Error ? error.message.toLowerCase() : '';
+      if (message.includes('already')) return 'already_invited';
+      if (message.includes('refer yourself') || message.includes('cannot_refer_self')) return 'self';
+      return 'error';
+    }
   }
 
   return (
@@ -667,7 +738,9 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
         confirmOutgoing,
         submitSupportMessage,
         submitReview,
+        submitReviewForUnlock,
         submitDispute,
+        submitDisputeForUnlock,
         sendReferralInvite,
       }}
     >

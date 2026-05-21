@@ -255,6 +255,7 @@ export function ContactSupportScreen() {
   const [topic, setTopic] = useState('Unlock issue');
   const [message, setMessage] = useState('I need help with a flow inside the prototype.');
   const [sent, setSent] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { supportTopics, submitSupportMessage } = useMobileApp();
 
   return (
@@ -301,16 +302,27 @@ export function ContactSupportScreen() {
       {sent ? (
         <Card>
           <CardDescription>
-            Support request submitted. You can see the entry in transaction history.
+            Support request submitted. The support team will follow up via SMS or WhatsApp.
           </CardDescription>
+        </Card>
+      ) : null}
+
+      {errorMessage ? (
+        <Card>
+          <CardDescription>{errorMessage}</CardDescription>
         </Card>
       ) : null}
 
       <Button
         label="Send support request"
-        onPress={() => {
-          submitSupportMessage(topic, message);
-          setSent(true);
+        onPress={async () => {
+          setErrorMessage(null);
+          const outcome = await submitSupportMessage(topic, message);
+          if (outcome === 'success') {
+            setSent(true);
+          } else {
+            setErrorMessage('We could not reach the support backend. Try again later.');
+          }
         }}
       />
     </Screen>
@@ -321,7 +333,8 @@ export function RateReviewScreen() {
   const [rating, setRating] = useState(4);
   const [comment, setComment] = useState('The unlock flow is clear and the listing details are useful.');
   const [submitted, setSubmitted] = useState(false);
-  const { reviewPrompts, submitReview } = useMobileApp();
+  const [errorText, setErrorText] = useState<string | null>(null);
+  const { reviewPrompts, submitReview, submitReviewForUnlock, latestUnlock } = useMobileApp();
 
   return (
     <Screen>
@@ -378,11 +391,35 @@ export function RateReviewScreen() {
         </Card>
       ) : null}
 
+      {errorText ? (
+        <Card>
+          <CardDescription>{errorText}</CardDescription>
+        </Card>
+      ) : null}
+
       <Button
         label="Submit review"
-        onPress={() => {
-          submitReview(rating, comment);
-          setSubmitted(true);
+        onPress={async () => {
+          setErrorText(null);
+          if (!latestUnlock) {
+            submitReview(rating, comment);
+            setSubmitted(true);
+            return;
+          }
+          const outcome = await submitReviewForUnlock(latestUnlock.id, rating, comment);
+          if (outcome === 'success') {
+            setSubmitted(true);
+            return;
+          }
+          if (outcome === 'already_reviewed') {
+            setErrorText('You have already reviewed this unlock.');
+          } else if (outcome === 'not_confirmed') {
+            setErrorText('Reviews unlock after both parties confirm the move-in.');
+          } else if (outcome === 'forbidden') {
+            setErrorText('Only unlock participants can leave a review.');
+          } else {
+            setErrorText('We could not submit your review. Try again later.');
+          }
         }}
       />
     </Screen>

@@ -67,6 +67,25 @@ enum ConfirmationSide {
   INCOMING_TENANT
 }
 
+enum SupportTicketStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+  CLOSED
+}
+
+enum ReviewerSide {
+  INCOMING_TENANT
+  OUTGOING_TENANT
+}
+
+enum ReferralStatus {
+  INVITED
+  JOINED
+  REWARDED
+  EXPIRED
+}
+
 enum DisputeStatus {
   OPEN
   INVESTIGATING
@@ -105,6 +124,10 @@ model User {
   refreshTokens        RefreshToken[]
   uploadedAssets       UploadedAsset[]
   auditLogs            AuditLog[]
+  supportTickets       SupportTicket[]
+  reviews              UnlockReview[]
+  referralsSent        Referral[]        @relation("ReferralsSent")
+  referralsReceived    Referral[]        @relation("ReferralsReceived")
 
   @@index([phoneNumberHash])
   @@index([email])
@@ -286,6 +309,7 @@ model Unlock {
   confirmations            Confirmation[]
   commission               Commission?
   dispute                  Dispute?
+  reviews                  UnlockReview[]
 
   @@unique([listingId, buyerId])
   @@index([buyerId, createdAt])
@@ -368,6 +392,64 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([action])
   @@map("audit_logs")
+}
+
+model Referral {
+  id              String         @id @default(cuid())
+  referrerId      String
+  inviteePhoneHash String
+  inviteePhoneMasked String
+  code            String         @unique
+  status          ReferralStatus @default(INVITED)
+  refereeUserId   String?
+  joinedAt        DateTime?
+  rewardedAt      DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  referrer        User           @relation("ReferralsSent", fields: [referrerId], references: [id], onDelete: Cascade)
+  referee         User?          @relation("ReferralsReceived", fields: [refereeUserId], references: [id], onDelete: SetNull)
+
+  @@unique([referrerId, inviteePhoneHash])
+  @@index([referrerId, createdAt])
+  @@index([status])
+  @@map("referrals")
+}
+
+model UnlockReview {
+  id        String       @id @default(cuid())
+  unlockId  String
+  reviewerId String
+  side      ReviewerSide
+  rating    Int
+  comment   String?      @db.Text
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  unlock    Unlock       @relation(fields: [unlockId], references: [id], onDelete: Cascade)
+  reviewer  User         @relation(fields: [reviewerId], references: [id], onDelete: Cascade)
+
+  @@unique([unlockId, reviewerId])
+  @@index([unlockId])
+  @@index([reviewerId])
+  @@map("unlock_reviews")
+}
+
+model SupportTicket {
+  id              String              @id @default(cuid())
+  userId          String
+  subject         String
+  message         String              @db.Text
+  status          SupportTicketStatus @default(OPEN)
+  relatedUnlockId String?
+  channel         String?
+  adminNotes      String?             @db.Text
+  resolvedAt      DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([status])
+  @@map("support_tickets")
 }
 
 model SystemConfig {

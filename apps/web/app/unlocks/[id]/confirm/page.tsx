@@ -1,12 +1,32 @@
+/**
+ * Purpose: Server page that renders the tenant move-in confirmation surface.
+ * Why important: Fetches the live unlock from /unlocks/my-unlocks so the
+ *   confirmation form points at a real backend record instead of mock data.
+ * Used by: Next.js routing for /unlocks/[id]/confirm.
+ */
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { CheckCircle2, ClipboardCheck } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { ClipboardCheck } from 'lucide-react';
+import { auth } from '@clerk/nextjs/server';
+import type { MyUnlockRecord } from '@pataspace/contracts';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { TenantWorkspaceShell } from '@/components/workspace/page';
-import { getMockUnlockBundle } from '@/lib/mock-app-state';
+import { ConfirmMoveInForm } from '@/components/unlocks/confirm-move-in-form';
+import { getMyUnlocks } from '@/lib/api/unlocks';
 import { formatDateLabel } from '@/lib/format';
 import { linkButtonClass } from '@/lib/link-button';
+
+function describeListing(listing: MyUnlockRecord['listing']) {
+  return listing.bedrooms === 0
+    ? `Studio · ${listing.neighborhood}`
+    : `${listing.bedrooms}BR · ${listing.neighborhood}`;
+}
 
 export default async function Page({
   params,
@@ -14,13 +34,18 @@ export default async function Page({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const bundle = getMockUnlockBundle(id);
+  const { getToken } = await auth();
+  const token = await getToken();
 
-  if (!bundle) {
+  const response = await getMyUnlocks(token, 1, 100).catch(() => null);
+  const unlock = response?.data.find((entry) => entry.unlockId === id) ?? null;
+
+  if (!unlock) {
     notFound();
   }
 
-  const { unlock, listing } = bundle;
+  const listingTitle = describeListing(unlock.listing);
+  const alreadyConfirmed = unlock.myConfirmation !== null;
 
   return (
     <TenantWorkspaceShell
@@ -28,7 +53,10 @@ export default async function Page({
       title="Confirm move-in"
       description="Use the confirmation step to document that contact led to a successful housing handover."
       actions={
-        <Link href={`/unlocks/${unlock.unlockId}`} className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
+        <Link
+          href={`/unlocks/${unlock.unlockId}`}
+          className={linkButtonClass({ variant: 'outline', size: 'sm' })}
+        >
           Back to unlock
         </Link>
       }
@@ -43,26 +71,11 @@ export default async function Page({
               Confirm only after you have spoken to the outgoing tenant and validated the handover outcome.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {[
-              'You reached the current tenant on the revealed contact details.',
-              'The property details and occupancy context matched what was discussed.',
-              'You are ready to confirm the move-in outcome on your side.',
-            ].map((item) => (
-              <div
-                key={item}
-                className="flex gap-4 border border-border bg-muted p-4 text-sm leading-7 text-muted-foreground"
-              >
-                <span className="mt-1 flex size-8 items-center justify-center border border-primary/30 bg-primary/10 text-primary">
-                  <CheckCircle2 className="size-4" />
-                </span>
-                <p>{item}</p>
-              </div>
-            ))}
-
-            <Button className="h-11 bg-primary px-6 text-primary-foreground hover:bg-primary/90">
-              Confirm move-in
-            </Button>
+          <CardContent>
+            <ConfirmMoveInForm
+              unlockId={unlock.unlockId}
+              alreadyConfirmed={alreadyConfirmed}
+            />
           </CardContent>
         </Card>
 
@@ -75,10 +88,13 @@ export default async function Page({
           <CardContent className="space-y-4 text-sm leading-7 text-background/76">
             <p className="inline-flex items-center gap-2 font-medium text-background">
               <ClipboardCheck className="size-4 text-primary" />
-              {listing.title}
+              {listingTitle}
             </p>
             <p>Unlocked on {formatDateLabel(unlock.createdAt)}</p>
-            <p>Your first confirmation was {unlock.myConfirmation ? 'already recorded' : 'not yet recorded'}.</p>
+            <p>
+              Your first confirmation was{' '}
+              {alreadyConfirmed ? 'already recorded' : 'not yet recorded'}.
+            </p>
             <p>
               Once both sides confirm, the owner-side commission workflow becomes eligible to continue.
             </p>

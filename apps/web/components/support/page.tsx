@@ -1,13 +1,15 @@
 import Link from 'next/link';
 import { ArrowRight, Flag, MessageCircle, PlayCircle } from 'lucide-react';
+import type { SupportTicketRecord } from '@pataspace/contracts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PublicSiteFrame } from '@/components/shared/public-site-frame';
 import { TenantWorkspaceShell } from '@/components/workspace/page';
-import { mockSupportRequests, supportTopics } from '@/lib/mock-app-state';
+import { SupportContactForm } from '@/components/support/contact-form';
+import { supportTopics } from '@/lib/mock-app-state';
 import { formatDateLabel } from '@/lib/format';
 import { linkButtonClass } from '@/lib/link-button';
 
-export function HelpCenterPage() {
+export function HelpCenterPage({ tickets }: { tickets: SupportTicketRecord[] }) {
   return (
     <TenantWorkspaceShell
       pathname="/support"
@@ -70,25 +72,57 @@ export function HelpCenterPage() {
             </Card>
           </div>
 
-          <Card className="border border-border bg-foreground text-background shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-3xl font-semibold text-background">
-                Open support threads
-              </CardTitle>
-              <CardDescription className="text-sm leading-7 text-background/60">
-                Active support work stays visible beside the FAQ guidance.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {mockSupportRequests.map((request) => (
-                <div key={request.id} className="border border-background/10 bg-background/6 p-4 text-sm leading-7 text-background/76">
-                  <p className="font-medium text-background">{request.subject}</p>
-                  <p className="mt-2">{request.summary}</p>
-                  <p className="mt-2 text-background/50">Updated {formatDateLabel(request.updatedAt)}</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            <Card className="border border-border bg-card shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-3xl font-semibold text-foreground">
+                  Contact support
+                </CardTitle>
+                <CardDescription className="text-sm leading-7 text-muted-foreground">
+                  Sends a real ticket to the support team. You will be contacted via SMS or WhatsApp.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <SupportContactForm />
+              </CardContent>
+            </Card>
+
+            <Card className="border border-border bg-foreground text-background shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-3xl font-semibold text-background">
+                  Open support threads
+                </CardTitle>
+                <CardDescription className="text-sm leading-7 text-background/60">
+                  Your active support work, pulled live from the backend.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {tickets.length === 0 ? (
+                  <p className="text-sm leading-7 text-background/76">
+                    No active support tickets yet. Use the form above to open one.
+                  </p>
+                ) : (
+                  tickets.map((ticket) => (
+                    <div
+                      key={ticket.id}
+                      className="border border-background/10 bg-background/6 p-4 text-sm leading-7 text-background/76"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-medium text-background">{ticket.subject}</p>
+                        <span className="border border-background/20 px-2 py-0.5 text-xs">
+                          {ticket.status}
+                        </span>
+                      </div>
+                      <p className="mt-2">{ticket.message}</p>
+                      <p className="mt-2 text-background/50">
+                        Updated {formatDateLabel(ticket.updatedAt)}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </section>
     </TenantWorkspaceShell>

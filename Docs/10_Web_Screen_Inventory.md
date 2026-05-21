@@ -66,11 +66,46 @@
   - dispute operations
   - analytics dashboards
 - Lower-priority tenant enhancements not yet backed by a clear web surface:
-  - saved listings
-  - notifications
   - referral
   - rate and review
   - app update announcements
+
+## Phase 1.5 Additions (Shipped Post-Inventory)
+
+Routes added after the original 20-screen Phase 1 cut. They have been merged
+into the web app and supersede the original "intentionally excluded" list for
+the items listed here. The screen inventory above stays the canonical count
+for the tenant-critical funnel; everything in this section is supplemental.
+
+- Marketing / pre-auth pages: `/about`, `/how-it-works`, `/pricing`,
+  `/whats-new` — static landing context surfaces.
+- Tenant convenience: `/search`, `/map`, `/saved`, `/notifications`,
+  `/settings` — discovery and account helpers; rely on the same backend
+  endpoints as the inventory routes.
+- Outgoing-tenant posting on web: `/post`, `/post/upload-photos`,
+  `/post/details` — mirror of the mobile post flow. Use only on devices
+  that can capture GPS-verified photos; the mobile flow remains the
+  primary path.
+
+If any of these routes are removed, update this section in the same change
+set rather than letting the inventory drift again.
+
+## Intentionally Static Pages
+
+These pages render static marketing or visual copy and do not currently call
+`/api/v1`. That is deliberate — they exist to support the public funnel and
+they will be promoted to live data when there is a real backend surface to
+read from:
+
+- `/about`
+- `/pricing`
+- `/saved` — currently a demo of saved-listing layout; backend has no saved
+  listings endpoint yet.
+- `/listings/[id]/gallery` — photo gallery uses a static local image bank
+  for stock visuals; the listing data itself comes from the backend.
+
+Promotion plan: once `/users/me/saved-listings` and per-listing gallery
+endpoints exist, these pages move into the wired list above.
 
 ## Route Mapping
 

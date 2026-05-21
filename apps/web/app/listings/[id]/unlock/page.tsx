@@ -1,14 +1,31 @@
+/**
+ * Purpose: Server page that renders the unlock-checkout surface for a listing.
+ * Why important: Pulls the live listing record, wallet balance, and existing
+ *   unlock from the backend so the client checkout button can either reveal
+ *   contact (POST /unlocks) or jump to top-up when credits are short.
+ * Used by: Next.js routing for /listings/[id]/unlock.
+ */
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowRight, ShieldCheck, Wallet } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { auth } from '@clerk/nextjs/server';
+import type { MyUnlockRecord } from '@pataspace/contracts';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { PublicSiteFrame } from '@/components/shared/public-site-frame';
 import { ScreenHero } from '@/components/shared/screen-hero';
-import { getMockListingById } from '@/lib/mock-listings';
+import { UnlockCheckoutButton } from '@/components/unlocks/unlock-checkout-button';
+import { getListingById } from '@/lib/api/listings';
+import { getMyUnlocks } from '@/lib/api/unlocks';
+import { getCreditBalance } from '@/lib/api/credits';
 import { formatKes } from '@/lib/format';
 import { getListingVisual } from '@/lib/listing-visuals';
-import { getMockUnlockByListingId, mockCreditBalance } from '@/lib/mock-app-state';
 import { linkButtonClass } from '@/lib/link-button';
 
 export default async function Page({
@@ -17,15 +34,32 @@ export default async function Page({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const listing = getMockListingById(id);
+  const { getToken } = await auth();
+  const token = await getToken();
 
+  const listing = await getListingById(id, token).catch(() => null);
   if (!listing) {
     notFound();
   }
 
+  const [balance, unlocks] = await Promise.all([
+    getCreditBalance(token).catch(() => null),
+    getMyUnlocks(token, 1, 100).catch(
+      () => ({ data: [] as MyUnlockRecord[] }) as { data: MyUnlockRecord[] },
+    ),
+  ]);
+
+  const existingUnlock = unlocks.data.find(
+    (entry) => entry.listing.id === listing.id,
+  );
+  const currentBalance = balance?.balance ?? 0;
+  const postUnlockBalance = currentBalance - listing.unlockCostCredits;
+  const insufficient = !existingUnlock && currentBalance < listing.unlockCostCredits;
   const visual = getListingVisual(listing.id);
-  const postUnlockBalance = mockCreditBalance.balance - listing.unlockCostCredits;
-  const existingUnlock = getMockUnlockByListingId(listing.id);
+  const listingTitle =
+    listing.bedrooms === 0
+      ? `Studio · ${listing.neighborhood}`
+      : `${listing.bedrooms}BR · ${listing.neighborhood}`;
 
   return (
     <PublicSiteFrame>
@@ -66,9 +100,11 @@ export default async function Page({
                   Listing summary
                 </p>
                 <h2 className="mt-3 text-3xl font-semibold text-foreground">
-                  {listing.title}
+                  {listingTitle}
                 </h2>
-                <p className="mt-2 text-sm leading-7 text-muted-foreground">{listing.description}</p>
+                <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                  {listing.description}
+                </p>
               </div>
 
               <div className="grid gap-3 border border-border bg-muted p-4 text-sm text-muted-foreground sm:grid-cols-3">
@@ -80,7 +116,7 @@ export default async function Page({
               <div className="grid gap-3">
                 {[
                   'Exact address, directions, map pin, and contact numbers are revealed immediately after purchase.',
-                  'Repeat unlocks stay idempotent and should not charge twice for the same listing.',
+                  'Repeat unlocks stay idempotent and will not charge twice for the same listing.',
                   'The current tenant is notified so both sides can move into confirmation workflow cleanly.',
                 ].map((item) => (
                   <div
@@ -114,11 +150,11 @@ export default async function Page({
                 <div className="mt-5 grid gap-3 text-sm text-primary-foreground/80">
                   <p className="flex items-center justify-between">
                     <span>Current balance</span>
-                    <span>{formatKes(mockCreditBalance.balance)}</span>
+                    <span>{formatKes(currentBalance)}</span>
                   </p>
                   <p className="flex items-center justify-between">
                     <span>Balance after unlock</span>
-                    <span>{formatKes(postUnlockBalance)}</span>
+                    <span>{formatKes(Math.max(postUnlockBalance, 0))}</span>
                   </p>
                 </div>
               </div>
@@ -133,25 +169,19 @@ export default async function Page({
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  href={existingUnlock ? `/unlocks/${existingUnlock.unlockId}` : '/unlocks'}
-                  className={linkButtonClass({ size: 'sm' })}
-                >
-                  Reveal contact
-                </Link>
-                <Link
-                  href="/wallet/processing"
-                  className={linkButtonClass({ variant: 'outline', size: 'sm' })}
-                >
-                  Preview processing state
-                  <ArrowRight className="size-4" />
-                </Link>
-              </div>
+              <UnlockCheckoutButton
+                listingId={listing.id}
+                existingUnlockId={existingUnlock?.unlockId ?? null}
+                insufficientCredits={insufficient}
+              />
 
-              <Link href="/wallet" className="inline-flex items-center gap-2 text-sm font-medium text-primary">
+              <Link
+                href="/wallet"
+                className="inline-flex items-center gap-2 text-sm font-medium text-primary"
+              >
                 <Wallet className="size-4" />
                 Review wallet history first
+                <ArrowRight className="size-4" />
               </Link>
             </CardContent>
           </Card>

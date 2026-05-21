@@ -118,6 +118,42 @@ export function MyListingDetailsScreen() {
       </Card>
 
       <Card>
+        <CardTitle className="text-[20px]">Commission timeline</CardTitle>
+        {listingRow.commissions.length === 0 ? (
+          <CardDescription>
+            No commissions yet. They appear here once both parties confirm an unlock.
+          </CardDescription>
+        ) : (
+          <View className="mt-4 gap-3">
+            {listingRow.commissions.map((commission) => (
+              <View
+                key={commission.unlockId}
+                className="rounded-2xl bg-secondary px-4 py-3"
+              >
+                <View className="flex-row items-center justify-between gap-3">
+                  <Text className="text-sm font-semibold text-foreground">
+                    KES {commission.amountKES.toLocaleString()}
+                  </Text>
+                  <Badge
+                    variant={commission.status === 'PAID' ? 'dark' : 'secondary'}
+                  >
+                    {commission.status}
+                  </Badge>
+                </View>
+                <Text className="mt-1 text-xs text-muted-foreground">
+                  {commission.paidAt
+                    ? `Paid ${new Date(commission.paidAt).toLocaleDateString('en-KE')}`
+                    : commission.eligibleAt
+                      ? `Eligible from ${new Date(commission.eligibleAt).toLocaleDateString('en-KE')}`
+                      : 'Awaiting confirmation lock-in'}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </Card>
+
+      <Card>
         <CardTitle className="text-[20px]">Review note</CardTitle>
         <CardDescription>{listingRow.reviewNote}</CardDescription>
       </Card>

@@ -64,6 +64,14 @@ export class MyUnlockListingDto {
   bedrooms!: number;
 }
 
+export class MyUnlockDisputeSummaryDto {
+  @ApiProperty({ example: 'cm8dispute123' })
+  id!: string;
+
+  @ApiProperty({ enum: ['OPEN', 'INVESTIGATING', 'RESOLVED', 'CLOSED'] })
+  status!: 'OPEN' | 'INVESTIGATING' | 'RESOLVED' | 'CLOSED';
+}
+
 export class MyUnlockRecordDto {
   @ApiProperty({ example: 'cm8unlock123' })
   unlockId!: string;
@@ -77,8 +85,8 @@ export class MyUnlockRecordDto {
   @ApiProperty({ type: () => UnlockContactInfoDto })
   contactInfo!: UnlockContactInfoDto;
 
-  @ApiProperty({ enum: ['pending_confirmation', 'confirmed', 'refunded'] })
-  status!: 'pending_confirmation' | 'confirmed' | 'refunded';
+  @ApiProperty({ enum: ['pending_confirmation', 'confirmed', 'disputed', 'refunded'] })
+  status!: 'pending_confirmation' | 'confirmed' | 'disputed' | 'refunded';
 
   @ApiProperty({ example: null, nullable: true })
   myConfirmation!: string | null;
@@ -88,6 +96,9 @@ export class MyUnlockRecordDto {
 
   @ApiProperty({ example: '2026-03-20T14:00:00.000Z' })
   createdAt!: string;
+
+  @ApiProperty({ type: () => MyUnlockDisputeSummaryDto, nullable: true })
+  dispute!: MyUnlockDisputeSummaryDto | null;
 }
 
 export class UnlockPaginationDto {

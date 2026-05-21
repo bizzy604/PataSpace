@@ -113,6 +113,14 @@ export type ListingPreview = {
   };
 };
 
+export type MyListingCommissionEntry = {
+  unlockId: string;
+  amountKES: number;
+  status: 'PENDING' | 'DUE' | 'PROCESSING' | 'PAID' | 'FAILED' | 'CANCELLED';
+  eligibleAt: string | null;
+  paidAt: string | null;
+};
+
 export type MyListingRow = {
   id: string;
   title: string;
@@ -122,6 +130,7 @@ export type MyListingRow = {
   payout: string;
   updated: string;
   reviewNote: string;
+  commissions: MyListingCommissionEntry[];
 };
 
 export type WalletPackage = {
@@ -486,6 +495,7 @@ export const initialMyListingRows: MyListingRow[] = [
     payout: 'KES 750 pending',
     updated: 'Updated 2h ago',
     reviewNote: 'Live and converting well in Kilimani searches.',
+    commissions: [],
   },
   {
     id: 'south-b-studio',
@@ -496,6 +506,7 @@ export const initialMyListingRows: MyListingRow[] = [
     payout: 'Waiting for publish',
     updated: 'Awaiting media check',
     reviewNote: 'Admin review is checking room coverage and GPS tags.',
+    commissions: [],
   },
 ];
 

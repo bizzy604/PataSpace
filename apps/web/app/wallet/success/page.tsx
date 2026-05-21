@@ -1,13 +1,55 @@
+/**
+ * Purpose: Confirmation page shown after an M-Pesa credit purchase completes.
+ * Why important: Pulls the most recent COMPLETED purchase transaction from
+ *   /credits/transactions so the receipt reflects what the backend recorded
+ *   instead of static mock data.
+ * Used by: Next.js routing for /wallet/success.
+ */
 import Link from 'next/link';
 import { CheckCircle2, Wallet2 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { auth } from '@clerk/nextjs/server';
+import { TransactionType } from '@pataspace/contracts';
+import type { CreditTransaction } from '@pataspace/contracts';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { TenantWorkspaceShell } from '@/components/workspace/page';
-import { mockTransactions } from '@/lib/mock-app-state';
+import { getRecentTransactions } from '@/lib/api/credits';
 import { formatDateLabel, formatKes } from '@/lib/format';
 import { linkButtonClass } from '@/lib/link-button';
 
-export default function Page() {
-  const purchase = mockTransactions.find((transaction) => transaction.type === 'PURCHASE');
+function describePurchase(transaction: CreditTransaction | null) {
+  if (!transaction) {
+    return {
+      label: 'Latest top-up',
+      amount: 'KES —',
+      receipt: 'Pending callback',
+      date: 'Just now',
+    };
+  }
+  return {
+    label: transaction.description ?? 'Credit purchase',
+    amount: formatKes(Math.abs(transaction.amount)),
+    receipt: transaction.mpesaReceiptNumber ?? 'Pending callback',
+    date: formatDateLabel(transaction.createdAt),
+  };
+}
+
+export default async function Page() {
+  const { getToken } = await auth();
+  const token = await getToken();
+
+  const transactions = await getRecentTransactions(token, 20).catch(
+    () => [] as CreditTransaction[],
+  );
+  const purchase = transactions.find(
+    (transaction) => transaction.type === TransactionType.PURCHASE,
+  ) ?? null;
+  const details = describePurchase(purchase);
 
   return (
     <TenantWorkspaceShell
@@ -39,20 +81,20 @@ export default function Page() {
               </p>
               <div className="mt-4 space-y-3 text-sm leading-7 text-muted-foreground">
                 <p className="flex items-center justify-between">
-                  <span>Package</span>
-                  <span>Fast Track</span>
+                  <span>Description</span>
+                  <span>{details.label}</span>
                 </p>
                 <p className="flex items-center justify-between">
                   <span>Amount</span>
-                  <span>{formatKes(2000)}</span>
+                  <span>{details.amount}</span>
                 </p>
                 <p className="flex items-center justify-between">
                   <span>Receipt</span>
-                  <span>{purchase?.mpesaReceiptNumber}</span>
+                  <span>{details.receipt}</span>
                 </p>
                 <p className="flex items-center justify-between">
                   <span>Date</span>
-                  <span>{purchase ? formatDateLabel(purchase.createdAt) : 'Today'}</span>
+                  <span>{details.date}</span>
                 </p>
               </div>
             </div>
@@ -72,7 +114,10 @@ export default function Page() {
                 <Link href="/listings" className={linkButtonClass({ size: 'sm' })}>
                   Browse listings
                 </Link>
-                <Link href="/wallet/transactions" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
+                <Link
+                  href="/wallet/transactions"
+                  className={linkButtonClass({ variant: 'outline', size: 'sm' })}
+                >
                   View receipt
                 </Link>
               </div>

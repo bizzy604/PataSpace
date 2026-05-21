@@ -398,10 +398,13 @@ export class ListingService {
           createdAt: true,
           unlocks: {
             select: {
+              id: true,
               commission: {
                 select: {
                   amountKES: true,
                   status: true,
+                  eligibleAt: true,
+                  paidAt: true,
                 },
               },
             },
@@ -413,11 +416,20 @@ export class ListingService {
     const data: MyListing[] = listings.map((listing) => {
       let totalEarnings = 0;
       let pendingEarnings = 0;
+      const commissions: MyListing['commissions'] = [];
 
       for (const unlock of listing.unlocks) {
         if (!unlock.commission) {
           continue;
         }
+
+        commissions.push({
+          unlockId: unlock.id,
+          amountKES: unlock.commission.amountKES,
+          status: unlock.commission.status as unknown as MyListing['commissions'][number]['status'],
+          eligibleAt: unlock.commission.eligibleAt?.toISOString() ?? null,
+          paidAt: unlock.commission.paidAt?.toISOString() ?? null,
+        });
 
         if (unlock.commission.status === CommissionStatus.PAID) {
           totalEarnings += unlock.commission.amountKES;
@@ -442,6 +454,7 @@ export class ListingService {
         totalEarnings,
         pendingEarnings,
         createdAt: listing.createdAt.toISOString(),
+        commissions,
       };
     });
 

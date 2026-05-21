@@ -18,6 +18,9 @@ import { UploadModule } from './modules/upload/upload.module';
 import { ConfirmationModule } from './modules/confirmation/confirmation.module';
 import { DisputeModule } from './modules/dispute/dispute.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { SupportModule } from './modules/support/support.module';
+import { ReviewModule } from './modules/review/review.module';
+import { ReferralModule } from './modules/referral/referral.module';
 import { JobsModule } from './jobs/jobs.module';
 import { DatabaseModule } from './common/database/database.module';
 import { RequestContextModule } from './common/request-context/request-context.module';
@@ -89,6 +92,9 @@ import { StellarModule } from './infrastructure/stellar/stellar.module';
     ConfirmationModule,
     DisputeModule,
     AdminModule,
+    SupportModule,
+    ReviewModule,
+    ReferralModule,
     JobsModule,
   ],
   controllers: [AppController],

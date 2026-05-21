@@ -1,10 +1,29 @@
+/**
+ * Purpose: Server page that renders a single credit-transaction receipt.
+ * Why important: Finds the transaction by id from the authenticated user's
+ *   live transaction history so the receipt comes from the backend ledger
+ *   rather than mock data.
+ * Used by: Next.js routing for /wallet/transactions/[id].
+ */
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ReceiptText, Wallet2 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { auth } from '@clerk/nextjs/server';
+import type { CreditTransaction } from '@pataspace/contracts';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { TenantWorkspaceShell } from '@/components/workspace/page';
-import { StatusBadge, transactionStatusMeta, transactionTypeMeta } from '@/components/shared/status-badge';
-import { getMockTransactionById } from '@/lib/mock-app-state';
+import {
+  StatusBadge,
+  transactionStatusMeta,
+  transactionTypeMeta,
+} from '@/components/shared/status-badge';
+import { getRecentTransactions } from '@/lib/api/credits';
 import { formatDateLabel, formatKes } from '@/lib/format';
 import { linkButtonClass } from '@/lib/link-button';
 
@@ -14,7 +33,13 @@ export default async function Page({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const transaction = getMockTransactionById(id);
+  const { getToken } = await auth();
+  const token = await getToken();
+
+  const transactions = await getRecentTransactions(token, 100).catch(
+    () => [] as CreditTransaction[],
+  );
+  const transaction = transactions.find((entry) => entry.id === id);
 
   if (!transaction) {
     notFound();
@@ -22,6 +47,7 @@ export default async function Page({
 
   const status = transactionStatusMeta(transaction.status);
   const type = transactionTypeMeta(transaction.type);
+  const balanceDelta = transaction.balanceAfter - transaction.balanceBefore;
 
   return (
     <TenantWorkspaceShell
@@ -29,7 +55,10 @@ export default async function Page({
       title="Transaction detail"
       description="Inspect the exact ledger movement, receipt details, and any linked unlock activity for this wallet record."
       actions={
-        <Link href="/wallet/transactions" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
+        <Link
+          href="/wallet/transactions"
+          className={linkButtonClass({ variant: 'outline', size: 'sm' })}
+        >
           Back to history
         </Link>
       }
@@ -42,7 +71,7 @@ export default async function Page({
               <StatusBadge label={status.label} tone={status.tone} />
             </div>
             <CardTitle className="text-3xl font-semibold text-foreground">
-              {transaction.description}
+              {transaction.description ?? type.label}
             </CardTitle>
             <CardDescription className="text-sm leading-7 text-muted-foreground">
               Created on {formatDateLabel(transaction.createdAt)}.
@@ -51,8 +80,8 @@ export default async function Page({
           <CardContent className="space-y-4 text-sm leading-7 text-muted-foreground">
             <div className="border border-border bg-muted p-5">
               <p className="text-4xl font-semibold text-foreground">
-                {transaction.amount < 0 ? '-' : '+'}
-                {formatKes(Math.abs(transaction.amount))}
+                {balanceDelta < 0 ? '-' : '+'}
+                {formatKes(Math.abs(balanceDelta))}
               </p>
               <p className="mt-3">Balance before: {formatKes(transaction.balanceBefore)}</p>
               <p>Balance after: {formatKes(transaction.balanceAfter)}</p>
@@ -64,7 +93,10 @@ export default async function Page({
                 Payment metadata
               </p>
               <p className="mt-3">Transaction id: {transaction.id}</p>
-              <p>Receipt: {transaction.mpesaReceiptNumber ?? 'No receipt on non-purchase ledger entries'}</p>
+              <p>
+                Receipt:{' '}
+                {transaction.mpesaReceiptNumber ?? 'No receipt on non-purchase ledger entries'}
+              </p>
               <p>Related unlock: {transaction.unlockId ?? 'None'}</p>
             </div>
           </CardContent>
@@ -85,7 +117,10 @@ export default async function Page({
               Every wallet record is auditable from the web workspace so users can trace purchases, unlock deductions, and refunds through one interface.
             </p>
             {transaction.unlockId ? (
-              <Link href={`/unlocks/${transaction.unlockId}`} className={linkButtonClass({ size: 'sm' })}>
+              <Link
+                href={`/unlocks/${transaction.unlockId}`}
+                className={linkButtonClass({ size: 'sm' })}
+              >
                 Open linked unlock
               </Link>
             ) : (
