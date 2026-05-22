@@ -37,11 +37,17 @@ describe('PaymentWebhookController', () => {
       }),
     };
 
+    const commissionCallbackService = {
+      handleB2CResult: jest.fn().mockResolvedValue({ kind: 'no_state_change', commissionId: 'c1' }),
+    };
+
     return {
       controller: new PaymentWebhookController(
         paymentService as never,
         configService as never,
+        commissionCallbackService as never,
       ),
+      commissionCallbackService,
       paymentService,
     };
   };

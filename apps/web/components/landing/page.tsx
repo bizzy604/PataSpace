@@ -2,7 +2,9 @@
 
 import Image from 'next/image';
 import { useEffect, useState, type ReactNode } from 'react';
-import { ArrowRight, Check, ClipboardList, Clock3, Moon, Repeat2, RotateCcw, Sun } from 'lucide-react';
+import { ArrowRight, Check, ClipboardList, Clock3, LayoutDashboard, LogIn, Moon, Repeat2, RotateCcw, Sun, UserPlus } from 'lucide-react';
+import { Show, SignInButton, SignUpButton } from '@clerk/nextjs';
+import Link from 'next/link';
 import { BrandLogo } from '@/components/shared/brand-logo';
 import { cn } from '@/lib/utils';
 
@@ -168,7 +170,7 @@ export function LandingHomePage() {
             <a href="#top" aria-label="PataSpace home" className="inline-flex items-center">
               <BrandLogo priority />
             </a>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <button
                 type="button"
                 onClick={toggleTheme}
@@ -177,7 +179,41 @@ export function LandingHomePage() {
               >
                 {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
               </button>
-              <a href="#cta" className="inline-flex items-center gap-2 bg-primary px-4 py-2.5 text-[0.85rem] font-medium text-primary-foreground shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+              <Show when="signed-out">
+                <SignUpButton mode="redirect">
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2.5 text-[0.85rem] font-medium text-foreground transition hover:bg-muted"
+                  >
+                    <UserPlus className="size-4" />
+                    Register
+                  </button>
+                </SignUpButton>
+              </Show>
+              <Show when="signed-out">
+                <SignInButton mode="redirect">
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-2 bg-primary px-4 py-2.5 text-[0.85rem] font-medium text-primary-foreground shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                  >
+                    <LogIn className="size-4" />
+                    Sign in
+                  </button>
+                </SignInButton>
+              </Show>
+              <Show when="signed-in">
+                <Link
+                  href="/wallet"
+                  className="inline-flex items-center gap-2 bg-primary px-4 py-2.5 text-[0.85rem] font-medium text-primary-foreground shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                >
+                  <LayoutDashboard className="size-4" />
+                  Open workspace
+                </Link>
+              </Show>
+              <a
+                href="#cta"
+                className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2.5 text-[0.85rem] font-medium text-foreground transition hover:bg-muted"
+              >
                 Request a Demo
               </a>
             </div>
