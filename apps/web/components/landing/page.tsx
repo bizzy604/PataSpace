@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useEffect, useState, type ReactNode } from 'react';
 import { ArrowRight, Check, ClipboardList, Clock3, LayoutDashboard, LogIn, Moon, Repeat2, RotateCcw, Sun, UserPlus } from 'lucide-react';
-import { Show, SignInButton, SignUpButton } from '@clerk/nextjs';
+import { SignInButton, SignUpButton, useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 import { BrandLogo } from '@/components/shared/brand-logo';
 import { cn } from '@/lib/utils';
@@ -114,6 +114,7 @@ function HeroBackgroundMarquee() {
 export function LandingHomePage() {
   const [isDark, setIsDark] = useState(false);
   const [themeOverride, setThemeOverride] = useState<'light' | 'dark' | null>(null);
+  const { isLoaded, isSignedIn } = useUser();
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem('pataspace-landing-theme');
@@ -179,29 +180,29 @@ export function LandingHomePage() {
               >
                 {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
               </button>
-              <Show when="signed-out">
-                <SignUpButton mode="redirect">
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2.5 text-[0.85rem] font-medium text-foreground transition hover:bg-muted"
-                  >
-                    <UserPlus className="size-4" />
-                    Register
-                  </button>
-                </SignUpButton>
-              </Show>
-              <Show when="signed-out">
-                <SignInButton mode="redirect">
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-2 bg-primary px-4 py-2.5 text-[0.85rem] font-medium text-primary-foreground shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                  >
-                    <LogIn className="size-4" />
-                    Sign in
-                  </button>
-                </SignInButton>
-              </Show>
-              <Show when="signed-in">
+              {isLoaded && !isSignedIn && (
+                <>
+                  <SignUpButton mode="redirect">
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2.5 text-[0.85rem] font-medium text-foreground transition hover:bg-muted"
+                    >
+                      <UserPlus className="size-4" />
+                      Register
+                    </button>
+                  </SignUpButton>
+                  <SignInButton mode="redirect">
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-2 bg-primary px-4 py-2.5 text-[0.85rem] font-medium text-primary-foreground shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                    >
+                      <LogIn className="size-4" />
+                      Sign in
+                    </button>
+                  </SignInButton>
+                </>
+              )}
+              {isLoaded && isSignedIn && (
                 <Link
                   href="/wallet"
                   className="inline-flex items-center gap-2 bg-primary px-4 py-2.5 text-[0.85rem] font-medium text-primary-foreground shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
@@ -209,7 +210,7 @@ export function LandingHomePage() {
                   <LayoutDashboard className="size-4" />
                   Open workspace
                 </Link>
-              </Show>
+              )}
               <a
                 href="#cta"
                 className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2.5 text-[0.85rem] font-medium text-foreground transition hover:bg-muted"

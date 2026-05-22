@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Show, SignInButton, SignOutButton, SignUpButton, UserButton } from '@clerk/nextjs';
+import { SignInButton, SignOutButton, SignUpButton, UserButton, useUser } from '@clerk/nextjs';
 import { LayoutDashboard, LogIn, LogOut, UserPlus } from 'lucide-react';
 import { BrandLogo } from '@/components/shared/brand-logo';
 import { cn } from '@/lib/utils';
@@ -21,6 +21,9 @@ export function PublicSiteFrame({
   children: React.ReactNode;
   className?: string;
 }) {
+  const { isLoaded, isSignedIn } = useUser();
+  const showSignedIn = isLoaded && isSignedIn;
+  const showSignedOut = isLoaded && !isSignedIn;
   return (
     <div className={cn('min-h-screen bg-background text-foreground', className)}>
       <header className="sticky top-0 z-40 border-b border-border bg-background">
@@ -30,41 +33,41 @@ export function PublicSiteFrame({
           </Link>
 
           <div className="flex items-center gap-2.5">
-            <Show when="signed-in">
+            {showSignedIn && (
               <Link href="/wallet" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
                 <LayoutDashboard className="size-4" />
                 Workspace
               </Link>
-            </Show>
-            <Show when="signed-out">
+            )}
+            {showSignedOut && (
               <SignUpButton mode="redirect">
                 <button type="button" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
                   <UserPlus className="size-4" />
                   Register
                 </button>
               </SignUpButton>
-            </Show>
-            <Show when="signed-out">
+            )}
+            {showSignedOut && (
               <SignInButton mode="redirect">
                 <button type="button" className={linkButtonClass({ size: 'sm' })}>
                   <LogIn className="size-4" />
                   Sign in
                 </button>
               </SignInButton>
-            </Show>
-            <Show when="signed-in">
+            )}
+            {showSignedIn && (
               <div className="border border-border bg-card p-1 shadow-sm">
                 <UserButton />
               </div>
-            </Show>
-            <Show when="signed-in">
+            )}
+            {showSignedIn && (
               <SignOutButton>
                 <button type="button" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
                   <LogOut className="size-4" />
                   Sign out
                 </button>
               </SignOutButton>
-            </Show>
+            )}
           </div>
         </div>
       </header>
