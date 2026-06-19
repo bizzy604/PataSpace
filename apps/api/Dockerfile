@@ -28,7 +28,6 @@ RUN pnpm --filter @pataspace/contracts build \
 
 # ---- Runner: API-scoped install + built artifacts only ----
 FROM node:20-slim AS runner
-ENV NODE_ENV=production
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 ENV PORT=3001
@@ -47,10 +46,11 @@ COPY apps/mobile/package.json apps/mobile/
 COPY packages/contracts/package.json packages/contracts/
 COPY packages/design-tokens/package.json packages/design-tokens/
 
-# Install only the API closure (incl. prisma CLI + ts-node for migrations); the
-# shared BuildKit store cache makes this reuse the builder's downloads.
+# Install the full API closure (prisma CLI is a devDep needed for generate +
+# migrations). The shared BuildKit store cache reuses the builder's downloads.
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --frozen-lockfile --ignore-scripts --filter @pataspace/api...
+    pnpm install --frozen-lockfile --ignore-scripts --filter @pataspace/api... \
+    && pnpm store prune
 
 # Built artifacts + Prisma schema/bootstrap scripts from the builder.
 COPY --from=builder /app/packages/contracts/dist packages/contracts/dist
@@ -61,6 +61,7 @@ COPY apps/api/tsconfig*.json apps/api/
 # Generate the Prisma client against the installed @prisma/client.
 RUN pnpm --filter @pataspace/api prisma:generate
 
+ENV NODE_ENV=production
 EXPOSE 3001
 USER node
 
