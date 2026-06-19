@@ -60,13 +60,29 @@ If you want to install the build on a physical iPhone, register the device first
 pnpm dlx eas-cli device:create
 ```
 
+## Store Release (App Store & Google Play)
+
+Production submission to the Apple App Store and Google Play is documented
+end-to-end in [STORE_RELEASE.md](STORE_RELEASE.md): account setup, EAS environment
+variables, build/submit commands, version bumps, and the compliance checklist.
+
+`eas.json` profiles:
+
+- `development` — dev-client internal build, `development` EAS environment.
+- `preview` — installable internal `.apk`, `preview` EAS environment.
+- `production` — store binaries (`.aab` / `.ipa`), `production` EAS environment,
+  wired to `submit.production` for `eas submit`.
+
 ## Current Source Layout
 
 - `src/app`: Expo Router routes (entry is `expo-router/entry` per package.json)
 - `src/screens`: screen-level components
 - `src/components`: reusable UI
-- `src/features`: feature-specific logic
+- `src/features`: feature-specific logic (e.g. `features/account` — the
+  store-required account-deletion flow, reachable from Settings → Danger zone)
 - `src/lib`: utilities
+- `src/types/expo-router.d.ts`: hand-maintained typed-routes list — **add new
+  `src/app` routes here** or `<Link href>` to them will fail to type-check
 
 ## Dependencies
 

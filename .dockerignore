@@ -1,0 +1,33 @@
+# Purpose: Trims the Docker build context shared by every app image.
+# Why important: Keeps image builds fast and reproducible, and prevents secrets
+#   (.env files) and local-only artifacts from leaking into any layer.
+# Used by: apps/*/Dockerfile and infra/nginx/Dockerfile (build context is repo root).
+
+# Dependency and build output (reinstalled/rebuilt inside the image)
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/coverage
+**/test-results
+**/playwright-report
+**/*.tsbuildinfo
+
+# Mobile (Expo) local artifacts — manifest is kept so pnpm can resolve the workspace
+apps/mobile/.expo
+apps/mobile/android
+apps/mobile/ios
+
+# VCS, editor, logs
+.git
+.github
+**/*.log
+.vscode
+.idea
+
+# Secrets — never copy real env files into an image. Examples are allowed.
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.prod.example
+!**/.env.vps.example

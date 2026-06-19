@@ -1,10 +1,14 @@
-name: Backend CI
+name: CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main, staging, dev]
   pull_request:
+    branches: [main, staging, dev]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   backend:
@@ -107,3 +111,26 @@ jobs:
       - run: pnpm --filter @pataspace/api test:smoke
       - run: pnpm --filter @pataspace/api test
       - run: pnpm --filter @pataspace/api build
+
+  frontend:
+    runs-on: ubuntu-latest
+
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @pataspace/contracts build
+      - run: pnpm --filter @pataspace/web build
+      - run: pnpm --filter @pataspace/admin build

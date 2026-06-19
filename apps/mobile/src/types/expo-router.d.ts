@@ -1,3 +1,11 @@
+/**
+ * Purpose: Hand-maintained expo-router typed-routes augmentation listing every
+ *   app route so `<Link href>` and `router.push` are type-checked.
+ * Why important: `.expo/types/router.d.ts` is generated and gitignored, so it is
+ *   absent in fresh checkouts and CI; this committed file is the source of truth.
+ * Used by: the whole app via TypeScript. Add a route here whenever you add a file
+ *   under src/app (e.g. delete-account) or `<Link href>` to it fails to type-check.
+ */
 import * as Router from 'expo-router';
 
 type StaticRoute =
@@ -13,6 +21,7 @@ type StaticRoute =
   | `/create-listing-photos`
   | `/create-listing-review`
   | `/credits`
+  | `/delete-account`
   | `/dispute`
   | `/edit-profile`
   | `/filters`
@@ -58,6 +67,7 @@ type StaticHrefInput =
   | { pathname: `/create-listing-photos`; params?: Router.UnknownInputParams }
   | { pathname: `/create-listing-review`; params?: Router.UnknownInputParams }
   | { pathname: `/credits`; params?: Router.UnknownInputParams }
+  | { pathname: `/delete-account`; params?: Router.UnknownInputParams }
   | { pathname: `/dispute`; params?: Router.UnknownInputParams }
   | { pathname: `/edit-profile`; params?: Router.UnknownInputParams }
   | { pathname: `/filters`; params?: Router.UnknownInputParams }
@@ -101,6 +111,7 @@ type StaticHrefOutput =
   | { pathname: `/create-listing-photos`; params?: Router.UnknownOutputParams }
   | { pathname: `/create-listing-review`; params?: Router.UnknownOutputParams }
   | { pathname: `/credits`; params?: Router.UnknownOutputParams }
+  | { pathname: `/delete-account`; params?: Router.UnknownOutputParams }
   | { pathname: `/dispute`; params?: Router.UnknownOutputParams }
   | { pathname: `/edit-profile`; params?: Router.UnknownOutputParams }
   | { pathname: `/filters`; params?: Router.UnknownOutputParams }

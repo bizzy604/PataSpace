@@ -34,6 +34,7 @@ export const appRoutes = {
   profile: '/profile',
   editProfile: '/edit-profile',
   settings: '/settings',
+  deleteAccount: '/delete-account',
   helpCenter: '/help-center',
   contactSupport: '/contact-support',
   rateReview: '/rate-review',

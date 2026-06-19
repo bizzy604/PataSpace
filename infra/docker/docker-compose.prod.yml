@@ -1,0 +1,119 @@
+# Purpose: Production-style stack provisioning every PataSpace service container.
+# Why important: One command brings up the full system (db, cache, API, web,
+#   admin, edge proxy) from built images, with migrations run as a discrete step.
+# Used by: operators/CI for `docker compose -f infra/docker/docker-compose.prod.yml up`.
+#
+# Copy .env.prod.example to infra/docker/.env and fill in secrets before running.
+
+name: pataspace
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-pataspace}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      PATA_DB_APP_USER: ${PATA_DB_APP_USER:-pataspace_app}
+      PATA_DB_APP_PASSWORD: ${PATA_DB_APP_PASSWORD:?set PATA_DB_APP_PASSWORD in .env}
+      PATA_DB_MIGRATOR_USER: ${PATA_DB_MIGRATOR_USER:-pataspace_migrator}
+      PATA_DB_MIGRATOR_PASSWORD: ${PATA_DB_MIGRATOR_PASSWORD:?set PATA_DB_MIGRATOR_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Bootstraps the least-privilege app/migrator roles on first init.
+      - ../../apps/api/prisma/bootstrap:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-pataspace}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # One-shot migration runner (single owner of schema changes). Runs to completion
+  # before the API starts; uses DATABASE_MIGRATION_URL from .env.
+  api-migrate:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+    image: ${API_IMAGE:-ghcr.io/bizzy604/pataspace-api:latest}
+    command: ["pnpm", "--filter", "@pataspace/api", "prisma:migrate:deploy"]
+    env_file: [.env]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+    image: ${API_IMAGE:-ghcr.io/bizzy604/pataspace-api:latest}
+    env_file: [.env]
+    environment:
+      PORT: 3001
+    expose: ["3001"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ../..
+      dockerfile: apps/web/Dockerfile
+    image: ${WEB_IMAGE:-ghcr.io/bizzy604/pataspace-web:latest}
+    environment:
+      PORT: 3000
+    expose: ["3000"]
+    depends_on:
+      api:
+        condition: service_started
+    restart: unless-stopped
+
+  admin:
+    build:
+      context: ../..
+      dockerfile: apps/admin/Dockerfile
+    image: ${ADMIN_IMAGE:-ghcr.io/bizzy604/pataspace-admin:latest}
+    ports:
+      - "${ADMIN_PORT:-8080}:80"
+    restart: unless-stopped
+
+  nginx:
+    build:
+      context: ../..
+      dockerfile: infra/nginx/Dockerfile
+    image: ${NGINX_IMAGE:-ghcr.io/bizzy604/pataspace-nginx:latest}
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    depends_on:
+      api:
+        condition: service_started
+      web:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

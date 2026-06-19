@@ -7,3 +7,9 @@ expo-env.d.ts
 .env.local
 .env.*.local
 # @end expo-cli
+
+# Store-submission secrets used by `eas submit` (never commit these):
+# - Google Play service-account JSON
+# - App Store Connect API key (.p8)
+credentials/
+*.p8

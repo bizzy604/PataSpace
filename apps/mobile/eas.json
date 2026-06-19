@@ -3,15 +3,39 @@
     "appVersionSource": "local"
   },
   "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "environment": "development",
+      "android": {
+        "buildType": "apk"
+      }
+    },
     "preview": {
       "distribution": "internal",
+      "environment": "preview",
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
+      "environment": "production",
       "android": {
         "buildType": "app-bundle"
+      },
+      "ios": {}
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "REPLACE_WITH_APP_STORE_CONNECT_APP_ID",
+        "appleTeamId": "REPLACE_WITH_APPLE_TEAM_ID"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./credentials/play-service-account.json",
+        "track": "internal",
+        "releaseStatus": "draft"
       }
     }
   }

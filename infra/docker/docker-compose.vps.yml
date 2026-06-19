@@ -1,0 +1,84 @@
+# Purpose: API-only production stack for a VPS that already runs nginx + Certbot.
+# Why important: Ships the backend the mobile app needs for store review, alongside
+#   other sites the host nginx already serves.
+# Used by: Hostinger VPS — `docker compose -f docker-compose.vps.yml up -d`.
+#
+# TLS is handled by the host nginx + Certbot (not Caddy), which proxies
+# api.dalakenya.com → localhost:3002 (the published API port).
+# Requires: .env file (copy .env.vps.example → .env, fill secrets).
+
+name: pataspace-api
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-pataspace}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      PATA_DB_APP_USER: ${PATA_DB_APP_USER:-pataspace_app}
+      PATA_DB_APP_PASSWORD: ${PATA_DB_APP_PASSWORD:?set PATA_DB_APP_PASSWORD in .env}
+      PATA_DB_MIGRATOR_USER: ${PATA_DB_MIGRATOR_USER:-pataspace_migrator}
+      PATA_DB_MIGRATOR_PASSWORD: ${PATA_DB_MIGRATOR_PASSWORD:?set PATA_DB_MIGRATOR_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../../apps/api/prisma/bootstrap:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-pataspace}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  api-migrate:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+    image: ${API_IMAGE:-pataspace-api:local}
+    command: ["pnpm", "--filter", "@pataspace/api", "prisma:migrate:deploy"]
+    env_file: [.env]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+    image: ${API_IMAGE:-pataspace-api:local}
+    env_file: [.env]
+    environment:
+      PORT: 3001
+    ports:
+      - "127.0.0.1:3002:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
