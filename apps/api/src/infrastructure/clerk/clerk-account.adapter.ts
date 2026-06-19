@@ -16,7 +16,10 @@ export class ClerkAccountAdapter {
   private readonly clerk: ReturnType<typeof createClerkClient>;
 
   constructor(configService: ConfigService) {
-    const secretKey = configService.get<string>('security.clerkSecretKey') ?? '';
+    const secretKey = configService.get<string>('security.clerkSecretKey');
+    if (!secretKey) {
+      throw new Error('security.clerkSecretKey is not configured — cannot initialise ClerkAccountAdapter');
+    }
     this.clerk = createClerkClient({ secretKey });
   }
 

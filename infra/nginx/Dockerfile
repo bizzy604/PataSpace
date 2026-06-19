@@ -3,6 +3,6 @@
 #   the backend and everything else to the Next.js site.
 # Used by: infra/docker/docker-compose.prod.yml and .github/workflows/docker-publish.yml.
 
-FROM nginx:1.27-alpine
+FROM nginxinc/nginx-unprivileged:1.27-alpine
 COPY infra/nginx/edge.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
+EXPOSE 8080

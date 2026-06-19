@@ -1,10 +1,12 @@
-# Purpose: API-only production stack for a VPS that already runs nginx + Certbot.
+# Purpose: API-only production stack for a VPS with an existing nginx + Certbot.
 # Why important: Ships the backend the mobile app needs for store review, alongside
 #   other sites the host nginx already serves.
 # Used by: Hostinger VPS — `docker compose -f docker-compose.vps.yml up -d`.
 #
-# TLS is handled by the host nginx + Certbot (not Caddy), which proxies
-# api.dalakenya.com → localhost:3002 (the published API port).
+# TLS: handled by the host's existing nginx + Certbot (not Caddy). The host nginx
+# reverse-proxies the API domain to localhost:3002 (the published API port).
+# The Caddyfile in this directory is an alternative for standalone VPS setups
+# without a pre-existing nginx — see VPS_DEPLOY.md for both paths.
 # Requires: .env file (copy .env.vps.example → .env, fill secrets).
 
 name: pataspace-api
@@ -32,11 +34,11 @@ services:
 
   redis:
     image: redis:7
-    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}"]
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5

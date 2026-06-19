@@ -28,6 +28,8 @@ function ToggleRow({
     <Pressable
       className="flex-row items-center justify-between rounded-[20px] bg-secondary p-4"
       onPress={onPress}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value }}
     >
       <Text className="text-sm font-semibold text-foreground">{label}</Text>
       <View

@@ -18,8 +18,8 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 RUN pnpm --filter @pataspace/contracts build \
   && pnpm --filter @pataspace/admin build
 
-# ---- Runner: nginx serving the built SPA ----
-FROM nginx:1.27-alpine AS runner
+# ---- Runner: unprivileged nginx serving the built SPA ----
+FROM nginxinc/nginx-unprivileged:1.27-alpine AS runner
 COPY apps/admin/docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/apps/admin/dist /usr/share/nginx/html
-EXPOSE 80
+EXPOSE 8080
