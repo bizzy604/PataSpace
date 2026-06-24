@@ -1,15 +1,15 @@
-# Purpose: API-only production stack for a VPS with an existing nginx + Certbot.
-# Why important: Ships the backend the mobile app needs for store review, alongside
+# Purpose: Production stack for a VPS with an existing nginx + Certbot.
+# Why important: Ships the API + web frontend the platform needs, alongside
 #   other sites the host nginx already serves.
 # Used by: Hostinger VPS — `docker compose -f docker-compose.vps.yml up -d`.
 #
 # TLS: handled by the host's existing nginx + Certbot (not Caddy). The host nginx
-# reverse-proxies the API domain to localhost:3002 (the published API port).
+# reverse-proxies the API domain to localhost:3002 and the web domain to localhost:3003.
 # The Caddyfile in this directory is an alternative for standalone VPS setups
 # without a pre-existing nginx — see VPS_DEPLOY.md for both paths.
 # Requires: .env file (copy .env.vps.example → .env, fill secrets).
 
-name: pataspace-api
+name: pataspace
 
 services:
   postgres:
@@ -79,6 +79,30 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ../..
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${WEB_PUBLIC_API_URL:-https://api.dalakenya.com/api/v1}
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-}
+    image: ${WEB_IMAGE:-pataspace-web:local}
+    environment:
+      PORT: 3000
+      NEXT_PUBLIC_API_BASE_URL: ${WEB_PUBLIC_API_URL:-https://api.dalakenya.com/api/v1}
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-}
+      NEXT_PUBLIC_CLERK_SIGN_IN_URL: /auth/sign-in
+      NEXT_PUBLIC_CLERK_SIGN_UP_URL: /auth/register
+      NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL: /wallet
+      NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL: /wallet
+      NEXT_PUBLIC_CLERK_AFTER_SIGN_OUT_URL: /
+    ports:
+      - "127.0.0.1:3003:3000"
+    depends_on:
+      api:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
