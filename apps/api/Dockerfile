@@ -20,8 +20,7 @@ RUN corepack enable \
 WORKDIR /app
 
 COPY . .
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --frozen-lockfile --ignore-scripts
+RUN pnpm install --frozen-lockfile --ignore-scripts
 RUN pnpm --filter @pataspace/contracts build \
   && pnpm --filter @pataspace/api prisma:generate \
   && pnpm --filter @pataspace/api build
@@ -46,11 +45,7 @@ COPY apps/mobile/package.json apps/mobile/
 COPY packages/contracts/package.json packages/contracts/
 COPY packages/design-tokens/package.json packages/design-tokens/
 
-# Install the full API closure (prisma CLI is a devDep needed for generate +
-# migrations). The shared BuildKit store cache reuses the builder's downloads.
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --frozen-lockfile --ignore-scripts --filter @pataspace/api... \
-    && pnpm store prune
+RUN pnpm install --frozen-lockfile --ignore-scripts --filter @pataspace/api...
 
 # Built artifacts + Prisma schema/bootstrap scripts from the builder.
 COPY --from=builder /app/packages/contracts/dist packages/contracts/dist

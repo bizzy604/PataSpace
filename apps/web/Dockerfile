@@ -32,8 +32,7 @@ RUN corepack enable
 WORKDIR /app
 
 COPY . .
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --frozen-lockfile --ignore-scripts
+RUN pnpm install --frozen-lockfile --ignore-scripts
 RUN pnpm --filter @pataspace/contracts build \
   && pnpm --filter @pataspace/web build
 
