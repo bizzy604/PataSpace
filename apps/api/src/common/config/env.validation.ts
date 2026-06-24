@@ -109,15 +109,14 @@ export const envSchema = z.object({
       'MPESA_TIMEOUT_URL',
     ]);
 
-    // Daraja API itself must always be HTTPS.
-    // Callback/result/timeout URLs only enforce HTTPS in production — in development
-    // they typically point at a localhost or ngrok address.
+    // Live M-Pesa mode handles real money: the Daraja API and every callback it
+    // posts to must be HTTPS, regardless of NODE_ENV. Safaricom rejects non-HTTPS
+    // callback URLs in live mode, so a localhost/http address here is always a
+    // misconfiguration. (Sandbox mode keeps the relaxed localhost/ngrok behaviour.)
     requireHttps(context, value.MPESA_BASE_URL, 'MPESA_BASE_URL');
-    if (value.NODE_ENV === 'production') {
-      requireHttps(context, value.MPESA_CALLBACK_URL, 'MPESA_CALLBACK_URL');
-      requireHttps(context, value.MPESA_RESULT_URL, 'MPESA_RESULT_URL');
-      requireHttps(context, value.MPESA_TIMEOUT_URL, 'MPESA_TIMEOUT_URL');
-    }
+    requireHttps(context, value.MPESA_CALLBACK_URL, 'MPESA_CALLBACK_URL');
+    requireHttps(context, value.MPESA_RESULT_URL, 'MPESA_RESULT_URL');
+    requireHttps(context, value.MPESA_TIMEOUT_URL, 'MPESA_TIMEOUT_URL');
   }
 });
 

@@ -157,7 +157,7 @@ export function UnlockDetailPage({
     >
       <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
         <div className="space-y-6">
-          <div className="border border-primary/30 bg-primary/10 p-5 text-primary">
+          <div className="rounded-xl border border-primary/15 bg-primary/5 p-5 text-primary">
             <p className="inline-flex items-center gap-2 font-medium">
               <CheckCircle2 className="size-5" />
               Contact unlocked successfully
@@ -179,13 +179,13 @@ export function UnlockDetailPage({
             </CardHeader>
             <CardContent className="space-y-4">
               {tenantFirstName ? (
-                <div className="border border-border bg-muted p-5">
+                <div className="rounded-lg bg-muted/50 p-5">
                   <div className="flex items-center gap-4">
                     <Avatar size="lg">
                       <AvatarFallback>{tenantFirstName[0]?.toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="text-2xl font-semibold text-foreground">
+                      <p className="text-xl font-semibold text-foreground">
                         {tenantFirstName}
                       </p>
                       <p className="text-sm text-muted-foreground">Current tenant</p>
@@ -197,10 +197,10 @@ export function UnlockDetailPage({
               {contactRows.map(({ label, value, action, Icon }) => (
                 <div
                   key={label}
-                  className="flex flex-wrap items-center justify-between gap-4 border border-border bg-muted p-4"
+                  className="flex flex-wrap items-center justify-between gap-4 rounded-lg bg-muted/50 p-4"
                 >
                   <div className="flex min-w-0 items-start gap-3">
-                    <span className="flex size-10 items-center justify-center border border-border bg-card text-primary">
+                    <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                       <Icon className="size-5" />
                     </span>
                     <div className="min-w-0">
@@ -208,7 +208,7 @@ export function UnlockDetailPage({
                       <p className="mt-1 break-all text-sm leading-7 text-muted-foreground">{value}</p>
                     </div>
                   </div>
-                  <span className="border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+                  <span className="rounded-md bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
                     {action}
                   </span>
                 </div>
@@ -227,13 +227,13 @@ export function UnlockDetailPage({
         </div>
 
         <div className="space-y-6">
-          <Card className="border border-border bg-foreground text-background shadow-sm">
+          <Card className="border-0 bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-lg">
             <CardHeader>
-              <CardTitle className="text-3xl font-semibold text-background">
+              <CardTitle className="text-2xl font-bold text-primary-foreground">
                 What happens next
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 text-sm leading-7 text-background/76">
+            <CardContent className="space-y-4 text-sm leading-7 text-primary-foreground/80">
               <p>1. Reach the tenant through the unlocked phone number.</p>
               <p>2. Use the revealed address and map pin to reach the unit.</p>
               <p>3. Use the confirmation route if the move-in succeeds, or the dispute route if the listing context breaks down.</p>
@@ -260,7 +260,7 @@ export function UnlockDetailPage({
                   };
                 })(),
               ].map((item) => (
-                <div key={item.title} className="border border-border bg-muted p-4">
+                <div key={item.title} className="rounded-lg bg-muted/50 p-4">
                   <StatusBadge label={item.title} tone={item.tone} />
                   <p className="mt-3 text-sm leading-7 text-muted-foreground">{item.body}</p>
                 </div>

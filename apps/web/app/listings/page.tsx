@@ -79,7 +79,7 @@ export default async function Page({
 
       <section className="px-4 pb-8 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[0.78fr_2.22fr]">
-          <div className="space-y-5 border border-border bg-card p-5 shadow-sm">
+          <div className="space-y-5 rounded-xl border border-border bg-card p-5 shadow-sm">
             <div>
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-primary">Active filters</p>
               <div className="mt-3 grid gap-2">
@@ -88,7 +88,7 @@ export default async function Page({
                   bedrooms ? `Bedrooms: ${bedrooms}` : 'Bedrooms: Any',
                   price ? `Budget: ${price}` : 'Budget: Any',
                 ].map((chip) => (
-                  <span key={chip} className="border border-border bg-muted px-3 py-2 text-xs font-medium text-foreground">
+                  <span key={chip} className="rounded-lg bg-muted px-3 py-2 text-xs font-medium text-foreground">
                     {chip}
                   </span>
                 ))}
@@ -96,13 +96,13 @@ export default async function Page({
             </div>
 
             <div>
-              <p className="text-xl font-semibold text-foreground">Explore neighborhoods</p>
+              <p className="text-lg font-semibold text-foreground">Explore neighborhoods</p>
               <div className="mt-3 grid gap-2.5">
                 {neighborhoodSearchCards.map((neighborhood) => (
                   <Link
                     key={neighborhood.name}
                     href={`/listings?location=${encodeURIComponent(neighborhood.name)}`}
-                    className="border border-border bg-muted p-3.5 transition hover:border-primary hover:bg-card"
+                    className="rounded-lg bg-muted/60 p-3.5 transition-all hover:bg-primary/5 hover:shadow-sm"
                   >
                     <p className="font-medium text-foreground">{neighborhood.name}</p>
                     <p className="mt-1 text-sm leading-5 text-muted-foreground">{neighborhood.description}</p>

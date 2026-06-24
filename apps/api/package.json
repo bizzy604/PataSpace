@@ -46,6 +46,7 @@
     "bcryptjs": "^3.0.3",
     "bullmq": "^5.58.5",
     "compression": "^1.8.1",
+    "dotenv": "^16.6.1",
     "helmet": "^8.1.0",
     "ioredis": "^5.8.0",
     "passport": "^0.7.0",

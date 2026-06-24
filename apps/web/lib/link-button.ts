@@ -2,14 +2,14 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 export const linkButtonVariants = cva(
-  'inline-flex shrink-0 items-center justify-center border text-sm font-semibold whitespace-nowrap transition-[transform,background-color,border-color,color,box-shadow] duration-150 active:translate-y-px',
+  'inline-flex shrink-0 items-center justify-center rounded-lg border text-sm font-semibold whitespace-nowrap transition-all duration-200 active:translate-y-px',
   {
     variants: {
       variant: {
         default:
-          'border-transparent bg-primary text-primary-foreground shadow-sm hover:-translate-y-px hover:shadow-md',
+          'border-transparent bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-md',
         outline:
-          'border-border bg-card text-foreground shadow-sm hover:-translate-y-px hover:shadow-md hover:bg-muted',
+          'border-border bg-card text-foreground shadow-sm hover:bg-muted hover:shadow-md',
         ghost: 'border-transparent text-muted-foreground hover:bg-muted hover:text-foreground',
       },
       size: {

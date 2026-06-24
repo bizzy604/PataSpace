@@ -16,10 +16,10 @@ export function ScreenHero({
   return (
     <section className={cn('px-4 pb-6 pt-8 sm:px-6 lg:px-8', className)}>
       <div className="mx-auto max-w-[1400px]">
-        <div className="flex flex-col gap-5 border-b border-border pb-6 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-5 border-b border-border/60 pb-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
             {eyebrow ? (
-              <p className="inline-flex items-center border border-border bg-muted px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-primary">
+              <p className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-primary">
                 {eyebrow}
               </p>
             ) : null}

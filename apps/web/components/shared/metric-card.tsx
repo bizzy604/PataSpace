@@ -20,7 +20,7 @@ export function MetricCard({
             {label}
           </p>
           {Icon ? (
-            <span className="flex size-8 items-center justify-center border border-border bg-muted text-primary">
+            <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Icon className="size-[0.95rem]" />
             </span>
           ) : null}

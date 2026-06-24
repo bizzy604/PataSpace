@@ -85,12 +85,12 @@ export function WalletBuyPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="border border-border bg-foreground p-5 text-background">
-                <p className="text-xs font-semibold uppercase tracking-widest text-background/60">Selected package</p>
-                <p className="mt-3 text-3xl font-semibold">{selectedPkg?.name}</p>
-                <div className="mt-4 grid gap-3 text-sm text-background/70 sm:grid-cols-2">
-                  <p className="border border-background/10 bg-background/10 px-4 py-3">Amount: {formatKes(selectedPkg?.amount ?? 0)}</p>
-                  <p className="border border-background/10 bg-background/10 px-4 py-3">Credits: {selectedPkg?.credits}</p>
+              <div className="rounded-xl bg-gradient-to-br from-primary to-accent p-5 text-primary-foreground">
+                <p className="text-xs font-semibold uppercase tracking-widest text-primary-foreground/70">Selected package</p>
+                <p className="mt-3 text-2xl font-bold">{selectedPkg?.name}</p>
+                <div className="mt-4 grid gap-3 text-sm text-primary-foreground/80 sm:grid-cols-2">
+                  <p className="rounded-lg bg-primary-foreground/10 px-4 py-3">Amount: {formatKes(selectedPkg?.amount ?? 0)}</p>
+                  <p className="rounded-lg bg-primary-foreground/10 px-4 py-3">Credits: {selectedPkg?.credits}</p>
                 </div>
               </div>
 
@@ -111,10 +111,10 @@ export function WalletBuyPage() {
               </div>
 
               {error ? (
-                <p className="border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</p>
+                <p className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">{error}</p>
               ) : null}
 
-              <div className="border border-primary/20 bg-primary/5 p-5">
+              <div className="rounded-xl border border-primary/15 bg-primary/5 p-5">
                 <p className="inline-flex items-center gap-2 font-medium text-foreground">
                   <Smartphone className="size-4 text-primary" /> How it works
                 </p>
@@ -159,10 +159,10 @@ export function WalletBuyPage() {
                   type="button"
                   onClick={() => setSelectedId(pkg.id)}
                   className={cn(
-                    'w-full border p-4 text-left transition',
+                    'w-full rounded-xl border p-4 text-left transition-all',
                     isSelected
-                      ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
-                      : 'border-border bg-muted hover:border-primary/30 hover:bg-card',
+                      ? 'border-primary/40 bg-primary/5 ring-2 ring-primary/20 shadow-sm'
+                      : 'border-border bg-muted/50 hover:border-primary/20 hover:bg-card',
                   )}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -177,8 +177,8 @@ export function WalletBuyPage() {
                     ) : null}
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2 text-sm text-muted-foreground">
-                    <span className="border border-border bg-card px-3 py-1">{formatKes(pkg.amount)}</span>
-                    <span className="border border-border bg-card px-3 py-1">{pkg.credits} credits</span>
+                    <span className="rounded-md bg-card px-3 py-1">{formatKes(pkg.amount)}</span>
+                    <span className="rounded-md bg-card px-3 py-1">{pkg.credits} credits</span>
                   </div>
                 </button>
               );

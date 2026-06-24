@@ -73,7 +73,7 @@ export function ProfileOverviewPage() {
               <MetricCard label="Support threads" value="0" hint="Open and resolved support threads." Icon={MessageCircle} />
               <MetricCard label="Lifetime wallet" value={balance ? formatKes(balance.lifetimeEarned) : '—'} hint="Total credits funded or restored." Icon={ShieldCheck} />
             </div>
-            <div className="border border-primary/20 bg-primary/8 p-5">
+            <div className="rounded-xl border border-primary/15 bg-primary/5 p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Verification</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <StatusBadge label={user ? 'Account active' : 'Loading…'} tone="positive" />
@@ -97,9 +97,9 @@ export function ProfileOverviewPage() {
               <Link
                 key={href}
                 href={href}
-                className="flex items-start gap-4 border border-border bg-muted p-4 transition hover:border-primary hover:bg-card"
+                className="flex items-start gap-4 rounded-xl bg-muted/50 p-4 transition-all hover:bg-primary/5 hover:shadow-sm"
               >
-                <span className="flex size-11 items-center justify-center border border-border bg-card text-primary">
+                <span className="flex size-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <Icon className="size-5" />
                 </span>
                 <div className="min-w-0">

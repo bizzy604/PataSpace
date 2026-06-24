@@ -22,6 +22,7 @@ import { SupportModule } from './modules/support/support.module';
 import { ReviewModule } from './modules/review/review.module';
 import { ReferralModule } from './modules/referral/referral.module';
 import { SavedListingModule } from './modules/saved-listing/saved-listing.module';
+import { WaitlistModule } from './modules/waitlist/waitlist.module';
 import { JobsModule } from './jobs/jobs.module';
 import { DatabaseModule } from './common/database/database.module';
 import { RequestContextModule } from './common/request-context/request-context.module';
@@ -97,6 +98,7 @@ import { StellarModule } from './infrastructure/stellar/stellar.module';
     ReviewModule,
     ReferralModule,
     SavedListingModule,
+    WaitlistModule,
     JobsModule,
   ],
   controllers: [AppController],

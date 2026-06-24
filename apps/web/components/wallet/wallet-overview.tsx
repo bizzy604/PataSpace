@@ -48,10 +48,10 @@ export function WalletOverviewPage() {
     >
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr] xl:items-start">
         <div className="space-y-6">
-          <Card className="h-fit border border-primary bg-primary text-primary-foreground shadow-md">
+          <Card className="h-fit border-0 bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-lg">
             <CardHeader className="pb-4">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-primary-foreground/70">Available balance</p>
-              <CardTitle className="text-4xl font-semibold text-primary-foreground">
+              <CardTitle className="text-4xl font-bold text-primary-foreground">
                 {balance ? formatKes(balance.balance) : '—'}
               </CardTitle>
               <CardDescription className="max-w-xl text-sm leading-6 text-primary-foreground/75">
@@ -64,7 +64,7 @@ export function WalletOverviewPage() {
                 { label: 'Lifetime spent', value: balance ? formatKes(balance.lifetimeSpent) : '—' },
                 { label: 'Completed top-ups', value: `${completedPurchases}` },
               ].map((item) => (
-                <div key={item.label} className="border border-primary-foreground/20 bg-primary-foreground/10 p-3.5">
+                <div key={item.label} className="rounded-lg bg-primary-foreground/10 p-3.5">
                   <p className="text-[0.68rem] uppercase tracking-[0.16em] text-primary-foreground/60">{item.label}</p>
                   <p className="mt-2 text-xl font-semibold text-primary-foreground">{item.value}</p>
                 </div>
@@ -85,18 +85,18 @@ export function WalletOverviewPage() {
                 return (
                   <div
                     key={pkg.id}
-                    className={`border p-5 ${isRecommended ? 'border-primary bg-primary/5' : 'border-border bg-muted'}`}
+                    className={`rounded-xl border p-5 transition-all ${isRecommended ? 'border-primary/40 bg-primary/5 shadow-sm' : 'border-border bg-muted/50 hover:border-primary/20'}`}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <p className="text-2xl font-semibold text-foreground">{pkg.name}</p>
+                        <p className="text-xl font-semibold text-foreground">{pkg.name}</p>
                         <p className="mt-1 text-sm leading-7 text-muted-foreground">{pkg.description}</p>
                       </div>
                       {isRecommended ? <StatusBadge label="Recommended" tone="brand" /> : null}
                     </div>
                     <div className="mt-4 grid gap-3 text-sm text-foreground sm:grid-cols-2">
-                      <p className="border border-border bg-card px-4 py-3">Amount: {formatKes(pkg.amount)}</p>
-                      <p className="border border-border bg-card px-4 py-3">Credits: {pkg.credits}</p>
+                      <p className="rounded-lg bg-card px-4 py-3">Amount: {formatKes(pkg.amount)}</p>
+                      <p className="rounded-lg bg-card px-4 py-3">Credits: {pkg.credits}</p>
                     </div>
                   </div>
                 );
@@ -121,7 +121,7 @@ export function WalletOverviewPage() {
                 const type = transactionTypeMeta(transaction.type);
                 const status = transactionStatusMeta(transaction.status);
                 return (
-                  <div key={transaction.id} className="border border-border bg-muted p-4">
+                  <div key={transaction.id} className="rounded-lg bg-muted/50 p-4">
                     <div className="flex flex-wrap gap-2">
                       <StatusBadge label={type.label} tone={type.tone} />
                       <StatusBadge label={status.label} tone={status.tone} />

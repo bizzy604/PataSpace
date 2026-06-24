@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
-import { LandingHomePage } from '@/components/landing/page';
+import { WaitlistPage } from '@/components/waitlist/page';
 
 export const metadata: Metadata = {
-  title: 'PataSpace | For Property Owners',
+  title: 'PataSpace | Join the Waitlist',
   description:
-    'PataSpace helps property owners reduce vacancy by connecting outgoing tenants directly with verified renters before units go cold.',
+    'PataSpace is launching soon. Join the waitlist to get early access to the platform that connects outgoing tenants directly with verified renters in Nairobi.',
 };
 
 export default function Page() {
-  return <LandingHomePage />;
+  return <WaitlistPage />;
 }

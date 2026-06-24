@@ -469,6 +469,17 @@ model SavedListing {
   @@map("saved_listings")
 }
 
+model WaitlistEntry {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  source    String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("waitlist_entries")
+}
+
 model SystemConfig {
   id          String   @id @default(cuid())
   key         String   @unique

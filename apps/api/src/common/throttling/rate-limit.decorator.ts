@@ -10,6 +10,7 @@ export const rateLimitProfiles = {
   creditPurchase: { limit: 10, ttlSeconds: 86400 },
   uploadCreate: { limit: 100, ttlSeconds: 3600 },
   uploadConfirm: { limit: 100, ttlSeconds: 3600 },
+  waitlistJoin: { limit: 5, ttlSeconds: 60 },
 } as const;
 
 export type RateLimitProfile = keyof typeof rateLimitProfiles;

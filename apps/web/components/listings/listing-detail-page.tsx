@@ -59,20 +59,20 @@ export function ListingDetailPage({
       <section className="px-4 pb-10 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-6 xl:grid-cols-[1.12fr_0.88fr]">
           <div className="space-y-6">
-            <div className="overflow-hidden border border-border bg-card shadow-sm">
+            <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
               <div className="relative h-[420px]">
                 <Image src={visual.hero} alt={visual.alt} fill className="object-cover" sizes="(min-width: 1280px) 65vw, 100vw" />
-                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.02),rgba(0,0,0,0.5))]" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
                 <div className="absolute left-6 right-6 top-6 flex flex-wrap items-center justify-between gap-3">
                   <StatusBadge label="GPS verified" tone="positive" />
-                  <StatusBadge label={`${listing.unlockCount} unlocks`} tone="brand" className="bg-card/90" />
+                  <StatusBadge label={`${listing.unlockCount} unlocks`} tone="brand" className="bg-card/90 backdrop-blur-sm" />
                 </div>
               </div>
               <div className="grid gap-3 p-4 md:grid-cols-4">
                 {(listing.photos.length > 0 ? listing.photos.slice(0, 4) : visual.gallery.slice(0, 4)).map((photo, index) => (
                   <div
                     key={typeof photo === 'string' ? photo : photo.url}
-                    className="relative h-28 overflow-hidden border border-border"
+                    className="relative h-28 overflow-hidden rounded-lg border border-border"
                   >
                     <Image
                       src={typeof photo === 'string' ? photo : photo.url}
@@ -99,7 +99,7 @@ export function ListingDetailPage({
                   </p>
                   <p className="mt-4 text-sm leading-7 text-muted-foreground">{listing.description}</p>
                 </div>
-                <div className="grid gap-3 border border-border bg-muted p-5 text-sm text-foreground">
+                <div className="grid gap-3 rounded-lg bg-muted/60 p-5 text-sm text-foreground">
                   <p className="inline-flex items-center gap-2"><BedDouble className="size-4 text-primary" />{listing.bedrooms === 0 ? 'Studio' : `${listing.bedrooms} bedrooms`}</p>
                   <p className="inline-flex items-center gap-2"><Bath className="size-4 text-primary" />{listing.bathrooms} bathrooms</p>
                   <p className="text-muted-foreground">Available from {formatDateLabel(listing.availableFrom)}</p>
@@ -115,7 +115,7 @@ export function ListingDetailPage({
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">Amenities</p>
                   <div className="grid gap-3">
                     {listing.amenities.map((item) => (
-                      <div key={item} className="border border-border bg-muted px-4 py-3 text-sm text-foreground">{item}</div>
+                      <div key={item} className="rounded-lg bg-muted/60 px-4 py-3 text-sm text-foreground">{item}</div>
                     ))}
                   </div>
                 </CardContent>
@@ -126,7 +126,7 @@ export function ListingDetailPage({
               <Card className="border border-border bg-card shadow-sm">
                 <CardContent className="space-y-4 p-6">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">From the current tenant</p>
-                  <div className="border-l-4 border-primary bg-muted p-5">
+                  <div className="rounded-lg border-l-4 border-l-primary bg-muted/60 p-5">
                     <p className="text-sm leading-7 text-foreground">{listing.propertyNotes}</p>
                     <p className="mt-4 font-medium text-foreground">{listing.tenant.firstName}</p>
                   </div>
@@ -136,25 +136,25 @@ export function ListingDetailPage({
           </div>
 
           <div className="space-y-6">
-            <Card className="border border-primary bg-primary text-primary-foreground shadow-md">
+            <Card className="border-0 bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-lg">
               <CardContent className="space-y-5 p-6">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary-foreground/70">Unlock summary</p>
-                <p className="text-4xl font-semibold">{formatKes(listing.unlockCostCredits)}</p>
+                <p className="text-4xl font-bold">{formatKes(listing.unlockCostCredits)}</p>
                 <p className="text-sm leading-7 text-primary-foreground/80">
                   Unlock pricing follows the marketplace rule of 10% of monthly rent. The paid reveal includes the phone number, full address, and GPS coordinates.
                 </p>
                 {isAuthenticated ? (
                   <div className="flex flex-wrap gap-3">
-                    <Link href={`/listings/${listing.id}/unlock`} className="inline-flex items-center gap-2 border border-primary-foreground bg-primary-foreground px-4 py-2.5 text-sm font-semibold text-primary shadow-sm transition hover:-translate-y-px hover:shadow-md">
+                    <Link href={`/listings/${listing.id}/unlock`} className="inline-flex items-center gap-2 rounded-lg bg-primary-foreground px-4 py-2.5 text-sm font-semibold text-primary shadow-sm transition-all hover:shadow-md">
                       Reveal contact <ArrowRight className="size-4" />
                     </Link>
-                    <Link href="/wallet" className="inline-flex items-center gap-2 border border-primary-foreground/40 px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary-foreground/10">
+                    <Link href="/wallet" className="inline-flex items-center gap-2 rounded-lg border border-primary-foreground/30 px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary-foreground/10">
                       <Wallet className="size-4" /> Check wallet
                     </Link>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <Link href={unlockHref} className="inline-flex items-center gap-2 border border-primary-foreground bg-primary-foreground px-4 py-2.5 text-sm font-semibold text-primary shadow-sm transition hover:-translate-y-px hover:shadow-md">
+                    <Link href={unlockHref} className="inline-flex items-center gap-2 rounded-lg bg-primary-foreground px-4 py-2.5 text-sm font-semibold text-primary shadow-sm transition-all hover:shadow-md">
                       <LogIn className="size-4" /> Sign in to unlock
                     </Link>
                     <p className="text-xs text-primary-foreground/60">Free to browse — sign in only when you want to reveal contact details.</p>
@@ -166,7 +166,7 @@ export function ListingDetailPage({
             <Card className="border border-border bg-card shadow-sm">
               <CardContent className="space-y-4 p-6">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">Location preview</p>
-                <div className="border border-border bg-muted p-6">
+                <div className="rounded-lg bg-muted/60 p-6">
                   <p className="font-medium text-foreground">{visual.mapLabel}</p>
                   <p className="mt-3 text-sm leading-7 text-muted-foreground">
                     Exact address and GPS coordinates remain hidden until unlock.

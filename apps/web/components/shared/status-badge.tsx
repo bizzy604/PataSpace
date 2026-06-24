@@ -5,11 +5,11 @@ import type { MockUnlockStatus, MockTransaction } from '@/lib/mock-app-state';
 type StatusTone = 'neutral' | 'brand' | 'positive' | 'warning' | 'danger';
 
 const toneClassName: Record<StatusTone, string> = {
-  neutral: 'border-border bg-muted text-muted-foreground',
-  brand: 'border-primary/30 bg-primary/10 text-primary',
-  positive: 'border-green-300 bg-green-50 text-green-800',
-  warning: 'border-accent bg-accent/20 text-accent-foreground',
-  danger: 'border-destructive/40 bg-destructive/10 text-destructive',
+  neutral: 'border-border/60 bg-muted text-muted-foreground',
+  brand: 'border-primary/20 bg-primary/10 text-primary',
+  positive: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400',
+  warning: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-400',
+  danger: 'border-destructive/20 bg-destructive/5 text-destructive',
 };
 
 export function StatusBadge({

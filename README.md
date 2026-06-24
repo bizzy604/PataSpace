@@ -16,8 +16,16 @@ PataSpace is a multi-app workspace for a housing marketplace with a NestJS backe
 
 ## Infrastructure
 
-- `infra/docker`: Local PostgreSQL and Redis services.
-- `infra/nginx`: Reverse proxy starter config.
+- `infra/docker`: Local PostgreSQL and Redis services (`docker-compose.yml`) plus the
+  full production-style stack (`docker-compose.prod.yml`). See `infra/docker/README.md`.
+- `infra/nginx`: Reverse proxy starter config and the edge proxy image (`Dockerfile`, `edge.conf`).
+- Per-app container images: `apps/api/Dockerfile`, `apps/web/Dockerfile`, `apps/admin/Dockerfile`.
+
+## CI/CD
+
+- `.github/workflows/ci.yml`: backend test/lint/build + frontend build.
+- `.github/workflows/docker-publish.yml`: builds all service images and pushes them
+  to GHCR (`ghcr.io/<owner>/pataspace-*`) on `main` and version tags.
 
 ## Standards
 

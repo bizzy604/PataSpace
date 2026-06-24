@@ -26,7 +26,7 @@ export function PublicSiteFrame({
   const showSignedOut = isLoaded && !isSignedIn;
   return (
     <div className={cn('min-h-screen bg-background text-foreground', className)}>
-      <header className="sticky top-0 z-40 border-b border-border bg-background">
+      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between gap-4 px-6 py-4 md:px-10 lg:px-16">
           <Link href="/" aria-label="PataSpace home" className="inline-flex shrink-0 items-center">
             <BrandLogo priority />
@@ -56,7 +56,7 @@ export function PublicSiteFrame({
               </SignInButton>
             )}
             {showSignedIn && (
-              <div className="border border-border bg-card p-1 shadow-sm">
+              <div className="rounded-lg border border-border bg-card p-1 shadow-sm">
                 <UserButton />
               </div>
             )}
@@ -74,7 +74,7 @@ export function PublicSiteFrame({
 
       <div className="relative">{children}</div>
 
-      <footer className="border-t border-border bg-background">
+      <footer className="border-t border-border/60 bg-background">
         <div className="mx-auto flex max-w-[1400px] flex-col gap-6 px-6 py-8 md:flex-row md:items-center md:justify-between md:px-10 lg:px-16">
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
             <BrandLogo compact />

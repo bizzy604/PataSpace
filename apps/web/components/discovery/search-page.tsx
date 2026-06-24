@@ -40,8 +40,8 @@ export function SearchPage({ query, listings }: { query?: string; listings: List
       }
     >
       <section className="px-4 pb-6 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl border border-border bg-card p-5 shadow-sm">
-          <div className="flex flex-wrap items-center gap-3 border border-border bg-muted px-4 py-3">
+        <div className="mx-auto max-w-7xl rounded-xl border border-border bg-card p-5 shadow-sm">
+          <div className="flex flex-wrap items-center gap-3 rounded-lg bg-muted/60 px-4 py-3">
             <Search className="size-5 text-primary" />
             <span className="text-sm text-muted-foreground">
               {query?.trim() || 'Search neighborhoods, cities...'}
@@ -59,7 +59,7 @@ export function SearchPage({ query, listings }: { query?: string; listings: List
                     <Link
                       key={card.name}
                       href={`/search?q=${encodeURIComponent(card.name)}`}
-                      className="overflow-hidden border border-border bg-muted transition hover:border-primary/30 hover:bg-card"
+                      className="overflow-hidden rounded-xl border border-border bg-muted/50 transition-all hover:shadow-md"
                     >
                       <div className="relative h-32">
                         <Image
@@ -88,7 +88,7 @@ export function SearchPage({ query, listings }: { query?: string; listings: List
                     <Link
                       key={item.label}
                       href={item.href}
-                      className="block border border-border bg-muted p-3.5 transition hover:border-primary/30 hover:bg-card"
+                      className="block rounded-lg bg-muted/50 p-3.5 transition-all hover:bg-primary/5 hover:shadow-sm"
                     >
                       <p className="font-medium text-foreground">{item.label}</p>
                       <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.note}</p>
@@ -107,7 +107,7 @@ export function SearchPage({ query, listings }: { query?: string; listings: List
             {listings.length ? (
               listings.map((listing) => <ListingPreviewCard key={listing.id} listing={listing} />)
             ) : (
-              <div className="border border-border bg-card p-8 text-center shadow-sm xl:col-span-2">
+              <div className="rounded-xl border border-border bg-card p-8 text-center shadow-sm xl:col-span-2">
                 <p className="text-3xl font-semibold text-foreground">
                   No results yet
                 </p>

@@ -109,6 +109,29 @@ curl http://127.0.0.1:3000/api/v1/ready
 curl http://127.0.0.1:3000/api/v1/docs/openapi.json
 ```
 
+## Container Provisioning (Docker)
+
+A container path is available alongside the PM2 path above.
+
+- Images: `apps/api/Dockerfile`, `apps/web/Dockerfile`, `apps/admin/Dockerfile`,
+  `infra/nginx/Dockerfile`. All build from the repo root so the pnpm workspace resolves.
+- Full stack: `infra/docker/docker-compose.prod.yml` (api, web, admin, edge nginx,
+  Postgres, Redis). See `infra/docker/README.md` for the run steps.
+- Migrations run as a discrete `api-migrate` service (`prisma:migrate:deploy` via
+  `DATABASE_MIGRATION_URL`) that completes before the `api` container starts, preserving
+  the single-owner migration rule.
+
+```bash
+cd infra/docker
+cp .env.prod.example .env   # edit secrets
+docker compose -f docker-compose.prod.yml up --build
+```
+
+CI (`.github/workflows/docker-publish.yml`) builds these images on every PR and pushes
+them to `ghcr.io/<owner>/pataspace-*` on `main` pushes and `v*` tags. A registry-based
+deploy can then pull those tags (set `API_IMAGE`/`WEB_IMAGE`/`ADMIN_IMAGE`/`NGINX_IMAGE`
+in `.env`).
+
 ## Operational Notes
 
 - Jobs run in-process through the API application, so only one scheduler-active backend instance should own cron execution until job coordination changes.

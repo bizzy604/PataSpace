@@ -9,9 +9,9 @@ import { BrandLogo } from '@/components/shared/brand-logo';
 import { cn } from '@/lib/utils';
 
 const sectionShell = 'mx-auto max-w-[1400px] px-6 py-20 md:px-10 lg:px-16 lg:py-28';
-const sectionTitleClass = 'text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.15] tracking-[-0.02em] text-foreground';
+const sectionTitleClass = 'text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.12] tracking-[-0.025em] text-foreground';
 const bodyTextClass = 'text-[1.05rem] leading-8 text-muted-foreground';
-const cardClass = 'border border-border bg-card';
+const cardClass = 'rounded-xl border border-border bg-card';
 
 type PainPoint = { title: string; body: string; Icon: typeof Clock3 };
 type ComparisonRow = { label: string; traditional: string; pataspace: string; traditionalClassName?: string; pataspaceClassName?: string };
@@ -71,15 +71,15 @@ function Reveal({ children, className }: { children: ReactNode; className?: stri
 
 function SectionLabel({ children, centered = false }: { children: ReactNode; centered?: boolean }) {
   return (
-    <div className={cn('mb-5 inline-flex items-center gap-2 text-[0.72rem] font-medium uppercase tracking-[0.18em] text-primary', centered && 'justify-center')}>
-      <span className="h-px w-6 bg-current" />
+    <div className={cn('mb-5 inline-flex items-center gap-2.5 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-primary', centered && 'justify-center')}>
+      <span className="h-0.5 w-6 rounded-full bg-primary/40" />
       {children}
     </div>
   );
 }
 
 function Divider() {
-  return <hr className="mx-6 border-0 border-t border-border md:mx-10 lg:mx-16" />;
+  return <hr className="mx-6 border-0 border-t border-border/60 md:mx-10 lg:mx-16" />;
 }
 
 function HeroMarqueeRow({ images, className }: { images: string[]; className?: string }) {
@@ -166,17 +166,17 @@ export function LandingHomePage() {
   return (
     <div id="top" className={cn(isDark && 'dark', 'relative isolate overflow-x-hidden bg-background text-foreground transition-colors duration-300')}>
       <div className="relative z-10">
-        <nav className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background px-6 py-5 md:px-10 lg:px-16">
+        <nav className="fixed inset-x-0 top-0 z-50 border-b border-border/60 bg-background/80 px-6 py-4 backdrop-blur-xl md:px-10 lg:px-16">
           <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between gap-4">
             <a href="#top" aria-label="PataSpace home" className="inline-flex items-center">
               <BrandLogo priority />
             </a>
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={toggleTheme}
                 aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-                className="inline-flex size-11 items-center justify-center border border-border bg-card text-foreground transition hover:bg-muted"
+                className="inline-flex size-10 items-center justify-center rounded-lg border border-border bg-card text-foreground transition hover:bg-muted"
               >
                 {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
               </button>
@@ -185,7 +185,7 @@ export function LandingHomePage() {
                   <SignUpButton mode="redirect">
                     <button
                       type="button"
-                      className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2.5 text-[0.85rem] font-medium text-foreground transition hover:bg-muted"
+                      className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-[0.85rem] font-medium text-foreground transition hover:bg-muted"
                     >
                       <UserPlus className="size-4" />
                       Register
@@ -194,7 +194,7 @@ export function LandingHomePage() {
                   <SignInButton mode="redirect">
                     <button
                       type="button"
-                      className="inline-flex items-center gap-2 bg-primary px-4 py-2.5 text-[0.85rem] font-medium text-primary-foreground shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                      className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-[0.85rem] font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90 hover:shadow-md"
                     >
                       <LogIn className="size-4" />
                       Sign in
@@ -205,7 +205,7 @@ export function LandingHomePage() {
               {isLoaded && isSignedIn && (
                 <Link
                   href="/wallet"
-                  className="inline-flex items-center gap-2 bg-primary px-4 py-2.5 text-[0.85rem] font-medium text-primary-foreground shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-[0.85rem] font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90 hover:shadow-md"
                 >
                   <LayoutDashboard className="size-4" />
                   Open workspace
@@ -213,7 +213,7 @@ export function LandingHomePage() {
               )}
               <a
                 href="#cta"
-                className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2.5 text-[0.85rem] font-medium text-foreground transition hover:bg-muted"
+                className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-[0.85rem] font-medium text-foreground transition hover:bg-muted"
               >
                 Request a Demo
               </a>
@@ -248,12 +248,12 @@ export function LandingHomePage() {
                   </div>
                 ))}
               </div>
-              <div className="flex flex-col items-center gap-5 sm:flex-row sm:justify-center">
-                <a href="#cta" className="inline-flex items-center gap-2 bg-primary px-8 py-3.5 text-[0.9rem] font-medium text-primary-foreground shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+              <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+                <a href="#cta" className="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-[0.9rem] font-semibold text-primary-foreground shadow-md transition-all hover:bg-primary/90 hover:shadow-lg">
                   Request a 15-Minute Demo
                   <ArrowRight className="size-4" />
                 </a>
-                <a href="#how" className="border-b border-foreground/20 pb-0.5 text-[0.85rem] text-muted-foreground transition hover:border-foreground hover:text-foreground">
+                <a href="#how" className="rounded-xl border border-border bg-card/80 px-6 py-3.5 text-[0.85rem] font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-muted">
                   See how it works
                 </a>
               </div>
@@ -273,8 +273,8 @@ export function LandingHomePage() {
               </p>
               <ul className="mt-10 space-y-5">
                 {painPoints.map(({ title, body, Icon }) => (
-                  <li key={title} className={cn(cardClass, 'flex items-start gap-4 p-5 transition hover:border-primary')}>
-                    <div className="mt-0.5 text-muted-foreground"><Icon className="size-[1.1rem]" /></div>
+                  <li key={title} className={cn(cardClass, 'flex items-start gap-4 p-5 shadow-sm transition-all hover:border-primary/40 hover:shadow-md')}>
+                    <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><Icon className="size-[1.1rem]" /></div>
                     <div className="text-[0.92rem] leading-[1.65] text-muted-foreground">
                       <strong className="mb-1 block text-[0.95rem] font-medium text-foreground">{title}</strong>
                       {body}
@@ -287,14 +287,14 @@ export function LandingHomePage() {
                 <div className="space-y-3">
                   <div className="grid gap-3 md:hidden">
                     {comparisonRows.map((row) => (
-                      <article key={row.label} className={cn(cardClass, 'p-4')}>
+                      <article key={row.label} className={cn(cardClass, 'p-4 shadow-sm')}>
                         <div className="text-[0.68rem] uppercase tracking-[0.14em] text-muted-foreground">{row.label}</div>
                         <div className="mt-4 grid gap-3">
-                          <div className="border border-border bg-muted p-3">
+                          <div className="rounded-lg border border-border bg-muted p-3">
                             <div className="text-[0.68rem] font-medium uppercase tracking-[0.1em] text-muted-foreground">Traditional Agent</div>
                             <div className={cn('mt-2 text-[0.82rem] leading-6 text-muted-foreground', row.traditionalClassName)}>{row.traditional}</div>
                           </div>
-                          <div className="border border-primary/30 bg-primary/10 p-3">
+                          <div className="rounded-lg border border-primary/30 bg-primary/10 p-3">
                             <div className="text-[0.68rem] font-medium uppercase tracking-[0.1em] text-primary">PataSpace</div>
                             <div className={cn('mt-2 text-[0.82rem] leading-6 text-muted-foreground', row.pataspaceClassName)}>{row.pataspace}</div>
                           </div>
@@ -304,7 +304,7 @@ export function LandingHomePage() {
                   </div>
 
                   <div className="hidden md:block">
-                    <div className={cn(cardClass, 'overflow-hidden')}>
+                    <div className={cn(cardClass, 'overflow-hidden shadow-sm')}>
                       <div className="border-b border-border bg-muted px-5 py-4 text-[0.7rem] uppercase tracking-[0.15em] text-muted-foreground">
                         The old way vs. the PataSpace way
                       </div>
@@ -333,7 +333,7 @@ export function LandingHomePage() {
             </Reveal>
 
             <Reveal className="lg:pt-1">
-              <div className={cn(cardClass, 'p-6 shadow-sm sm:p-8 lg:sticky lg:top-28')}>
+              <div className={cn(cardClass, 'p-6 shadow-lg sm:p-8 lg:sticky lg:top-24')}>
                 <div className="mb-6 text-[0.72rem] uppercase tracking-[0.15em] text-muted-foreground">Vacancy Cost Estimator</div>
                 <div className="mb-1 text-[3.2rem] leading-none font-black text-destructive sm:text-[4rem]">21</div>
                 <div className="mb-8 text-[0.85rem] text-muted-foreground">average days vacant per tenant turnover</div>
@@ -364,17 +364,15 @@ export function LandingHomePage() {
               Your outgoing tenant knows the unit better than any agent. They know the neighborhood, the caretaker, the water schedule, the commute. PataSpace turns that knowledge into a direct connection with your next tenant — with no middleman and no vacancy window.
             </p>
           </Reveal>
-          <Reveal className="mt-16 overflow-hidden border border-border bg-muted">
-            <div className="grid gap-px md:grid-cols-3">
-              {steps.map((step) => (
-                <article key={step.number} className="bg-card p-8 transition hover:bg-primary/5">
-                  <div className="mb-4 text-[3.5rem] leading-none font-black text-primary/20">{step.number}</div>
-                  <div className="mb-3 text-[0.95rem] font-medium text-foreground">{step.title}</div>
-                  <div className="text-[0.85rem] leading-7 text-muted-foreground">{step.body}</div>
-                  <div className="mt-5 inline-flex bg-primary/10 px-3 py-1.5 text-[0.7rem] uppercase tracking-[0.12em] text-primary">{step.tag}</div>
-                </article>
-              ))}
-            </div>
+          <Reveal className="mt-16 grid gap-6 md:grid-cols-3">
+            {steps.map((step) => (
+              <article key={step.number} className="rounded-xl border border-border bg-card p-8 shadow-sm transition-all hover:border-primary/30 hover:shadow-md">
+                <div className="mb-4 text-[3.5rem] leading-none font-black text-primary/15">{step.number}</div>
+                <div className="mb-3 text-[0.95rem] font-semibold text-foreground">{step.title}</div>
+                <div className="text-[0.85rem] leading-7 text-muted-foreground">{step.body}</div>
+                <div className="mt-5 inline-flex rounded-full bg-primary/10 px-3 py-1.5 text-[0.7rem] uppercase tracking-[0.12em] text-primary">{step.tag}</div>
+              </article>
+            ))}
           </Reveal>
         </section>
 
@@ -388,22 +386,22 @@ export function LandingHomePage() {
               <p className={cn(bodyTextClass, 'max-w-[620px]')}>
                 PataSpace is not a listing board. It is a two-sided network. Every property owner who consents brings their tenants onto the platform. Every tenant who joins brings renters. Every renter who buys credits creates M-Pesa commission for the next outgoing tenant. The network grows, and every unit becomes easier to fill than the last.
               </p>
-              <div className="mt-8 border border-primary/30 bg-primary/10 px-6 py-5 text-[0.85rem] leading-7 text-foreground italic">
+              <div className="mt-8 rounded-xl border border-primary/20 bg-primary/5 px-6 py-5 text-[0.85rem] leading-7 text-foreground italic">
                 When you join today, you are not just solving your own vacancy problem. You are joining a network that gets more valuable for every landlord, every month.
               </div>
             </Reveal>
             <Reveal>
-              <div className="overflow-hidden border border-border bg-muted">
+              <div className="space-y-3">
                 {flywheelItems.map((item) => (
                   <div
                     key={item.title}
-                    className={cn('flex gap-5 border-b border-border px-7 py-6 transition last:border-b-0', item.highlight ? 'bg-primary/10' : 'bg-card hover:bg-primary/5')}
+                    className={cn('flex gap-5 rounded-xl border px-7 py-6 transition-all', item.highlight ? 'border-primary/30 bg-primary/5 shadow-md' : 'border-border bg-card shadow-sm hover:border-primary/20 hover:shadow-md')}
                   >
-                    <div className={cn('shrink-0 pt-0.5 text-[1.4rem] text-primary/50', item.highlight && 'text-primary')}>
+                    <div className={cn('flex size-10 shrink-0 items-center justify-center rounded-lg text-[1.2rem]', item.highlight ? 'bg-primary/15 text-primary' : 'bg-muted text-primary/60')}>
                       {item.highlight ? <RotateCcw className="size-5" /> : item.arrow}
                     </div>
                     <div>
-                      <strong className={cn('mb-1 block text-[0.9rem] font-medium', item.highlight ? 'text-primary' : 'text-foreground')}>{item.title}</strong>
+                      <strong className={cn('mb-1 block text-[0.9rem] font-semibold', item.highlight ? 'text-primary' : 'text-foreground')}>{item.title}</strong>
                       <span className="text-[0.8rem] leading-6 text-muted-foreground">{item.body}</span>
                     </div>
                   </div>
@@ -423,8 +421,8 @@ export function LandingHomePage() {
               <ul className="mt-10 space-y-6">
                 {benefits.map((benefit) => (
                   <li key={benefit.title} className="flex items-start gap-4">
-                    <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center border border-primary bg-primary/10 text-primary">
-                      <Check className="size-3" />
+                    <div className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <Check className="size-3.5" />
                     </div>
                     <div className="text-[0.92rem] leading-[1.65] text-muted-foreground">
                       <strong className="mb-1 block text-[0.95rem] font-medium text-foreground">{benefit.title}</strong>
@@ -435,13 +433,13 @@ export function LandingHomePage() {
               </ul>
             </Reveal>
             <Reveal>
-              <div className="border border-primary/30 bg-primary/10 p-10 text-center shadow-sm">
+              <div className="rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/5 to-primary/10 p-10 text-center shadow-lg">
                 <div className="mb-4 text-[0.72rem] uppercase tracking-[0.18em] text-muted-foreground">Your cost as a property owner</div>
                 <div className="mb-2 text-[4rem] leading-none font-black text-primary">Free.</div>
                 <div className="mb-6 text-[0.85rem] leading-7 text-muted-foreground">
                   PataSpace is funded by renters who pay credits to unlock unit details. You are our supply. We protect that relationship — which means you never pay us anything.
                 </div>
-                <a href="#cta" className="inline-flex items-center gap-2 bg-primary px-6 py-3 text-[0.9rem] font-medium text-primary-foreground shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                <a href="#cta" className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-[0.9rem] font-semibold text-primary-foreground shadow-md transition-all hover:bg-primary/90 hover:shadow-lg">
                   Request a Demo
                   <ArrowRight className="size-4" />
                 </a>
@@ -458,17 +456,15 @@ export function LandingHomePage() {
           <Reveal>
             <h2 className={sectionTitleClass}>Property owners across Nairobi are already on board.</h2>
           </Reveal>
-          <Reveal className="mt-16 overflow-hidden border border-border bg-muted">
-            <div className="grid gap-px md:grid-cols-3">
-              {proofStats.map((stat) => (
-                <div key={stat.description} className="bg-card px-8 py-10 text-center">
-                  <div className="mb-2 text-[3rem] leading-none font-black text-foreground">{stat.value}</div>
-                  <div className="text-[0.82rem] leading-6 text-muted-foreground">{stat.description}</div>
-                </div>
-              ))}
-            </div>
+          <Reveal className="mt-16 grid gap-6 md:grid-cols-3">
+            {proofStats.map((stat) => (
+              <div key={stat.description} className="rounded-xl border border-border bg-card px-8 py-10 text-center shadow-sm">
+                <div className="mb-2 text-[3rem] leading-none font-black text-foreground">{stat.value}</div>
+                <div className="text-[0.82rem] leading-6 text-muted-foreground">{stat.description}</div>
+              </div>
+            ))}
           </Reveal>
-          <Reveal className="mt-16 border-l-[3px] border-primary bg-card px-8 py-10 shadow-sm">
+          <Reveal className="mt-16 rounded-xl border-l-4 border-l-primary border border-border bg-card px-8 py-10 shadow-sm">
             <div className="mb-4 text-[1.2rem] leading-8 font-semibold italic text-foreground">
               &quot;The moment my tenant gave notice, I used to start worrying about the next three weeks. That anxiety was a hidden cost I had accepted as normal.&quot;
             </div>
@@ -483,8 +479,8 @@ export function LandingHomePage() {
         <section id="cta" className={cn(sectionShell, 'text-center')}>
           <SectionLabel centered>Founding Property Owners</SectionLabel>
           <Reveal>
-            <div className="mb-6 inline-flex items-center gap-2 border border-primary/30 bg-primary/10 px-4 py-2 text-[0.75rem] uppercase tracking-[0.1em] text-primary">
-              <span className="size-1.5 bg-current animate-pulse" />
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-[0.75rem] uppercase tracking-[0.1em] text-primary">
+              <span className="size-1.5 rounded-full bg-current animate-pulse" />
               Cohort currently open across Nairobi
             </div>
           </Reveal>
@@ -502,7 +498,7 @@ export function LandingHomePage() {
           </Reveal>
           <Reveal className="mb-10 flex flex-wrap justify-center gap-2">
             {areaTags.map((tag) => (
-              <span key={tag} className="border border-border bg-muted px-3 py-1.5 text-[0.75rem] text-muted-foreground">{tag}</span>
+              <span key={tag} className="rounded-full border border-border bg-muted px-3 py-1.5 text-[0.75rem] text-muted-foreground">{tag}</span>
             ))}
           </Reveal>
           <Reveal>
@@ -513,28 +509,28 @@ export function LandingHomePage() {
           <Reveal className="mb-10 flex flex-wrap justify-center gap-x-10 gap-y-3">
             {riskReducers.map((item) => (
               <div key={item} className="flex items-center gap-2 text-[0.82rem] text-muted-foreground">
-                <span className="size-1.5 bg-primary" />
+                <span className="size-1.5 rounded-full bg-primary" />
                 {item}
               </div>
             ))}
           </Reveal>
           <Reveal>
-            <form className="flex flex-wrap justify-center gap-4" onSubmit={(event) => event.preventDefault()}>
+            <form className="flex flex-wrap justify-center gap-3" onSubmit={(event) => event.preventDefault()}>
               <label htmlFor="owner-name" className="sr-only">Your name</label>
               <input
                 id="owner-name"
                 type="text"
                 placeholder="Your name"
-                className="w-full border border-border bg-card px-5 py-3.5 text-[0.9rem] text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary md:w-[260px]"
+                className="w-full rounded-xl border border-border bg-card px-5 py-3.5 text-[0.9rem] text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 md:w-[260px]"
               />
               <label htmlFor="owner-phone" className="sr-only">Phone number (WhatsApp)</label>
               <input
                 id="owner-phone"
                 type="tel"
                 placeholder="Phone number (WhatsApp)"
-                className="w-full border border-border bg-card px-5 py-3.5 text-[0.9rem] text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary md:w-[260px]"
+                className="w-full rounded-xl border border-border bg-card px-5 py-3.5 text-[0.9rem] text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 md:w-[260px]"
               />
-              <button type="submit" className="inline-flex items-center justify-center gap-2 bg-primary px-8 py-3.5 text-[0.9rem] font-medium text-primary-foreground shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+              <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-[0.9rem] font-semibold text-primary-foreground shadow-md transition-all hover:bg-primary/90 hover:shadow-lg">
                 Book My Demo
                 <ArrowRight className="size-4" />
               </button>
@@ -543,7 +539,7 @@ export function LandingHomePage() {
           <div className="mt-5 text-[0.78rem] text-muted-foreground">We will reach out within 24 hours to confirm a time that works for you.</div>
         </section>
 
-        <footer className="flex flex-col gap-4 border-t border-border px-6 py-10 text-center md:flex-row md:items-center md:justify-between md:px-10 lg:px-16">
+        <footer className="flex flex-col gap-4 border-t border-border/60 px-6 py-10 text-center md:flex-row md:items-center md:justify-between md:px-10 lg:px-16">
           <div className="inline-flex items-center justify-center md:justify-start">
             <BrandLogo compact />
           </div>

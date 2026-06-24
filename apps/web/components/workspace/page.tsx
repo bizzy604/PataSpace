@@ -108,19 +108,19 @@ export function TenantWorkspaceShell({
         <SidebarHeader className="gap-4 px-3 py-4">
           <Link href="/" className="flex items-center px-2 py-2">
             <BrandLogo priority className="group-data-[collapsible=icon]:hidden" />
-            <span className="hidden size-9 items-center justify-center bg-sidebar-primary text-sidebar-primary-foreground group-data-[collapsible=icon]:flex">
+            <span className="hidden size-9 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground group-data-[collapsible=icon]:flex">
               <ShieldCheck className="size-4" />
             </span>
           </Link>
 
-          <div className="border border-sidebar-border bg-sidebar-accent p-4 shadow-sm group-data-[collapsible=icon]:hidden">
-            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-sidebar-foreground/55">
+          <div className="rounded-xl border border-sidebar-border bg-sidebar-accent/60 p-4 group-data-[collapsible=icon]:hidden">
+            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-sidebar-foreground/50">
               Available balance
             </p>
             <p className="mt-2 text-2xl font-semibold text-sidebar-foreground">
               {balance !== null ? formatKes(balance) : '—'}
             </p>
-            <p className="mt-1 text-sm text-sidebar-foreground/65">
+            <p className="mt-1 text-sm text-sidebar-foreground/60">
               Ready for browsing and unlocks.
             </p>
           </div>
@@ -157,20 +157,20 @@ export function TenantWorkspaceShell({
         </SidebarContent>
 
         <SidebarFooter className="px-3 pb-4">
-          <div className="border border-sidebar-border bg-sidebar-accent p-3 shadow-sm">
+          <div className="rounded-xl border border-sidebar-border bg-sidebar-accent/60 p-3">
             <div className="flex items-center gap-3">
               <Avatar size="lg">
                 <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
               <div className="min-w-0 group-data-[collapsible=icon]:hidden">
                 <p className="font-medium text-sidebar-foreground">{displayName}</p>
-                <p className="truncate text-xs text-sidebar-foreground/60">{displaySub}</p>
+                <p className="truncate text-xs text-sidebar-foreground/55">{displaySub}</p>
               </div>
               <SignOutButton>
                 <button
                   type="button"
                   aria-label="Sign out"
-                  className="ml-auto group-data-[collapsible=icon]:hidden"
+                  className="ml-auto rounded-lg p-1.5 transition hover:bg-sidebar-accent group-data-[collapsible=icon]:hidden"
                 >
                   <LogOut className="size-4 text-sidebar-foreground/50 transition hover:text-sidebar-foreground" />
                 </button>
@@ -182,18 +182,18 @@ export function TenantWorkspaceShell({
       </Sidebar>
 
       <SidebarInset className="bg-background">
-        <header className="sticky top-0 z-30 border-b border-border bg-background px-4 py-4 sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 px-4 py-4 backdrop-blur-xl sm:px-6 lg:px-8">
           <div className="mx-auto flex max-w-[1400px] flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-start gap-3">
-              <SidebarTrigger className="mt-0.5 shrink-0" />
+              <SidebarTrigger className="mt-1 shrink-0" />
               <div>
-                <h1 className="text-[1.9rem] font-semibold text-foreground">
+                <h1 className="text-2xl font-semibold text-foreground">
                   {title}
                 </h1>
                 <p className="mt-1 max-w-xl text-sm leading-6 text-muted-foreground">{description}</p>
               </div>
             </div>
-            {actions ? <div className="flex flex-wrap gap-3 lg:justify-end">{actions}</div> : null}
+            {actions ? <div className="flex flex-wrap gap-2 lg:justify-end">{actions}</div> : null}
           </div>
         </header>
 

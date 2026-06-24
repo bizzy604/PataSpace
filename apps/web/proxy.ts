@@ -1,8 +1,16 @@
-// Clerk proxy — protects authenticated routes and handles sign-in redirects.
-// Workspace routes (/wallet, /profile, /settings, /notifications, /saved, /unlocks, /post)
-// require an active Clerk session. The unlock step (/listings/:id/unlock) also requires
-// sign-in; all other listing routes are publicly browsable without an account.
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
+
+const WAITLIST_MODE = true;
+
+const WAITLIST_ALLOWED = [
+  '/',
+  '/_next',
+  '/brand',
+  '/mock',
+  '/favicon.ico',
+  '/api',
+];
 
 const isProtectedRoute = createRouteMatcher([
   '/wallet(.*)',
@@ -17,6 +25,17 @@ const isProtectedRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
+  if (WAITLIST_MODE) {
+    const { pathname } = req.nextUrl;
+    const isAllowed = WAITLIST_ALLOWED.some(
+      (p) => pathname === p || pathname.startsWith(`${p}/`),
+    );
+    if (!isAllowed) {
+      return NextResponse.redirect(new URL('/', req.url));
+    }
+    return NextResponse.next();
+  }
+
   if (isProtectedRoute(req)) await auth.protect();
 });
 
