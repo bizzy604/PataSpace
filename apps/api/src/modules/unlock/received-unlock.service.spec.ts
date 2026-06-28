@@ -61,6 +61,25 @@ describe('ReceivedUnlockService', () => {
     });
   });
 
+  it('excludes actively disputed unlocks from the confirmed filter', async () => {
+    const { service, prismaService } = createService();
+    prismaService.$transaction.mockResolvedValue([0, []]);
+
+    await service.getReceivedUnlocks('owner_1', { status: 'confirmed' });
+
+    const where = prismaService.unlock.findMany.mock.calls[0][0].where;
+    expect(where.isRefunded).toBe(false);
+    expect(where.NOT).toEqual({
+      dispute: {
+        is: { status: { in: [DisputeStatus.OPEN, DisputeStatus.INVESTIGATING] } },
+      },
+    });
+    expect(where.AND).toEqual([
+      { confirmations: { some: { side: ConfirmationSide.INCOMING_TENANT } } },
+      { confirmations: { some: { side: ConfirmationSide.OUTGOING_TENANT } } },
+    ]);
+  });
+
   it('maps confirmation sides and pending status for an unconfirmed unlock', async () => {
     const { service, prismaService } = createService();
     prismaService.$transaction.mockResolvedValue([

@@ -123,6 +123,10 @@ export class ReceivedUnlockService {
       return {};
     }
 
+    const activeDisputeFilter: Prisma.UnlockWhereInput = {
+      dispute: { is: { status: { in: [...ACTIVE_DISPUTE_STATUSES] } } },
+    };
+
     const bothConfirmedFilter: Prisma.UnlockWhereInput = {
       AND: [
         { confirmations: { some: { side: ConfirmationSide.INCOMING_TENANT } } },
@@ -131,16 +135,16 @@ export class ReceivedUnlockService {
     };
 
     if (status === 'confirmed') {
-      return { isRefunded: false, ...bothConfirmedFilter };
+      // Exclude actively disputed unlocks so the result matches the 'confirmed'
+      // label resolveHistoryStatus() assigns (a dispute outranks confirmation).
+      return { isRefunded: false, NOT: activeDisputeFilter, ...bothConfirmedFilter };
     }
 
     // awaiting_confirmation: owner has not confirmed, not refunded, not blocked
     return {
       isRefunded: false,
       confirmations: { none: { side: ConfirmationSide.OUTGOING_TENANT } },
-      NOT: {
-        dispute: { is: { status: { in: [...ACTIVE_DISPUTE_STATUSES] } } },
-      },
+      NOT: activeDisputeFilter,
     };
   }
 

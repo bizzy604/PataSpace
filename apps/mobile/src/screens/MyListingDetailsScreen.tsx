@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocalSearchParams } from 'expo-router';
 import { ImageBackground, Text, View } from 'react-native';
 import type { ReceivedUnlockRecord } from '@pataspace/contracts';
@@ -70,10 +70,23 @@ import {
 
 export function MyListingDetailsScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
-  const { getListingById, myListings, getReceivedUnlocksForListing, confirmReceivedUnlock } =
-    useMobileApp();
+  const {
+    getListingById,
+    myListings,
+    getReceivedUnlocksForListing,
+    confirmReceivedUnlock,
+    refreshReceivedUnlocks,
+  } = useMobileApp();
   const listing = getListingById(params.id);
   const listingRow = myListings.find((item) => item.id === (Array.isArray(params.id) ? params.id[0] : params.id));
+
+  // Pull the latest received unlocks on open so a freshly unlocked listing shows
+  // its pending confirmation immediately, not only after the sign-in sync.
+  useEffect(() => {
+    void refreshReceivedUnlocks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listingRow?.id]);
+
   const receivedUnlocks = listingRow ? getReceivedUnlocksForListing(listingRow.id) : [];
   const pendingConfirmation = receivedUnlocks.filter(
     (unlock) => !unlock.outgoingConfirmed && !unlock.isRefunded && unlock.status !== 'disputed',

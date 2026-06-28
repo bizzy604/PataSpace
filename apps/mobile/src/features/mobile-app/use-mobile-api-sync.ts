@@ -23,7 +23,7 @@ import {
 } from '@/data/mock-listings';
 import { fetchListings, fetchMyListings } from '@/lib/api/listings';
 import { fetchCreditBalance, fetchTransactions } from '@/lib/api/credits';
-import { fetchMyUnlocks, fetchReceivedUnlocks } from '@/lib/api/unlocks';
+import { fetchMyUnlocks, fetchAllReceivedUnlocks } from '@/lib/api/unlocks';
 import { fetchMyReferrals } from '@/lib/api/referrals';
 import { fetchMySavedListings } from '@/lib/api/saved-listings';
 
@@ -185,8 +185,8 @@ export function useMobileApiSync(
     fetchMyUnlocks(getToken)
       .then((response) => setUnlocks(response.data.map(apiUnlockToRecord)))
       .catch(() => {});
-    fetchReceivedUnlocks(getToken)
-      .then((response) => setReceivedUnlocks(response.data))
+    fetchAllReceivedUnlocks(getToken)
+      .then((records) => setReceivedUnlocks(records))
       .catch(() => {});
     fetchMyListings(getToken)
       .then((listings) => setMyListings(listings.map(apiMyListingToRow)))

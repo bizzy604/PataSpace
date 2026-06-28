@@ -47,7 +47,7 @@ import { mobileThemes, type AppColorScheme, type MobileThemePalette } from '@/li
 import {
   createUnlock as createUnlockApi,
   confirmUnlock as confirmUnlockApi,
-  fetchReceivedUnlocks as fetchReceivedUnlocksApi,
+  fetchAllReceivedUnlocks as fetchAllReceivedUnlocksApi,
 } from '@/lib/api/unlocks';
 import { ApiRequestError } from '@/lib/api-client';
 import { uploadAndConfirmPhoto, uploadAndConfirmVideo } from '@/lib/api/uploads';
@@ -621,8 +621,8 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
       return;
     }
     try {
-      const response = await fetchReceivedUnlocksApi(getToken);
-      setReceivedUnlocks(response.data);
+      const records = await fetchAllReceivedUnlocksApi(getToken);
+      setReceivedUnlocks(records);
     } catch {
       // leave the last known state in place on a transient failure
     }

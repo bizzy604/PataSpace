@@ -11,6 +11,7 @@ import type {
   CreateUnlockResponse,
   PaginatedMyUnlocksResponse,
   PaginatedReceivedUnlocksResponse,
+  ReceivedUnlockRecord,
 } from '@pataspace/contracts';
 import { apiFetch } from '../api-client';
 
@@ -55,4 +56,27 @@ export async function fetchReceivedUnlocks(
     `/unlocks/received?page=${page}&limit=${limit}`,
     getToken,
   );
+}
+
+/**
+ * Fetches every received-unlock page so the owner's full list is preserved
+ * (the API caps limit at 50). Used by the provider refresh and sign-in sync.
+ */
+export async function fetchAllReceivedUnlocks(
+  getToken: () => Promise<string | null>,
+): Promise<ReceivedUnlockRecord[]> {
+  const limit = 50;
+  const all: ReceivedUnlockRecord[] = [];
+  let page = 1;
+
+  for (;;) {
+    const response = await fetchReceivedUnlocks(getToken, page, limit);
+    all.push(...response.data);
+    if (!response.pagination.hasNext) {
+      break;
+    }
+    page += 1;
+  }
+
+  return all;
 }
