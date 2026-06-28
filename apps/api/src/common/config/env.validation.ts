@@ -24,6 +24,7 @@ export const envSchema = z.object({
   HTTP_TRUST_PROXY: z.string().optional(),
   REQUEST_ID_HEADER: z.string().min(1).default('x-request-id'),
   APP_ENCRYPTION_KEY: z.string().min(32),
+  APP_HASH_PEPPER: z.string().min(16).optional(),
   OTP_TTL_SECONDS: z.coerce.number().int().positive().default(300),
   OTP_MAX_ATTEMPTS: z.coerce.number().int().positive().default(3),
   OTP_SANDBOX_CODE: z.string().regex(/^\d{4,6}$/).default('123456'),

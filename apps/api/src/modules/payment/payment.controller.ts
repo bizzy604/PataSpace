@@ -126,7 +126,20 @@ export class PaymentWebhookController {
 
   private assertCallbackAuthorized(provided: string | undefined) {
     const expected = this.configService.get<string>('infrastructure.mpesa.callbackSecret') ?? '';
-    if (!expected) return;
+    if (!expected) {
+      // Fail closed in production: an unset callback secret would otherwise
+      // leave these public endpoints (which credit accounts / settle payouts)
+      // open to anyone. Live mode already requires the secret via env
+      // validation; this also covers a production + sandbox-mode misconfig.
+      const environment = this.configService.get<string>('app.environment') ?? 'development';
+      if (environment === 'production') {
+        throw new UnauthorizedException({
+          code: 'CALLBACK_SECRET_NOT_CONFIGURED',
+          message: 'Payment callback authentication is not configured',
+        });
+      }
+      return;
+    }
     if (!provided || !secretsMatch(provided, expected)) {
       throw new UnauthorizedException({ code: 'INVALID_CALLBACK_SIGNATURE', message: 'Payment callback authentication failed' });
     }

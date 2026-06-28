@@ -72,9 +72,12 @@ export class S3StorageProvider implements StorageProvider {
       return {
         provider: 's3',
         key: input.key,
+        // Fail closed: the stored object must report the exact size and
+        // content-type that were declared (and allow-listed) at presign time.
+        // Missing metadata is treated as a mismatch rather than waved through,
+        // so a client cannot swap in an oversized or different-typed object.
         confirmed:
-          (object.ContentLength === undefined || object.ContentLength === input.size) &&
-          (object.ContentType === undefined || object.ContentType === input.contentType),
+          object.ContentLength === input.size && object.ContentType === input.contentType,
         url,
         cdnUrl,
       };
