@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useRouter } from 'expo-router';
 import { Text, View } from 'react-native';
 import { Badge } from '@/components/ui/badge';
@@ -9,9 +10,10 @@ import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
 import { appRoutes } from '@/lib/routes';
 
 export function ConfirmationsScreen() {
-  const { latestUnlock, getListingById, confirmationStages, confirmIncoming, confirmOutgoing } =
-    useMobileApp();
+  const { latestUnlock, getListingById, confirmationStages, confirmIncoming } = useMobileApp();
   const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState<string | null>(null);
   const listing = getListingById(latestUnlock?.listingId);
 
   if (!latestUnlock || !listing) {
@@ -88,16 +90,29 @@ export function ConfirmationsScreen() {
 
       <View className="gap-3">
         <Button
-          label={latestUnlock.incomingConfirmed ? 'Incoming side already confirmed' : 'Confirm incoming tenant side'}
-          disabled={latestUnlock.incomingConfirmed}
-          onPress={() => void confirmIncoming(listing.id)}
+          label={
+            latestUnlock.incomingConfirmed
+              ? 'You confirmed your move-in'
+              : submitting
+                ? 'Recording…'
+                : 'Confirm I am moving in'
+          }
+          disabled={latestUnlock.incomingConfirmed || submitting}
+          onPress={() => {
+            setFeedback(null);
+            setSubmitting(true);
+            void confirmIncoming(listing.id)
+              .then((result) => {
+                if (result === 'error') {
+                  setFeedback('We could not record your confirmation. Try again.');
+                }
+              })
+              .finally(() => setSubmitting(false));
+          }}
         />
-        <Button
-          variant="outline"
-          label={latestUnlock.outgoingConfirmed ? 'Outgoing side already confirmed' : 'Confirm outgoing tenant side'}
-          disabled={latestUnlock.outgoingConfirmed}
-          onPress={() => void confirmOutgoing(listing.id)}
-        />
+        {feedback ? (
+          <Text className="text-sm text-destructive">{feedback}</Text>
+        ) : null}
         {bothConfirmed ? (
           <Button
             variant="dark"
@@ -106,6 +121,13 @@ export function ConfirmationsScreen() {
           />
         ) : null}
       </View>
+
+      <Card>
+        <CardTitle className="text-base">Are you the outgoing tenant?</CardTitle>
+        <CardDescription className="mt-1">
+          Confirm your move-out from the unlock on your listing in the listing dashboard.
+        </CardDescription>
+      </Card>
 
       <Link href={appRoutes.myListings} asChild>
         <Button variant="secondary" label="View listing dashboard" />

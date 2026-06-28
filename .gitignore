@@ -10,8 +10,11 @@ ios/
 *.log
 *.tsbuildinfo
 .env
-.env.local
-.env.*.local
+# Ignore every real env file (.env.local, .env.prod, .env.vps, ...) but keep
+# the committed *.example templates tracked.
+.env.*
+!.env.example
+!.env.*.example
 .DS_Store
 Thumbs.db
 .github/skills/*

@@ -8,6 +8,7 @@ import {
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { resolveDatabaseAccessModeForRole } from '../database/rls-context.util';
+import { sanitizeLogPath } from '../http/sanitize-log-path.util';
 import { RequestContextService } from '../request-context/request-context.service';
 
 @Injectable()
@@ -39,7 +40,7 @@ export class LoggingInterceptor implements NestInterceptor {
           JSON.stringify({
             event: 'http.request',
             method: request.method,
-            path: request.url,
+            path: sanitizeLogPath(request.url),
             statusCode: response.statusCode,
             durationMs: duration,
             requestId,

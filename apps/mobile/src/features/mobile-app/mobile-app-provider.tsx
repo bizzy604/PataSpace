@@ -1,6 +1,6 @@
 import { useAuth, useClerk, useUser } from '@clerk/expo';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import type { UnlockContactInfo } from '@pataspace/contracts';
+import type { ReceivedUnlockRecord, UnlockContactInfo } from '@pataspace/contracts';
 import { useColorScheme as useNativeWindColorScheme } from 'nativewind';
 import {
   confirmationStages,
@@ -44,7 +44,12 @@ import {
   type WalletPackage,
 } from '@/data/mock-listings';
 import { mobileThemes, type AppColorScheme, type MobileThemePalette } from '@/lib/theme';
-import { createUnlock as createUnlockApi, confirmUnlock as confirmUnlockApi } from '@/lib/api/unlocks';
+import {
+  createUnlock as createUnlockApi,
+  confirmUnlock as confirmUnlockApi,
+  fetchAllReceivedUnlocks as fetchAllReceivedUnlocksApi,
+} from '@/lib/api/unlocks';
+import { ApiRequestError } from '@/lib/api-client';
 import { uploadAndConfirmPhoto, uploadAndConfirmVideo } from '@/lib/api/uploads';
 import { createListing as createListingApi } from '@/lib/api/listings';
 import { fetchCreditBalance, purchaseCredits } from '@/lib/api/credits';
@@ -129,8 +134,11 @@ type MobileAppContextValue = {
   initiatePurchase: (packageId: string, phone: string) => Promise<void>;
   refreshWallet: () => Promise<void>;
   unlockListing: (listingId: string) => Promise<'success' | 'already_unlocked' | 'insufficient'>;
-  confirmIncoming: (listingId: string) => Promise<void>;
-  confirmOutgoing: (listingId: string) => Promise<void>;
+  confirmIncoming: (listingId: string) => Promise<'success' | 'already_confirmed' | 'error'>;
+  receivedUnlocks: ReceivedUnlockRecord[];
+  getReceivedUnlocksForListing: (listingId: string) => ReceivedUnlockRecord[];
+  confirmReceivedUnlock: (unlockId: string) => Promise<'success' | 'already_confirmed' | 'error'>;
+  refreshReceivedUnlocks: () => Promise<void>;
   submitSupportMessage: (topic: string, message: string) => Promise<'success' | 'error'>;
   submitReview: (rating: number, comment: string) => void;
   submitReviewForUnlock: (unlockId: string, rating: number, comment: string) => Promise<'success' | 'already_reviewed' | 'not_confirmed' | 'forbidden' | 'error'>;
@@ -227,6 +235,7 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
   const [walletBalance, setWalletBalance] = useState(5000);
   const [transactions, setTransactions] = useState(initialTransactions);
   const [unlocks, setUnlocks] = useState(initialUnlocks);
+  const [receivedUnlocks, setReceivedUnlocks] = useState<ReceivedUnlockRecord[]>([]);
   const [listingContactInfoById, setListingContactInfoById] =
     useState<Record<string, UnlockContactInfo>>(initialUnlockContactInfoByListingId);
   const [notifications, setNotifications] = useState(initialNotifications);
@@ -245,6 +254,7 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
     setWalletBalance,
     setTransactions,
     setUnlocks,
+    setReceivedUnlocks,
     setMyListings,
     setReferrals,
     setSavedListingIds,
@@ -582,20 +592,72 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
     );
   }
 
-  async function confirmIncoming(listingId: string) {
+  async function confirmIncoming(
+    listingId: string,
+  ): Promise<'success' | 'already_confirmed' | 'error'> {
     const unlock = unlocks.find((u) => u.listingId === listingId);
-    if (unlock) {
-      await confirmUnlockApi(getToken, unlock.id, ConfirmationSide.INCOMING_TENANT).catch(() => {});
+    if (!unlock) {
+      return 'error';
     }
-    updateUnlock(listingId, { incomingConfirmed: true });
+    try {
+      await confirmUnlockApi(getToken, unlock.id, ConfirmationSide.INCOMING_TENANT);
+      updateUnlock(listingId, { incomingConfirmed: true });
+      return 'success';
+    } catch (error) {
+      if (error instanceof ApiRequestError && error.code === 'ALREADY_CONFIRMED') {
+        updateUnlock(listingId, { incomingConfirmed: true });
+        return 'already_confirmed';
+      }
+      return 'error';
+    }
   }
 
-  async function confirmOutgoing(listingId: string) {
-    const unlock = unlocks.find((u) => u.listingId === listingId);
-    if (unlock) {
-      await confirmUnlockApi(getToken, unlock.id, ConfirmationSide.OUTGOING_TENANT).catch(() => {});
+  function getReceivedUnlocksForListing(listingId: string) {
+    return receivedUnlocks.filter((record) => record.listing.id === listingId);
+  }
+
+  async function refreshReceivedUnlocks() {
+    if (!isAuthenticated) {
+      return;
     }
-    updateUnlock(listingId, { outgoingConfirmed: true });
+    try {
+      const records = await fetchAllReceivedUnlocksApi(getToken);
+      setReceivedUnlocks(records);
+    } catch {
+      // leave the last known state in place on a transient failure
+    }
+  }
+
+  async function confirmReceivedUnlock(
+    unlockId: string,
+  ): Promise<'success' | 'already_confirmed' | 'error'> {
+    try {
+      await confirmUnlockApi(getToken, unlockId, ConfirmationSide.OUTGOING_TENANT);
+      setReceivedUnlocks((current) =>
+        current.map((record) =>
+          record.unlockId === unlockId ? { ...record, outgoingConfirmed: true } : record,
+        ),
+      );
+      pushNotification({
+        id: `notif-confirm-out-${Date.now()}`,
+        title: 'Move-out confirmed',
+        detail: 'Your side is confirmed. Commission unlocks once both sides agree.',
+        time: 'Just now',
+        target: { route: 'my-listings' },
+      });
+      void refreshReceivedUnlocks();
+      return 'success';
+    } catch (error) {
+      if (error instanceof ApiRequestError && error.code === 'ALREADY_CONFIRMED') {
+        setReceivedUnlocks((current) =>
+          current.map((record) =>
+            record.unlockId === unlockId ? { ...record, outgoingConfirmed: true } : record,
+          ),
+        );
+        return 'already_confirmed';
+      }
+      return 'error';
+    }
   }
 
   async function submitSupportMessage(
@@ -785,7 +847,10 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
         refreshWallet,
         unlockListing,
         confirmIncoming,
-        confirmOutgoing,
+        receivedUnlocks,
+        getReceivedUnlocksForListing,
+        confirmReceivedUnlock,
+        refreshReceivedUnlocks,
         submitSupportMessage,
         submitReview,
         submitReviewForUnlock,

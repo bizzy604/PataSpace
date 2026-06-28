@@ -75,3 +75,35 @@ export type PaginatedMyUnlocksResponse = {
   data: MyUnlockRecord[];
   pagination: UnlockPagination;
 };
+
+import type { CommissionStatus } from '../enums';
+
+export type ReceivedUnlockStatus = 'awaiting_confirmation' | 'confirmed' | 'all';
+
+export type ReceivedUnlocksFilters = {
+  page?: number;
+  limit?: number;
+  status?: ReceivedUnlockStatus;
+};
+
+export type ReceivedUnlockCommissionSummary = {
+  amountKES: number;
+  status: CommissionStatus;
+  payableOn: string | null;
+};
+
+export type ReceivedUnlockRecord = {
+  unlockId: string;
+  listing: MyUnlockListingPreview;
+  incomingConfirmed: boolean;
+  outgoingConfirmed: boolean;
+  status: UnlockHistoryStatus;
+  commission: ReceivedUnlockCommissionSummary | null;
+  isRefunded: boolean;
+  createdAt: string;
+};
+
+export type PaginatedReceivedUnlocksResponse = {
+  data: ReceivedUnlockRecord[];
+  pagination: UnlockPagination;
+};

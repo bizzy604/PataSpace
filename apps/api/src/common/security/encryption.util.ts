@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'crypto';
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from 'crypto';
 
 const AES_ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 12;
@@ -25,8 +25,23 @@ export function normalizePhoneNumber(phoneNumber: string) {
   return trimmed;
 }
 
+/**
+ * Keyed blind index for equality lookups on low-entropy PII (e.g. phone
+ * numbers). HMAC with a server-side pepper instead of a bare SHA-256 so the
+ * hashes are not enumerable via a precomputed/rainbow table if the database
+ * leaks. Falls back to APP_ENCRYPTION_KEY when APP_HASH_PEPPER is unset so no
+ * new required config is introduced; both are validated high-entropy secrets.
+ * NOTE: changing the pepper invalidates existing *_Hash columns — re-index on
+ * rotation.
+ */
+function getLookupPepper() {
+  return process.env.APP_HASH_PEPPER ?? process.env.APP_ENCRYPTION_KEY ?? '';
+}
+
 export function hashLookupValue(value: string) {
-  return createHash('sha256').update(value.trim().toLowerCase()).digest('hex');
+  return createHmac('sha256', getLookupPepper())
+    .update(value.trim().toLowerCase())
+    .digest('hex');
 }
 
 export function hashSecretValue(value: string) {

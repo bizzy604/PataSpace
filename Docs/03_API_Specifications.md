@@ -743,6 +743,44 @@ Get listings I've unlocked.
 
 ---
 
+### GET /unlocks/received
+
+Outgoing-tenant view: unlocks placed on listings I own, so I can confirm my
+move-out side. Surfaces the `unlockId` the owner needs for `POST /confirmations`
+with `side = outgoing_tenant`.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Query Parameters:**
+- `status`: `awaiting_confirmation|confirmed|all` (optional)
+- `page`, `limit`
+
+**Response:** `200 OK`
+```json
+{
+  "data": [
+    {
+      "unlockId": "unlock_clx999",
+      "listing": {
+        "id": "listing_clx456def",
+        "neighborhood": "Kilimani",
+        "monthlyRent": 25000,
+        "bedrooms": 2
+      },
+      "incomingConfirmed": true,
+      "outgoingConfirmed": false,
+      "status": "pending_confirmation",
+      "commission": null,
+      "isRefunded": false,
+      "createdAt": "2026-03-20T14:00:00Z"
+    }
+  ],
+  "pagination": { /* ... */ }
+}
+```
+
+---
+
 ## 3.5 CONFIRMATION ENDPOINTS
 
 ### POST /confirmations

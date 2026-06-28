@@ -6,6 +6,7 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
+import { sanitizeLogPath } from '../http/sanitize-log-path.util';
 import { RequestContextService } from '../request-context/request-context.service';
 
 @Catch()
@@ -48,7 +49,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         details: payload.details,
       },
       meta: {
-        path: request.url,
+        path: sanitizeLogPath(request.url),
         requestId,
         timestamp: new Date().toISOString(),
       },

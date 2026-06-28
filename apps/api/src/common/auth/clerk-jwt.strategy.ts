@@ -25,6 +25,7 @@ type BearerRequest = {
 export class ClerkJwtStrategy extends PassportStrategy(Strategy, 'clerk-jwt') {
   private readonly clerk: ReturnType<typeof createClerkClient>;
   private readonly clerkSecretKey: string;
+  private readonly authorizedParties: string[];
 
   constructor(
     configService: ConfigService,
@@ -33,6 +34,7 @@ export class ClerkJwtStrategy extends PassportStrategy(Strategy, 'clerk-jwt') {
   ) {
     super();
     this.clerkSecretKey = configService.get<string>('security.clerkSecretKey') ?? '';
+    this.authorizedParties = configService.get<string[]>('http.allowedOrigins') ?? [];
     this.clerk = createClerkClient({ secretKey: this.clerkSecretKey });
   }
 
@@ -52,7 +54,15 @@ export class ClerkJwtStrategy extends PassportStrategy(Strategy, 'clerk-jwt') {
 
     let clerkId: string;
     try {
-      const payload = await verifyToken(token, { secretKey: this.clerkSecretKey });
+      // Pass authorizedParties (the configured frontend origins) so a token
+      // minted for a different origin (azp mismatch) is rejected. Only applied
+      // when origins are configured — production env validation requires them.
+      const payload = await verifyToken(token, {
+        secretKey: this.clerkSecretKey,
+        ...(this.authorizedParties.length > 0
+          ? { authorizedParties: this.authorizedParties }
+          : {}),
+      });
       clerkId = payload.sub;
     } catch {
       throw new UnauthorizedException({

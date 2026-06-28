@@ -128,3 +128,48 @@ export class MyUnlocksResponseDto {
   @ApiProperty({ type: () => UnlockPaginationDto })
   pagination!: UnlockPaginationDto;
 }
+
+export class ReceivedUnlockCommissionDto {
+  @ApiProperty({ example: 750 })
+  amountKES!: number;
+
+  @ApiProperty({ enum: ['PENDING', 'DUE', 'PROCESSING', 'PAID', 'FAILED', 'CANCELLED'] })
+  status!: string;
+
+  @ApiProperty({ example: '2026-03-27T14:00:00.000Z', nullable: true })
+  payableOn!: string | null;
+}
+
+export class ReceivedUnlockRecordDto {
+  @ApiProperty({ example: 'cm8unlock123' })
+  unlockId!: string;
+
+  @ApiProperty({ type: () => MyUnlockListingDto })
+  listing!: MyUnlockListingDto;
+
+  @ApiProperty({ example: false })
+  incomingConfirmed!: boolean;
+
+  @ApiProperty({ example: false })
+  outgoingConfirmed!: boolean;
+
+  @ApiProperty({ enum: ['pending_confirmation', 'confirmed', 'disputed', 'refunded'] })
+  status!: 'pending_confirmation' | 'confirmed' | 'disputed' | 'refunded';
+
+  @ApiProperty({ type: () => ReceivedUnlockCommissionDto, nullable: true })
+  commission!: ReceivedUnlockCommissionDto | null;
+
+  @ApiProperty({ example: false })
+  isRefunded!: boolean;
+
+  @ApiProperty({ example: '2026-03-20T14:00:00.000Z' })
+  createdAt!: string;
+}
+
+export class ReceivedUnlocksResponseDto {
+  @ApiProperty({ type: () => [ReceivedUnlockRecordDto] })
+  data!: ReceivedUnlockRecordDto[];
+
+  @ApiProperty({ type: () => UnlockPaginationDto })
+  pagination!: UnlockPaginationDto;
+}

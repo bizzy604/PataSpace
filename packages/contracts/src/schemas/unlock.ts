@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DisputeStatus } from '../enums';
+import { CommissionStatus, DisputeStatus } from '../enums';
 import { isoDateStringSchema, paginationMetaSchema, paginationQuerySchema } from './common';
 
 export const unlockContactSchema = z.object({
@@ -65,6 +65,41 @@ export const myUnlockRecordSchema = z.object({
 
 export const paginatedMyUnlocksResponseSchema = z.object({
   data: z.array(myUnlockRecordSchema),
+  pagination: paginationMetaSchema.extend({
+    hasNext: z.boolean(),
+    hasPrev: z.boolean(),
+  }),
+});
+
+export const receivedUnlockStatusSchema = z.enum([
+  'awaiting_confirmation',
+  'confirmed',
+  'all',
+]);
+
+export const receivedUnlocksQuerySchema = paginationQuerySchema.extend({
+  status: receivedUnlockStatusSchema.optional(),
+});
+
+export const receivedUnlockCommissionSchema = z.object({
+  amountKES: z.number().int().nonnegative(),
+  status: z.nativeEnum(CommissionStatus),
+  payableOn: isoDateStringSchema.nullable(),
+});
+
+export const receivedUnlockRecordSchema = z.object({
+  unlockId: z.string().min(1),
+  listing: myUnlockListingSchema,
+  incomingConfirmed: z.boolean(),
+  outgoingConfirmed: z.boolean(),
+  status: unlockHistoryStatusSchema,
+  commission: receivedUnlockCommissionSchema.nullable(),
+  isRefunded: z.boolean(),
+  createdAt: isoDateStringSchema,
+});
+
+export const paginatedReceivedUnlocksResponseSchema = z.object({
+  data: z.array(receivedUnlockRecordSchema),
   pagination: paginationMetaSchema.extend({
     hasNext: z.boolean(),
     hasPrev: z.boolean(),

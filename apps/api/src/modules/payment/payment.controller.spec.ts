@@ -20,7 +20,7 @@ describe('PaymentWebhookController', () => {
     },
   };
 
-  const createController = (callbackSecret = '') => {
+  const createController = (callbackSecret = '', environment = 'development') => {
     const paymentService = {
       handleMpesaCallback: jest.fn().mockResolvedValue({
         ResultCode: 0,
@@ -31,6 +31,10 @@ describe('PaymentWebhookController', () => {
       get: jest.fn((key: string) => {
         if (key === 'infrastructure.mpesa.callbackSecret') {
           return callbackSecret;
+        }
+
+        if (key === 'app.environment') {
+          return environment;
         }
 
         return undefined;
@@ -70,6 +74,15 @@ describe('PaymentWebhookController', () => {
     expect(() =>
       controller.handleMpesaCallback(undefined, undefined, callbackPayload as never),
     ).toThrow(UnauthorizedException);
+  });
+
+  it('rejects callbacks in production when no secret is configured (fail closed)', () => {
+    const { controller, paymentService } = createController('', 'production');
+
+    expect(() =>
+      controller.handleMpesaCallback(undefined, undefined, callbackPayload as never),
+    ).toThrow(UnauthorizedException);
+    expect(paymentService.handleMpesaCallback).not.toHaveBeenCalled();
   });
 
   it('accepts callbacks with the configured secret header', async () => {
