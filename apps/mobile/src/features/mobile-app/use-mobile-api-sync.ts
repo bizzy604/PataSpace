@@ -10,6 +10,7 @@ import type {
   ListingCard,
   MyListing,
   MyUnlockRecord,
+  ReceivedUnlockRecord,
   ReferralRecord,
 } from '@pataspace/contracts';
 import { draftCameraSequence } from '@/data/media-library';
@@ -22,7 +23,7 @@ import {
 } from '@/data/mock-listings';
 import { fetchListings, fetchMyListings } from '@/lib/api/listings';
 import { fetchCreditBalance, fetchTransactions } from '@/lib/api/credits';
-import { fetchMyUnlocks } from '@/lib/api/unlocks';
+import { fetchMyUnlocks, fetchReceivedUnlocks } from '@/lib/api/unlocks';
 import { fetchMyReferrals } from '@/lib/api/referrals';
 import { fetchMySavedListings } from '@/lib/api/saved-listings';
 
@@ -161,6 +162,7 @@ export function useMobileApiSync(
   setWalletBalance: (balance: number) => void,
   setTransactions: (records: TransactionRecord[]) => void,
   setUnlocks: (records: UnlockRecord[]) => void,
+  setReceivedUnlocks: (records: ReceivedUnlockRecord[]) => void,
   setMyListings: (rows: MyListingRow[]) => void,
   setReferrals: (records: ReferralRecord[]) => void,
   setSavedListingIds: (ids: string[]) => void,
@@ -182,6 +184,9 @@ export function useMobileApiSync(
       .catch(() => {});
     fetchMyUnlocks(getToken)
       .then((response) => setUnlocks(response.data.map(apiUnlockToRecord)))
+      .catch(() => {});
+    fetchReceivedUnlocks(getToken)
+      .then((response) => setReceivedUnlocks(response.data))
       .catch(() => {});
     fetchMyListings(getToken)
       .then((listings) => setMyListings(listings.map(apiMyListingToRow)))

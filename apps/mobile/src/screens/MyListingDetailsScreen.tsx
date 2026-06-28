@@ -1,11 +1,67 @@
+import { useState } from 'react';
 import { Link, useLocalSearchParams } from 'expo-router';
 import { ImageBackground, Text, View } from 'react-native';
+import type { ReceivedUnlockRecord } from '@pataspace/contracts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
 import { SectionHeader } from '@/components/ui/section-header';
 import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
+
+function OutgoingUnlockRow({
+  unlock,
+  onConfirm,
+}: {
+  unlock: ReceivedUnlockRecord;
+  onConfirm: (unlockId: string) => Promise<'success' | 'already_confirmed' | 'error'>;
+}) {
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const blocked = unlock.isRefunded || unlock.status === 'disputed';
+
+  return (
+    <View className="rounded-2xl bg-secondary px-4 py-3">
+      <View className="flex-row items-center justify-between gap-3">
+        <Text className="text-sm font-semibold text-foreground">
+          Unlock · {unlock.incomingConfirmed ? 'tenant confirmed' : 'tenant pending'}
+        </Text>
+        <Badge variant={unlock.outgoingConfirmed ? 'dark' : 'secondary'}>
+          {unlock.outgoingConfirmed ? 'You confirmed' : 'Action needed'}
+        </Badge>
+      </View>
+      {error ? <Text className="mt-2 text-xs text-destructive">{error}</Text> : null}
+      {unlock.outgoingConfirmed ? (
+        <Text className="mt-2 text-xs text-muted-foreground">
+          Your move-out is confirmed. Commission unlocks once both sides agree.
+        </Text>
+      ) : blocked ? (
+        <Text className="mt-2 text-xs text-muted-foreground">
+          {unlock.isRefunded
+            ? 'This unlock was refunded; no confirmation needed.'
+            : 'This unlock is under dispute. Resolve it before confirming.'}
+        </Text>
+      ) : (
+        <Button
+          className="mt-3"
+          label={submitting ? 'Recording…' : 'Confirm I am moving out'}
+          disabled={submitting}
+          onPress={() => {
+            setError(null);
+            setSubmitting(true);
+            void onConfirm(unlock.unlockId)
+              .then((result) => {
+                if (result === 'error') {
+                  setError('We could not record your confirmation. Try again.');
+                }
+              })
+              .finally(() => setSubmitting(false));
+          }}
+        />
+      )}
+    </View>
+  );
+}
 import {
   appRoutes,
   listingGalleryHref,
@@ -14,9 +70,14 @@ import {
 
 export function MyListingDetailsScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
-  const { getListingById, myListings } = useMobileApp();
+  const { getListingById, myListings, getReceivedUnlocksForListing, confirmReceivedUnlock } =
+    useMobileApp();
   const listing = getListingById(params.id);
   const listingRow = myListings.find((item) => item.id === (Array.isArray(params.id) ? params.id[0] : params.id));
+  const receivedUnlocks = listingRow ? getReceivedUnlocksForListing(listingRow.id) : [];
+  const pendingConfirmation = receivedUnlocks.filter(
+    (unlock) => !unlock.outgoingConfirmed && !unlock.isRefunded && unlock.status !== 'disputed',
+  );
 
   if (!listing || !listingRow) {
     return (
@@ -115,6 +176,31 @@ export function MyListingDetailsScreen() {
       <Card>
         <CardTitle className="text-[20px]">Payout status</CardTitle>
         <CardDescription>{listingRow.payout}</CardDescription>
+      </Card>
+
+      <Card>
+        <CardTitle className="text-[20px]">Confirm your move-out</CardTitle>
+        {receivedUnlocks.length === 0 ? (
+          <CardDescription>
+            No one has unlocked this listing yet. When an incoming tenant unlocks it,
+            confirm your move-out here so the commission can proceed.
+          </CardDescription>
+        ) : pendingConfirmation.length === 0 ? (
+          <CardDescription>
+            Nothing needs your confirmation right now. Confirmed unlocks move to the
+            commission timeline below.
+          </CardDescription>
+        ) : (
+          <View className="mt-4 gap-3">
+            {pendingConfirmation.map((unlock) => (
+              <OutgoingUnlockRow
+                key={unlock.unlockId}
+                unlock={unlock}
+                onConfirm={confirmReceivedUnlock}
+              />
+            ))}
+          </View>
+        )}
       </Card>
 
       <Card>

@@ -1,7 +1,8 @@
 /**
  * Purpose: Unlock API functions for the mobile app.
  * Why important: Creates unlocks, fetches unlock history, and submits confirmations.
- * Used by: use-mobile-api-sync hook, MobileAppProvider (unlockListing, confirmIncoming, confirmOutgoing).
+ * Used by: use-mobile-api-sync hook, MobileAppProvider (unlockListing, confirmIncoming,
+ *   confirmReceivedUnlock, received-unlocks sync).
  */
 import type {
   ConfirmationSide,
@@ -9,6 +10,7 @@ import type {
   CreateUnlockRequest,
   CreateUnlockResponse,
   PaginatedMyUnlocksResponse,
+  PaginatedReceivedUnlocksResponse,
 } from '@pataspace/contracts';
 import { apiFetch } from '../api-client';
 
@@ -42,4 +44,15 @@ export async function confirmUnlock(
     method: 'POST',
     body: JSON.stringify({ unlockId, side }),
   });
+}
+
+export async function fetchReceivedUnlocks(
+  getToken: () => Promise<string | null>,
+  page = 1,
+  limit = 50,
+): Promise<PaginatedReceivedUnlocksResponse> {
+  return apiFetch<PaginatedReceivedUnlocksResponse>(
+    `/unlocks/received?page=${page}&limit=${limit}`,
+    getToken,
+  );
 }
