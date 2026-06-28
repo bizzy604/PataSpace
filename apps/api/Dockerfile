@@ -4,9 +4,10 @@
 # Used by: infra/docker/docker-compose.prod.yml and .github/workflows/docker-publish.yml.
 #
 # Build context is the repo root so the pnpm workspace (packages/contracts) resolves.
-# The runner re-installs ONLY the API's dependency closure, so the image excludes the
-# web/admin/mobile dependency trees while keeping the Prisma CLI + ts-node that the
-# migration step needs.
+# The runner re-installs ONLY the API's PRODUCTION dependency closure, so the image
+# excludes the web/admin/mobile trees AND the test/build tooling (jest, ts-jest,
+# @nestjs/cli, supertest). The Prisma CLI + ts-node + typescript the one-shot
+# migration step needs live in dependencies (not devDependencies) for this reason.
 
 # ---- Builder: install the workspace and compile the API ----
 FROM node:20-slim AS builder
@@ -45,7 +46,7 @@ COPY apps/mobile/package.json apps/mobile/
 COPY packages/contracts/package.json packages/contracts/
 COPY packages/design-tokens/package.json packages/design-tokens/
 
-RUN pnpm install --frozen-lockfile --ignore-scripts --filter @pataspace/api...
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts --filter @pataspace/api...
 
 # Built artifacts + Prisma schema/bootstrap scripts from the builder.
 COPY --from=builder /app/packages/contracts/dist packages/contracts/dist

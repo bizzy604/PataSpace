@@ -8,8 +8,14 @@ Used by: operator deploying the first production API instance.
 
 # PataSpace API — VPS Deployment Guide
 
-Target: Hostinger VPS with Docker Manager. Ships: API + Postgres + Redis + Caddy
-(auto-TLS). Uses prebuilt GHCR images.
+Target: Hostinger VPS with Docker Manager. `docker-compose.vps.yml` ships
+API + Web + Postgres + Redis, all bound to `127.0.0.1` (api on `3002`, web on
+`3003`). Uses prebuilt GHCR images.
+
+**TLS is NOT handled by this stack.** The host's existing nginx + Certbot
+terminates TLS and reverse-proxies the API domain → `127.0.0.1:3002` and the web
+domain → `127.0.0.1:3003`. If your VPS has no pre-existing nginx, use the
+standalone Caddy path described at the bottom of this guide instead.
 
 ## Prerequisites
 
@@ -98,9 +104,15 @@ Critical values to set correctly:
 | `DATABASE_URL` | `postgresql://pataspace_app:<APP_PW>@postgres:5432/pataspace` |
 | `DATABASE_MIGRATION_URL` | `postgresql://pataspace_migrator:<MIG_PW>@postgres:5432/pataspace` |
 | `DATABASE_ADMIN_URL` | `postgresql://postgres:<PG_PW>@postgres:5432/pataspace` |
-| `ALLOWED_ORIGINS` | `*` for now (tighten to app domains later) |
+| `ALLOWED_ORIGINS` | Comma-separated exact origins, e.g. `https://dalakenya.com,https://admin.dalakenya.com` |
 
 All DB URLs use the compose service name `postgres` (resolves inside the network).
+
+> **`ALLOWED_ORIGINS` is exact-match, not a wildcard.** The API checks
+> `allowedOrigins.includes(origin)` (`apps/api/src/common/bootstrap/configure-app.ts`),
+> so `*` does **not** allow all browsers — it only matches the literal origin `*`.
+> List every web/admin origin explicitly. (The mobile app sends no `Origin`
+> header, so it is unaffected either way.)
 
 ## Step 4 — Start the stack
 
@@ -114,8 +126,11 @@ First boot sequence:
 1. **postgres** starts and runs the bootstrap scripts (creates app/migrator roles).
 2. **redis** starts.
 3. **api-migrate** runs `prisma:migrate:deploy`, then exits.
-4. **api** boots once migration succeeds; health check starts.
-5. **caddy** provisions a Let's Encrypt cert for `API_DOMAIN` and starts proxying.
+4. **api** boots once migration succeeds; health check starts (listening on `127.0.0.1:3002`).
+5. **web** boots once the API is healthy (listening on `127.0.0.1:3003`).
+
+Then point the host nginx at the two local ports and let Certbot issue the certs
+(see "Host nginx + TLS" below).
 
 Watch logs:
 
@@ -123,21 +138,48 @@ Watch logs:
 docker compose -f docker-compose.vps.yml logs -f
 ```
 
-## Step 5 — Verify
+## Step 5 — Host nginx + TLS
 
-```bash
-# From your local machine (or the VPS):
-curl https://<API_DOMAIN>/api/v1/health
-# Expected: {"status":"ok","service":"pataspace-api",...}
+The stack only listens on localhost. The host nginx terminates TLS and proxies
+the public domains to the containers. Add a server block per domain, then let
+Certbot install the certs:
 
-curl https://<API_DOMAIN>/api/v1/ready
-# Expected: {"status":"ready","dependencies":{...}}
+```nginx
+# /etc/nginx/sites-available/pataspace-api
+server {
+  server_name <API_DOMAIN>;
+  location / { proxy_pass http://127.0.0.1:3002; proxy_set_header Host $host; proxy_set_header X-Forwarded-Proto $scheme; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; }
+}
+# /etc/nginx/sites-available/pataspace-web
+server {
+  server_name <WEB_DOMAIN>;
+  location / { proxy_pass http://127.0.0.1:3003; proxy_set_header Host $host; proxy_set_header X-Forwarded-Proto $scheme; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; }
+}
 ```
 
-If Caddy shows a TLS error, verify the DNS A-record resolves to the VPS IP and
-ports 80/443 are open in the VPS firewall.
+```bash
+sudo ln -s /etc/nginx/sites-available/pataspace-{api,web} /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+sudo certbot --nginx -d <API_DOMAIN> -d <WEB_DOMAIN>
+```
 
-## Step 6 — Wire the mobile app
+## Step 6 — Verify
+
+```bash
+# Local container check on the VPS (no TLS yet):
+curl http://127.0.0.1:3002/api/v1/health
+# Expected: {"status":"ok","service":"pataspace-api",...}
+
+# Public check once host nginx + Certbot are live:
+curl https://<API_DOMAIN>/api/v1/health
+curl https://<API_DOMAIN>/api/v1/ready
+# Expected: {"status":"ready"|"degraded",...}
+```
+
+If TLS fails, verify the DNS A-record resolves to the VPS IP and ports 80/443
+are open in the VPS firewall before re-running Certbot.
+
+## Step 7 — Wire the mobile app
 
 Set the EAS environment variable so production mobile builds point here:
 
@@ -158,19 +200,20 @@ After merging new code to `main`, the Docker Publish action pushes a fresh
 
 ```bash
 cd /opt/pataspace/infra/docker
-docker compose -f docker-compose.vps.yml pull api
-docker compose -f docker-compose.vps.yml up -d api api-migrate
+docker compose -f docker-compose.vps.yml pull api web
+docker compose -f docker-compose.vps.yml up -d api-migrate api web
 ```
 
-`api-migrate` re-runs migrations (idempotent), then `api` restarts with the new
-image.
+`api-migrate` re-runs migrations (idempotent), then `api` and `web` restart with
+the new images.
 
 ## Troubleshooting
 
 | Symptom | Fix |
 | --- | --- |
 | `api-migrate` exits with error | Check `docker compose logs api-migrate` — usually a missing/wrong `DATABASE_MIGRATION_URL` |
-| Caddy `tls.obtain` error | DNS A-record not propagated, or ports 80/443 blocked |
+| Certbot / TLS issuance fails | DNS A-record not propagated, or ports 80/443 blocked by the VPS firewall |
+| Browser blocked by CORS | `ALLOWED_ORIGINS` is exact-match; add the exact web/admin origin (no wildcard) |
 | API returns 403 `ACCOUNT_INACTIVE` | Clerk user exists but the local DB record has `isActive=false` |
 | `POSTGRES_PASSWORD not set` on startup | The `.env` file is missing or not in the same directory as the compose file |
 | Redis connection refused | Check `REDIS_PASSWORD` matches between `.env` and the redis service command |

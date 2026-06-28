@@ -1,3 +1,13 @@
+/**
+ * Purpose: LOCAL path to create the least-privilege app/migrator Postgres roles,
+ *   run via `pnpm prisma:bootstrap:roles` using DATABASE_ADMIN/URL connection strings.
+ * Why important: Lets a developer (or a non-container deploy) provision the same
+ *   role/grant model the container gets automatically on first init.
+ * Used by: apps/api/package.json `prisma:bootstrap:roles`; renders bootstrap-roles.sql.template.
+ *
+ * SYNC: The CONTAINER path is `010-bootstrap-roles.sh` (Postgres first-init hook).
+ *   Both must grant the same final privileges. Change one, change the other.
+ */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
