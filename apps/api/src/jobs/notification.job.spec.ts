@@ -28,6 +28,7 @@ describe('NotificationJob', () => {
         prismaService as never,
         smsService as never,
         userService as never,
+        { runInternal: (fn: () => unknown) => fn() } as never,
       ),
     };
   };

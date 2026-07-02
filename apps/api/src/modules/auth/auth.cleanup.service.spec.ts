@@ -22,7 +22,11 @@ describe('AuthCleanupService', () => {
 
     return {
       prismaService,
-      service: new AuthCleanupService(prismaService as never, configService as never),
+      service: new AuthCleanupService(
+        prismaService as never,
+        configService as never,
+        { runInternal: (fn: () => unknown) => fn() } as never,
+      ),
     };
   };
 

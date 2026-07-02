@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../common/database/prisma.service';
+import { RequestContextService } from '../common/request-context/request-context.service';
 import { StorageService } from '../infrastructure/storage/storage.service';
 
 @Injectable()
@@ -12,11 +13,12 @@ export class ListingCleanupJob {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly storageService: StorageService,
+    private readonly requestContext: RequestContextService,
   ) {}
 
   @Cron('0 3 * * 0')
   async handleListingCleanup() {
-    return this.hardDeleteOldListings();
+    return this.requestContext.runInternal(() => this.hardDeleteOldListings());
   }
 
   async hardDeleteOldListings(now = new Date()) {

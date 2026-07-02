@@ -44,6 +44,7 @@ describe('ReferralRewardJob', () => {
       job: new ReferralRewardJob(
         prismaService as never,
         creditService as never,
+        { runInternal: (fn: () => unknown) => fn() } as never,
         configService as never,
       ),
     };

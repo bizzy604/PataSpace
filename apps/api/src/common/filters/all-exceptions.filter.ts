@@ -5,12 +5,15 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { sanitizeLogPath } from '../http/sanitize-log-path.util';
 import { RequestContextService } from '../request-context/request-context.service';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
+  private readonly logger = new Logger(AllExceptionsFilter.name);
+
   constructor(
     private readonly requestIdHeader = 'x-request-id',
     private readonly requestContext?: RequestContextService,
@@ -32,6 +35,25 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     const payload = this.normalizePayload(exception, status);
     const retryAfter = payload.retryAfter ?? this.extractRetryAfter(payload.details);
+
+    // Server-side faults (5xx) must be logged with their stack, otherwise the
+    // generic client response leaves no way to diagnose a production incident.
+    // Client errors (4xx) are expected and stay out of the error log.
+    if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+      const error = exception instanceof Error ? exception : undefined;
+      this.logger.error(
+        JSON.stringify({
+          event: 'http.unhandled_exception',
+          statusCode: status,
+          method: request.method,
+          path: sanitizeLogPath(request.url),
+          requestId,
+          userId: request.user?.id ?? null,
+          message: error?.message ?? String(exception),
+        }),
+        error?.stack,
+      );
+    }
 
     if (requestId) {
       response.setHeader(this.requestIdHeader, requestId);

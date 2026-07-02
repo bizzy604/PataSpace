@@ -3,6 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { randomUUID } from 'crypto';
 import { CommissionStatus, DisputeStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../common/database/prisma.service';
+import { RequestContextService } from '../common/request-context/request-context.service';
 import {
   ADVISORY_LOCK_KEYS,
   releaseAdvisoryLock,
@@ -29,10 +30,15 @@ export class CommissionPayoutJob {
     private readonly mpesaClient: MpesaClient,
     private readonly smsService: SmsService,
     private readonly userService: UserService,
+    private readonly requestContext: RequestContextService,
   ) {}
 
   @Cron('0 9 * * *')
   async handleCommissionPayouts() {
+    return this.requestContext.runInternal(() => this.runCommissionPayoutsWithLock());
+  }
+
+  private async runCommissionPayoutsWithLock() {
     const acquired = await tryAdvisoryLock(
       this.prismaService,
       ADVISORY_LOCK_KEYS.commissionPayoutJob,

@@ -53,6 +53,50 @@ describe('envSchema', () => {
     );
   });
 
+  const validProductionEnv = {
+    ...baseEnv,
+    NODE_ENV: 'production',
+    ALLOWED_ORIGINS: 'https://app.pataspace.example',
+    APP_BASE_URL: 'https://api.pataspace.example',
+    SMS_PROVIDER: 'africastalking',
+    AT_USERNAME: 'pataspace',
+    AT_API_KEY: 'at-api-key',
+    CLERK_SECRET_KEY: 'sk_live_clerk_secret',
+  };
+
+  it('accepts a fully-configured production env', () => {
+    const result = envSchema.safeParse(validProductionEnv);
+
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects sandbox SMS in production (fixed OTP would be usable)', () => {
+    const result = envSchema.safeParse({
+      ...validProductionEnv,
+      SMS_PROVIDER: 'sandbox',
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: ['SMS_PROVIDER'] }),
+      ]),
+    );
+  });
+
+  it('requires CLERK_SECRET_KEY in production', () => {
+    const { CLERK_SECRET_KEY, ...withoutClerk } = validProductionEnv;
+    void CLERK_SECRET_KEY;
+    const result = envSchema.safeParse(withoutClerk);
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: ['CLERK_SECRET_KEY'] }),
+      ]),
+    );
+  });
+
   it('requires a callback secret and HTTPS callback URLs in live M-Pesa mode', () => {
     const result = envSchema.safeParse({
       ...baseEnv,
