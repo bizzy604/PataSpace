@@ -1,0 +1,130 @@
+# Purpose: Observability overlay — Prometheus, Grafana, Alertmanager, and the
+#   node/cadvisor/postgres/redis exporters for the PataSpace stack.
+# Why important: Adds metrics, dashboards, and alerting to a running deployment
+#   without touching the app services; everything shares the stack's network so
+#   Prometheus scrapes api/postgres/redis by service name.
+# Used by: operators, layered onto the base stack:
+#   docker compose -f docker-compose.prod.yml -f docker-compose.observability.yml up -d
+#   docker compose -f docker-compose.vps.yml  -f docker-compose.observability.yml up -d
+#
+# Requires in infra/docker/.env (see .env.prod.example / .env.vps.example):
+#   METRICS_TOKEN, GRAFANA_ADMIN_PASSWORD (and the base stack's POSTGRES_* /
+#   REDIS_PASSWORD, which the exporters reuse).
+# All UIs bind to 127.0.0.1 only; reach them over SSH tunnel or a host proxy.
+
+services:
+  prometheus:
+    image: prom/prometheus:v3.13.0
+    environment:
+      METRICS_TOKEN: ${METRICS_TOKEN:-}
+    # The entrypoint writes METRICS_TOKEN to a credentials file because
+    # Prometheus cannot read secrets from environment variables directly.
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        printf '%s' "$$METRICS_TOKEN" > /prometheus/api-metrics-token &&
+        exec /bin/prometheus
+        --config.file=/etc/prometheus/prometheus.yml
+        --storage.tsdb.path=/prometheus
+        --storage.tsdb.retention.time=${PROMETHEUS_RETENTION_TIME:-30d}
+        --storage.tsdb.retention.size=${PROMETHEUS_RETENTION_SIZE:-5GB}
+        --web.enable-lifecycle
+    volumes:
+      - ../observability/prometheus:/etc/prometheus:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:9090/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  alertmanager:
+    image: prom/alertmanager:v0.33.0
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+    volumes:
+      - ../observability/alertmanager:/etc/alertmanager:ro
+      - alertmanager_data:/alertmanager
+    ports:
+      - "127.0.0.1:${ALERTMANAGER_PORT:-9093}:9093"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:9093/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:12.2.10
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD in .env}
+      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-http://localhost:3005}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_USERS_ALLOW_ORG_CREATE: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    volumes:
+      - ../observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../observability/grafana/dashboards:/var/lib/grafana/dashboards/pataspace:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-3005}:3000"
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  node-exporter:
+    image: prom/node-exporter:v1.11.1
+    command:
+      - --path.rootfs=/host
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+    restart: unless-stopped
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.55.1
+    privileged: true
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+    restart: unless-stopped
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.20.0
+    environment:
+      # Override with a dedicated pg_monitor role via POSTGRES_EXPORTER_DSN;
+      # see infra/observability/README.md.
+      DATA_SOURCE_NAME: ${POSTGRES_EXPORTER_DSN:-postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-pataspace}?sslmode=disable}
+    restart: unless-stopped
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.86.0
+    command:
+      - --redis.addr=redis://redis:6379
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:
+  alertmanager_data:
+  grafana_data:

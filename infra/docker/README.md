@@ -9,6 +9,7 @@ Container images and a production-style stack for PataSpace.
 | `docker-compose.yml` | Local **dev** dependencies only (Postgres + Redis). |
 | `docker-compose.prod.yml` | Full **production-style** stack from built images. |
 | `docker-compose.vps.yml` | **API-only** VPS stack with Caddy auto-TLS. |
+| `docker-compose.observability.yml` | Monitoring **overlay** (Prometheus, Grafana, Alertmanager, exporters) for either stack — see `infra/observability/README.md`. |
 | `Caddyfile` | Caddy reverse-proxy config (used by the VPS stack). |
 | `.env.prod.example` | Template for the full prod stack's `.env`. |
 | `.env.vps.example` | Template for the VPS API-only stack's `.env`. |
@@ -45,6 +46,18 @@ Verify the API once healthy:
 curl http://localhost/api/v1/health
 curl http://localhost/api/v1/ready
 ```
+
+## Monitoring
+
+Layer the observability overlay onto either stack to add Prometheus, Grafana,
+Alertmanager, and host/container/Postgres/Redis exporters:
+
+```bash
+docker compose -f docker-compose.prod.yml -f docker-compose.observability.yml up -d
+```
+
+Requires `METRICS_TOKEN` and `GRAFANA_ADMIN_PASSWORD` in `.env`. Full details:
+`infra/observability/README.md`.
 
 ## Migrations
 

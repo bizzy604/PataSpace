@@ -7,6 +7,8 @@ import { AllExceptionsFilter } from '../filters/all-exceptions.filter';
 import { LoggingInterceptor } from '../interceptors/logging.interceptor';
 import { resolveDatabaseAccessModeForPath } from '../database/rls-context.util';
 import { RequestContextService } from '../request-context/request-context.service';
+import { createHttpMetricsMiddleware } from '../../infrastructure/observability/http-metrics.middleware';
+import { MetricsService } from '../../infrastructure/observability/metrics.service';
 
 export function configureApp(app: INestApplication) {
   const configService = app.get(ConfigService);
@@ -23,7 +25,12 @@ export function configureApp(app: INestApplication) {
   httpAdapter.set('trust proxy', trustProxy);
 
   app.enableShutdownHooks();
-  app.setGlobalPrefix(globalPrefix);
+  // /metrics stays outside the API prefix so the nginx edge (which only
+  // forwards /api/*) never routes it to the public internet.
+  app.setGlobalPrefix(globalPrefix, { exclude: ['metrics'] });
+  // Installed before routing so guard rejections (401/429) and unmatched
+  // requests (404) are measured too, not just requests that reach a handler.
+  app.use(createHttpMetricsMiddleware(app.get(MetricsService)));
   app.use(
     (
       request: { headers: Record<string, string | string[] | undefined>; requestId?: string },

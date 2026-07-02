@@ -61,7 +61,7 @@ export class AppService {
       return {
         status: 'up' as const,
       };
-    } catch (error) {
+    } catch {
       return {
         status: 'down' as const,
       };

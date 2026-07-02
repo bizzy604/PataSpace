@@ -193,6 +193,23 @@ eas env:create --environment production \
 
 Also set `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` to the `pk_live_…` key.
 
+## Step 8 — Monitoring (optional but recommended)
+
+Layer the observability overlay onto the running stack to get Prometheus,
+Grafana dashboards, and Alertmanager:
+
+```bash
+cd /opt/pataspace/infra/docker
+# .env additions: METRICS_TOKEN (openssl rand -hex 32) and GRAFANA_ADMIN_PASSWORD
+docker compose -f docker-compose.vps.yml -f docker-compose.observability.yml up -d
+```
+
+All monitoring UIs bind to `127.0.0.1` on the VPS; reach Grafana with
+`ssh -L 3005:localhost:3005 <vps>` → http://localhost:3005. `METRICS_TOKEN` is
+required: the host nginx forwards every path to the API, and the token is what
+keeps `https://<API_DOMAIN>/metrics` private (without it the API serves 404
+there and Prometheus cannot scrape). Details: `infra/observability/README.md`.
+
 ## Updating the API
 
 After merging new code to `main`, the Docker Publish action pushes a fresh
