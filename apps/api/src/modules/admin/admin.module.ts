@@ -9,9 +9,11 @@ import { Module } from '@nestjs/common';
 import { ListingModule } from '../listing/listing.module';
 import { UserModule } from '../user/user.module';
 import { AdminController } from './admin.controller';
+import { AdminDisputesController } from './admin-disputes.controller';
 import { AdminListingsController } from './admin-listings.controller';
 import { AdminMetricsController } from './admin-metrics.controller';
 import { AdminUsersController } from './admin-users.controller';
+import { AdminDisputeService } from './application/admin-dispute.service';
 import { AdminListingService } from './application/admin-listing.service';
 import { AdminMetricsService } from './application/admin-metrics.service';
 import { AdminUserService } from './application/admin-user.service';
@@ -20,10 +22,16 @@ import { AdminUserService } from './application/admin-user.service';
   imports: [ListingModule, UserModule],
   controllers: [
     AdminController,
+    AdminDisputesController,
     AdminListingsController,
     AdminMetricsController,
     AdminUsersController,
   ],
-  providers: [AdminListingService, AdminMetricsService, AdminUserService],
+  providers: [
+    AdminDisputeService,
+    AdminListingService,
+    AdminMetricsService,
+    AdminUserService,
+  ],
 })
 export class AdminModule {}

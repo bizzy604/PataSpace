@@ -19,7 +19,6 @@ Image build files live with each app:
 
 - `apps/api/Dockerfile` — NestJS API (multi-stage, Prisma).
 - `apps/web/Dockerfile` — Next.js site (standalone output).
-- `apps/admin/Dockerfile` — Vite SPA built and served by nginx (`apps/admin/docker/nginx.conf`).
 - `infra/nginx/Dockerfile` + `infra/nginx/edge.conf` — edge reverse proxy.
 
 All images build from the **repo root** context so the pnpm workspace resolves.
@@ -36,7 +35,6 @@ Service topology:
 
 - `nginx` (edge) → published on `HTTP_PORT` (default `80`): routes `/api/*` → `api`, everything else → `web`.
 - `api` (NestJS) on internal `3001`, `web` (Next.js) on internal `3000`.
-- `admin` (static SPA) published on `ADMIN_PORT` (default `8080`).
 - `postgres` + `redis` with healthchecks and named volumes.
 - `api-migrate`: one-shot service that runs `prisma:migrate:deploy` (single owner of schema changes) and must finish before `api` starts.
 
@@ -69,9 +67,9 @@ init scripts in `apps/api/prisma/bootstrap` on first volume creation.
 
 ## Using prebuilt images (GHCR)
 
-CI publishes `ghcr.io/bizzy604/pataspace-{api,web,admin,nginx}`. To run the stack
+CI publishes `ghcr.io/bizzy604/pataspace-{api,web,nginx}`. To run the stack
 from those instead of building locally, set the image vars in `.env`
-(`API_IMAGE`, `WEB_IMAGE`, `ADMIN_IMAGE`, `NGINX_IMAGE`) and run
+(`API_IMAGE`, `WEB_IMAGE`, `NGINX_IMAGE`) and run
 `docker compose -f docker-compose.prod.yml up` (no `--build`).
 
 ## Notes / follow-ups

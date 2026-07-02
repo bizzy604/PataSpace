@@ -104,7 +104,7 @@ Critical values to set correctly:
 | `DATABASE_URL` | `postgresql://pataspace_app:<APP_PW>@postgres:5432/pataspace` |
 | `DATABASE_MIGRATION_URL` | `postgresql://pataspace_migrator:<MIG_PW>@postgres:5432/pataspace` |
 | `DATABASE_ADMIN_URL` | `postgresql://postgres:<PG_PW>@postgres:5432/pataspace` |
-| `ALLOWED_ORIGINS` | Comma-separated exact origins, e.g. `https://dalakenya.com,https://admin.dalakenya.com` |
+| `ALLOWED_ORIGINS` | Comma-separated exact origins, e.g. `https://dalakenya.com` |
 
 All DB URLs use the compose service name `postgres` (resolves inside the network).
 

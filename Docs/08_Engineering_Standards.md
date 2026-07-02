@@ -95,7 +95,7 @@ Small modules may collapse folders, but they must keep the same separation of co
 - Empty modules or empty directories committed as placeholders.
 - Cross-module imports into another module's private implementation files.
 
-## Frontend Standards For `apps/web`, `apps/admin`, and `apps/mobile`
+## Frontend Standards For `apps/web` and `apps/mobile`
 
 - Keep each app feature-oriented and avoid a flat component dump.
 - Keep route-level logic thin and move reusable behavior into local features, components, or lib folders.

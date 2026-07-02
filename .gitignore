@@ -25,3 +25,4 @@ Thumbs.db
 .claude/rules/*
 !.claude/rules/backend-modular-monolith.md
 .codex/*
+test-results/

@@ -54,8 +54,8 @@ export default function Page() {
         description="Browse, fund credits, unlock direct contact, confirm the outcome, and resolve issues in one flow."
         actions={
           <>
-            <Link href="/listings" className={linkButtonClass({ size: 'sm' })}>
-              Start browsing
+            <Link href="/#join" className={linkButtonClass({ size: 'sm' })}>
+              Join the waitlist
             </Link>
             <Link href="/pricing" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
               See pricing

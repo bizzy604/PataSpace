@@ -2,13 +2,16 @@
 
 ## Purpose
 
-`apps/web` is the public web experience for browsing listings, viewing details, Clerk authentication, and future unlock flows.
+`apps/web` is the PataSpace web presence: the public landing/marketing pages
+and the `/admin` operations console. All tenant-facing product flows (browse,
+unlock, wallet, posting, confirmations) live in `apps/mobile`.
 
 ## Stack
 
 - Next.js App Router
 - React
 - Tailwind CSS
+- Clerk (admin authentication)
 - Three.js via `@react-three/fiber` and `@react-three/drei` for the landing scene
 
 ## Local Commands
@@ -17,59 +20,44 @@
 pnpm --filter @pataspace/web dev
 pnpm --filter @pataspace/web build
 pnpm --filter @pataspace/web start
+pnpm --filter @pataspace/web test:e2e
 ```
+
+## Route Surface
+
+Public:
+
+- `/`: waitlist landing page
+- `/about`, `/how-it-works`, `/pricing`: static marketing pages
+
+Admin console (Clerk session + ADMIN role required):
+
+- `/admin/sign-in`: Clerk sign-in (the only auth entry point on web)
+- `/admin`: operations dashboard (GET /admin/metrics)
+- `/admin/listings`: moderation queue + full catalogue CRUD (edit, soft delete)
+- `/admin/users`: account directory with ban/unban
+- `/admin/disputes`: dispute queue with investigate/resolve/close
+
+Everything else redirects to `/` via `proxy.ts` middleware.
+
+## Access Control
+
+- `proxy.ts`: public gate (marketing set only) + Clerk session gate on `/admin`.
+- `app/admin/(console)/layout.tsx`: server-side ADMIN role check against
+  `GET /users/me`; non-admins get a refusal screen.
+- The API is the security boundary — every `/admin/*` endpoint enforces
+  `Role.ADMIN` independently.
 
 ## Current Source Layout
 
-- `app`: route entrypoints and page composition
-- `components`: shared UI and feature components
-- `lib`: API helpers, utilities, and local mock data
-- `public`: static assets
+- `app`: route entrypoints (marketing + `app/admin/(console)` pages)
+- `components/admin`: console shell, panels, and data hook
+- `components/shared`, `components/ui`, `components/waitlist`: shared UI
+- `lib/api`: API client (`client.ts`), admin fetchers (`admin.ts`), user profile
+- `tests/e2e`: Playwright suites (landing, marketing pages, route gates)
 
-## Current Route Surface
+## E2E Tests
 
-- `/`: Stitch-backed PataSpace home
-- `/listings`: browse listings with inline search and filter shell
-- `/listings/[id]`: Stitch-backed listing details
-- `/listings/[id]/gallery`: media review
-- `/listings/[id]/unlock`: unlock confirmation
-- `/auth/register`: Clerk sign-up flow
-- `/auth/sign-in`: Clerk sign-in flow
-- `/wallet`: Stitch-backed wallet overview
-- `/wallet/buy`: Stitch-backed M-Pesa payment flow
-- `/wallet/processing`: M-Pesa pending state
-- `/wallet/success`: payment success state
-- `/wallet/transactions`: Stitch-backed transaction history
-- `/wallet/transactions/[id]`: transaction detail
-- `/unlocks`: unlock history
-- `/unlocks/[id]`: Stitch-backed connection status
-- `/unlocks/[id]/confirm`: confirmation flow
-- `/unlocks/[id]/dispute`: dispute entry
-- `/profile`: Stitch-backed user profile
-- `/profile/edit`: Stitch-backed edit profile
-- `/notifications`: Stitch-backed notifications
-- `/post`: redirects to the listing-posting upload flow
-- `/post/upload-photos`: Stitch-backed listing photo upload
-- `/post/details`: Stitch-backed listing details form
-- `/search`: Stitch-backed search and map view
-- `/map`: Stitch-backed search and map view
-- `/settings`: Stitch-backed settings
-- `/support`: Stitch-backed help center
-- `/whats-new`: Stitch-backed feature announcement
-
-## Dependencies
-
-- Backend contracts and endpoints served by `apps/api`
-- Shared design direction from `packages/design-tokens`
-
-## Development Rules
-
-- Keep route files thin and move reusable logic into feature components or `lib`.
-- Reuse shared contracts and design primitives before adding local variants.
-- Update this README when routes, commands, or major structure changes.
-
-## Current Gaps
-
-- Several user-facing routes now render committed Stitch HTML exports through local iframe-backed shells for design fidelity. They are integrated into the app route surface, but they are not yet native React/Tailwind rewrites.
-- The app still relies on local mock data for most route content and route gating.
-- Protected-route decisions, API session handoff, and real mutation wiring are the next major steps.
+`pnpm --filter @pataspace/web test:e2e` boots a dev server on port 4400 and
+verifies the landing, marketing pages, admin sign-in redirects, and
+retired-route redirects. Requires the Clerk dev keys in `apps/web/.env`.

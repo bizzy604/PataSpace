@@ -1,95 +1,76 @@
+/**
+ * Purpose: Public "Pricing" marketing page — explains the credit and unlock
+ *   model with worked examples.
+ * Why important: Sets pricing expectations before tenants install the mobile
+ *   app, where purchases actually happen.
+ * Used by: /pricing route.
+ */
 import Link from 'next/link';
 import { Calculator } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { TenantWorkspaceShell } from '@/components/workspace/page';
-import { creditPackages } from '@/lib/mock-app-state';
-import { mockListings } from '@/lib/mock-listings';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PublicSiteFrame } from '@/components/shared/public-site-frame';
+import { ScreenHero } from '@/components/shared/screen-hero';
 import { formatKes } from '@/lib/format';
 import { linkButtonClass } from '@/lib/link-button';
 
+const rentExamples = [
+  { label: 'Bedsitter, Umoja', monthlyRent: 8000 },
+  { label: 'One bedroom, Kilimani', monthlyRent: 25000 },
+  { label: 'Two bedroom, Kileleshwa', monthlyRent: 45000 },
+] as const;
+
 export default function Page() {
   return (
-    <TenantWorkspaceShell
-      pathname="/pricing"
-      title="Pricing"
-      description="Credits are bought in packages, while each unlock follows the listing-based marketplace formula."
-      actions={
-        <>
-          <Link href="/wallet/buy" className={linkButtonClass({ size: 'sm' })}>
-            Buy credits
-          </Link>
-          <Link href="/listings" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
-            Compare listings
-          </Link>
-        </>
-      }
-    >
+    <PublicSiteFrame>
+      <ScreenHero
+        eyebrow="Pricing"
+        title="Browse free, pay only to unlock"
+        description="Credits are bought in packages inside the mobile app. Each unlock follows the same listing-based formula, so the reveal price is always predictable."
+        actions={
+          <>
+            <Link href="/#join" className={linkButtonClass({ size: 'sm' })}>
+              Join the waitlist
+            </Link>
+            <Link href="/how-it-works" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
+              How it works
+            </Link>
+          </>
+        }
+      />
+
       <section className="px-4 pb-6 sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[1fr_1fr]">
+        <div className="mx-auto max-w-7xl">
           <Card className="border border-border bg-card shadow-sm">
             <CardHeader>
               <CardTitle className="text-3xl font-semibold text-foreground">
                 Listing unlock formula
               </CardTitle>
               <CardDescription className="text-sm leading-7 text-muted-foreground">
-                Unlock cost = 10% of monthly rent. Owner commission = 30% of the unlock cost after confirmation.
+                Unlock cost = 10% of monthly rent. Outgoing-tenant commission = 30% of the unlock cost after both sides confirm.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {mockListings.map((listing) => {
-                const commission = Math.round(listing.unlockCostCredits * 0.3);
+            <CardContent className="grid gap-4 md:grid-cols-3">
+              {rentExamples.map((example) => {
+                const unlockCost = Math.round(example.monthlyRent * 0.1);
+                const commission = Math.round(unlockCost * 0.3);
 
                 return (
-                  <div
-                    key={listing.id}
-                    className="border border-border bg-muted p-5"
-                  >
-                    <p className="text-xl font-semibold text-foreground">
-                      {listing.title}
-                    </p>
+                  <div key={example.label} className="border border-border bg-muted p-5">
+                    <p className="text-xl font-semibold text-foreground">{example.label}</p>
                     <div className="mt-3 grid gap-2 text-sm leading-7 text-muted-foreground">
                       <p className="flex items-center justify-between">
                         <span>Monthly rent</span>
-                        <span>{formatKes(listing.monthlyRent)}</span>
+                        <span>{formatKes(example.monthlyRent)}</span>
                       </p>
                       <p className="flex items-center justify-between">
                         <span>Unlock cost</span>
-                        <span>{formatKes(listing.unlockCostCredits)}</span>
+                        <span>{formatKes(unlockCost)}</span>
                       </p>
                       <p className="flex items-center justify-between">
-                        <span>Potential owner commission</span>
+                        <span>Outgoing-tenant commission</span>
                         <span>{formatKes(commission)}</span>
                       </p>
                     </div>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-
-          <Card className="border border-border bg-foreground text-background shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-3xl font-semibold text-background">
-                Wallet packages
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {creditPackages.map((pkg) => {
-                const isRecommended = 'recommended' in pkg && pkg.recommended;
-
-                return (
-                  <div
-                    key={pkg.id}
-                    className={`border p-5 ${isRecommended ? 'border-background/20 bg-background/12' : 'border-background/10 bg-background/6'}`}
-                  >
-                    <p className="text-xs font-semibold uppercase tracking-widest text-background/60">
-                      {pkg.name}
-                    </p>
-                    <p className="mt-2 text-3xl font-semibold text-background">
-                      {formatKes(pkg.amount)}
-                    </p>
-                    <p className="mt-1 text-sm text-background/70">{pkg.credits} credits</p>
-                    <p className="mt-3 text-sm leading-7 text-background/76">{pkg.description}</p>
                   </div>
                 );
               })}
@@ -111,7 +92,7 @@ export default function Page() {
                     Pricing intent
                   </CardTitle>
                   <CardDescription className="text-sm leading-7 text-muted-foreground">
-                    Wallet packages cover browsing runway. Unlock pricing reflects the listing you decide to pursue.
+                    Credit packages cover browsing runway. Unlock pricing reflects the listing you decide to pursue.
                   </CardDescription>
                 </div>
               </div>
@@ -119,7 +100,7 @@ export default function Page() {
             <CardContent className="grid gap-4 md:grid-cols-3">
               {[
                 'Browse stays free so renters can compare before paying.',
-                'Unlocks should not bill twice for the same listing.',
+                'Unlocks never bill twice for the same listing.',
                 'Refunds stay explicit when a dispute proves the reveal was invalid.',
               ].map((item) => (
                 <div
@@ -133,6 +114,6 @@ export default function Page() {
           </Card>
         </div>
       </section>
-    </TenantWorkspaceShell>
+    </PublicSiteFrame>
   );
 }

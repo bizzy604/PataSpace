@@ -41,7 +41,6 @@ WORKDIR /app
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json tsconfig.base.json ./
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
-COPY apps/admin/package.json apps/admin/
 COPY apps/mobile/package.json apps/mobile/
 COPY packages/contracts/package.json packages/contracts/
 COPY packages/design-tokens/package.json packages/design-tokens/
