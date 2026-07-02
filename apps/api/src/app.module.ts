@@ -27,6 +27,7 @@ import { JobsModule } from './jobs/jobs.module';
 import { DatabaseModule } from './common/database/database.module';
 import { RequestContextModule } from './common/request-context/request-context.module';
 import { CacheModule } from './infrastructure/cache/cache.module';
+import { ObservabilityModule } from './infrastructure/observability/observability.module';
 import { RedisService } from './infrastructure/cache/redis.service';
 import { IdempotencyInterceptor } from './common/idempotency/idempotency.interceptor';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
@@ -77,6 +78,7 @@ import { StellarModule } from './infrastructure/stellar/stellar.module';
       }),
     }),
     RequestContextModule,
+    ObservabilityModule,
     DatabaseModule,
     CacheModule,
     QueueModule,

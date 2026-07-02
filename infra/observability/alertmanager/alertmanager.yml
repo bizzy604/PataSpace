@@ -1,0 +1,48 @@
+# Purpose: Alertmanager routing for PataSpace alerts.
+# Why important: Groups, de-duplicates, and escalates the alerts Prometheus
+#   fires; criticals repeat faster than warnings, and a critical mutes its own
+#   warning-level duplicates.
+# Used by: the alertmanager service in infra/docker/docker-compose.observability.yml.
+#
+# The default receiver is a no-op so the stack runs out of the box. Wire a real
+# notification channel by uncommenting one of the examples below and reloading
+# (docker compose restart alertmanager). Keep real webhook URLs / SMTP secrets
+# out of git: put this file's secrets in a copy managed on the host if needed.
+
+route:
+  receiver: default
+  group_by: [alertname, job]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 12h
+  routes:
+    - matchers:
+        - severity="critical"
+      receiver: default
+      repeat_interval: 4h
+
+receivers:
+  - name: default
+    # --- Slack example ---
+    # slack_configs:
+    #   - api_url: https://hooks.slack.com/services/XXX/YYY/ZZZ
+    #     channel: '#pataspace-alerts'
+    #     send_resolved: true
+    #     title: '{{ .Status | toUpper }} {{ .CommonLabels.alertname }}'
+    #     text: '{{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}'
+    # --- Email example ---
+    # email_configs:
+    #   - to: ops@dalakenya.com
+    #     from: alerts@dalakenya.com
+    #     smarthost: smtp.example.com:587
+    #     auth_username: alerts@dalakenya.com
+    #     auth_password: replace-me
+    #     send_resolved: true
+
+inhibit_rules:
+  # A firing critical silences the warning version of the same alert.
+  - source_matchers:
+      - severity="critical"
+    target_matchers:
+      - severity="warning"
+    equal: [alertname, job]

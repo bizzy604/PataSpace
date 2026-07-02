@@ -5,7 +5,6 @@
  *   concurrent replicas from double-paying.
  * Used by: jest runner via apps/api jest config.
  */
-import { ReferralStatus } from '@prisma/client';
 import { ReferralRewardJob } from './referral-reward.job';
 
 describe('ReferralRewardJob', () => {

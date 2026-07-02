@@ -30,7 +30,7 @@ docker compose -f infra/docker/docker-compose.yml up -d
 ## Current Source Layout
 
 - `src/common`: shared backend concerns such as config, auth, filters, interceptors, validation, Swagger, throttling, and request context
-- `src/infrastructure`: Redis, queue, SMS, storage, and M-Pesa adapters
+- `src/infrastructure`: Redis, queue, SMS, storage, M-Pesa, and observability adapters
 - `src/modules`: feature modules
 - `src/jobs`: scheduled jobs
 - `prisma`: schema, migrations, and seed
@@ -49,6 +49,14 @@ docker compose -f infra/docker/docker-compose.yml up -d
 - Business logic belongs in the owning module, not in controllers or unrelated modules.
 - Infrastructure integration must stay behind adapters in `src/infrastructure`.
 - Source files must stay under the 200-line limit defined in `Docs/08_Engineering_Standards.md`.
+
+## Observability
+
+- Prometheus metrics are served at `GET /metrics` (outside the `/api/v1` prefix, so the nginx edge never forwards it publicly).
+- `src/infrastructure/observability` owns the registry: default Node.js runtime metrics plus `http_server_requests_total`, `http_server_request_duration_seconds`, and `http_server_requests_in_flight`, recorded by middleware so guard-rejected (401/429) and unmatched (404) requests are counted too.
+- In production the endpoint fails closed (404) until `METRICS_TOKEN` is set; then it requires `Authorization: Bearer <token>`.
+- To publish a domain metric, inject `MetricsService` (global) and register a collector on its registry.
+- Scrape/dashboard/alerting infra lives in `infra/observability` (see its README).
 
 ## Database Security
 

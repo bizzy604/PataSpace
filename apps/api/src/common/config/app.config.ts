@@ -66,6 +66,11 @@ export default () => ({
     otpMaxAttempts: Number(process.env.OTP_MAX_ATTEMPTS ?? 3),
     sandboxOtpCode: process.env.OTP_SANDBOX_CODE ?? '123456',
   },
+  observability: {
+    // Bearer token protecting GET /metrics. Required in production (the
+    // endpoint fails closed without it); optional elsewhere.
+    metricsToken: process.env.METRICS_TOKEN,
+  },
   idempotency: {
     ttlSeconds: Number(process.env.IDEMPOTENCY_TTL_SECONDS ?? 86_400),
     inProgressTtlSeconds: Number(process.env.IDEMPOTENCY_IN_PROGRESS_TTL_SECONDS ?? 120),

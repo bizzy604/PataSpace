@@ -1,0 +1,18 @@
+# Purpose: Provisions the Prometheus datasource into Grafana at startup.
+# Why important: Dashboards reference this datasource by uid; provisioning it
+#   makes a fresh Grafana container fully functional with zero clicks.
+# Used by: the grafana service (mounted at /etc/grafana/provisioning).
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: pataspace-prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: 15s
+      httpMethod: POST

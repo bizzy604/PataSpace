@@ -1,0 +1,69 @@
+# Purpose: Alert rules for the PataSpace API service (availability, errors,
+#   latency, runtime health).
+# Why important: These are the pages that fire when tenants can't use the
+#   product — before users report it.
+# Used by: prometheus.yml (rule_files: alerts/*.rules.yml).
+
+groups:
+  - name: pataspace-api
+    rules:
+      - alert: ApiDown
+        expr: up{job="pataspace-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: PataSpace API scrape target is down
+          description: >-
+            Prometheus has not been able to scrape the API for 2 minutes.
+            Either the process is down or /metrics is rejecting the token
+            (check METRICS_TOKEN in infra/docker/.env matches on both sides).
+
+      - alert: ApiHighErrorRate
+        expr: >-
+          sum(rate(http_server_requests_total{job="pataspace-api",status_code=~"5.."}[5m]))
+          /
+          sum(rate(http_server_requests_total{job="pataspace-api"}[5m]))
+          > 0.05
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: API 5xx error rate above 5%
+          description: >-
+            More than 5% of API requests returned 5xx over the last 10 minutes
+            ({{ $value | humanizePercentage }}).
+
+      - alert: ApiHighLatencyP95
+        expr: >-
+          histogram_quantile(0.95,
+            sum by (le) (rate(http_server_request_duration_seconds_bucket{job="pataspace-api"}[5m]))
+          ) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: API p95 latency above 1s
+          description: >-
+            95th percentile request duration has been above 1 second for 10
+            minutes (currently {{ $value | humanizeDuration }}).
+
+      - alert: ApiEventLoopLagHigh
+        expr: nodejs_eventloop_lag_p99_seconds{job="pataspace-api"} > 0.2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Node.js event loop lag p99 above 200ms
+          description: >-
+            The API event loop is stalling ({{ $value | humanizeDuration }} p99),
+            usually a sign of CPU-bound work or a blocked process.
+
+      - alert: ApiRestarted
+        expr: time() - process_start_time_seconds{job="pataspace-api"} < 300
+        for: 0m
+        labels:
+          severity: info
+        annotations:
+          summary: API process restarted recently
+          description: The API process started less than 5 minutes ago.

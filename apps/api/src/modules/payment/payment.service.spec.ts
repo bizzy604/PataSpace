@@ -7,7 +7,7 @@
  */
 
 import { ForbiddenException, HttpException } from '@nestjs/common';
-import { TransactionStatus, TransactionType } from '@prisma/client';
+import { TransactionStatus } from '@prisma/client';
 import { PaymentService } from './payment.service';
 
 describe('PaymentService (orchestrator)', () => {
