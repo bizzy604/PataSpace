@@ -134,3 +134,27 @@ jobs:
       - run: pnpm --filter @pataspace/contracts build
       - run: pnpm --filter @pataspace/web build
       - run: pnpm --filter @pataspace/admin build
+
+  security-audit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+
+      # Informational for now: the audit currently reports pre-existing critical
+      # and high advisories (see Docs/SECURITY_AUDIT.md H3). Once those are
+      # patched, drop `continue-on-error` so a new high/critical fails the build.
+      - name: pnpm audit (high and above)
+        continue-on-error: true
+        run: pnpm audit --audit-level high
