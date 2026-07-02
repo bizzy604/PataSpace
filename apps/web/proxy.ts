@@ -1,10 +1,20 @@
+/**
+ * Purpose: Middleware for the landing + admin web app.
+ * Why important: Two gates. The public gate is pure Next (no Clerk) so the
+ *   marketing surface and retired-route redirects work deterministically.
+ *   The admin gate runs clerkMiddleware and requires a session; the ADMIN
+ *   role itself is checked in the console layout and, authoritatively, by
+ *   the API's Role.ADMIN guard.
+ * Used by: Next.js middleware runtime for every request.
+ */
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextFetchEvent, type NextRequest } from 'next/server';
 
-const WAITLIST_MODE = true;
-
-const WAITLIST_ALLOWED = [
+const PUBLIC_PATHS = [
   '/',
+  '/about',
+  '/how-it-works',
+  '/pricing',
   '/_next',
   '/brand',
   '/mock',
@@ -12,32 +22,32 @@ const WAITLIST_ALLOWED = [
   '/api',
 ];
 
-const isProtectedRoute = createRouteMatcher([
-  '/wallet(.*)',
-  '/profile(.*)',
-  '/settings(.*)',
-  '/notifications(.*)',
-  '/saved(.*)',
-  '/unlocks(.*)',
-  '/referrals(.*)',
-  '/post(.*)',
-  '/listings/:id/unlock(.*)',
-]);
+const isAdminRoute = createRouteMatcher(['/admin(.*)']);
+const isAdminSignInRoute = createRouteMatcher(['/admin/sign-in(.*)']);
 
-export default clerkMiddleware(async (auth, req) => {
-  if (WAITLIST_MODE) {
-    const { pathname } = req.nextUrl;
-    const isAllowed = WAITLIST_ALLOWED.some(
-      (p) => pathname === p || pathname.startsWith(`${p}/`),
-    );
-    if (!isAllowed) {
-      return NextResponse.redirect(new URL('/', req.url));
-    }
-    return NextResponse.next();
+const adminMiddleware = clerkMiddleware(async (auth, req) => {
+  if (!isAdminSignInRoute(req)) {
+    await auth.protect({
+      unauthenticatedUrl: new URL('/admin/sign-in', req.url).toString(),
+    });
+  }
+});
+
+export default function middleware(request: NextRequest, event: NextFetchEvent) {
+  if (isAdminRoute(request)) {
+    return adminMiddleware(request, event);
   }
 
-  if (isProtectedRoute(req)) await auth.protect();
-});
+  const { pathname } = request.nextUrl;
+  const isPublic = PUBLIC_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
+  if (!isPublic) {
+    // Retired tenant routes and anything unknown go back to the landing page.
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [

@@ -113,9 +113,9 @@ curl http://127.0.0.1:3000/api/v1/docs/openapi.json
 
 A container path is available alongside the PM2 path above.
 
-- Images: `apps/api/Dockerfile`, `apps/web/Dockerfile`, `apps/admin/Dockerfile`,
+- Images: `apps/api/Dockerfile`, `apps/web/Dockerfile`,
   `infra/nginx/Dockerfile`. All build from the repo root so the pnpm workspace resolves.
-- Full stack: `infra/docker/docker-compose.prod.yml` (api, web, admin, edge nginx,
+- Full stack: `infra/docker/docker-compose.prod.yml` (api, web, edge nginx,
   Postgres, Redis). See `infra/docker/README.md` for the run steps.
 - Migrations run as a discrete `api-migrate` service (`prisma:migrate:deploy` via
   `DATABASE_MIGRATION_URL`) that completes before the `api` container starts, preserving

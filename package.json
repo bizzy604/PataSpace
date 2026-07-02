@@ -6,7 +6,6 @@
   "scripts": {
     "dev:api": "pnpm --filter @pataspace/api start:dev",
     "dev:web": "pnpm --filter @pataspace/web dev",
-    "dev:admin": "pnpm --filter @pataspace/admin dev",
     "dev:mobile": "pnpm --filter @pataspace/mobile start",
     "build": "pnpm -r --if-present build",
     "lint": "pnpm -r --if-present lint",

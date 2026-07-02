@@ -133,7 +133,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @pataspace/contracts build
       - run: pnpm --filter @pataspace/web build
-      - run: pnpm --filter @pataspace/admin build
 
   observability:
     runs-on: ubuntu-latest

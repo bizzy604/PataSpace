@@ -35,8 +35,6 @@ jobs:
             dockerfile: apps/api/Dockerfile
           - name: web
             dockerfile: apps/web/Dockerfile
-          - name: admin
-            dockerfile: apps/admin/Dockerfile
           - name: nginx
             dockerfile: infra/nginx/Dockerfile
     steps:

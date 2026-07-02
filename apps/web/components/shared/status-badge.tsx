@@ -1,8 +1,13 @@
+/**
+ * Purpose: Generic status chip with a small tone palette.
+ * Why important: One consistent way to render lifecycle states (listing
+ *   status, dispute status, ban state) across the admin console.
+ * Used by: /admin pages (listings, users, disputes).
+ */
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import type { MockUnlockStatus, MockTransaction } from '@/lib/mock-app-state';
 
-type StatusTone = 'neutral' | 'brand' | 'positive' | 'warning' | 'danger';
+export type StatusTone = 'neutral' | 'brand' | 'positive' | 'warning' | 'danger';
 
 const toneClassName: Record<StatusTone, string> = {
   neutral: 'border-border/60 bg-muted text-muted-foreground',
@@ -29,51 +34,4 @@ export function StatusBadge({
       {label}
     </Badge>
   );
-}
-
-export function unlockStatusMeta(status: MockUnlockStatus) {
-  switch (status) {
-    case 'confirmed':
-      return { label: 'Confirmed', tone: 'positive' as const };
-    case 'pending_confirmation':
-      return { label: 'Pending confirmation', tone: 'warning' as const };
-    case 'disputed':
-      return { label: 'Disputed', tone: 'danger' as const };
-    case 'refunded':
-      return { label: 'Refunded', tone: 'brand' as const };
-    default:
-      return { label: status, tone: 'neutral' as const };
-  }
-}
-
-export function transactionStatusMeta(status: MockTransaction['status']) {
-  switch (status) {
-    case 'COMPLETED':
-      return { label: 'Completed', tone: 'positive' as const };
-    case 'PENDING':
-      return { label: 'Pending', tone: 'warning' as const };
-    case 'FAILED':
-      return { label: 'Failed', tone: 'danger' as const };
-    case 'REFUNDED':
-      return { label: 'Refunded', tone: 'brand' as const };
-    case 'CANCELLED':
-      return { label: 'Cancelled', tone: 'neutral' as const };
-    default:
-      return { label: status, tone: 'neutral' as const };
-  }
-}
-
-export function transactionTypeMeta(type: MockTransaction['type']) {
-  switch (type) {
-    case 'PURCHASE':
-      return { label: 'Purchase', tone: 'brand' as const };
-    case 'SPEND':
-      return { label: 'Unlock spend', tone: 'warning' as const };
-    case 'REFUND':
-      return { label: 'Refund', tone: 'positive' as const };
-    case 'BONUS':
-      return { label: 'Bonus', tone: 'neutral' as const };
-    default:
-      return { label: type, tone: 'neutral' as const };
-  }
 }

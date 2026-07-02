@@ -1,13 +1,12 @@
 # PataSpace
 
-PataSpace is a multi-app workspace for a housing marketplace with a NestJS backend, public web client, admin console, and mobile app.
+PataSpace is a multi-app workspace for a housing marketplace with a NestJS backend, a web app (public landing + admin console), and a mobile app for all tenant-facing flows.
 
 ## Workspace Apps
 
 - `apps/api`: NestJS backend modular monolith.
-- `apps/web`: Next.js public browsing experience.
-- `apps/admin`: Vite and React operations console.
-- `apps/mobile`: Expo and React Native tenant application.
+- `apps/web`: Next.js landing/marketing pages plus the `/admin` operations console.
+- `apps/mobile`: Expo and React Native tenant application (all client-facing flows).
 
 ## Shared Packages
 
@@ -22,7 +21,7 @@ PataSpace is a multi-app workspace for a housing marketplace with a NestJS backe
 - `infra/observability`: Prometheus, Grafana, and Alertmanager configs plus generated
   dashboards; deployed via the `infra/docker/docker-compose.observability.yml` overlay.
   See `infra/observability/README.md`.
-- Per-app container images: `apps/api/Dockerfile`, `apps/web/Dockerfile`, `apps/admin/Dockerfile`.
+- Per-app container images: `apps/api/Dockerfile`, `apps/web/Dockerfile`.
 
 ## CI/CD
 
@@ -42,7 +41,6 @@ PataSpace is a multi-app workspace for a housing marketplace with a NestJS backe
 pnpm install
 pnpm dev:api
 pnpm dev:web
-pnpm dev:admin
 pnpm dev:mobile
 pnpm build
 pnpm test
@@ -53,5 +51,4 @@ pnpm standards:check
 
 - `apps/api/README.md`
 - `apps/web/README.md`
-- `apps/admin/README.md`
 - `apps/mobile/README.md`

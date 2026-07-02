@@ -1,6 +1,7 @@
 # Purpose: Production-style stack provisioning every PataSpace service container.
 # Why important: One command brings up the full system (db, cache, API, web,
-#   admin, edge proxy) from built images, with migrations run as a discrete step.
+#   edge proxy) from built images, with migrations run as a discrete step.
+#   The admin console lives inside the web app at /admin.
 # Used by: operators/CI for `docker compose -f infra/docker/docker-compose.prod.yml up`.
 #
 # Copy .env.prod.example to infra/docker/.env and fill in secrets before running.
@@ -90,15 +91,6 @@ services:
     depends_on:
       api:
         condition: service_started
-    restart: unless-stopped
-
-  admin:
-    build:
-      context: ../..
-      dockerfile: apps/admin/Dockerfile
-    image: ${ADMIN_IMAGE:-ghcr.io/bizzy604/pataspace-admin:latest}
-    ports:
-      - "127.0.0.1:${ADMIN_PORT:-8080}:8080"
     restart: unless-stopped
 
   nginx:

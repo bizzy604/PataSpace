@@ -1,5 +1,10 @@
 # PataSpace Web Screen Inventory
 
+> **Superseded (July 2026):** the web app is now landing/marketing + the
+> `/admin` operations console only. All tenant-facing web screens listed below
+> were retired; the mobile app owns the client experience. This document is
+> kept for historical context. Current surface: `apps/web/README.md`.
+
 ## Scope Date
 
 - March 30, 2026
