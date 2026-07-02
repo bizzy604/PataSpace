@@ -9,6 +9,27 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    ignore:
+      # Expo-SDK-coupled packages only move together with an `expo` SDK
+      # upgrade (npx expo install --fix), never independently. Dependabot
+      # keeps proposing SDK 57 packages while apps/mobile is on SDK 54,
+      # which would break the native runtime.
+      - dependency-name: 'expo'
+      - dependency-name: 'expo-*'
+      - dependency-name: '@expo/*'
+      - dependency-name: 'babel-preset-expo'
+      - dependency-name: 'react-native'
+      - dependency-name: 'react-native-*'
+      # Prisma majors need a coordinated CLI + client migration, not an
+      # auto-bump (PR #14 bumped the CLI to 7.x while the client stayed 5.x).
+      - dependency-name: 'prisma'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@prisma/client'
+        update-types: ['version-update:semver-major']
+      # apps/mobile must stay on tailwind 3 (nativewind 4 requires it); web
+      # is already on 4, so blocking tailwind majors costs nothing.
+      - dependency-name: 'tailwindcss'
+        update-types: ['version-update:semver-major']
     groups:
       # Batch low-risk updates into single PRs to cut review noise; security
       # updates still come through regardless of these groups.
