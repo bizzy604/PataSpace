@@ -1,73 +1,15 @@
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  GoneException,
-} from '@nestjs/common';
-import {
-  ConfirmationSide as PrismaConfirmationSide,
-  DisputeStatus,
-} from '@prisma/client';
-import { ConfirmationService } from './confirmation.service';
+/**
+ * Purpose: Gate tests for the confirmation lifecycle — stale-unlock
+ *   auto-confirmation and commission eligibility.
+ * Why important: Auto-confirmation attributes the missing side after 14 days
+ *   and creates commissions; a regression here pays or blocks real money.
+ *   Side/authorization rules live in confirmation.authorization.spec.ts.
+ * Used by: jest runner via apps/api jest config.
+ */
+import { ConfirmationSide as PrismaConfirmationSide, DisputeStatus } from '@prisma/client';
+import { createConfirmationService } from './confirmation.spec-fixtures';
 
 describe('ConfirmationService', () => {
-  const createConfirmationService = () => {
-    const prismaService = {
-      confirmation: {
-        create: jest.fn(),
-      },
-      commission: {
-        upsert: jest.fn(),
-      },
-      unlock: {
-        findMany: jest.fn(),
-        findUnique: jest.fn(),
-        findUniqueOrThrow: jest.fn(),
-      },
-    };
-    const smsService = {
-      sendMessage: jest.fn(),
-    };
-    const userService = {
-      decryptPhoneNumber: jest.fn((value: string) =>
-        value === 'buyer-phone' ? '+254700000001' : '+254700000002',
-      ),
-    };
-
-    return {
-      prismaService,
-      smsService,
-      userService,
-      service: new ConfirmationService(
-        prismaService as never,
-        smsService as never,
-        userService as never,
-      ),
-    };
-  };
-
-  const createUnlock = (overrides = {}) => ({
-    id: 'unlock_1',
-    buyerId: 'buyer_1',
-    isRefunded: false,
-    refundReason: null,
-    refundedAt: null,
-    listing: {
-      userId: 'owner_1',
-      neighborhood: 'Kilimani',
-      commission: 750,
-      user: {
-        phoneNumberEncrypted: 'owner-phone',
-      },
-    },
-    buyer: {
-      phoneNumberEncrypted: 'buyer-phone',
-    },
-    confirmations: [],
-    dispute: null,
-    ...overrides,
-  });
-
   it('auto-confirms stale one-sided unlocks and creates commission eligibility', async () => {
     const { prismaService, service, smsService } = createConfirmationService();
 
@@ -203,80 +145,5 @@ describe('ConfirmationService', () => {
     expect(prismaService.confirmation.create).not.toHaveBeenCalled();
     expect(prismaService.commission.upsert).not.toHaveBeenCalled();
     expect(smsService.sendMessage).not.toHaveBeenCalled();
-  });
-
-  it('rejects duplicate confirmations from the same side', async () => {
-    const { prismaService, service } = createConfirmationService();
-
-    prismaService.unlock.findUnique.mockResolvedValue(
-      createUnlock({
-        confirmations: [
-          {
-            side: PrismaConfirmationSide.INCOMING_TENANT,
-            confirmedAt: new Date('2026-03-24T10:00:00.000Z'),
-          },
-        ],
-      }),
-    );
-
-    await expect(
-      service.createConfirmation('buyer_1', {
-        side: 'INCOMING_TENANT' as never,
-        unlockId: 'unlock_1',
-      }),
-    ).rejects.toBeInstanceOf(BadRequestException);
-    expect(prismaService.confirmation.create).not.toHaveBeenCalled();
-  });
-
-  it('rejects manual confirmations from unauthorized users', async () => {
-    const { prismaService, service } = createConfirmationService();
-
-    prismaService.unlock.findUnique.mockResolvedValue(createUnlock());
-
-    await expect(
-      service.createConfirmation('intruder_1', {
-        side: 'INCOMING_TENANT' as never,
-        unlockId: 'unlock_1',
-      }),
-    ).rejects.toBeInstanceOf(ForbiddenException);
-    expect(prismaService.confirmation.create).not.toHaveBeenCalled();
-  });
-
-  it('rejects confirmations for refunded unlocks', async () => {
-    const { prismaService, service } = createConfirmationService();
-
-    prismaService.unlock.findUnique.mockResolvedValue(
-      createUnlock({
-        isRefunded: true,
-        refundReason: 'Listing removed',
-        refundedAt: new Date('2026-03-24T12:00:00.000Z'),
-      }),
-    );
-
-    await expect(
-      service.createConfirmation('buyer_1', {
-        side: 'INCOMING_TENANT' as never,
-        unlockId: 'unlock_1',
-      }),
-    ).rejects.toBeInstanceOf(GoneException);
-  });
-
-  it('blocks manual confirmations while a dispute is open', async () => {
-    const { prismaService, service } = createConfirmationService();
-
-    prismaService.unlock.findUnique.mockResolvedValue(
-      createUnlock({
-        dispute: {
-          status: DisputeStatus.OPEN,
-        },
-      }),
-    );
-
-    await expect(
-      service.createConfirmation('buyer_1', {
-        side: 'INCOMING_TENANT' as never,
-        unlockId: 'unlock_1',
-      }),
-    ).rejects.toBeInstanceOf(ConflictException);
   });
 });
