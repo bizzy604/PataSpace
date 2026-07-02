@@ -19,7 +19,35 @@ One **critical, directly-monetizable** flaw breaks that baseline: Stellar credit
 purchases grant credits without ever verifying the amount paid. Below, ranked by
 exploitability and financial impact.
 
-Status: **DONE_WITH_CONCERNS** — audit complete, no code changed.
+Status: **DONE_WITH_CONCERNS** — audit complete; remediation applied (below).
+
+## Remediation status (branch claude/production-audit-9o354l)
+
+| ID | Finding | Status |
+|----|---------|--------|
+| C1 | Stellar amount not verified | **Fixed** — provider returns received XLM, service rejects underpayment; tests added |
+| H1 | Fixed OTP usable in prod | **Fixed** — prod env validation requires `SMS_PROVIDER=africastalking`; test added |
+| H2 | RLS fails open | **Fixed** — default is now `anonymous`; jobs use `runInternal`; tests added |
+| H3 | Vulnerable dependencies | **Partial** — Dependabot + CI audit gate added; version bumps still owed (see note) |
+| M1 | `CLERK_SECRET_KEY` unvalidated | **Fixed** — required in production; test added |
+| M2 | CORS allows no-origin | **Documented** — intentional (native/same-origin), `credentials:false` mitigates |
+| P0-2 | 5xx not logged | **Fixed** — `AllExceptionsFilter` logs faults with stack + context |
+| P2-8 | Redis unauthenticated (prod compose) | **Fixed** — `requirepass` + authed healthcheck |
+| P2-9 | No edge security headers | **Fixed** — HSTS/nosniff/X-Frame-Options/Referrer/frame-ancestors |
+| P2-11 | Video upload cap = image cap | **Fixed** — raised to 50MB |
+
+Note on H3: the actual package upgrades (`@clerk/*`, `next`, `axios`, `multer`,
+`undici`, and overrides for transitive `handlebars`/`shell-quote`) are **not**
+done in this branch — bumping across majors needs the full test suite, which the
+sandbox could not run (Prisma engine download is blocked by the egress proxy).
+The Dependabot config and CI audit job are in place to drive and gate those
+upgrades. Deferred, non-security items from the production audit (P1-5 per-query
+RLS performance, P1-6 frontend test coverage) are unchanged and tracked there.
+
+Local verification note: the API Jest suite could not be executed in the sandbox
+(`prisma generate` needs an engine binary the proxy blocks). The pure-TS specs
+that do run were verified green here (env validation, `runInternal`). All other
+new/updated specs follow existing CI-verified patterns and run in CI.
 
 ---
 
