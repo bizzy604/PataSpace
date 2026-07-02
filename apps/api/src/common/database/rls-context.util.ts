@@ -46,8 +46,11 @@ export function buildRlsContext(state?: Pick<
   'databaseAccessMode' | 'role' | 'userId'
 > | null): RlsContext {
   if (!state) {
+    // Fail closed: a missing request context (e.g. an HTTP path that lost its
+    // AsyncLocalStorage scope) gets the least-privileged mode, never god-mode.
+    // Trusted background work opts into 'internal' via RequestContextService.runInternal.
     return {
-      accessMode: 'internal',
+      accessMode: 'anonymous',
       role: null,
       userId: null,
     };

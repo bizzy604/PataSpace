@@ -31,12 +31,14 @@ export class TestnetStellarProvider implements StellarProvider {
       return null;
     }
 
-    // Auto-complete: simulate an immediate on-chain settlement
+    // Auto-complete: simulate an immediate on-chain settlement of the exact
+    // quoted amount so it passes the same amount check the live provider does.
     return {
       transactionHash: `testnet_${randomUUID().replace(/-/g, '')}`,
       from: 'GABC123TESTNET_SENDER',
       memo: req.memo,
       settledAt: new Date().toISOString(),
+      amountXLM: req.expectedAmountXLM,
     };
   }
 

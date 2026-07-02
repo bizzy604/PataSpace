@@ -22,9 +22,16 @@ describe('rls-context.util', () => {
     expect(resolveDatabaseAccessModeForRole('ADMIN')).toBe('admin');
   });
 
-  it('builds an internal fallback context when no request context exists', () => {
+  it('fails closed to anonymous when no request context exists', () => {
+    // A missing context must never grant god-mode; trusted background work
+    // opts into 'internal' explicitly via RequestContextService.runInternal.
     expect(buildRlsContext()).toEqual({
-      accessMode: 'internal',
+      accessMode: 'anonymous',
+      role: null,
+      userId: null,
+    });
+    expect(buildRlsContext(null)).toEqual({
+      accessMode: 'anonymous',
       role: null,
       userId: null,
     });

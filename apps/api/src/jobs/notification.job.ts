@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../common/database/prisma.service';
+import { RequestContextService } from '../common/request-context/request-context.service';
 import { SmsService } from '../infrastructure/sms/sms.service';
 import { UserService } from '../modules/user/user.service';
 
@@ -14,11 +15,12 @@ export class NotificationJob {
     private readonly prismaService: PrismaService,
     private readonly smsService: SmsService,
     private readonly userService: UserService,
+    private readonly requestContext: RequestContextService,
   ) {}
 
   @Cron('*/15 * * * *')
   async handleOperationalAlerts() {
-    return this.dispatchOperationalAlerts();
+    return this.requestContext.runInternal(() => this.dispatchOperationalAlerts());
   }
 
   async dispatchOperationalAlerts(now = new Date()) {

@@ -1,0 +1,26 @@
+# Purpose: Automated dependency update PRs so new advisories surface and get
+#   patched instead of accumulating (the audit found 4 critical / 68 high).
+# Why important: Without this, a fresh critical CVE ships silently.
+# Used by: GitHub Dependabot.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      # Batch low-risk updates into single PRs to cut review noise; security
+      # updates still come through regardless of these groups.
+      dev-dependencies:
+        dependency-type: development
+      production-minor-patch:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

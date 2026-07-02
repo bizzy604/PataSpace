@@ -40,20 +40,54 @@ export class LiveStellarProvider implements StellarProvider {
       .limit(200)
       .call();
 
-    const match = page.records.find(
+    const matches = page.records.filter(
       (tx) => tx.successful && tx.memo === req.memo,
     );
 
-    if (!match) {
+    if (matches.length === 0) {
       return null;
     }
 
+    // Sum only native-XLM payments whose destination is the treasury, across
+    // every settled transaction carrying this memo. Anything else (a different
+    // asset, an outbound transfer, a path payment to another account) does not
+    // count toward the purchase — this is what closes the amount-bypass hole.
+    let receivedXLM = 0;
+    for (const tx of matches) {
+      const operations = await tx.operations();
+      for (const operation of operations.records) {
+        receivedXLM += this.treasuryNativeAmount(operation);
+      }
+    }
+
+    const primary = matches[0];
     return {
-      transactionHash: match.hash,
-      from: match.source_account,
+      transactionHash: primary.hash,
+      from: primary.source_account,
       memo: req.memo,
-      settledAt: match.created_at,
+      settledAt: primary.created_at,
+      amountXLM: receivedXLM.toFixed(7),
     };
+  }
+
+  private treasuryNativeAmount(operation: unknown): number {
+    const op = operation as {
+      type?: string;
+      asset_type?: string;
+      to?: string;
+      amount?: string;
+    };
+
+    if (
+      op.type === 'payment' &&
+      op.asset_type === 'native' &&
+      op.to === this.config.treasuryPublicKey
+    ) {
+      const amount = Number(op.amount);
+      return Number.isFinite(amount) && amount > 0 ? amount : 0;
+    }
+
+    return 0;
   }
 
   async healthCheck() {

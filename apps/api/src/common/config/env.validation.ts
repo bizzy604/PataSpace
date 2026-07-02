@@ -25,6 +25,8 @@ export const envSchema = z.object({
   REQUEST_ID_HEADER: z.string().min(1).default('x-request-id'),
   APP_ENCRYPTION_KEY: z.string().min(32),
   APP_HASH_PEPPER: z.string().min(16).optional(),
+  CLERK_SECRET_KEY: z.string().min(1).optional(),
+  CLERK_PUBLISHABLE_KEY: z.string().min(1).optional(),
   OTP_TTL_SECONDS: z.coerce.number().int().positive().default(300),
   OTP_MAX_ATTEMPTS: z.coerce.number().int().positive().default(3),
   OTP_SANDBOX_CODE: z.string().regex(/^\d{4,6}$/).default('123456'),
@@ -80,6 +82,22 @@ export const envSchema = z.object({
     }
 
     requireHttps(context, value.APP_BASE_URL, 'APP_BASE_URL');
+
+    // Sandbox SMS returns a fixed OTP (OTP_SANDBOX_CODE), and verify-otp mints a
+    // full session on OTP alone. Allowing sandbox SMS in production would make
+    // phone ownership forgeable, so a real provider is mandatory there.
+    if (value.SMS_PROVIDER !== 'africastalking') {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['SMS_PROVIDER'],
+        message: 'SMS_PROVIDER must be "africastalking" in production; sandbox uses a fixed OTP.',
+      });
+    }
+
+    // Clerk is the identity provider for the web and mobile clients. Without the
+    // secret, every Clerk-authenticated request fails closed with a generic 401
+    // and the outage is silent — require it explicitly at startup.
+    requireFields(context, value, ['CLERK_SECRET_KEY']);
   }
 
   if (value.SMS_PROVIDER === 'africastalking') {

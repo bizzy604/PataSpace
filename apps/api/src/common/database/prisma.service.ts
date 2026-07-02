@@ -233,10 +233,14 @@ export class PrismaService
       );
     }
 
+    // No ambient context: fail closed to 'anonymous'. Trusted callers (jobs,
+    // bootstrap) establish an explicit 'internal' context first via
+    // RequestContextService.runInternal, so reaching here means the scope was
+    // lost and must not silently escalate to full access.
     return this.requestContext.run(
       {
-        databaseAccessMode: 'internal',
-        requestId: 'internal-prisma',
+        databaseAccessMode: 'anonymous',
+        requestId: 'contextless-prisma',
         rlsTransactionScoped: true,
       },
       callback,

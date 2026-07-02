@@ -16,6 +16,7 @@ import {
   TransactionType,
 } from '@prisma/client';
 import { PrismaService } from '../common/database/prisma.service';
+import { RequestContextService } from '../common/request-context/request-context.service';
 import {
   ADVISORY_LOCK_KEYS,
   releaseAdvisoryLock,
@@ -32,6 +33,7 @@ export class ReferralRewardJob {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly creditService: CreditService,
+    private readonly requestContext: RequestContextService,
     configService: ConfigService,
   ) {
     this.rewardCredits = configService.get<number>('referral.rewardCredits') ?? 500;
@@ -39,6 +41,10 @@ export class ReferralRewardJob {
 
   @Cron('0 8 * * *')
   async handleReferralRewards() {
+    return this.requestContext.runInternal(() => this.runReferralRewardsWithLock());
+  }
+
+  private async runReferralRewardsWithLock() {
     const acquired = await tryAdvisoryLock(
       this.prismaService,
       ADVISORY_LOCK_KEYS.referralRewardJob,

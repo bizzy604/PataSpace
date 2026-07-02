@@ -20,7 +20,11 @@ describe('ListingCleanupJob', () => {
     return {
       prismaService,
       storageService,
-      job: new ListingCleanupJob(prismaService as never, storageService as never),
+      job: new ListingCleanupJob(
+        prismaService as never,
+        storageService as never,
+        { runInternal: (fn: () => unknown) => fn() } as never,
+      ),
     };
   };
 

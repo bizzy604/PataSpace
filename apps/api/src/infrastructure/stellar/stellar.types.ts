@@ -24,6 +24,12 @@ export type StellarPaymentRequestResponse = {
 
 export type StellarFindPaymentRequest = {
   memo: string;
+  /**
+   * The exact native-XLM amount the buyer was quoted for this memo. The live
+   * provider verifies the on-chain amount against it; the testnet provider
+   * echoes it so auto-completed settlements pass the same amount check.
+   */
+  expectedAmountXLM: string;
 };
 
 export type StellarPaymentRecord = {
@@ -31,6 +37,11 @@ export type StellarPaymentRecord = {
   from: string;
   memo: string;
   settledAt: string;
+  /**
+   * Total native XLM actually received by the treasury for this memo. Callers
+   * MUST verify this is >= the expected amount before granting credits.
+   */
+  amountXLM: string;
 };
 
 export interface StellarProvider {

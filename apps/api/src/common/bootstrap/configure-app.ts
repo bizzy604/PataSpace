@@ -58,6 +58,11 @@ export function configureApp(app: INestApplication) {
       origin: string | undefined,
       callback: (error: Error | null, allow?: boolean) => void,
     ) => {
+      // A missing Origin header means the caller is not a cross-origin browser
+      // fetch (same-origin navigation, native/mobile client, or server-to-server),
+      // none of which CORS is designed to gate — allowed intentionally. Any
+      // present Origin must be on the allowlist. credentials:false keeps this
+      // safe from credentialed cross-origin abuse.
       if (!origin) {
         callback(null, true);
         return;

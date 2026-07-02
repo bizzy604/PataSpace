@@ -1,6 +1,7 @@
 /**
- * Purpose: Unit tests for StellarPurchaseService — payment requests, reconciliation, error resilience.
- * Why important: Verifies delegation to StellarClient and PaymentFulfillmentService without network calls.
+ * Purpose: Unit tests for StellarPurchaseService — payment requests, reconciliation, amount verification.
+ * Why important: Proves credits are granted only when the on-chain amount meets the quote,
+ *   and verifies delegation to StellarClient and PaymentFulfillmentService without network calls.
  * Used by: Jest test runner
  */
 
@@ -11,6 +12,8 @@ describe('StellarPurchaseService', () => {
     const prismaService = {
       creditTransaction: {
         findMany: jest.fn().mockResolvedValue([]),
+        findUnique: jest.fn().mockResolvedValue({ metadata: {} }),
+        update: jest.fn().mockResolvedValue(undefined),
       },
     };
 
@@ -43,6 +46,12 @@ describe('StellarPurchaseService', () => {
     return { prismaService, stellarClient, fulfillment, configService, service };
   };
 
+  const pendingTx = (id: string, ageMs: number, amountXLM = '29.4117647') => ({
+    id,
+    createdAt: new Date(Date.now() - ageMs),
+    metadata: { stellarAmountXLM: amountXLM, paymentAmountKES: 500 },
+  });
+
   describe('createPaymentRequest', () => {
     it('computes XLM amount from KES rate and delegates to stellarClient', async () => {
       const { service, stellarClient } = createService();
@@ -56,6 +65,16 @@ describe('StellarPurchaseService', () => {
       expect(result.stellarDestinationAddress).toBe('GABC_TREASURY_ADDRESS');
       expect(result.stellarMemo).toBe('txn_1');
       expect(result.stellarAmountXLM).toBe('29.4117647');
+    });
+
+    it('persists the quoted XLM amount onto the transaction metadata', async () => {
+      const { service, prismaService } = createService();
+
+      await service.createPaymentRequest('txn_1', { amountKES: 500 });
+
+      const updateCall = prismaService.creditTransaction.update.mock.calls[0][0];
+      expect(updateCall.where).toEqual({ id: 'txn_1' });
+      expect(updateCall.data.metadata).toMatchObject({ stellarAmountXLM: '29.4117647' });
     });
 
     it('uses different KES amounts correctly', async () => {
@@ -75,18 +94,27 @@ describe('StellarPurchaseService', () => {
       expect(count).toBe(0);
     });
 
-    it('settles payment when Horizon finds a matching on-chain record', async () => {
-      const { service, prismaService, stellarClient, fulfillment } = createService();
+    it('passes the quoted amount to the provider lookup', async () => {
+      const { service, prismaService, stellarClient } = createService();
+      prismaService.creditTransaction.findMany.mockResolvedValue([pendingTx('txn_1', 2 * 60 * 1000)]);
 
-      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
-      prismaService.creditTransaction.findMany.mockResolvedValue([
-        { id: 'txn_settled', createdAt: twoMinutesAgo },
-      ]);
+      await service.reconcilePending(new Date());
+
+      expect(stellarClient.findIncomingPayment).toHaveBeenCalledWith({
+        memo: 'txn_1',
+        expectedAmountXLM: '29.4117647',
+      });
+    });
+
+    it('settles when the on-chain amount meets the quote', async () => {
+      const { service, prismaService, stellarClient, fulfillment } = createService();
+      prismaService.creditTransaction.findMany.mockResolvedValue([pendingTx('txn_settled', 2 * 60 * 1000)]);
       stellarClient.findIncomingPayment.mockResolvedValue({
         transactionHash: 'abc123_stellar_hash',
         from: 'GSENDER_ADDRESS',
         memo: 'txn_settled',
         settledAt: new Date().toISOString(),
+        amountXLM: '29.4117647',
       });
 
       const count = await service.reconcilePending(new Date());
@@ -98,13 +126,89 @@ describe('StellarPurchaseService', () => {
       expect(count).toBe(1);
     });
 
+    it('settles when the on-chain amount slightly exceeds the quote', async () => {
+      const { service, prismaService, stellarClient, fulfillment } = createService();
+      prismaService.creditTransaction.findMany.mockResolvedValue([pendingTx('txn_over', 2 * 60 * 1000)]);
+      stellarClient.findIncomingPayment.mockResolvedValue({
+        transactionHash: 'hash_over',
+        from: 'GSENDER_ADDRESS',
+        memo: 'txn_over',
+        settledAt: new Date().toISOString(),
+        amountXLM: '30.0000000',
+      });
+
+      await service.reconcilePending(new Date());
+
+      expect(fulfillment.processSuccessfulPayment).toHaveBeenCalledTimes(1);
+      expect(fulfillment.processFailedPayment).not.toHaveBeenCalled();
+    });
+
+    it('REJECTS an underpayment and never grants credits', async () => {
+      const { service, prismaService, stellarClient, fulfillment } = createService();
+      prismaService.creditTransaction.findMany.mockResolvedValue([pendingTx('txn_cheat', 2 * 60 * 1000)]);
+      // Attacker sends a single stroop against a ~29 XLM quote.
+      stellarClient.findIncomingPayment.mockResolvedValue({
+        transactionHash: 'hash_cheat',
+        from: 'GATTACKER',
+        memo: 'txn_cheat',
+        settledAt: new Date().toISOString(),
+        amountXLM: '0.0000001',
+      });
+
+      const count = await service.reconcilePending(new Date());
+
+      expect(fulfillment.processSuccessfulPayment).not.toHaveBeenCalled();
+      expect(fulfillment.processFailedPayment).toHaveBeenCalledWith(
+        'txn_cheat',
+        -2,
+        expect.stringContaining('below the required'),
+        { stellarTransactionHash: 'hash_cheat' },
+      );
+      expect(count).toBe(1);
+    });
+
+    it('does not grant credits when the amount is non-numeric', async () => {
+      const { service, prismaService, stellarClient, fulfillment } = createService();
+      prismaService.creditTransaction.findMany.mockResolvedValue([pendingTx('txn_nan', 2 * 60 * 1000)]);
+      stellarClient.findIncomingPayment.mockResolvedValue({
+        transactionHash: 'hash_nan',
+        from: 'GSENDER',
+        memo: 'txn_nan',
+        settledAt: new Date().toISOString(),
+        amountXLM: 'not-a-number',
+      });
+
+      await service.reconcilePending(new Date());
+
+      expect(fulfillment.processSuccessfulPayment).not.toHaveBeenCalled();
+      expect(fulfillment.processFailedPayment).toHaveBeenCalled();
+    });
+
+    it('falls back to the KES quote when stellarAmountXLM metadata is absent', async () => {
+      const { service, prismaService, stellarClient, fulfillment } = createService();
+      prismaService.creditTransaction.findMany.mockResolvedValue([
+        { id: 'txn_legacy', createdAt: new Date(Date.now() - 2 * 60 * 1000), metadata: { paymentAmountKES: 500 } },
+      ]);
+      stellarClient.findIncomingPayment.mockResolvedValue({
+        transactionHash: 'hash_legacy',
+        from: 'GSENDER',
+        memo: 'txn_legacy',
+        settledAt: new Date().toISOString(),
+        amountXLM: '29.4117647',
+      });
+
+      await service.reconcilePending(new Date());
+
+      expect(stellarClient.findIncomingPayment).toHaveBeenCalledWith({
+        memo: 'txn_legacy',
+        expectedAmountXLM: '29.4117647',
+      });
+      expect(fulfillment.processSuccessfulPayment).toHaveBeenCalledTimes(1);
+    });
+
     it('expires payment after 30-minute timeout with no incoming payment', async () => {
       const { service, prismaService, stellarClient, fulfillment } = createService();
-
-      const thirtyFiveMinutesAgo = new Date(Date.now() - 35 * 60 * 1000);
-      prismaService.creditTransaction.findMany.mockResolvedValue([
-        { id: 'txn_expired', createdAt: thirtyFiveMinutesAgo },
-      ]);
+      prismaService.creditTransaction.findMany.mockResolvedValue([pendingTx('txn_expired', 35 * 60 * 1000)]);
       stellarClient.findIncomingPayment.mockResolvedValue(null);
 
       const count = await service.reconcilePending(new Date());
@@ -119,11 +223,7 @@ describe('StellarPurchaseService', () => {
 
     it('skips payment within timeout when no on-chain record exists yet', async () => {
       const { service, prismaService, stellarClient, fulfillment } = createService();
-
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-      prismaService.creditTransaction.findMany.mockResolvedValue([
-        { id: 'txn_waiting', createdAt: fiveMinutesAgo },
-      ]);
+      prismaService.creditTransaction.findMany.mockResolvedValue([pendingTx('txn_waiting', 5 * 60 * 1000)]);
       stellarClient.findIncomingPayment.mockResolvedValue(null);
 
       const count = await service.reconcilePending(new Date());
@@ -135,11 +235,9 @@ describe('StellarPurchaseService', () => {
 
     it('continues reconciling subsequent transactions when one throws', async () => {
       const { service, prismaService, stellarClient, fulfillment } = createService();
-
-      const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
       prismaService.creditTransaction.findMany.mockResolvedValue([
-        { id: 'txn_error', createdAt: twoMinutesAgo },
-        { id: 'txn_ok', createdAt: twoMinutesAgo },
+        pendingTx('txn_error', 2 * 60 * 1000),
+        pendingTx('txn_ok', 2 * 60 * 1000),
       ]);
       stellarClient.findIncomingPayment
         .mockRejectedValueOnce(new Error('Horizon timeout'))
@@ -148,6 +246,7 @@ describe('StellarPurchaseService', () => {
           from: 'GSENDER_ADDRESS',
           memo: 'txn_ok',
           settledAt: new Date().toISOString(),
+          amountXLM: '29.4117647',
         });
 
       const count = await service.reconcilePending(new Date());
