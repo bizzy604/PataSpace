@@ -84,6 +84,9 @@ export type ListingPreview = {
   monthlyRent: number;
   unlockCost: string;
   unlockCostCredits: number;
+  // Success fee (spec v1.1 section 4.3): the mover pays this only at
+  // confirmed move-in; shown free pre-unlock so the paywall reads honest.
+  successFeeKes: number;
   commissionAmount: string;
   county: string;
   houseType: ListingHouseType;
@@ -153,15 +156,34 @@ export type TransactionRecord = {
   detail: string;
 };
 
+export type UnlockSuccessFee = {
+  feeDueKes: number;
+  creditsApplied: number;
+  cashCollectedKes: number;
+  remainingKes: number;
+  status: 'PENDING' | 'PARTIAL' | 'SETTLED';
+};
+
 export type UnlockRecord = {
   id: string;
   listingId: string;
   creditsSpent: number;
   contactInfo: UnlockContactInfo;
+  // 'masked': phoneNumber is a pooled PataSpace line, never the raw number.
+  contactMode: 'direct' | 'masked';
+  contactExpiresAt: string | null;
   incomingConfirmed: boolean;
   outgoingConfirmed: boolean;
   createdAt: string;
   holdUntil: string;
+  // Set once the seeker confirms; drives the settle-fee and flywheel UX.
+  confirmationId?: string;
+  successFee?: UnlockSuccessFee;
+  vacatedListingPrompt?: {
+    seededFromConfirmationId: string;
+    estimatedEarningsKes: number;
+    message: string;
+  };
 };
 
 export type NotificationRecord = {
@@ -209,6 +231,9 @@ export type ListingDraft = {
   // Landlord-awareness attestation (spec v1.2 section 5): must be true before
   // submit; the API rejects listings without it.
   landlordAware: boolean;
+  // Mover-to-poster flywheel (spec v1.2 section 4.6): links this draft to the
+  // move-in confirmation that seeded it.
+  seededFromConfirmationId?: string;
   photos: ListingDraftPhoto[];
   video?: { uri: string };
 };
@@ -261,17 +286,23 @@ export function formatListingHouseType(houseType: ListingHouseType) {
 function buildListing(
   listing: Omit<
     ListingPreview,
-    'price' | 'unlockCost' | 'unlockCostCredits' | 'commissionAmount' | 'photoCount'
+    | 'price'
+    | 'unlockCost'
+    | 'unlockCostCredits'
+    | 'successFeeKes'
+    | 'commissionAmount'
+    | 'photoCount'
   >,
 ) {
-  const unlockCostCredits = Math.round(listing.monthlyRent * 0.1);
+  const pricing = estimateListingPricing(listing.houseType, listing.monthlyRent);
 
   return {
     ...listing,
-    unlockCostCredits,
+    unlockCostCredits: pricing.unlockCredits,
+    successFeeKes: pricing.successFeeKes,
     price: `${formatCurrency(listing.monthlyRent)}/mo`,
-    unlockCost: formatCredits(unlockCostCredits),
-    commissionAmount: formatCurrency(Math.round(unlockCostCredits * 0.3)),
+    unlockCost: formatCredits(pricing.unlockCredits),
+    commissionAmount: formatCurrency(pricing.posterEarningsKes),
     photoCount: `${listing.galleryMedia.length} photos`,
   };
 }

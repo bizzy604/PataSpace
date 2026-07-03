@@ -1,8 +1,9 @@
 /**
  * Purpose: Unlock API functions for the mobile app.
- * Why important: Creates unlocks, fetches unlock history, and submits confirmations.
+ * Why important: Creates unlocks, fetches unlock history, submits confirmations,
+ *   reports dead listings for instant refunds, and settles success fees.
  * Used by: use-mobile-api-sync hook, MobileAppProvider (unlockListing, confirmIncoming,
- *   confirmReceivedUnlock, received-unlocks sync).
+ *   confirmReceivedUnlock, settleFee, reportDeadUnlock, received-unlocks sync).
  */
 import type {
   ConfirmationSide,
@@ -12,6 +13,10 @@ import type {
   PaginatedMyUnlocksResponse,
   PaginatedReceivedUnlocksResponse,
   ReceivedUnlockRecord,
+  ReportUnlockDeadRequest,
+  ReportUnlockDeadResponse,
+  SettleSuccessFeeResponse,
+  UnlockDeadReason,
 } from '@pataspace/contracts';
 import { apiFetch } from '../api-client';
 
@@ -44,6 +49,28 @@ export async function confirmUnlock(
   return apiFetch<CreateConfirmationResponse>('/confirmations', getToken, {
     method: 'POST',
     body: JSON.stringify({ unlockId, side }),
+  });
+}
+
+export async function reportUnlockDead(
+  getToken: () => Promise<string | null>,
+  unlockId: string,
+  reason: UnlockDeadReason,
+  comment?: string,
+): Promise<ReportUnlockDeadResponse> {
+  return apiFetch<ReportUnlockDeadResponse>(`/unlocks/${unlockId}/report-dead`, getToken, {
+    method: 'POST',
+    body: JSON.stringify({ reason, comment } satisfies ReportUnlockDeadRequest),
+  });
+}
+
+export async function settleSuccessFee(
+  getToken: () => Promise<string | null>,
+  unlockId: string,
+): Promise<SettleSuccessFeeResponse> {
+  return apiFetch<SettleSuccessFeeResponse>('/confirmations/settle-fee', getToken, {
+    method: 'POST',
+    body: JSON.stringify({ unlockId }),
   });
 }
 

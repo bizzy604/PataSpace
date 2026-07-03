@@ -24,6 +24,7 @@ export const appRoutes = {
   myListing: '/my-listing',
   unlock: '/unlock',
   contactRevealed: '/contact-revealed',
+  reportDead: '/report-dead',
   confirmations: '/confirmations',
   confirmationSuccess: '/confirmation-success',
   credits: '/credits',
@@ -74,6 +75,13 @@ export function unlockHref(id: string): Href {
 export function contactRevealedHref(id: string): Href {
   return {
     pathname: '/contact-revealed',
+    params: { id },
+  };
+}
+
+export function reportDeadHref(id: string): Href {
+  return {
+    pathname: '/report-dead',
     params: { id },
   };
 }

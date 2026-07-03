@@ -48,10 +48,15 @@ import {
   createUnlock as createUnlockApi,
   confirmUnlock as confirmUnlockApi,
   fetchAllReceivedUnlocks as fetchAllReceivedUnlocksApi,
+  reportUnlockDead as reportUnlockDeadApi,
+  settleSuccessFee as settleSuccessFeeApi,
 } from '@/lib/api/unlocks';
 import { ApiRequestError } from '@/lib/api-client';
 import { uploadAndConfirmPhoto, uploadAndConfirmVideo } from '@/lib/api/uploads';
-import { createListing as createListingApi } from '@/lib/api/listings';
+import {
+  createListing as createListingApi,
+  seedListingFromConfirmation as seedListingFromConfirmationApi,
+} from '@/lib/api/listings';
 import { fetchCreditBalance, purchaseCredits } from '@/lib/api/credits';
 import { createDispute as createDisputeApi } from '@/lib/api/disputes';
 import { createSupportTicket as createSupportTicketApi } from '@/lib/api/support';
@@ -68,6 +73,7 @@ import {
   ListingStatus,
   type CreditPurchasePackage,
   type ReferralRecord,
+  type UnlockDeadReason,
 } from '@pataspace/contracts';
 import { useMobileApiSync } from './use-mobile-api-sync';
 
@@ -133,8 +139,17 @@ type MobileAppContextValue = {
   completeTopUp: () => TransactionRecord | undefined;
   initiatePurchase: (packageId: string, phone: string) => Promise<void>;
   refreshWallet: () => Promise<void>;
-  unlockListing: (listingId: string) => Promise<'success' | 'already_unlocked' | 'insufficient'>;
+  unlockListing: (
+    listingId: string,
+  ) => Promise<'success' | 'already_unlocked' | 'insufficient' | 'fee_unsettled'>;
   confirmIncoming: (listingId: string) => Promise<'success' | 'already_confirmed' | 'error'>;
+  settleFee: (listingId: string) => Promise<'settled' | 'insufficient' | 'error'>;
+  reportDeadUnlock: (
+    listingId: string,
+    reason: UnlockDeadReason,
+    comment?: string,
+  ) => Promise<'refunded' | 'error'>;
+  startSeededListing: (confirmationId: string) => Promise<'ready' | 'already_posted' | 'error'>;
   receivedUnlocks: ReceivedUnlockRecord[];
   getReceivedUnlocksForListing: (listingId: string) => ReceivedUnlockRecord[];
   confirmReceivedUnlock: (unlockId: string) => Promise<'success' | 'already_confirmed' | 'error'>;
@@ -453,6 +468,7 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
       })),
       video: videoInput,
       landlordAware: true,
+      seededFromConfirmationId: draft.seededFromConfirmationId,
     });
 
     const isLive = response.status === ListingStatus.ACTIVE;
@@ -548,7 +564,9 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
     return transaction;
   }
 
-  async function unlockListing(listingId: string): Promise<'success' | 'already_unlocked' | 'insufficient'> {
+  async function unlockListing(
+    listingId: string,
+  ): Promise<'success' | 'already_unlocked' | 'insufficient' | 'fee_unsettled'> {
     const listing = getListing(listingId);
     if (!listing) return 'insufficient';
     if (unlocks.some((unlock) => unlock.listingId === listingId)) return 'already_unlocked';
@@ -562,6 +580,8 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
         listingId,
         creditsSpent: response.creditsSpent,
         contactInfo,
+        contactMode: response.contactMode,
+        contactExpiresAt: response.contactExpiresAt,
         incomingConfirmed: false,
         outgoingConfirmed: false,
         createdAt: new Date().toISOString(),
@@ -578,7 +598,10 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
         target: { route: 'confirmations' },
       });
       return 'success';
-    } catch {
+    } catch (error) {
+      if (error instanceof ApiRequestError && error.code === 'SUCCESS_FEE_UNSETTLED') {
+        return 'fee_unsettled';
+      }
       return 'insufficient';
     }
   }
@@ -604,13 +627,129 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
       return 'error';
     }
     try {
-      await confirmUnlockApi(getToken, unlock.id, ConfirmationSide.INCOMING_TENANT);
-      updateUnlock(listingId, { incomingConfirmed: true });
+      const response = await confirmUnlockApi(
+        getToken,
+        unlock.id,
+        ConfirmationSide.INCOMING_TENANT,
+      );
+      updateUnlock(listingId, {
+        incomingConfirmed: true,
+        outgoingConfirmed: response.bothConfirmed || unlock.outgoingConfirmed,
+        confirmationId: response.confirmationId,
+        successFee: response.successFee,
+        vacatedListingPrompt: response.vacatedListingPrompt,
+      });
+      if (response.vacatedListingPrompt) {
+        pushNotification({
+          id: `notif-flywheel-${Date.now()}`,
+          title: 'Leaving a house behind?',
+          detail: response.vacatedListingPrompt.message,
+          time: 'Just now',
+          target: { route: 'confirmations' },
+        });
+      }
       return 'success';
     } catch (error) {
       if (error instanceof ApiRequestError && error.code === 'ALREADY_CONFIRMED') {
         updateUnlock(listingId, { incomingConfirmed: true });
         return 'already_confirmed';
+      }
+      return 'error';
+    }
+  }
+
+  // Settles the remaining success-fee balance from wallet credits
+  // (spec section 4.4). Top up the exact shortfall first if needed.
+  async function settleFee(listingId: string): Promise<'settled' | 'insufficient' | 'error'> {
+    const unlock = unlocks.find((u) => u.listingId === listingId);
+    if (!unlock) {
+      return 'error';
+    }
+    try {
+      const response = await settleSuccessFeeApi(getToken, unlock.id);
+      setWalletBalance(response.newBalance);
+      updateUnlock(listingId, {
+        successFee: {
+          feeDueKes: response.feeDueKes,
+          creditsApplied: response.creditsApplied,
+          cashCollectedKes: response.cashCollectedKes,
+          remainingKes: response.remainingKes,
+          status: response.status,
+        },
+      });
+      pushNotification({
+        id: `notif-fee-settled-${Date.now()}`,
+        title: 'Move-in fee settled',
+        detail: 'You are all set. Karibu nyumbani!',
+        time: 'Just now',
+        target: { route: 'confirmations' },
+      });
+      return 'settled';
+    } catch (error) {
+      if (error instanceof ApiRequestError && error.code === 'INSUFFICIENT_CREDITS') {
+        return 'insufficient';
+      }
+      return 'error';
+    }
+  }
+
+  // Report-dead with a reason code (spec section 4.2): credits refund
+  // instantly and the unlock leaves the active list.
+  async function reportDeadUnlock(
+    listingId: string,
+    reason: UnlockDeadReason,
+    comment?: string,
+  ): Promise<'refunded' | 'error'> {
+    const unlock = unlocks.find((u) => u.listingId === listingId);
+    if (!unlock) {
+      return 'error';
+    }
+    try {
+      const response = await reportUnlockDeadApi(getToken, unlock.id, reason, comment);
+      setWalletBalance(response.newBalance);
+      setUnlocks((current) => current.filter((record) => record.id !== unlock.id));
+      setListingContactInfoById((current) => {
+        const next = { ...current };
+        delete next[listingId];
+        return next;
+      });
+      pushNotification({
+        id: `notif-dead-${Date.now()}`,
+        title: 'Credits refunded',
+        detail: `${response.creditsRefunded.toLocaleString()} credits are back in your wallet.`,
+        time: 'Just now',
+        target: { route: 'credits' },
+      });
+      return 'refunded';
+    } catch {
+      return 'error';
+    }
+  }
+
+  // Mover-to-poster flywheel (spec section 4.6): seeds a fresh draft linked
+  // to the confirmed move-in, ready for the normal capture flow.
+  async function startSeededListing(
+    confirmationId: string,
+  ): Promise<'ready' | 'already_posted' | 'error'> {
+    try {
+      const seed = await seedListingFromConfirmationApi(getToken, confirmationId);
+      setDraft({
+        ...initialDraft,
+        title: '',
+        area: '',
+        location: '',
+        monthlyRent: '',
+        deposit: '',
+        description: '',
+        amenities: '',
+        moveReason: 'Moving to my new PataSpace home',
+        photos: [],
+        seededFromConfirmationId: seed.seededFromConfirmationId,
+      });
+      return 'ready';
+    } catch (error) {
+      if (error instanceof ApiRequestError && error.code === 'SEEDED_LISTING_EXISTS') {
+        return 'already_posted';
       }
       return 'error';
     }
@@ -851,6 +990,9 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
         refreshWallet,
         unlockListing,
         confirmIncoming,
+        settleFee,
+        reportDeadUnlock,
+        startSeededListing,
         receivedUnlocks,
         getReceivedUnlocksForListing,
         confirmReceivedUnlock,

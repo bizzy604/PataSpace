@@ -11,6 +11,7 @@ import type {
   MyListing,
   PaginatedListingsResponse,
   PaginatedMyListingsResponse,
+  SeedListingFromConfirmationResponse,
 } from '@pataspace/contracts';
 import { apiFetch, publicFetch } from '../api-client';
 
@@ -38,6 +39,16 @@ export async function fetchMyListings(
 ): Promise<MyListing[]> {
   const result = await apiFetch<PaginatedMyListingsResponse>('/listings/my-listings', getToken);
   return result.data;
+}
+
+export async function seedListingFromConfirmation(
+  getToken: () => Promise<string | null>,
+  confirmationId: string,
+): Promise<SeedListingFromConfirmationResponse> {
+  return apiFetch<SeedListingFromConfirmationResponse>('/listings/from-confirmation', getToken, {
+    method: 'POST',
+    body: JSON.stringify({ confirmationId }),
+  });
 }
 
 export async function createListing(
