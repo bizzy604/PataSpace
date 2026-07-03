@@ -305,6 +305,7 @@ export async function createCreditPurchase(
     .set('X-Forwarded-For', context.createForwardedFor())
     .send({
       package: packageKey,
+      paymentMethod: 'mpesa',
       phoneNumber,
     })
     .expect(202);

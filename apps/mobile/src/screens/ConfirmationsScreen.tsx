@@ -122,6 +122,24 @@ export function ConfirmationsScreen() {
         ) : null}
       </View>
 
+      {latestUnlock.successFee && latestUnlock.successFee.remainingKes > 0 ? (
+        <Card>
+          <CardTitle className="text-base">Move-in fee balance</CardTitle>
+          <CardDescription>
+            KES {latestUnlock.successFee.remainingKes.toLocaleString()} of your KES{' '}
+            {latestUnlock.successFee.feeDueKes.toLocaleString()} move-in fee is still due. Settle
+            it before key handover to keep your account active.
+          </CardDescription>
+          <View className="mt-3">
+            <Button
+              variant="secondary"
+              label="Settle the fee"
+              onPress={() => router.push(appRoutes.confirmationSuccess)}
+            />
+          </View>
+        </Card>
+      ) : null}
+
       <Card>
         <CardTitle className="text-base">Are you the outgoing tenant?</CardTitle>
         <CardDescription className="mt-1">

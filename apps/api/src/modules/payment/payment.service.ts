@@ -29,10 +29,13 @@ import { StellarPurchaseService } from './stellar-purchase.service';
 
 type PurchasePackageConfig = { amountKES: number; credits: number; label: string };
 
+// Credit peg is fixed at 1 credit = KES 1 (spec section 4.3); bonuses on the
+// larger packages are extra credits, never a different peg. A regression here
+// reprices every liability in the ledger and the mobile wallet packages.
 const CREDIT_PACKAGES: Record<CreditPurchasePackage, PurchasePackageConfig> = {
-  '5_credits': { amountKES: 500, credits: 5, label: '5 credits package' },
-  '10_credits': { amountKES: 1000, credits: 10, label: '10 credits package' },
-  '20_credits': { amountKES: 2000, credits: 20, label: '20 credits package' },
+  '5_credits': { amountKES: 5000, credits: 5000, label: '5,000 credits package' },
+  '10_credits': { amountKES: 10000, credits: 10500, label: '10,500 credits package' },
+  '20_credits': { amountKES: 20000, credits: 22000, label: '22,000 credits package' },
 };
 
 @Injectable()

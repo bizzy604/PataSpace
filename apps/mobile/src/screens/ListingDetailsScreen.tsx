@@ -41,6 +41,9 @@ export function ListingDetailsScreen() {
               Unlock cost
             </Text>
             <Text className="mt-1 text-lg font-semibold text-foreground">{listing.unlockCost}</Text>
+            <Text className="text-xs text-muted-foreground">
+              + KES {listing.successFeeKes.toLocaleString()} only if you move in
+            </Text>
           </View>
           <Link href={unlocked ? contactRevealedHref(listing.id) : unlockHref(listing.id)} asChild>
             <Button className="flex-1" label={unlocked ? 'Open contact' : 'Unlock contact'} />

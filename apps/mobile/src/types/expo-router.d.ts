@@ -42,6 +42,7 @@ type StaticRoute =
   | `/rate-review`
   | `/referral`
   | `/register`
+  | `/report-dead`
   | `/saved`
   | `/search`
   | `/settings`
@@ -61,6 +62,7 @@ type StaticHrefInput =
   | { pathname: `/confirmation-success`; params?: Router.UnknownInputParams }
   | { pathname: `/confirmations`; params?: Router.UnknownInputParams }
   | { pathname: `/contact-revealed`; params: { id: string | number } }
+  | { pathname: `/report-dead`; params: { id: string | number } }
   | { pathname: `/contact-support`; params?: Router.UnknownInputParams }
   | { pathname: `/create-listing`; params?: Router.UnknownInputParams }
   | { pathname: `/create-listing-details`; params?: Router.UnknownInputParams }
@@ -105,6 +107,7 @@ type StaticHrefOutput =
   | { pathname: `/confirmation-success`; params?: Router.UnknownOutputParams }
   | { pathname: `/confirmations`; params?: Router.UnknownOutputParams }
   | { pathname: `/contact-revealed`; params: { id: string } }
+  | { pathname: `/report-dead`; params: { id: string } }
   | { pathname: `/contact-support`; params?: Router.UnknownOutputParams }
   | { pathname: `/create-listing`; params?: Router.UnknownOutputParams }
   | { pathname: `/create-listing-details`; params?: Router.UnknownOutputParams }

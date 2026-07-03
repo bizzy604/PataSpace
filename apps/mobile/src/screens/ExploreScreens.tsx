@@ -453,8 +453,9 @@ export function ListingStatsScreen() {
       <Card>
         <CardTitle className="text-[20px]">Unlock economics</CardTitle>
         <CardDescription>
-          Unlock cost is {listing.unlockCost}. Commission amount after both confirmations is{' '}
-          {listing.commissionAmount}.
+          Unlock cost is {listing.unlockCost}. The mover pays a KES{' '}
+          {listing.successFeeKes.toLocaleString()} success fee only at confirmed move-in, and you
+          earn {listing.commissionAmount} of it.
         </CardDescription>
       </Card>
 

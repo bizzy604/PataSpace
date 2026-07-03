@@ -40,6 +40,7 @@ function listingCardToPreview(card: ListingCard): ListingPreview {
     price: `KES ${card.monthlyRent.toLocaleString()}/mo`,
     unlockCostCredits: card.unlockCostCredits,
     unlockCost: formatCredits(card.unlockCostCredits),
+    successFeeKes: card.successFeeKes,
     commissionAmount: `KES ${Math.round(card.successFeeKes * 0.7).toLocaleString()}`,
     county: card.county,
     houseType: card.houseType,
@@ -109,6 +110,10 @@ function apiUnlockToRecord(record: MyUnlockRecord): UnlockRecord {
     listingId: record.listing.id,
     creditsSpent: record.creditsSpent,
     contactInfo: record.contactInfo,
+    // History endpoint substitutes the masked line server-side; the client
+    // cannot distinguish, so render neutrally until the next unlock refresh.
+    contactMode: 'direct',
+    contactExpiresAt: null,
     incomingConfirmed: record.myConfirmation !== null,
     outgoingConfirmed: record.tenantConfirmation !== null,
     createdAt: record.createdAt,

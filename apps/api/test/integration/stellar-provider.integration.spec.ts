@@ -83,7 +83,7 @@ async function pollForPayment(
 ) {
   const until = Date.now() + deadlineMs;
   while (Date.now() < until) {
-    const record = await provider.findIncomingPayment({ memo });
+    const record = await provider.findIncomingPayment({ memo, expectedAmountXLM: '1.0000000' });
     if (record) return record;
     await new Promise((r) => setTimeout(r, 2500));
   }
@@ -126,7 +126,10 @@ describe('LiveStellarProvider — Stellar testnet integration', () => {
       'returns null for a memo that has never been submitted to the network',
       async () => {
         const ghostMemo = `ghost_${randomUUID().replace(/-/g, '').slice(0, 12)}`;
-        const result = await makeProvider().findIncomingPayment({ memo: ghostMemo });
+        const result = await makeProvider().findIncomingPayment({
+          memo: ghostMemo,
+          expectedAmountXLM: '1.0000000',
+        });
         expect(result).toBeNull();
       },
       TIMEOUT_MS,
