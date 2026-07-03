@@ -14,6 +14,9 @@ process.env.REDIS_PASSWORD ??= '';
 process.env.REDIS_DB ??= '0';
 process.env.JWT_SECRET ??= 'test-jwt-secret-value-12345';
 process.env.JWT_REFRESH_SECRET ??= 'test-refresh-secret-value-12345';
+// ClerkAccountAdapter refuses to boot without a key; the test lanes never
+// call Clerk (auth flows run through the OTP sandbox), so a fake key is safe.
+process.env.CLERK_SECRET_KEY ??= 'sk_test_jest-placeholder-key';
 process.env.ACCESS_TOKEN_TTL ??= '15m';
 process.env.REFRESH_TOKEN_TTL_DAYS ??= '30';
 process.env.REFRESH_TOKEN_TRANSPORT ??= 'json';

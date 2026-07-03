@@ -284,6 +284,7 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
       .set('X-Forwarded-For', createForwardedFor())
       .send({
         package: '10_credits',
+        paymentMethod: 'mpesa',
         phoneNumber: buyer.phoneNumber,
       })
       .expect(202);
@@ -374,6 +375,7 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
       .set('X-Forwarded-For', createForwardedFor())
       .send({
         package: '5_credits',
+        paymentMethod: 'mpesa',
         phoneNumber: buyer.phoneNumber,
       })
       .expect(202);
@@ -384,6 +386,7 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
       .set('X-Forwarded-For', createForwardedFor())
       .send({
         package: '5_credits',
+        paymentMethod: 'mpesa',
         phoneNumber: buyer.phoneNumber,
       })
       .expect(402);
@@ -435,6 +438,7 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
       .set('X-Forwarded-For', createForwardedFor())
       .send({
         package: '5_credits',
+        paymentMethod: 'mpesa',
         phoneNumber: buyer.phoneNumber,
       })
       .expect(202);

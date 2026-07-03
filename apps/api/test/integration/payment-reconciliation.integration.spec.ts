@@ -109,8 +109,8 @@ describe('Prisma-backed payment reconciliation flows', () => {
     expect(storedTransaction.status).toBe(TransactionStatus.FAILED);
     expect(storedTransaction.balanceAfter).toBe(0);
     expect(storedTransaction.metadata).toMatchObject({
-      callbackResultCode: 1,
-      callbackResultDesc: 'Insufficient funds',
+      resultCode: 1,
+      resultDesc: 'Insufficient funds',
       callbackPhoneNumber: buyer.phoneNumber,
     });
   });
@@ -162,8 +162,8 @@ describe('Prisma-backed payment reconciliation flows', () => {
     expect(storedTransaction.status).toBe(TransactionStatus.CANCELLED);
     expect(storedTransaction.balanceAfter).toBe(0);
     expect(storedTransaction.metadata).toMatchObject({
-      callbackResultCode: 1032,
-      callbackResultDesc: 'Request cancelled by user',
+      resultCode: 1032,
+      resultDesc: 'Request cancelled by user',
       callbackPhoneNumber: buyer.phoneNumber,
     });
   });

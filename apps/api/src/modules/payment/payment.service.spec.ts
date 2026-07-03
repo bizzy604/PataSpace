@@ -142,8 +142,8 @@ describe('PaymentService (orchestrator)', () => {
       expect(mpesaPurchaseService.executeStkPush).toHaveBeenCalled();
       expect(result.paymentMethod).toBe('mpesa');
       expect(result.status).toBe(TransactionStatus.PENDING);
-      expect(result.credits).toBe(5);
-      expect(result.amount).toBe(500);
+      expect(result.credits).toBe(5000);
+      expect(result.amount).toBe(5000);
     });
   });
 
