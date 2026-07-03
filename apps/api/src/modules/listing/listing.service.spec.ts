@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { ListingStatus, UploadMediaType } from '@prisma/client';
 import { ListingService } from './listing.service';
+import { ListingMediaResolver } from './persistence/listing-media.resolver';
 
 describe('ListingService', () => {
   const encryptionKey = '12345678901234567890123456789012';
@@ -14,6 +15,9 @@ describe('ListingService', () => {
       $transaction: jest.fn(),
       auditLog: {
         create: jest.fn(),
+      },
+      confirmation: {
+        findUnique: jest.fn(),
       },
       listing: {
         count: jest.fn(),
@@ -58,6 +62,7 @@ describe('ListingService', () => {
         userService as never,
         listingCacheService as never,
         smsService as never,
+        new ListingMediaResolver(prismaService as never),
         configService as never,
       ),
       smsService,
@@ -95,6 +100,7 @@ describe('ListingService', () => {
     description: 'Listing with enough detail to satisfy validation rules.',
     furnished: false,
     houseType: 'TWO_BEDROOM',
+    landlordAware: true,
     latitude: -1.289563,
     longitude: 36.790942,
     monthlyRent: 25000,
@@ -131,18 +137,21 @@ describe('ListingService', () => {
   });
 
   const createExistingListing = (overrides = {}) => ({
-    commission: 750,
+    commission: 1750,
     houseType: 'TWO_BEDROOM',
     id: 'listing_1',
     isApproved: true,
     isDeleted: false,
+    landlordAware: true,
     latitude: -1.289563,
     longitude: 36.790942,
     monthlyRent: 25000,
     photos: [],
+    posterRole: 'OUTGOING_TENANT',
     rejectionReason: null,
     status: ListingStatus.ACTIVE,
-    unlockCostCredits: 2500,
+    successFeeKes: 2500,
+    unlockCostCredits: 300,
     unlockCount: 0,
     updatedAt: new Date('2026-03-24T08:00:00.000Z'),
     userId: 'owner_1',
@@ -180,10 +189,11 @@ describe('ListingService', () => {
     );
     prismaService.listing.count.mockResolvedValue(2);
     prismaService.listing.create.mockResolvedValue({
-      commission: 750,
+      commission: 1750,
       id: 'listing_1',
       status: ListingStatus.PENDING,
-      unlockCostCredits: 2500,
+      successFeeKes: 2500,
+      unlockCostCredits: 300,
     });
 
     const result = await service.createListing('owner_1', 'mobile', input as never);
@@ -193,6 +203,7 @@ describe('ListingService', () => {
       id: 'listing_1',
       message: 'Listing created. Awaiting admin review (first 3 listings).',
       status: 'PENDING',
+      successFeeKes: 2500,
     });
     expect(prismaService.listing.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -204,6 +215,87 @@ describe('ListingService', () => {
       }),
     );
     expect(listingCacheService.invalidateListing).not.toHaveBeenCalled();
+  });
+
+  it('snapshots two-part pricing at creation: banded unlock credits + clamped success fee', async () => {
+    const { prismaService, service, userService } = createListingService();
+    const input = createListingInput();
+
+    userService.findStoredById.mockResolvedValue(createStoredUser());
+    prismaService.uploadedAsset.findMany.mockResolvedValue([
+      createUploadedAsset(),
+      createUploadedAsset({
+        cdnUrl: 'https://cdn.example.com/listings/owner_1/photo-2.jpg',
+        storageKey: 'listings/owner_1/photo-2.jpg',
+        url: 'https://uploads.example.com/listings/owner_1/photo-2.jpg',
+      }),
+    ]);
+    prismaService.uploadedAsset.findUnique.mockResolvedValue(
+      createUploadedAsset({
+        cdnUrl: 'https://cdn.example.com/listings/owner_1/walkthrough.mp4',
+        mediaType: UploadMediaType.VIDEO,
+        storageKey: 'listings/owner_1/walkthrough.mp4',
+        url: 'https://uploads.example.com/listings/owner_1/walkthrough.mp4',
+      }),
+    );
+    prismaService.listing.count.mockResolvedValue(5);
+    prismaService.listing.create.mockResolvedValue({
+      commission: 1750,
+      id: 'listing_1',
+      status: ListingStatus.ACTIVE,
+      successFeeKes: 2500,
+      unlockCostCredits: 300,
+    });
+
+    await service.createListing('owner_1', 'mobile', input as never);
+
+    expect(prismaService.listing.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          commission: 1750,
+          landlordAware: true,
+          posterRole: 'OUTGOING_TENANT',
+          successFeeKes: 2500,
+          unlockCostCredits: 300,
+        }),
+      }),
+    );
+  });
+
+  it('rejects listing creation without the landlord-awareness attestation', async () => {
+    const { prismaService, service } = createListingService();
+
+    await expect(
+      service.createListing(
+        'owner_1',
+        'mobile',
+        createListingInput({ landlordAware: false }) as never,
+      ),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'LANDLORD_AWARENESS_REQUIRED' }),
+    });
+    expect(prismaService.listing.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects a seeded listing when the confirmation belongs to someone else', async () => {
+    const { prismaService, service, userService } = createListingService();
+
+    userService.findStoredById.mockResolvedValue(createStoredUser());
+    prismaService.confirmation.findUnique.mockResolvedValue({
+      side: 'INCOMING_TENANT',
+      userId: 'other_user',
+    });
+
+    await expect(
+      service.createListing(
+        'owner_1',
+        'mobile',
+        createListingInput({ seededFromConfirmationId: 'confirmation_1' }) as never,
+      ),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'INVALID_SEED_CONFIRMATION' }),
+    });
+    expect(prismaService.listing.create).not.toHaveBeenCalled();
   });
 
   it('rejects listing creation when photo GPS does not match the listing coordinates', async () => {
@@ -315,13 +407,16 @@ describe('ListingService', () => {
       furnished: false,
       houseType: 'TWO_BEDROOM',
       id: 'listing_1',
+      landlordAware: true,
       latitude: -1.289563,
       longitude: 36.790942,
       monthlyRent: 25000,
       neighborhood: 'Kilimani',
+      posterRole: 'OUTGOING_TENANT',
       propertyType: 'Apartment',
+      successFeeKes: 2500,
       thumbnailUrl: 'https://cdn.example.com/thumb.jpg',
-      unlockCostCredits: 2500,
+      unlockCostCredits: 300,
       unlockCount: 1,
       user: {
         createdAt: new Date('2026-01-01T00:00:00.000Z'),

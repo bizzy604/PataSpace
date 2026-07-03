@@ -1,6 +1,11 @@
 import { z } from 'zod';
-import { CommissionStatus, DisputeStatus } from '../enums';
+import { CommissionStatus, DisputeStatus, UnlockDeadReason } from '../enums';
 import { isoDateStringSchema, paginationMetaSchema, paginationQuerySchema } from './common';
+
+// 'masked' means phoneNumber carries a pooled virtual number bridged by the
+// platform (spec section 4.5); 'direct' is the legacy raw-number reveal used
+// until a voice provider is configured.
+export const unlockContactModeSchema = z.enum(['direct', 'masked']);
 
 export const unlockContactSchema = z.object({
   phoneNumber: z.string().min(1),
@@ -24,7 +29,22 @@ export const createUnlockResponseSchema = z.object({
   creditsSpent: z.number().int().nonnegative(),
   newBalance: z.number().int().nonnegative(),
   contactInfo: unlockContactSchema,
+  contactMode: unlockContactModeSchema,
+  contactExpiresAt: isoDateStringSchema.nullable(),
   tenant: unlockTenantSchema,
+  message: z.string().min(1),
+});
+
+export const reportUnlockDeadSchema = z.object({
+  reason: z.nativeEnum(UnlockDeadReason),
+  comment: z.string().max(500).optional(),
+});
+
+export const reportUnlockDeadResponseSchema = z.object({
+  unlockId: z.string().min(1),
+  reason: z.nativeEnum(UnlockDeadReason),
+  creditsRefunded: z.number().int().nonnegative(),
+  newBalance: z.number().int().nonnegative(),
   message: z.string().min(1),
 });
 

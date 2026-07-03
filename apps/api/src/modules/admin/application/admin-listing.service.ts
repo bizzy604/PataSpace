@@ -8,7 +8,7 @@
  *   reject) stays in ListingService; this service owns everything else.
  */
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { ListingStatus } from '@prisma/client';
+import { ListingStatus, Prisma } from '@prisma/client';
 import {
   AdminDeleteListingRequest,
   AdminListingsResponse,
@@ -87,7 +87,7 @@ export class AdminListingService {
           entityType: 'Listing',
           entityId: listingId,
           oldValue: this.pickFields(listing, Object.keys(data)),
-          newValue: data,
+          newValue: JSON.parse(JSON.stringify(data)) as Prisma.InputJsonObject,
         },
       });
 
@@ -163,9 +163,9 @@ export class AdminListingService {
     return listing;
   }
 
-  private pickFields(source: Record<string, unknown>, keys: string[]) {
+  private pickFields(source: Record<string, unknown>, keys: string[]): Prisma.InputJsonObject {
     return Object.fromEntries(
       keys.map((key) => [key, source[key] instanceof Date ? (source[key] as Date).toISOString() : source[key]]),
-    );
+    ) as Prisma.InputJsonObject;
   }
 }

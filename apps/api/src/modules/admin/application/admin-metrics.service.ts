@@ -14,15 +14,20 @@ import {
 } from '@prisma/client';
 import { AdminMetricsResponse } from '@pataspace/contracts';
 import { PrismaService } from '../../../common/database/prisma.service';
+import { AdminTrustMetricsService } from './admin-trust-metrics.service';
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class AdminMetricsService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly trustMetricsService: AdminTrustMetricsService,
+  ) {}
 
   async getMetrics(now = new Date()): Promise<AdminMetricsResponse> {
     const sevenDaysAgo = new Date(now.getTime() - 7 * DAY_IN_MS);
+    const trustAndFlywheel = await this.trustMetricsService.getMetrics();
 
     const [
       usersTotal,
@@ -106,6 +111,7 @@ export class AdminMetricsService {
         paidAmountKES: paid.amountKES,
       },
       supportTickets: { open: ticketsOpen },
+      ...trustAndFlywheel,
       generatedAt: now.toISOString(),
     };
   }

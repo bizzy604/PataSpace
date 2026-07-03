@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import {
   ListingHouseType as ContractListingHouseType,
+  PosterRole as ContractPosterRole,
   ListingCard,
   PaginatedSavedListingsResponse,
   SavedListingRecord,
@@ -148,6 +149,9 @@ export class SavedListingService {
       furnished: saved.listing.furnished,
       availableFrom: saved.listing.availableFrom.toISOString(),
       unlockCostCredits: saved.listing.unlockCostCredits,
+      successFeeKes: saved.listing.successFeeKes,
+      landlordAware: saved.listing.landlordAware,
+      posterRole: saved.listing.posterRole as unknown as ContractPosterRole,
       thumbnailUrl: saved.listing.thumbnailUrl ?? undefined,
       viewCount: saved.listing.viewCount,
       unlockCount: saved.listing.unlockCount,

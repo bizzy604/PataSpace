@@ -1,3 +1,11 @@
+/**
+ * Purpose: Listing lifecycle orchestration: create/update with two-part
+ * pricing snapshots (spec v1.1 section 4.3) and landlord-awareness
+ * attestation (spec v1.2 section 5), browse/details, moderation.
+ * Why important: listings are the supply side; pricing snapshots taken here
+ * must never be recomputed for existing holds or pending fees.
+ * Used by: ListingController, AdminListingsController, ListingSeedService.
+ */
 import {
   BadRequestException,
   ConflictException,
@@ -12,9 +20,9 @@ import {
   DisputeStatus,
   ListingHouseType as PrismaListingHouseType,
   ListingStatus,
+  PosterRole as PrismaPosterRole,
   Prisma,
   Role,
-  UploadMediaType,
 } from '@prisma/client';
 import {
   AdminPendingListingsResponse,
@@ -29,6 +37,7 @@ import {
   MyListingsFilters,
   PaginatedListingsResponse,
   PaginatedMyListingsResponse,
+  PosterRole as ContractPosterRole,
   RejectListingRequest,
   UpdateListingRequest,
   UpdateListingResponse,
@@ -37,9 +46,20 @@ import { PrismaService } from '../../common/database/prisma.service';
 import { decryptField, encryptField } from '../../common/security/encryption.util';
 import { SmsService } from '../../infrastructure/sms/sms.service';
 import { UserService } from '../user/user.service';
+import {
+  assertPhotoGpsMatchesListing,
+  assertStoredPhotoGpsMatchesListing,
+} from './domain/listing-geo.util';
+import {
+  computeSuccessFeeKes,
+  DEFAULT_PRICING_CONFIG,
+  posterShareKes,
+  PricingConfig,
+  resolveUnlockCredits,
+} from './domain/pricing.policy';
 import { ListingCacheService } from './listing-cache.service';
+import { ListingMediaResolver } from './persistence/listing-media.resolver';
 
-const GPS_MATCH_THRESHOLD_METERS = 100;
 const FIRST_LISTINGS_REVIEW_THRESHOLD = 3;
 const PUBLIC_MAP_COORDINATE_DECIMALS = 2;
 const VISIBLE_LISTING_STATUSES = [
@@ -56,15 +76,19 @@ type Viewer = {
 @Injectable()
 export class ListingService {
   private readonly encryptionKey: string;
+  private readonly pricingConfig: PricingConfig;
 
   constructor(
     private readonly prismaService: PrismaService,
     private readonly userService: UserService,
     private readonly listingCacheService: ListingCacheService,
     private readonly smsService: SmsService,
+    private readonly listingMediaResolver: ListingMediaResolver,
     configService: ConfigService,
   ) {
     this.encryptionKey = configService.get<string>('security.encryptionKey') ?? '';
+    this.pricingConfig =
+      configService.get<PricingConfig>('pricing') ?? DEFAULT_PRICING_CONFIG;
   }
 
   async createListing(
@@ -73,72 +97,106 @@ export class ListingService {
     input: CreateListingRequest,
   ): Promise<CreateListingResponse> {
     this.assertMobileDevice(deviceType);
+    this.assertLandlordAware(input.landlordAware);
     await this.assertListingAccountIsEligible(userId);
-    this.assertPhotoGpsMatchesListing(input.latitude, input.longitude, input.photos);
+    assertPhotoGpsMatchesListing(input.latitude, input.longitude, input.photos);
 
-    const media = await this.resolveMediaAssets(userId, input.photos, input.video);
+    if (input.seededFromConfirmationId) {
+      await this.assertSeedConfirmationUsable(userId, input.seededFromConfirmationId);
+    }
+
+    const media = await this.listingMediaResolver.resolveMediaAssets(
+      userId,
+      input.photos,
+      input.video,
+    );
     const existingListingCount = await this.prismaService.listing.count({
       where: {
         userId,
       },
     });
     const requiresReview = existingListingCount < FIRST_LISTINGS_REVIEW_THRESHOLD;
-    const unlockCostCredits = this.calculateUnlockCost(input.monthlyRent);
-    const commission = this.calculateCommission(unlockCostCredits);
+    const unlockCostCredits = resolveUnlockCredits(
+      input.houseType as unknown as PrismaListingHouseType,
+      this.pricingConfig,
+    );
+    const successFeeKes = computeSuccessFeeKes(input.monthlyRent, this.pricingConfig);
+    const commission = posterShareKes(successFeeKes, this.pricingConfig);
     const now = new Date();
 
-    const listing = await this.prismaService.listing.create({
-      data: {
-        addressEncrypted: encryptField(input.address.trim(), this.encryptionKey),
-        amenities: input.amenities.map((amenity) => amenity.trim()),
-        approvedAt: requiresReview ? null : now,
-        availableFrom: new Date(input.availableFrom),
-        availableTo: input.availableTo ? new Date(input.availableTo) : null,
-        bathrooms: input.bathrooms,
-        bedrooms: input.bedrooms,
-        commission,
-        county: input.county.trim(),
-        description: input.description.trim(),
-        furnished: input.furnished ?? false,
-        houseType: input.houseType as unknown as PrismaListingHouseType,
-        isApproved: !requiresReview,
-        latitude: input.latitude,
-        longitude: input.longitude,
-        monthlyRent: input.monthlyRent,
-        neighborhood: input.neighborhood.trim(),
-        photos: {
-          create: input.photos
-            .sort((left, right) => left.order - right.order)
-            .map((photo) => {
-              const uploadedPhoto = media.photoByKey.get(photo.s3Key)!;
+    let listing;
+    try {
+      listing = await this.prismaService.listing.create({
+        data: {
+          addressEncrypted: encryptField(input.address.trim(), this.encryptionKey),
+          amenities: input.amenities.map((amenity) => amenity.trim()),
+          approvedAt: requiresReview ? null : now,
+          availableFrom: new Date(input.availableFrom),
+          availableTo: input.availableTo ? new Date(input.availableTo) : null,
+          bathrooms: input.bathrooms,
+          bedrooms: input.bedrooms,
+          commission,
+          county: input.county.trim(),
+          description: input.description.trim(),
+          furnished: input.furnished ?? false,
+          houseType: input.houseType as unknown as PrismaListingHouseType,
+          isApproved: !requiresReview,
+          landlordAware: input.landlordAware,
+          latitude: input.latitude,
+          longitude: input.longitude,
+          monthlyRent: input.monthlyRent,
+          neighborhood: input.neighborhood.trim(),
+          photos: {
+            create: input.photos
+              .sort((left, right) => left.order - right.order)
+              .map((photo) => {
+                const uploadedPhoto = media.photoByKey.get(photo.s3Key)!;
 
-              return {
-                height: photo.height,
-                latitude: photo.latitude,
-                longitude: photo.longitude,
-                order: photo.order,
-                s3Key: photo.s3Key,
-                takenAt: photo.takenAt ? new Date(photo.takenAt) : null,
-                url: uploadedPhoto.cdnUrl,
-                width: photo.width,
-              };
-            }),
+                return {
+                  height: photo.height,
+                  latitude: photo.latitude,
+                  longitude: photo.longitude,
+                  order: photo.order,
+                  s3Key: photo.s3Key,
+                  takenAt: photo.takenAt ? new Date(photo.takenAt) : null,
+                  url: uploadedPhoto.cdnUrl,
+                  width: photo.width,
+                };
+              }),
+          },
+          posterRole: (input.posterRole ??
+            ContractPosterRole.OUTGOING_TENANT) as unknown as PrismaPosterRole,
+          propertyNotes: input.propertyNotes?.trim(),
+          propertyType: input.propertyType.trim(),
+          seededFromConfirmationId: input.seededFromConfirmationId ?? null,
+          status: requiresReview ? ListingStatus.PENDING : ListingStatus.ACTIVE,
+          successFeeKes,
+          thumbnailUrl: media.photoByKey.get(input.photos[0].s3Key)?.cdnUrl,
+          unlockCostCredits,
+          userId,
+          videoUrl: media.video?.cdnUrl ?? null,
         },
-        propertyNotes: input.propertyNotes?.trim(),
-        propertyType: input.propertyType.trim(),
-        status: requiresReview ? ListingStatus.PENDING : ListingStatus.ACTIVE,
-        thumbnailUrl: media.photoByKey.get(input.photos[0].s3Key)?.cdnUrl,
-        unlockCostCredits,
-        userId,
-        videoUrl: media.video?.cdnUrl ?? null,
-      },
-      select: {
-        id: true,
-        status: true,
-        unlockCostCredits: true,
-        commission: true,
-      },
-    });
+        select: {
+          id: true,
+          status: true,
+          unlockCostCredits: true,
+          commission: true,
+          successFeeKes: true,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException({
+          code: 'SEEDED_LISTING_EXISTS',
+          message: 'A listing was already created from this move-in confirmation',
+        });
+      }
+
+      throw error;
+    }
 
     if (!requiresReview) {
       await this.listingCacheService.invalidateListing(listing.id);
@@ -152,6 +210,7 @@ export class ListingService {
         : 'Listing created and is now live.',
       unlockCostCredits: listing.unlockCostCredits,
       commission: listing.commission,
+      successFeeKes: listing.successFeeKes,
       estimatedApprovalTime: requiresReview ? '24 hours' : undefined,
     };
   }
@@ -215,6 +274,9 @@ export class ListingService {
         furnished: listing.furnished,
         availableFrom: listing.availableFrom.toISOString(),
         unlockCostCredits: listing.unlockCostCredits,
+        successFeeKes: listing.successFeeKes,
+        landlordAware: listing.landlordAware,
+        posterRole: listing.posterRole as unknown as ContractPosterRole,
         thumbnailUrl: listing.thumbnailUrl ?? undefined,
         viewCount: listing.viewCount,
         unlockCount: listing.unlockCount,
@@ -321,6 +383,9 @@ export class ListingService {
       furnished: listing.furnished,
       availableFrom: listing.availableFrom.toISOString(),
       unlockCostCredits: listing.unlockCostCredits,
+      successFeeKes: listing.successFeeKes,
+      landlordAware: listing.landlordAware,
+      posterRole: listing.posterRole as unknown as ContractPosterRole,
       thumbnailUrl: listing.thumbnailUrl ?? undefined,
       viewCount: listing.viewCount,
       unlockCount: listing.unlockCount,
@@ -541,20 +606,29 @@ export class ListingService {
     const effectiveLongitude = input.longitude ?? listing.longitude;
 
     if (input.photos) {
-      this.assertPhotoGpsMatchesListing(effectiveLatitude, effectiveLongitude, input.photos);
+      assertPhotoGpsMatchesListing(effectiveLatitude, effectiveLongitude, input.photos);
     }
 
     const photoMedia = input.photos
-      ? await this.resolvePhotoAssets(userId, input.photos)
+      ? await this.listingMediaResolver.resolvePhotoAssets(userId, input.photos)
       : null;
-    const videoMedia = input.video ? await this.resolveVideoAsset(userId, input.video) : null;
+    const videoMedia = input.video
+      ? await this.listingMediaResolver.resolveVideoAsset(userId, input.video)
+      : null;
     const unlockCostCredits =
-      input.monthlyRent !== undefined
-        ? this.calculateUnlockCost(input.monthlyRent)
+      input.houseType !== undefined
+        ? resolveUnlockCredits(
+            input.houseType as unknown as PrismaListingHouseType,
+            this.pricingConfig,
+          )
         : listing.unlockCostCredits;
+    const successFeeKes =
+      input.monthlyRent !== undefined
+        ? computeSuccessFeeKes(input.monthlyRent, this.pricingConfig)
+        : listing.successFeeKes;
     const commission =
       input.monthlyRent !== undefined
-        ? this.calculateCommission(unlockCostCredits)
+        ? posterShareKes(successFeeKes, this.pricingConfig)
         : listing.commission;
 
     const updatedListing = await this.prismaService.listing.update({
@@ -625,6 +699,7 @@ export class ListingService {
           listing.status === ListingStatus.REJECTED && requestedFields.length > 0
             ? ListingStatus.PENDING
             : undefined,
+        successFeeKes,
         thumbnailUrl: input.photos
           ? photoMedia?.get(input.photos[0].s3Key)?.cdnUrl
           : undefined,
@@ -840,7 +915,7 @@ export class ListingService {
       });
     }
 
-    this.assertStoredPhotoGpsMatchesListing(listing.latitude, listing.longitude, listing.photos);
+    assertStoredPhotoGpsMatchesListing(listing.latitude, listing.longitude, listing.photos);
 
     const updatedListing = await this.prismaService.$transaction(async (tx) => {
       const approvedListing = await tx.listing.update({
@@ -1102,198 +1177,39 @@ export class ListingService {
     });
   }
 
-  private async resolveMediaAssets(
-    userId: string,
-    photos: CreateListingRequest['photos'],
-    video: CreateListingRequest['video'],
-  ) {
-    const photoByKey = await this.resolvePhotoAssets(userId, photos);
-    const resolvedVideo = video ? await this.resolveVideoAsset(userId, video) : null;
-
-    return {
-      photoByKey,
-      video: resolvedVideo,
-    };
-  }
-
-  private async resolvePhotoAssets(userId: string, photos: Array<{ s3Key: string; url: string }>) {
-    const keys = photos.map((photo) => photo.s3Key);
-    const uniqueKeys = new Set(keys);
-
-    if (uniqueKeys.size !== keys.length) {
-      throw new BadRequestException({
-        code: 'INVALID_MEDIA_SELECTION',
-        message: 'Each listing photo must reference a unique uploaded asset',
-      });
+  private assertLandlordAware(landlordAware: boolean) {
+    if (landlordAware === true) {
+      return;
     }
 
-    const uploads = await this.prismaService.uploadedAsset.findMany({
-      where: {
-        storageKey: {
-          in: keys,
-        },
-      },
+    throw new BadRequestException({
+      code: 'LANDLORD_AWARENESS_REQUIRED',
+      message:
+        'You must confirm the landlord or caretaker knows this unit is being listed',
     });
-    const uploadMap = new Map(uploads.map((upload) => [upload.storageKey, upload]));
-
-    for (const photo of photos) {
-      const upload = uploadMap.get(photo.s3Key);
-
-      this.assertUploadUsable(userId, photo.s3Key, photo.url, upload, UploadMediaType.IMAGE);
-    }
-
-    return uploadMap;
   }
 
-  private async resolveVideoAsset(userId: string, video: { s3Key: string; url: string }) {
-    const upload = await this.prismaService.uploadedAsset.findUnique({
+  private async assertSeedConfirmationUsable(userId: string, confirmationId: string) {
+    const confirmation = await this.prismaService.confirmation.findUnique({
       where: {
-        storageKey: video.s3Key,
+        id: confirmationId,
+      },
+      select: {
+        userId: true,
+        side: true,
       },
     });
 
-    this.assertUploadUsable(userId, video.s3Key, video.url, upload, UploadMediaType.VIDEO);
-
-    return upload!;
-  }
-
-  private assertUploadUsable(
-    userId: string,
-    storageKey: string,
-    inputUrl: string,
-    upload:
-      | {
-          userId: string;
-          storageKey: string;
-          mediaType: UploadMediaType;
-          confirmedAt: Date | null;
-          url: string;
-          cdnUrl: string;
-        }
-      | null
-      | undefined,
-    expectedMediaType: UploadMediaType,
-  ) {
-    if (!upload || upload.userId !== userId || !storageKey.startsWith(`listings/${userId}/`)) {
+    if (
+      !confirmation ||
+      confirmation.userId !== userId ||
+      confirmation.side !== ConfirmationSide.INCOMING_TENANT
+    ) {
       throw new BadRequestException({
-        code: 'INVALID_MEDIA_SELECTION',
-        message: 'One or more uploaded assets do not belong to the current user',
+        code: 'INVALID_SEED_CONFIRMATION',
+        message: 'The referenced move-in confirmation does not belong to you',
       });
     }
-
-    if (!upload.confirmedAt) {
-      throw new BadRequestException({
-        code: 'UPLOAD_NOT_CONFIRMED',
-        message: 'All media must be confirmed before attaching them to a listing',
-      });
-    }
-
-    if (upload.mediaType !== expectedMediaType) {
-      throw new BadRequestException({
-        code: 'INVALID_MEDIA_SELECTION',
-        message: 'Uploaded media type does not match the requested listing field',
-      });
-    }
-
-    if (inputUrl !== upload.url && inputUrl !== upload.cdnUrl) {
-      throw new BadRequestException({
-        code: 'INVALID_MEDIA_SELECTION',
-        message: 'Uploaded media URL does not match the confirmed asset',
-      });
-    }
-  }
-
-  private assertPhotoGpsMatchesListing(
-    listingLatitude: number,
-    listingLongitude: number,
-    photos: Array<{ latitude: number; longitude: number; s3Key: string }>,
-  ) {
-    photos.forEach((photo) => {
-      const distanceMeters = this.calculateDistanceMeters(
-        listingLatitude,
-        listingLongitude,
-        photo.latitude,
-        photo.longitude,
-      );
-
-      if (distanceMeters <= GPS_MATCH_THRESHOLD_METERS) {
-        return;
-      }
-
-      throw new BadRequestException({
-        code: 'GPS_MISMATCH',
-        message: 'Photo GPS coordinates must match the listing coordinates within 100 meters',
-        details: {
-          distanceMeters: Math.round(distanceMeters),
-          s3Key: photo.s3Key,
-        },
-      });
-    });
-  }
-
-  private assertStoredPhotoGpsMatchesListing(
-    listingLatitude: number,
-    listingLongitude: number,
-    photos: Array<{ latitude: number | null; longitude: number | null; s3Key: string }>,
-  ) {
-    photos.forEach((photo) => {
-      if (photo.latitude === null || photo.longitude === null) {
-        throw new BadRequestException({
-          code: 'GPS_MISMATCH',
-          message: 'All listing photos must include GPS metadata before approval',
-          details: {
-            s3Key: photo.s3Key,
-          },
-        });
-      }
-
-      const distanceMeters = this.calculateDistanceMeters(
-        listingLatitude,
-        listingLongitude,
-        photo.latitude,
-        photo.longitude,
-      );
-
-      if (distanceMeters <= GPS_MATCH_THRESHOLD_METERS) {
-        return;
-      }
-
-      throw new BadRequestException({
-        code: 'GPS_MISMATCH',
-        message: 'Photo GPS coordinates must match the listing coordinates within 100 meters',
-        details: {
-          distanceMeters: Math.round(distanceMeters),
-          s3Key: photo.s3Key,
-        },
-      });
-    });
-  }
-
-  private calculateDistanceMeters(
-    latitude1: number,
-    longitude1: number,
-    latitude2: number,
-    longitude2: number,
-  ) {
-    const earthRadiusMeters = 6_371_000;
-    const latitudeDelta = this.toRadians(latitude2 - latitude1);
-    const longitudeDelta = this.toRadians(longitude2 - longitude1);
-    const latitude1Radians = this.toRadians(latitude1);
-    const latitude2Radians = this.toRadians(latitude2);
-
-    const a =
-      Math.sin(latitudeDelta / 2) * Math.sin(latitudeDelta / 2) +
-      Math.cos(latitude1Radians) *
-        Math.cos(latitude2Radians) *
-        Math.sin(longitudeDelta / 2) *
-        Math.sin(longitudeDelta / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return earthRadiusMeters * c;
-  }
-
-  private toRadians(value: number) {
-    return (value * Math.PI) / 180;
   }
 
   private buildMapLocation(latitude: number, longitude: number) {
@@ -1301,14 +1217,6 @@ export class ListingService {
       approxLatitude: this.roundCoordinate(latitude, PUBLIC_MAP_COORDINATE_DECIMALS),
       approxLongitude: this.roundCoordinate(longitude, PUBLIC_MAP_COORDINATE_DECIMALS),
     };
-  }
-
-  private calculateUnlockCost(monthlyRent: number) {
-    return Math.round(monthlyRent * 0.1);
-  }
-
-  private calculateCommission(unlockCostCredits: number) {
-    return Math.round(unlockCostCredits * 0.3);
   }
 
   private roundCoordinate(value: number, decimals: number) {

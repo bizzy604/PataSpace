@@ -98,6 +98,31 @@ enum UploadMediaType {
   VIDEO
 }
 
+enum PosterRole {
+  OUTGOING_TENANT
+  CARETAKER
+  LANDLORD
+  SCOUT
+}
+
+enum UnlockDeadReason {
+  OCCUPIED
+  FAKE
+  UNRESPONSIVE
+  LANDLORD_DECLINED
+}
+
+enum SuccessFeeStatus {
+  PENDING
+  PARTIAL
+  SETTLED
+}
+
+enum ProxySessionStatus {
+  ACTIVE
+  EXPIRED
+}
+
 model User {
   id                   String              @id @default(cuid())
   clerkId              String?             @unique
@@ -226,6 +251,10 @@ model Listing {
   availableTo       DateTime?
   unlockCostCredits Int
   commission        Int
+  successFeeKes     Int            @default(0)
+  landlordAware     Boolean        @default(false)
+  posterRole        PosterRole     @default(OUTGOING_TENANT)
+  seededFromConfirmationId String? @unique
   videoUrl          String?
   thumbnailUrl      String?
   status            ListingStatus  @default(PENDING)
@@ -303,6 +332,7 @@ model Unlock {
   isRefunded               Boolean            @default(false)
   refundReason             String?
   refundedAt               DateTime?
+  deadReason               UnlockDeadReason?
   createdAt                DateTime           @default(now())
   updatedAt                DateTime           @updatedAt
   listing                  Listing            @relation(fields: [listingId], references: [id], onDelete: Cascade)
@@ -312,6 +342,8 @@ model Unlock {
   commission               Commission?
   dispute                  Dispute?
   reviews                  UnlockReview[]
+  successFee               SuccessFee?
+  proxySession             ProxySession?
 
   @@unique([listingId, buyerId])
   @@index([buyerId, createdAt])
@@ -320,11 +352,12 @@ model Unlock {
 }
 
 model Confirmation {
-  id          String           @id @default(cuid())
-  unlockId    String
-  userId      String
-  side        ConfirmationSide
-  confirmedAt DateTime         @default(now())
+  id                String           @id @default(cuid())
+  unlockId          String
+  userId            String
+  side              ConfirmationSide
+  confirmedAt       DateTime         @default(now())
+  posterPromptSmsAt DateTime?
   unlock      Unlock           @relation(fields: [unlockId], references: [id], onDelete: Cascade)
   user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -355,6 +388,44 @@ model Commission {
   @@index([status, eligibleAt])
   @@index([outgoingTenantId])
   @@map("commissions")
+}
+
+model SuccessFee {
+  id               String           @id @default(cuid())
+  unlockId         String           @unique
+  listingId        String
+  moverId          String
+  feeDueKes        Int
+  creditsApplied   Int              @default(0)
+  cashCollectedKes Int              @default(0)
+  status           SuccessFeeStatus @default(PENDING)
+  settledAt        DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  unlock           Unlock           @relation(fields: [unlockId], references: [id], onDelete: Cascade)
+
+  @@index([moverId, status])
+  @@index([listingId])
+  @@map("success_fees")
+}
+
+model ProxySession {
+  id                    String             @id @default(cuid())
+  unlockId              String             @unique
+  virtualMsisdn         String
+  providerRef           String?
+  status                ProxySessionStatus @default(ACTIVE)
+  expiresAt             DateTime
+  firstPosterResponseAt DateTime?
+  callCount             Int                @default(0)
+  lastCallAt            DateTime?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  unlock                Unlock             @relation(fields: [unlockId], references: [id], onDelete: Cascade)
+
+  @@index([virtualMsisdn, status])
+  @@index([status, expiresAt])
+  @@map("proxy_sessions")
 }
 
 model Dispute {

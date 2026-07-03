@@ -231,6 +231,7 @@ describe('Phase 6 confirmations, disputes, and admin review flows', () => {
         availableTo: '2026-05-31T00:00:00.000Z',
         photos: media.photos,
         video: media.video,
+        landlordAware: true,
       });
   };
 
@@ -370,8 +371,14 @@ describe('Phase 6 confirmations, disputes, and admin review flows', () => {
 
     expect(outgoingConfirmationResponse.body.bothConfirmed).toBe(true);
     expect(outgoingConfirmationResponse.body.commission).toMatchObject({
-      amount: 750,
+      amount: 210,
       status: 'PENDING',
+    });
+    expect(outgoingConfirmationResponse.body.successFee).toMatchObject({
+      feeDueKes: 2500,
+      creditsApplied: 300,
+      remainingKes: 2200,
+      status: 'PARTIAL',
     });
 
     const payableOn = new Date(outgoingConfirmationResponse.body.commission.payableOn).getTime();
@@ -393,7 +400,7 @@ describe('Phase 6 confirmations, disputes, and admin review flows', () => {
     });
 
     expect(commission).toMatchObject({
-      amountKES: 750,
+      amountKES: 210,
       outgoingTenantId: owner.userId,
       status: 'PENDING',
     });
@@ -414,7 +421,7 @@ describe('Phase 6 confirmations, disputes, and admin review flows', () => {
       (item: { id: string }) => item.id === listingResponse.body.id,
     );
 
-    expect(ownerListing.pendingEarnings).toBe(750);
+    expect(ownerListing.pendingEarnings).toBe(210);
   });
 
   it('creates disputes once and restricts dispute lookup to participants or admins', async () => {

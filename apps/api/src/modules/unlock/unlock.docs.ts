@@ -1,4 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { UnlockDeadReason } from '@pataspace/contracts';
 
 export class UnlockContactInfoDto {
   @ApiProperty({ example: '+254712345678' })
@@ -43,10 +44,47 @@ export class CreateUnlockResponseDto {
   @ApiProperty({ type: () => UnlockContactInfoDto })
   contactInfo!: UnlockContactInfoDto;
 
+  @ApiProperty({
+    enum: ['direct', 'masked'],
+    example: 'masked',
+    description:
+      'masked: phoneNumber is a pooled virtual number bridged by PataSpace; ' +
+      'direct: legacy raw-number reveal (pre-provisioning fallback).',
+  })
+  contactMode!: 'direct' | 'masked';
+
+  @ApiProperty({ example: '2026-03-23T14:00:00.000Z', nullable: true })
+  contactExpiresAt!: string | null;
+
   @ApiProperty({ type: () => UnlockTenantDto })
   tenant!: UnlockTenantDto;
 
   @ApiProperty({ example: 'Contact unlocked. SMS sent to tenant to notify them.' })
+  message!: string;
+}
+
+export class ReportUnlockDeadRequestDto {
+  @ApiProperty({ enum: UnlockDeadReason, example: UnlockDeadReason.OCCUPIED })
+  reason!: UnlockDeadReason;
+
+  @ApiPropertyOptional({ example: 'Caretaker said the unit was taken last week.' })
+  comment?: string;
+}
+
+export class ReportUnlockDeadResponseDto {
+  @ApiProperty({ example: 'cm8unlock123' })
+  unlockId!: string;
+
+  @ApiProperty({ enum: UnlockDeadReason, example: UnlockDeadReason.OCCUPIED })
+  reason!: UnlockDeadReason;
+
+  @ApiProperty({ example: 300 })
+  creditsRefunded!: number;
+
+  @ApiProperty({ example: 2800 })
+  newBalance!: number;
+
+  @ApiProperty({ example: 'Credits refunded instantly. Thanks for keeping listings honest.' })
   message!: string;
 }
 

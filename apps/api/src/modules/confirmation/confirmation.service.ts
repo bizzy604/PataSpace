@@ -1,3 +1,13 @@
+/**
+ * Purpose: Move-in confirmation loop (spec sections 4.4/4.6): records
+ * per-side confirmations, triggers success-fee capture + fee-backed
+ * commission when both sides confirm, extends the masked contact session,
+ * and hands the mover the vacated-listing prompt (supply flywheel).
+ * Why important: confirmations are the payout trigger; nothing pays out
+ * without this loop closing.
+ * Used by: ConfirmationController, DisputeService, ConfirmationFollowupJob,
+ * MoverPosterReminderJob.
+ */
 import {
   BadRequestException,
   ConflictException,
@@ -7,7 +17,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
-  CommissionStatus as PrismaCommissionStatus,
   ConfirmationSide as PrismaConfirmationSide,
   DisputeStatus as PrismaDisputeStatus,
   Prisma,
@@ -15,14 +24,20 @@ import {
 import {
   CommissionStatus as ContractCommissionStatus,
   ConfirmationSide as ContractConfirmationSide,
+  ConfirmationSuccessFee,
   CreateConfirmationRequest,
   CreateConfirmationResponse,
+  VacatedListingPrompt,
 } from '@pataspace/contracts';
 import { PrismaService } from '../../common/database/prisma.service';
-import { SmsService } from '../../infrastructure/sms/sms.service';
-import { UserService } from '../user/user.service';
+import {
+  computeSuccessFeeKes,
+  posterShareKes,
+} from '../listing/domain/pricing.policy';
+import { ProxySessionService } from '../unlock/contact/proxy-session.service';
+import { ConfirmationNotifierService } from './confirmation-notifier.service';
+import { SuccessFeeService } from './success-fee.service';
 
-const COMMISSION_WAIT_DAYS = 7;
 const AUTO_CONFIRM_AFTER_DAYS = 14;
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const BLOCKING_DISPUTE_STATUSES = new Set<PrismaDisputeStatus>([
@@ -41,7 +56,7 @@ type UnlockForConfirmation = Prisma.UnlockGetPayload<{
       select: {
         userId: true;
         neighborhood: true;
-        commission: true;
+        monthlyRent: true;
         user: {
           select: {
             phoneNumberEncrypted: true;
@@ -68,12 +83,18 @@ type UnlockForConfirmation = Prisma.UnlockGetPayload<{
   };
 }>;
 
+type SettlementOutcome = {
+  commission: { amountKES: number; status: string; eligibleAt: Date } | null;
+  successFee: ConfirmationSuccessFee;
+};
+
 @Injectable()
 export class ConfirmationService {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly smsService: SmsService,
-    private readonly userService: UserService,
+    private readonly notifier: ConfirmationNotifierService,
+    private readonly successFeeService: SuccessFeeService,
+    private readonly proxySessionService: ProxySessionService,
   ) {}
 
   async createConfirmation(
@@ -84,31 +105,16 @@ export class ConfirmationService {
     this.assertConfirmationAllowed(unlock, userId, input.side);
 
     const confirmation = await this.createConfirmationRecord(unlock.id, userId, input.side);
-    await this.ensureCommissionIfEligible(unlock.id);
+    const settlement = await this.ensureSettlementIfEligible(unlock.id);
 
-    const currentState = await this.prismaService.unlock.findUniqueOrThrow({
-      where: {
-        id: unlock.id,
-      },
-      select: {
-        confirmations: {
-          select: {
-            side: true,
-          },
-        },
-        commission: {
-          select: {
-            amountKES: true,
-            status: true,
-            eligibleAt: true,
-          },
-        },
-      },
-    });
+    const bothConfirmed = settlement !== null;
+    const commission = settlement?.commission ?? null;
 
-    const bothConfirmed = currentState.confirmations.length >= 2;
-
-    await this.sendConfirmationNotifications(unlock, input.side, currentState.commission);
+    await this.notifier.sendConfirmationNotifications(
+      unlock,
+      input.side,
+      commission ? { amountKES: commission.amountKES, eligibleAt: commission.eligibleAt } : null,
+    );
 
     return {
       confirmationId: confirmation.id,
@@ -116,107 +122,26 @@ export class ConfirmationService {
       side: confirmation.side as unknown as ContractConfirmationSide,
       confirmedAt: confirmation.confirmedAt.toISOString(),
       bothConfirmed,
-      commission: currentState.commission
+      commission: commission
         ? {
-            amount: currentState.commission.amountKES,
-            status: currentState.commission.status as unknown as ContractCommissionStatus,
-            payableOn: currentState.commission.eligibleAt.toISOString(),
+            amount: commission.amountKES,
+            status: commission.status as unknown as ContractCommissionStatus,
+            payableOn: commission.eligibleAt.toISOString(),
           }
         : undefined,
-      message: this.buildResponseMessage(input.side, currentState.commission?.eligibleAt ?? null),
+      successFee: settlement?.successFee,
+      vacatedListingPrompt:
+        input.side === ContractConfirmationSide.INCOMING_TENANT
+          ? this.buildVacatedListingPrompt(confirmation.id, unlock.listing.monthlyRent)
+          : undefined,
+      message: this.buildResponseMessage(input.side, commission?.eligibleAt ?? null),
     };
   }
 
-  private async createConfirmationRecord(
-    unlockId: string,
-    userId: string,
-    side: ContractConfirmationSide,
-  ) {
-    try {
-      return await this.prismaService.confirmation.create({
-        data: {
-          unlockId,
-          userId,
-          side: side as unknown as PrismaConfirmationSide,
-        },
-        select: {
-          id: true,
-          unlockId: true,
-          side: true,
-          confirmedAt: true,
-        },
-      });
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        throw this.alreadyConfirmedError();
-      }
-
-      throw error;
-    }
-  }
-
-  private async ensureCommissionIfEligible(unlockId: string) {
-    const unlock = await this.prismaService.unlock.findUnique({
-      where: {
-        id: unlockId,
-      },
-      select: {
-        id: true,
-        isRefunded: true,
-        listing: {
-          select: {
-            userId: true,
-            commission: true,
-          },
-        },
-        confirmations: {
-          select: {
-            confirmedAt: true,
-            side: true,
-          },
-        },
-        dispute: {
-          select: {
-            status: true,
-          },
-        },
-      },
-    });
-
-    if (
-      !unlock ||
-      unlock.isRefunded ||
-      unlock.confirmations.length < 2 ||
-      (unlock.dispute && BLOCKING_DISPUTE_STATUSES.has(unlock.dispute.status))
-    ) {
-      return null;
-    }
-
-    return this.prismaService.commission.upsert({
-      where: {
-        unlockId,
-      },
-      update: {},
-        create: {
-          unlockId,
-          outgoingTenantId: unlock.listing.userId,
-          amountKES: unlock.listing.commission,
-          status: PrismaCommissionStatus.PENDING,
-          eligibleAt: this.calculateEligibleAt(unlock.confirmations),
-        },
-      select: {
-        amountKES: true,
-        status: true,
-        eligibleAt: true,
-      },
-    });
-  }
-
   async ensureCommissionForUnlock(unlockId: string) {
-    return this.ensureCommissionIfEligible(unlockId);
+    const settlement = await this.ensureSettlementIfEligible(unlockId);
+
+    return settlement?.commission ?? null;
   }
 
   async autoConfirmStaleUnlocks(now = new Date()) {
@@ -232,41 +157,7 @@ export class ConfirmationService {
           },
         },
       },
-      select: {
-        id: true,
-        buyerId: true,
-        isRefunded: true,
-        refundReason: true,
-        refundedAt: true,
-        listing: {
-          select: {
-            userId: true,
-            neighborhood: true,
-            commission: true,
-            user: {
-              select: {
-                phoneNumberEncrypted: true,
-              },
-            },
-          },
-        },
-        buyer: {
-          select: {
-            phoneNumberEncrypted: true,
-          },
-        },
-        confirmations: {
-          select: {
-            confirmedAt: true,
-            side: true,
-          },
-        },
-        dispute: {
-          select: {
-            status: true,
-          },
-        },
-      },
+      select: this.unlockSelect(),
     });
 
     let autoConfirmed = 0;
@@ -306,15 +197,24 @@ export class ConfirmationService {
         throw error;
       }
 
-      const commission = await this.ensureCommissionIfEligible(unlock.id);
-      await this.sendConfirmationNotifications(unlock, missingSide, commission);
+      const settlement = await this.ensureSettlementIfEligible(unlock.id);
+      await this.notifier.sendConfirmationNotifications(
+        unlock,
+        missingSide,
+        settlement?.commission
+          ? {
+              amountKES: settlement.commission.amountKES,
+              eligibleAt: settlement.commission.eligibleAt,
+            }
+          : null,
+      );
       autoConfirmed += 1;
     }
 
     return autoConfirmed;
   }
 
-  private async getUnlockOrThrow(unlockId: string): Promise<UnlockForConfirmation> {
+  private async ensureSettlementIfEligible(unlockId: string): Promise<SettlementOutcome | null> {
     const unlock = await this.prismaService.unlock.findUnique({
       where: {
         id: unlockId,
@@ -322,30 +222,19 @@ export class ConfirmationService {
       select: {
         id: true,
         buyerId: true,
+        creditsSpent: true,
         isRefunded: true,
-        refundReason: true,
-        refundedAt: true,
         listing: {
           select: {
+            id: true,
             userId: true,
-            neighborhood: true,
-            commission: true,
-            user: {
-              select: {
-                phoneNumberEncrypted: true,
-              },
-            },
-          },
-        },
-        buyer: {
-          select: {
-            phoneNumberEncrypted: true,
+            monthlyRent: true,
+            successFeeKes: true,
           },
         },
         confirmations: {
           select: {
             confirmedAt: true,
-            side: true,
           },
         },
         dispute: {
@@ -356,6 +245,90 @@ export class ConfirmationService {
       },
     });
 
+    if (
+      !unlock ||
+      unlock.isRefunded ||
+      unlock.confirmations.length < 2 ||
+      (unlock.dispute && BLOCKING_DISPUTE_STATUSES.has(unlock.dispute.status))
+    ) {
+      return null;
+    }
+
+    const successFee = await this.successFeeService.ensureForConfirmedUnlock(unlock);
+    await this.proxySessionService.extendForConfirmedUnlock(unlock.id);
+
+    const commission = await this.prismaService.commission.findUnique({
+      where: {
+        unlockId: unlock.id,
+      },
+      select: {
+        amountKES: true,
+        status: true,
+        eligibleAt: true,
+      },
+    });
+
+    return {
+      commission,
+      successFee,
+    };
+  }
+
+  private async createConfirmationRecord(
+    unlockId: string,
+    userId: string,
+    side: ContractConfirmationSide,
+  ) {
+    try {
+      return await this.prismaService.confirmation.create({
+        data: {
+          unlockId,
+          userId,
+          side: side as unknown as PrismaConfirmationSide,
+        },
+        select: {
+          id: true,
+          unlockId: true,
+          side: true,
+          confirmedAt: true,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw this.alreadyConfirmedError();
+      }
+
+      throw error;
+    }
+  }
+
+  // Supply flywheel (spec section 4.6): the mover is vacating another house
+  // right now. Rent-history profiles do not exist yet, so the new home's rent
+  // is the estimate basis; the client collects the real figures pre-capture.
+  private buildVacatedListingPrompt(
+    confirmationId: string,
+    estimateBasisRentKes: number,
+  ): VacatedListingPrompt {
+    const estimatedEarningsKes = posterShareKes(computeSuccessFeeKes(estimateBasisRentKes));
+
+    return {
+      seededFromConfirmationId: confirmationId,
+      estimatedEarningsKes,
+      message: `Leaving a house behind? It's worth ~KES ${estimatedEarningsKes} on PataSpace. Post it in 2 minutes.`,
+    };
+  }
+
+  private async getUnlockOrThrow(unlockId: string): Promise<UnlockForConfirmation> {
+    const unlock = await this.prismaService.unlock.findUnique({
+      where: {
+        id: unlockId,
+      },
+      select: this.unlockSelect(),
+    });
+
     if (!unlock) {
       throw new NotFoundException({
         code: 'UNLOCK_NOT_FOUND',
@@ -364,6 +337,44 @@ export class ConfirmationService {
     }
 
     return unlock;
+  }
+
+  private unlockSelect() {
+    return {
+      id: true,
+      buyerId: true,
+      isRefunded: true,
+      refundReason: true,
+      refundedAt: true,
+      listing: {
+        select: {
+          userId: true,
+          neighborhood: true,
+          monthlyRent: true,
+          user: {
+            select: {
+              phoneNumberEncrypted: true,
+            },
+          },
+        },
+      },
+      buyer: {
+        select: {
+          phoneNumberEncrypted: true,
+        },
+      },
+      confirmations: {
+        select: {
+          confirmedAt: true,
+          side: true,
+        },
+      },
+      dispute: {
+        select: {
+          status: true,
+        },
+      },
+    } as const;
   }
 
   private assertConfirmationAllowed(
@@ -427,72 +438,5 @@ export class ConfirmationService {
     return side === ContractConfirmationSide.INCOMING_TENANT
       ? 'Waiting for outgoing tenant to confirm.'
       : 'Waiting for incoming tenant to confirm.';
-  }
-
-  private calculateEligibleAt(confirmations: Array<{ confirmedAt: Date }>) {
-    const latestConfirmation = confirmations.reduce<Date | null>(
-      (latest, confirmation) =>
-        !latest || confirmation.confirmedAt.getTime() > latest.getTime()
-          ? confirmation.confirmedAt
-          : latest,
-      null,
-    );
-
-    const baseTime = latestConfirmation ?? new Date();
-    return new Date(baseTime.getTime() + COMMISSION_WAIT_DAYS * DAY_IN_MS);
-  }
-
-  private async sendConfirmationNotifications(
-    unlock: UnlockForConfirmation,
-    side: ContractConfirmationSide,
-    commission: { amountKES: number; eligibleAt: Date } | null,
-  ) {
-    const buyerPhoneNumber = unlock.buyer.phoneNumberEncrypted
-      ? this.userService.decryptPhoneNumber(unlock.buyer.phoneNumberEncrypted)
-      : null;
-    const outgoingTenantPhoneNumber = unlock.listing.user.phoneNumberEncrypted
-      ? this.userService.decryptPhoneNumber(unlock.listing.user.phoneNumberEncrypted)
-      : null;
-
-    if (commission) {
-      await Promise.all([
-        this.sendSmsQuietly(
-          buyerPhoneNumber,
-          `Connection confirmed on PataSpace for ${unlock.listing.neighborhood}.`,
-        ),
-        this.sendSmsQuietly(
-          outgoingTenantPhoneNumber,
-          `Connection confirmed on PataSpace. Your ${commission.amountKES} KES commission is scheduled for ${commission.eligibleAt
-            .toISOString()
-            .slice(0, 10)}.`,
-        ),
-      ]);
-
-      return;
-    }
-
-    if (side === ContractConfirmationSide.INCOMING_TENANT) {
-      await this.sendSmsQuietly(
-        outgoingTenantPhoneNumber,
-        `Incoming tenant confirmed the unlock for your ${unlock.listing.neighborhood} listing. Please confirm on PataSpace.`,
-      );
-      return;
-    }
-
-    await this.sendSmsQuietly(
-      buyerPhoneNumber,
-      `Outgoing tenant confirmed the unlock for ${unlock.listing.neighborhood}. Please confirm on PataSpace.`,
-    );
-  }
-
-  private async sendSmsQuietly(phoneNumber: string | null, message: string) {
-    if (!phoneNumber) {
-      return;
-    }
-    try {
-      await this.smsService.sendMessage(phoneNumber, message);
-    } catch {
-      return;
-    }
   }
 }

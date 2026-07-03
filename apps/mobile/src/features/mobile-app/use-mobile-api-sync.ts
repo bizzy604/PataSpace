@@ -40,7 +40,7 @@ function listingCardToPreview(card: ListingCard): ListingPreview {
     price: `KES ${card.monthlyRent.toLocaleString()}/mo`,
     unlockCostCredits: card.unlockCostCredits,
     unlockCost: formatCredits(card.unlockCostCredits),
-    commissionAmount: `KES ${Math.round(card.unlockCostCredits * 0.3).toLocaleString()}`,
+    commissionAmount: `KES ${Math.round(card.successFeeKes * 0.7).toLocaleString()}`,
     county: card.county,
     houseType: card.houseType,
     area: card.neighborhood,

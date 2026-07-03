@@ -20,13 +20,13 @@ import {
 } from '@pataspace/contracts';
 import { PrismaService } from '../../common/database/prisma.service';
 import { ConfirmationService } from '../confirmation/confirmation.service';
-import { UnlockService } from '../unlock/unlock.service';
+import { UnlockRefundService } from '../unlock/unlock-refund.service';
 
 @Injectable()
 export class DisputeService {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly unlockService: UnlockService,
+    private readonly unlockRefundService: UnlockRefundService,
     private readonly confirmationService: ConfirmationService,
   ) {}
 
@@ -276,7 +276,7 @@ export class DisputeService {
     }
 
     if (input.action === 'FULL_REFUND') {
-      await this.unlockService.refundUnlockById(dispute.unlock.id, input.resolution.trim());
+      await this.unlockRefundService.refundUnlockById(dispute.unlock.id, input.resolution.trim());
     }
 
     await this.prismaService.$transaction(async (tx) => {

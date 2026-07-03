@@ -17,6 +17,7 @@ import {
   countyOptions,
   createListingSteps,
   draftCameraSequence,
+  estimateListingPricing,
   formatListingHouseType,
   houseTypeOptions,
   photoCapturePrompts,
@@ -707,25 +708,27 @@ export function ListingDetailsFormScreen() {
 }
 
 export function ListingReviewScreen() {
-  const { draft, submitDraft } = useMobileApp();
+  const { draft, submitDraft, updateDraft } = useMobileApp();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const monthlyRent = Number(draft.monthlyRent) || 0;
-  const unlockEstimate = Math.round(monthlyRent * 0.1);
+  const pricing = estimateListingPricing(draft.houseType, monthlyRent);
   const heroPhoto = draft.photos[0];
 
   return (
     <Screen
       bottomBar={
         <Button
-          disabled={draft.photos.length === 0 || isSubmitting}
+          disabled={draft.photos.length === 0 || !draft.landlordAware || isSubmitting}
           label={
             draft.photos.length === 0
               ? 'Capture a photo first'
-              : isSubmitting
-                ? 'Uploading photos…'
-                : 'Submit listing'
+              : !draft.landlordAware
+                ? 'Confirm the landlord knows first'
+                : isSubmitting
+                  ? 'Uploading photos…'
+                  : 'Submit listing'
           }
           onPress={async () => {
             setSubmitError('');
@@ -774,10 +777,47 @@ export function ListingReviewScreen() {
         <Card className="flex-1">
           <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">Unlock</Text>
           <Text className="mt-2 text-[24px] font-semibold text-foreground">
-            {unlockEstimate.toLocaleString()} credits
+            {pricing.unlockCredits.toLocaleString()} credits
           </Text>
         </Card>
       </View>
+
+      <Card>
+        <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">
+          You earn on confirmed move-in
+        </Text>
+        <Text className="mt-2 text-[24px] font-semibold text-foreground">
+          KES {pricing.posterEarningsKes.toLocaleString()}
+        </Text>
+        <CardDescription>
+          70% of the KES {pricing.successFeeKes.toLocaleString()} success fee the mover pays only
+          when they move in.
+        </CardDescription>
+      </Card>
+
+      <Pressable
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: draft.landlordAware }}
+        onPress={() => updateDraft({ landlordAware: !draft.landlordAware })}
+      >
+        <Card className={draft.landlordAware ? 'border border-primary' : ''}>
+          <View className="flex-row items-center gap-3">
+            <AppIcon
+              active={draft.landlordAware}
+              name={draft.landlordAware ? 'checkmark-circle' : 'ellipse-outline'}
+              size={22}
+            />
+            <View className="flex-1">
+              <CardTitle className="text-[16px]">
+                The landlord or caretaker knows this unit is being listed
+              </CardTitle>
+              <CardDescription>
+                Required. Talking to them first prevents declined move-ins later.
+              </CardDescription>
+            </View>
+          </View>
+        </Card>
+      </Pressable>
 
       <View className="flex-row gap-3">
         <Card className="flex-1">

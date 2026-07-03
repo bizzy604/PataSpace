@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CommissionStatus, ListingHouseType, ListingStatus } from '../enums';
+import { CommissionStatus, ListingHouseType, ListingStatus, PosterRole } from '../enums';
 import { isoDateStringSchema, paginationMetaSchema } from './common';
 
 const coordinateSchema = z.object({
@@ -93,6 +93,9 @@ const createListingShape = z.object({
   availableTo: isoDateStringSchema.optional(),
   photos: z.array(listingPhotoInputSchema).min(5).max(15),
   video: listingVideoInputSchema.optional(),
+  landlordAware: z.literal(true),
+  posterRole: z.nativeEnum(PosterRole).default(PosterRole.OUTGOING_TENANT),
+  seededFromConfirmationId: z.string().min(1).optional(),
 });
 
 export const createListingSchema = createListingShape.superRefine(
@@ -156,6 +159,9 @@ export const listingCardSchema = z.object({
   furnished: z.boolean(),
   availableFrom: isoDateStringSchema,
   unlockCostCredits: z.number().int().positive(),
+  successFeeKes: z.number().int().nonnegative(),
+  landlordAware: z.boolean(),
+  posterRole: z.nativeEnum(PosterRole),
   thumbnailUrl: z.string().url().optional(),
   viewCount: z.number().int().nonnegative(),
   unlockCount: z.number().int().nonnegative(),
@@ -240,7 +246,23 @@ export const createListingResponseSchema = z.object({
   message: z.string().min(1),
   unlockCostCredits: z.number().int().positive(),
   commission: z.number().int().nonnegative(),
+  successFeeKes: z.number().int().nonnegative(),
   estimatedApprovalTime: z.string().min(1).optional(),
+});
+
+export const seedListingFromConfirmationSchema = z.object({
+  confirmationId: z.string().min(1),
+});
+
+// Rent-history profiles do not exist yet, so the seed carries the confirmation
+// linkage and an earnings estimate only; the client collects the spec's
+// "three quick fields" (county, unit type, rent) before capture.
+export const seedListingFromConfirmationResponseSchema = z.object({
+  seededFromConfirmationId: z.string().min(1),
+  posterRole: z.nativeEnum(PosterRole),
+  estimatedEarningsKes: z.number().int().nonnegative(),
+  estimateBasisRentKes: z.number().int().positive(),
+  message: z.string().min(1),
 });
 
 export const updateListingResponseSchema = z.object({

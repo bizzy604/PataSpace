@@ -15,16 +15,33 @@ export type UnlockTenantContact = {
   phoneNumber: string | null;
 };
 
+export type UnlockContactMode = 'direct' | 'masked';
+
 export type CreateUnlockResponse = {
   unlockId: string;
   creditsSpent: number;
   newBalance: number;
   contactInfo: UnlockContactInfo;
+  contactMode: UnlockContactMode;
+  contactExpiresAt: string | null;
   tenant: UnlockTenantContact;
   message: string;
 };
 
-import type { DisputeStatus } from '../enums';
+import type { DisputeStatus, UnlockDeadReason } from '../enums';
+
+export type ReportUnlockDeadRequest = {
+  reason: UnlockDeadReason;
+  comment?: string;
+};
+
+export type ReportUnlockDeadResponse = {
+  unlockId: string;
+  reason: UnlockDeadReason;
+  creditsRefunded: number;
+  newBalance: number;
+  message: string;
+};
 
 export type UnlockHistoryStatus =
   | 'pending_confirmation'
