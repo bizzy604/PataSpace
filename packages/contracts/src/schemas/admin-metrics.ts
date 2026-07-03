@@ -38,5 +38,23 @@ export const adminMetricsResponseSchema = z.object({
   supportTickets: z.object({
     open: countSchema,
   }),
+  // Landlord-awareness pilot metric (spec section 4.2): if landlord_declined
+  // exceeds ~20% of refunds, the landlord-claim flow gets prioritized.
+  trust: z.object({
+    refundsTotal: countSchema,
+    landlordDeclinedRefunds: countSchema,
+    landlordDeclinedShare: z.number().min(0).max(1),
+  }),
+  // Supply flywheel metric (spec section 4.6): target mover-to-poster > 25%.
+  flywheel: z.object({
+    confirmedMoveIns: countSchema,
+    seededListings: countSchema,
+    moverToPosterRate: z.number().min(0).max(1),
+  }),
+  successFees: z.object({
+    partialCount: countSchema,
+    settledCount: countSchema,
+    collectedKes: countSchema,
+  }),
   generatedAt: isoDateStringSchema,
 });

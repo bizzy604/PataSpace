@@ -1,5 +1,12 @@
+/**
+ * Purpose: Unlock purchase flow: charges banded unlock credits, reveals the
+ * gated contact payload (masked virtual number when the contact layer is
+ * enabled, spec v1.2 section 4.5), and lists unlock history.
+ * Why important: this is the paywall moment; money moves before contact is
+ * revealed, and raw numbers must not leak once masking is provisioned.
+ * Used by: UnlockController; refunds live in UnlockRefundService.
+ */
 import {
-  ConflictException,
   ForbiddenException,
   GoneException,
   HttpException,
@@ -9,12 +16,11 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
-  CommissionStatus,
   ConfirmationSide,
   DisputeStatus,
   ListingStatus,
   Prisma,
-  TransactionStatus,
+  SuccessFeeStatus,
 } from '@prisma/client';
 import {
   CreateUnlockRequest,
@@ -30,6 +36,7 @@ import { decryptField } from '../../common/security/encryption.util';
 import { SmsService } from '../../infrastructure/sms/sms.service';
 import { CreditService } from '../credit/credit.service';
 import { ListingCacheService } from '../listing/listing-cache.service';
+import { ProxySessionService, ProxySessionSummary } from './contact/proxy-session.service';
 
 type CreateUnlockResult = {
   created: boolean;
@@ -94,6 +101,7 @@ export class UnlockService {
     private readonly creditService: CreditService,
     private readonly listingCacheService: ListingCacheService,
     private readonly smsService: SmsService,
+    private readonly proxySessionService: ProxySessionService,
     configService: ConfigService,
   ) {
     this.encryptionKey = configService.get<string>('security.encryptionKey') ?? '';
@@ -116,6 +124,7 @@ export class UnlockService {
       }
 
       const currentBalance = await this.creditService.getCurrentBalanceValue(userId);
+      const proxySession = await this.proxySessionService.getActiveForUnlock(existingUnlock.id);
 
       return {
         created: false,
@@ -123,6 +132,7 @@ export class UnlockService {
           existingUnlock,
           currentBalance,
           'Listing already unlocked. Existing contact information returned without charging credits again.',
+          proxySession,
         ),
       };
     }
@@ -165,6 +175,8 @@ export class UnlockService {
         message: 'You cannot unlock your own listing',
       });
     }
+
+    await this.assertNoUnsettledSuccessFee(userId);
 
     if (
       listing.isDeleted ||
@@ -249,6 +261,9 @@ export class UnlockService {
           }
 
           const currentBalance = await this.creditService.getCurrentBalanceValue(userId, db);
+          const concurrentSession = await this.proxySessionService.getActiveForUnlock(
+            concurrentUnlock.id,
+          );
 
           return {
             created: false,
@@ -256,6 +271,7 @@ export class UnlockService {
               concurrentUnlock,
               currentBalance,
               'Listing already unlocked. Existing contact information returned without charging credits again.',
+              concurrentSession,
             ),
           };
         }
@@ -315,6 +331,8 @@ export class UnlockService {
           },
         });
 
+        const proxySession = await this.proxySessionService.createForUnlock(db, unlock.id);
+
         await db.listing.update({
           where: {
             id: lockedListing.id,
@@ -337,6 +355,7 @@ export class UnlockService {
             unlock,
             spendResult.balanceAfter,
             'Contact unlocked. SMS sent to tenant to notify them.',
+            proxySession,
           ),
         };
       });
@@ -349,6 +368,9 @@ export class UnlockService {
 
         if (concurrentUnlock && !concurrentUnlock.isRefunded) {
           const currentBalance = await this.creditService.getCurrentBalanceValue(userId);
+          const concurrentSession = await this.proxySessionService.getActiveForUnlock(
+            concurrentUnlock.id,
+          );
 
           result = {
             created: false,
@@ -356,6 +378,7 @@ export class UnlockService {
               concurrentUnlock,
               currentBalance,
               'Listing already unlocked. Existing contact information returned without charging credits again.',
+              concurrentSession,
             ),
           };
         } else {
@@ -422,12 +445,21 @@ export class UnlockService {
               bedrooms: true,
             },
           },
+          proxySession: {
+            select: {
+              virtualMsisdn: true,
+              status: true,
+            },
+          },
         },
       }),
     ]);
 
     const data: MyUnlockRecord[] = unlocks.map((unlock) => {
       const gps = this.parseGps(unlock.revealedGPS);
+      // Once an unlock was created under masking, the raw number never
+      // surfaces; expired sessions route callers to the closed prompt.
+      const maskedNumber = unlock.proxySession?.virtualMsisdn ?? null;
       const incomingConfirmation = unlock.confirmations.find(
         (confirmation) => confirmation.side === ConfirmationSide.INCOMING_TENANT,
       );
@@ -446,7 +478,7 @@ export class UnlockService {
         creditsSpent: unlock.creditsSpent,
         contactInfo: {
           address: this.decrypt(unlock.revealedAddressEncrypted),
-          phoneNumber: this.decrypt(unlock.revealedPhoneEncrypted),
+          phoneNumber: maskedNumber ?? this.decrypt(unlock.revealedPhoneEncrypted),
           latitude: gps.latitude,
           longitude: gps.longitude,
         },
@@ -472,151 +504,6 @@ export class UnlockService {
       data,
       pagination: this.buildPagination(total, page, limit),
     };
-  }
-
-  async refundUnlocksForListingInvalidation(listingId: string, reason: string) {
-    const unlocks = await this.prismaService.unlock.findMany({
-      where: {
-        listingId,
-        isRefunded: false,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    for (const unlock of unlocks) {
-      await this.refundUnlock(unlock.id, reason);
-    }
-
-    if (unlocks.length > 0) {
-      await this.listingCacheService.invalidateListing(listingId);
-    }
-  }
-
-  async refundUnlockById(unlockId: string, reason: string) {
-    await this.refundUnlock(unlockId, reason);
-  }
-
-  private async refundUnlock(unlockId: string, reason: string) {
-    let buyerId: string | null = null;
-    let buyerPhoneNumber: string | null = null;
-    let listingId: string | null = null;
-
-    await this.prismaService.$transaction(async (db) => {
-      const unlock = await db.unlock.findUnique({
-        where: {
-          id: unlockId,
-        },
-        include: {
-          creditTransaction: {
-            select: {
-              id: true,
-              metadata: true,
-              status: true,
-            },
-          },
-          commission: {
-            select: {
-              id: true,
-              status: true,
-            },
-          },
-          buyer: {
-            select: {
-              phoneNumberEncrypted: true,
-            },
-          },
-        },
-      });
-
-      if (!unlock || unlock.isRefunded) {
-        return;
-      }
-
-      if (unlock.commission?.status === CommissionStatus.PAID) {
-        throw new ConflictException({
-          code: 'COMMISSION_ALREADY_PAID',
-          message: 'Cannot refund an unlock after the commission has already been paid',
-        });
-      }
-
-      const refundResult = await this.creditService.refundCredits(db, {
-        userId: unlock.buyerId,
-        amount: unlock.creditsSpent,
-        description: `Refund for invalid listing ${unlock.listingId}`,
-        metadata: {
-          listingId: unlock.listingId,
-          reason,
-          unlockId: unlock.id,
-        },
-      });
-
-      await db.unlock.update({
-        where: {
-          id: unlock.id,
-        },
-        data: {
-          isRefunded: true,
-          refundReason: reason,
-          refundedAt: new Date(),
-        },
-      });
-
-      if (unlock.creditTransaction) {
-        await db.creditTransaction.update({
-          where: {
-            id: unlock.creditTransaction.id,
-          },
-          data: {
-            status: TransactionStatus.REFUNDED,
-            metadata: this.mergeMetadata(unlock.creditTransaction.metadata, {
-              refundedAt: new Date().toISOString(),
-              refundReason: reason,
-              refundTransactionId: refundResult.transaction.id,
-            }),
-          },
-        });
-      }
-
-      if (
-        unlock.commission &&
-        unlock.commission.status !== CommissionStatus.CANCELLED
-      ) {
-        await db.commission.update({
-          where: {
-            id: unlock.commission.id,
-          },
-          data: {
-            status: CommissionStatus.CANCELLED,
-            lastAttemptError: `Cancelled because unlock ${unlock.id} was refunded: ${reason}`,
-          },
-        });
-      }
-
-      buyerId = unlock.buyerId;
-      buyerPhoneNumber = unlock.buyer.phoneNumberEncrypted
-        ? this.decrypt(unlock.buyer.phoneNumberEncrypted)
-        : null;
-      listingId = unlock.listingId;
-    });
-
-    if (!buyerId) {
-      return;
-    }
-
-    await this.creditService.invalidateBalanceCache(buyerId);
-
-    if (listingId) {
-      await this.listingCacheService.invalidateListing(listingId);
-    }
-
-    if (buyerPhoneNumber) {
-      await this.sendSmsQuietly(
-        buyerPhoneNumber,
-        `Your unlock has been refunded on PataSpace. Reason: ${reason}`,
-      );
-    }
   }
 
   private findUnlock(
@@ -672,8 +559,32 @@ export class UnlockService {
     unlock: UnlockWithRelations,
     newBalance: number,
     message: string,
+    proxySession: ProxySessionSummary | null,
   ): CreateUnlockResponse {
     const gps = this.parseGps(unlock.revealedGPS);
+
+    if (proxySession) {
+      // Masked contact layer: the raw number never leaves the server.
+      return {
+        unlockId: unlock.id,
+        creditsSpent: unlock.creditsSpent,
+        newBalance,
+        contactInfo: {
+          address: this.decrypt(unlock.revealedAddressEncrypted),
+          phoneNumber: proxySession.virtualMsisdn,
+          latitude: gps.latitude,
+          longitude: gps.longitude,
+        },
+        contactMode: 'masked',
+        contactExpiresAt: proxySession.expiresAt.toISOString(),
+        tenant: {
+          firstName: unlock.listing.user.firstName,
+          lastName: unlock.listing.user.lastName,
+          phoneNumber: proxySession.virtualMsisdn,
+        },
+        message,
+      };
+    }
 
     return {
       unlockId: unlock.id,
@@ -685,6 +596,8 @@ export class UnlockService {
         latitude: gps.latitude,
         longitude: gps.longitude,
       },
+      contactMode: 'direct',
+      contactExpiresAt: null,
       tenant: {
         firstName: unlock.listing.user.firstName,
         lastName: unlock.listing.user.lastName,
@@ -807,19 +720,43 @@ export class UnlockService {
     };
   }
 
-  private mergeMetadata(
-    existing: Prisma.JsonValue | null | undefined,
-    patch: Record<string, unknown>,
-  ): Prisma.InputJsonObject {
-    const base =
-      existing && typeof existing === 'object' && !Array.isArray(existing)
-        ? (existing as Prisma.InputJsonObject)
-        : {};
+  // Account gating (spec section 4.4): a mover with an unpaid success-fee
+  // balance cannot open new unlocks until they settle. Queried directly to
+  // avoid a module cycle with the confirmation module.
+  private async assertNoUnsettledSuccessFee(userId: string) {
+    const unsettled = await this.prismaService.successFee.findFirst({
+      where: {
+        moverId: userId,
+        status: {
+          in: [SuccessFeeStatus.PENDING, SuccessFeeStatus.PARTIAL],
+        },
+      },
+      select: {
+        feeDueKes: true,
+        creditsApplied: true,
+        cashCollectedKes: true,
+        unlockId: true,
+      },
+    });
 
-    return {
-      ...base,
-      ...(patch as Prisma.InputJsonObject),
-    };
+    if (!unsettled) {
+      return;
+    }
+
+    throw new HttpException(
+      {
+        code: 'SUCCESS_FEE_UNSETTLED',
+        message: 'Settle your move-in fee before unlocking new listings',
+        details: {
+          unlockId: unsettled.unlockId,
+          remainingKes: Math.max(
+            0,
+            unsettled.feeDueKes - unsettled.creditsApplied - unsettled.cashCollectedKes,
+          ),
+        },
+      },
+      HttpStatus.PAYMENT_REQUIRED,
+    );
   }
 
   private decrypt(value: string) {

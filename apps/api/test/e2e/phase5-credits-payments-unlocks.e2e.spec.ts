@@ -8,7 +8,7 @@ import { configureApp } from '../../src/common/bootstrap/configure-app';
 import { PrismaService } from '../../src/common/database/prisma.service';
 import { hashLookupValue, normalizePhoneNumber } from '../../src/common/security/encryption.util';
 import { setupSwagger } from '../../src/common/swagger/setup-swagger';
-import { UnlockService } from '../../src/modules/unlock/unlock.service';
+import { UnlockRefundService } from '../../src/modules/unlock/unlock-refund.service';
 import { RedisService } from '../../src/infrastructure/cache/redis.service';
 import { QueueService } from '../../src/infrastructure/queue/queue.service';
 import { createInMemoryRedisService } from '../utils/create-in-memory-redis-service';
@@ -18,7 +18,7 @@ jest.setTimeout(60_000);
 describe('Phase 5 credits, payments, and unlock flows', () => {
   let app: INestApplication;
   let prismaService: PrismaService;
-  let unlockService: UnlockService;
+  let unlockRefundService: UnlockRefundService;
   let previousDatabaseUrl: string | undefined;
   const createdPhoneNumbers: string[] = [];
   let forwardedForCounter = 0;
@@ -231,6 +231,7 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
         availableTo: '2026-05-31T00:00:00.000Z',
         photos: media.photos,
         video: media.video,
+        landlordAware: true,
       });
   };
 
@@ -262,7 +263,7 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
     await app.init();
 
     prismaService = app.get(PrismaService);
-    unlockService = app.get(UnlockService);
+    unlockRefundService = app.get(UnlockRefundService);
   });
 
   afterAll(async () => {
@@ -530,8 +531,8 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
       })
       .expect(201);
 
-    expect(firstUnlockResponse.body.creditsSpent).toBe(2500);
-    expect(firstUnlockResponse.body.newBalance).toBe(3500);
+    expect(firstUnlockResponse.body.creditsSpent).toBe(300);
+    expect(firstUnlockResponse.body.newBalance).toBe(5700);
     expect(firstUnlockResponse.body.contactInfo.phoneNumber).toBe(owner.phoneNumber);
 
     const repeatUnlockResponse = await request(app.getHttpServer())
@@ -544,14 +545,14 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
       .expect(200);
 
     expect(repeatUnlockResponse.body.unlockId).toBe(firstUnlockResponse.body.unlockId);
-    expect(repeatUnlockResponse.body.newBalance).toBe(3500);
+    expect(repeatUnlockResponse.body.newBalance).toBe(5700);
 
     const balanceResponse = await request(app.getHttpServer())
       .get('/api/v1/credits/balance')
       .set('Authorization', `Bearer ${buyer.accessToken}`)
       .expect(200);
 
-    expect(balanceResponse.body.balance).toBe(3500);
+    expect(balanceResponse.body.balance).toBe(5700);
 
     const transactionsResponse = await request(app.getHttpServer())
       .get('/api/v1/credits/transactions')
@@ -590,8 +591,8 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
         userId: buyer.userId,
       },
       data: {
-        balance: 1000,
-        lifetimeEarned: 1000,
+        balance: 100,
+        lifetimeEarned: 100,
       },
     });
 
@@ -667,9 +668,9 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
       })
       .expect(201);
 
-    expect(successfulUnlockResponse.body.creditsSpent).toBe(2500);
+    expect(successfulUnlockResponse.body.creditsSpent).toBe(300);
 
-    await unlockService.refundUnlocksForListingInvalidation(
+    await unlockRefundService.refundUnlocksForListingInvalidation(
       approvedListingResponse.body.id,
       'Listing invalidated after moderation review',
     );
@@ -701,7 +702,7 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
     expect(refundTransactionsResponse.body.data[0]).toMatchObject({
       type: 'REFUND',
       status: 'COMPLETED',
-      amount: 2500,
+      amount: 300,
     });
   });
 
@@ -777,9 +778,9 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
       .set('Authorization', `Bearer ${buyer.accessToken}`)
       .expect(200);
 
-    expect(balanceAfterUnlock.body.balance).toBe(4500);
+    expect(balanceAfterUnlock.body.balance).toBe(6700);
 
-    await unlockService.refundUnlocksForListingInvalidation(
+    await unlockRefundService.refundUnlocksForListingInvalidation(
       listingResponse.body.id,
       'Listing removed by moderation',
     );

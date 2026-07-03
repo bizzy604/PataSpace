@@ -71,6 +71,26 @@ export enum ReviewerSide {
   OUTGOING_TENANT = 'OUTGOING_TENANT',
 }
 
+export enum PosterRole {
+  OUTGOING_TENANT = 'OUTGOING_TENANT',
+  CARETAKER = 'CARETAKER',
+  LANDLORD = 'LANDLORD',
+  SCOUT = 'SCOUT',
+}
+
+export enum UnlockDeadReason {
+  OCCUPIED = 'OCCUPIED',
+  FAKE = 'FAKE',
+  UNRESPONSIVE = 'UNRESPONSIVE',
+  LANDLORD_DECLINED = 'LANDLORD_DECLINED',
+}
+
+export enum SuccessFeeStatus {
+  PENDING = 'PENDING',
+  PARTIAL = 'PARTIAL',
+  SETTLED = 'SETTLED',
+}
+
 export enum ReferralStatus {
   INVITED = 'INVITED',
   JOINED = 'JOINED',

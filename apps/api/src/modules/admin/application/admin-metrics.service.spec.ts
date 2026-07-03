@@ -9,6 +9,12 @@ import { CommissionStatus } from '@prisma/client';
 import { AdminMetricsService } from './admin-metrics.service';
 
 describe('AdminMetricsService', () => {
+  const trustAndFlywheelFixture = {
+    trust: { refundsTotal: 10, landlordDeclinedRefunds: 3, landlordDeclinedShare: 0.3 },
+    flywheel: { confirmedMoveIns: 8, seededListings: 2, moverToPosterRate: 0.25 },
+    successFees: { partialCount: 2, settledCount: 6, collectedKes: 14000 },
+  };
+
   const createService = () => {
     const prismaService = {
       user: { count: jest.fn() },
@@ -18,8 +24,14 @@ describe('AdminMetricsService', () => {
       commission: { groupBy: jest.fn() },
       supportTicket: { count: jest.fn() },
     };
+    const trustMetricsService = {
+      getMetrics: jest.fn().mockResolvedValue(trustAndFlywheelFixture),
+    };
 
-    return { prismaService, service: new AdminMetricsService(prismaService as never) };
+    return {
+      prismaService,
+      service: new AdminMetricsService(prismaService as never, trustMetricsService as never),
+    };
   };
 
   it('maps every aggregate into the dashboard payload', async () => {
@@ -56,6 +68,7 @@ describe('AdminMetricsService', () => {
         paidAmountKES: 90000,
       },
       supportTickets: { open: 3 },
+      ...trustAndFlywheelFixture,
       generatedAt: '2026-07-02T10:00:00.000Z',
     });
     // The "new users" window is exactly seven days before `now`.

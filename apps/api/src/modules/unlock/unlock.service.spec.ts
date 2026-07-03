@@ -1,12 +1,17 @@
+/**
+ * Purpose: Gate tests for the unlock purchase flow, including masked-contact
+ * payloads (spec v1.2 section 4.5).
+ * Why important: this is the paywall moment; regressions here charge users
+ * without revealing contact, or leak raw numbers.
+ * Used by: jest unit lane (pnpm test:unit).
+ */
 import {
-  ConflictException,
   ForbiddenException,
   GoneException,
   HttpException,
   NotFoundException,
 } from '@nestjs/common';
 import {
-  CommissionStatus,
   ConfirmationSide,
   DisputeStatus,
   Prisma,
@@ -28,6 +33,9 @@ describe('UnlockService', () => {
       listing: {
         findFirst: jest.fn(),
       },
+      successFee: {
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
       $transaction: jest.fn(),
     };
     const creditService = {
@@ -42,6 +50,10 @@ describe('UnlockService', () => {
     const smsService = {
       sendMessage: jest.fn(),
     };
+    const proxySessionService = {
+      createForUnlock: jest.fn().mockResolvedValue(null),
+      getActiveForUnlock: jest.fn().mockResolvedValue(null),
+    };
     const configService = {
       get: jest.fn().mockImplementation((key: string) =>
         key === 'security.encryptionKey' ? encryptionKey : undefined,
@@ -52,12 +64,14 @@ describe('UnlockService', () => {
       creditService,
       listingCacheService,
       prismaService,
+      proxySessionService,
       smsService,
       service: new UnlockService(
         prismaService as never,
         creditService as never,
         listingCacheService as never,
         smsService as never,
+        proxySessionService as never,
         configService as never,
       ),
     };
@@ -409,120 +423,84 @@ describe('UnlockService', () => {
     });
   });
 
-  it('refunds an unlock, marks the spend as refunded, and cancels pending commission', async () => {
-    const { creditService, listingCacheService, prismaService, service, smsService } =
-      createUnlockService();
-    const transactionClient = {
-      commission: {
-        update: jest.fn(),
-      },
-      creditTransaction: {
-        update: jest.fn(),
-      },
-      unlock: {
-        findUnique: jest.fn().mockResolvedValue({
-          id: 'unlock_1',
-          buyerId: 'buyer_1',
-          listingId: 'listing_1',
-          creditsSpent: 2500,
-          isRefunded: false,
-          creditTransaction: {
-            id: 'txn_spend_1',
-            metadata: {
-              listingId: 'listing_1',
-            },
-            status: TransactionStatus.COMPLETED,
-          },
-          commission: {
-            id: 'commission_1',
-            status: CommissionStatus.PENDING,
-          },
-          buyer: {
-            phoneNumberEncrypted: encryptField('+254712345678', encryptionKey),
-          },
-        }),
-        update: jest.fn(),
-      },
-    };
+  it('returns the pooled virtual number instead of the raw contact when masking is active', async () => {
+    const { creditService, prismaService, proxySessionService, service } = createUnlockService();
 
-    prismaService.$transaction.mockImplementation(async (callback: Function) =>
-      callback(transactionClient),
-    );
-    creditService.refundCredits.mockResolvedValue({
-      transaction: {
-        id: 'txn_refund_1',
-      },
+    prismaService.unlock.findUnique.mockResolvedValue(createStoredUnlock());
+    creditService.getCurrentBalanceValue.mockResolvedValue(6000);
+    proxySessionService.getActiveForUnlock.mockResolvedValue({
+      virtualMsisdn: '+254207000001',
+      expiresAt: new Date('2026-03-27T10:00:00.000Z'),
     });
 
-    await service.refundUnlockById('unlock_1', 'Listing invalidated');
-
-    expect(creditService.refundCredits).toHaveBeenCalledWith(
-      transactionClient,
-      expect.objectContaining({
-        amount: 2500,
-        userId: 'buyer_1',
-      }),
-    );
-    expect(transactionClient.unlock.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          isRefunded: true,
-          refundReason: 'Listing invalidated',
-        }),
-      }),
-    );
-    expect(transactionClient.creditTransaction.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          status: TransactionStatus.REFUNDED,
-        }),
-      }),
-    );
-    expect(transactionClient.commission.update).toHaveBeenCalledWith({
-      where: {
-        id: 'commission_1',
-      },
-      data: expect.objectContaining({
-        status: CommissionStatus.CANCELLED,
-      }),
+    const result = await service.createUnlock('buyer_1', {
+      listingId: 'listing_1',
     });
-    expect(creditService.invalidateBalanceCache).toHaveBeenCalledWith('buyer_1');
-    expect(listingCacheService.invalidateListing).toHaveBeenCalledWith('listing_1');
-    expect(smsService.sendMessage).toHaveBeenCalledWith(
-      '+254712345678',
-      'Your unlock has been refunded on PataSpace. Reason: Listing invalidated',
-    );
+
+    expect(result.payload.contactMode).toBe('masked');
+    expect(result.payload.contactInfo.phoneNumber).toBe('+254207000001');
+    expect(result.payload.tenant.phoneNumber).toBe('+254207000001');
+    expect(result.payload.contactExpiresAt).toBe('2026-03-27T10:00:00.000Z');
+    expect(JSON.stringify(result.payload)).not.toContain('+254712345678');
+    expect(JSON.stringify(result.payload)).not.toContain('+254700000002');
   });
 
-  it('rejects unlock refunds once the commission has already been paid', async () => {
+  it('blocks new unlocks while the user has an unsettled success fee', async () => {
     const { creditService, prismaService, service } = createUnlockService();
-    const transactionClient = {
-      unlock: {
-        findUnique: jest.fn().mockResolvedValue({
-          id: 'unlock_1',
-          buyerId: 'buyer_1',
-          listingId: 'listing_1',
-          creditsSpent: 2500,
-          isRefunded: false,
-          creditTransaction: null,
-          commission: {
-            id: 'commission_1',
-            status: CommissionStatus.PAID,
-          },
-          buyer: {
-            phoneNumberEncrypted: encryptField('+254712345678', encryptionKey),
-          },
-        }),
-      },
-    };
 
-    prismaService.$transaction.mockImplementation(async (callback: Function) =>
-      callback(transactionClient),
-    );
+    prismaService.unlock.findUnique.mockResolvedValue(null);
+    prismaService.listing.findFirst.mockResolvedValue({
+      id: 'listing_1',
+      userId: 'owner_1',
+      addressEncrypted: 'address',
+      latitude: -1.2,
+      longitude: 36.8,
+      neighborhood: 'Kilimani',
+      unlockCostCredits: 300,
+      isApproved: true,
+      isDeleted: false,
+      status: 'ACTIVE',
+      user: {
+        firstName: 'Owner',
+        lastName: 'Tester',
+        phoneNumberEncrypted: 'phone',
+      },
+    });
+    prismaService.successFee.findFirst.mockResolvedValue({
+      unlockId: 'unlock_old',
+      feeDueKes: 2500,
+      creditsApplied: 300,
+      cashCollectedKes: 0,
+    });
 
     await expect(
-      service.refundUnlockById('unlock_1', 'Listing invalidated'),
-    ).rejects.toBeInstanceOf(ConflictException);
-    expect(creditService.refundCredits).not.toHaveBeenCalled();
+      service.createUnlock('buyer_1', {
+        listingId: 'listing_1',
+      }),
+    ).rejects.toMatchObject({
+      status: 402,
+      response: expect.objectContaining({
+        code: 'SUCCESS_FEE_UNSETTLED',
+        details: expect.objectContaining({
+          remainingKes: 2200,
+        }),
+      }),
+    });
+    expect(creditService.spendCredits).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the direct reveal when no proxy session exists', async () => {
+    const { creditService, prismaService, service } = createUnlockService();
+
+    prismaService.unlock.findUnique.mockResolvedValue(createStoredUnlock());
+    creditService.getCurrentBalanceValue.mockResolvedValue(6000);
+
+    const result = await service.createUnlock('buyer_1', {
+      listingId: 'listing_1',
+    });
+
+    expect(result.payload.contactMode).toBe('direct');
+    expect(result.payload.contactExpiresAt).toBeNull();
+    expect(result.payload.contactInfo.phoneNumber).toBe('+254712345678');
   });
 });

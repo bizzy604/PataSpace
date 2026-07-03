@@ -296,7 +296,10 @@ export class CreditService {
       userId: string;
       amount: number;
       description: string;
-      unlockId: string;
+      // Optional: unlock purchases link the spend to their unlock row;
+      // success-fee settlements spend without one (unlockId is unique per
+      // transaction and already consumed by the original unlock spend).
+      unlockId?: string;
       phoneNumberHash?: string | null;
       metadata?: Prisma.InputJsonValue | null;
     },

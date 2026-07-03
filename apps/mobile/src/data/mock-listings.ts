@@ -206,6 +206,9 @@ export type ListingDraft = {
   amenities: string;
   landlordPhone: string;
   moveReason: string;
+  // Landlord-awareness attestation (spec v1.2 section 5): must be true before
+  // submit; the API rejects listings without it.
+  landlordAware: boolean;
   photos: ListingDraftPhoto[];
   video?: { uri: string };
 };
@@ -482,8 +485,31 @@ export const initialDraft: ListingDraft = {
   amenities: 'Parking, water backup, caretaker, prepaid power',
   landlordPhone: '+254 711 020 304',
   moveReason: 'Relocating closer to work',
+  landlordAware: false,
   photos: [],
 };
+
+// Client-side mirror of the two-part pricing policy (spec v1.1 section 4.3)
+// for display only; the API snapshot is the source of truth.
+export function estimateListingPricing(houseType: ListingHouseType, monthlyRent: number) {
+  const unlockCredits =
+    houseType === ListingHouseType.STUDIO || houseType === ListingHouseType.BEDSITTER
+      ? 100
+      : houseType === ListingHouseType.ONE_BEDROOM
+        ? 200
+        : houseType === ListingHouseType.TWO_BEDROOM
+          ? 300
+          : houseType === ListingHouseType.THREE_BEDROOM
+            ? 400
+            : 500;
+  const successFeeKes = Math.min(Math.max(Math.round(monthlyRent * 0.1), 1000), 5000);
+
+  return {
+    unlockCredits,
+    successFeeKes,
+    posterEarningsKes: Math.round(successFeeKes * 0.7),
+  };
+}
 
 export const initialMyListingRows: MyListingRow[] = [
   {

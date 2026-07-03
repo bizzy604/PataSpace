@@ -66,6 +66,42 @@ export class AdminSupportMetricsDto {
   open!: number;
 }
 
+export class AdminTrustMetricsDto {
+  @ApiProperty({ example: 10 })
+  refundsTotal!: number;
+
+  @ApiProperty({ example: 3 })
+  landlordDeclinedRefunds!: number;
+
+  @ApiProperty({
+    example: 0.3,
+    description: 'landlord_declined share of refunds; >0.2 triggers the landlord-claim flow.',
+  })
+  landlordDeclinedShare!: number;
+}
+
+export class AdminFlywheelMetricsDto {
+  @ApiProperty({ example: 8 })
+  confirmedMoveIns!: number;
+
+  @ApiProperty({ example: 2 })
+  seededListings!: number;
+
+  @ApiProperty({ example: 0.25, description: 'Launch target: > 0.25.' })
+  moverToPosterRate!: number;
+}
+
+export class AdminSuccessFeeMetricsDto {
+  @ApiProperty({ example: 2 })
+  partialCount!: number;
+
+  @ApiProperty({ example: 6 })
+  settledCount!: number;
+
+  @ApiProperty({ example: 14000 })
+  collectedKes!: number;
+}
+
 export class AdminMetricsResponseDto {
   @ApiProperty({ type: () => AdminUserMetricsDto })
   users!: AdminUserMetricsDto;
@@ -84,6 +120,15 @@ export class AdminMetricsResponseDto {
 
   @ApiProperty({ type: () => AdminSupportMetricsDto })
   supportTickets!: AdminSupportMetricsDto;
+
+  @ApiProperty({ type: () => AdminTrustMetricsDto })
+  trust!: AdminTrustMetricsDto;
+
+  @ApiProperty({ type: () => AdminFlywheelMetricsDto })
+  flywheel!: AdminFlywheelMetricsDto;
+
+  @ApiProperty({ type: () => AdminSuccessFeeMetricsDto })
+  successFees!: AdminSuccessFeeMetricsDto;
 
   @ApiProperty({ example: '2026-07-02T10:00:00.000Z' })
   generatedAt!: string;

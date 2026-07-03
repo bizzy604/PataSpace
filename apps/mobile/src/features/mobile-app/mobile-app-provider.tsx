@@ -398,6 +398,9 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
 
     const listingGps = coverPhoto.gps;
     if (!listingGps) throw new Error('GPS data is required. Retake the cover photo with location enabled.');
+    if (!draft.landlordAware) {
+      throw new Error('Confirm the landlord or caretaker knows this unit is being listed.');
+    }
 
     const confirmedPhotos: Array<{ s3Key: string; url: string; gps: NonNullable<typeof listingGps>; index: number }> = [];
     for (let i = 0; i < draft.photos.length; i++) {
@@ -449,6 +452,7 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
         takenAt: p.gps.timestamp ? new Date(p.gps.timestamp).toISOString() : undefined,
       })),
       video: videoInput,
+      landlordAware: true,
     });
 
     const isLive = response.status === ListingStatus.ACTIVE;

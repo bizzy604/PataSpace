@@ -14,31 +14,40 @@ export const createConfirmationService = () => {
       create: jest.fn(),
     },
     commission: {
-      upsert: jest.fn(),
+      findUnique: jest.fn(),
     },
     unlock: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
-      findUniqueOrThrow: jest.fn(),
     },
   };
-  const smsService = {
-    sendMessage: jest.fn(),
+  const notifier = {
+    sendConfirmationNotifications: jest.fn(),
+    sendSmsQuietly: jest.fn(),
   };
-  const userService = {
-    decryptPhoneNumber: jest.fn((value: string) =>
-      value === 'buyer-phone' ? '+254700000001' : '+254700000002',
-    ),
+  const successFeeService = {
+    ensureForConfirmedUnlock: jest.fn().mockResolvedValue({
+      feeDueKes: 2500,
+      creditsApplied: 300,
+      cashCollectedKes: 0,
+      remainingKes: 2200,
+      status: 'PARTIAL',
+    }),
+  };
+  const proxySessionService = {
+    extendForConfirmedUnlock: jest.fn(),
   };
 
   return {
+    notifier,
     prismaService,
-    smsService,
-    userService,
+    proxySessionService,
+    successFeeService,
     service: new ConfirmationService(
       prismaService as never,
-      smsService as never,
-      userService as never,
+      notifier as never,
+      successFeeService as never,
+      proxySessionService as never,
     ),
   };
 };
@@ -46,13 +55,16 @@ export const createConfirmationService = () => {
 export const createUnlock = (overrides = {}) => ({
   id: 'unlock_1',
   buyerId: 'buyer_1',
+  creditsSpent: 300,
   isRefunded: false,
   refundReason: null,
   refundedAt: null,
   listing: {
+    id: 'listing_1',
     userId: 'owner_1',
     neighborhood: 'Kilimani',
-    commission: 750,
+    monthlyRent: 25000,
+    successFeeKes: 2500,
     user: {
       phoneNumberEncrypted: 'owner-phone',
     },

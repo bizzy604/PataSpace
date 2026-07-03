@@ -24,7 +24,7 @@ describe('ListingController', () => {
         },
       }),
     };
-    const controller = new ListingController(listingService as never);
+    const controller = new ListingController(listingService as never, { seedFromConfirmation: jest.fn() } as never);
     const response = createResponse();
 
     const result = await controller.browseListings(
@@ -65,7 +65,7 @@ describe('ListingController', () => {
     const listingService = {
       browseListings: jest.fn().mockResolvedValue(payload),
     };
-    const controller = new ListingController(listingService as never);
+    const controller = new ListingController(listingService as never, { seedFromConfirmation: jest.fn() } as never);
     const initialResponse = createResponse();
 
     await controller.browseListings(

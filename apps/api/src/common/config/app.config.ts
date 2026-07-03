@@ -78,6 +78,32 @@ export default () => ({
   referral: {
     rewardCredits: Number(process.env.REFERRAL_REWARD_CREDITS ?? 500),
   },
+  // Two-part pricing (spec v1.1 section 4.3). All values are remote-config by
+  // design; the credit peg (1 credit = KES 1) is fixed and deliberately absent.
+  pricing: {
+    unlockBandBedsitter: Number(process.env.UNLOCK_BAND_BEDSITTER ?? 100),
+    unlockBand1Br: Number(process.env.UNLOCK_BAND_1BR ?? 200),
+    unlockBand2Br: Number(process.env.UNLOCK_BAND_2BR ?? 300),
+    unlockBand3Br: Number(process.env.UNLOCK_BAND_3BR ?? 400),
+    unlockBand4BrPlus: Number(process.env.UNLOCK_BAND_4BR_PLUS ?? 500),
+    successFeePct: Number(process.env.SUCCESS_FEE_PCT ?? 0.1),
+    feeFloorKes: Number(process.env.FEE_FLOOR_KES ?? 1000),
+    feeCapKes: Number(process.env.FEE_CAP_KES ?? 5000),
+    splitPoster: Number(process.env.SPLIT_POSTER ?? 0.7),
+  },
+  // Masked contact layer (spec v1.2 section 4.5). Masking activates only when
+  // a pooled virtual number range is configured; otherwise unlocks fall back
+  // to the legacy direct reveal so the product keeps working pre-provisioning.
+  contact: {
+    maskingEnabled: process.env.CONTACT_MASKING_ENABLED === 'true',
+    virtualNumbers: (process.env.CONTACT_VIRTUAL_NUMBERS ?? '')
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean),
+    sessionTtlHours: Number(process.env.CONTACT_SESSION_TTL_HOURS ?? 72),
+    postCaptureTtlDays: Number(process.env.CONTACT_POST_CAPTURE_TTL_DAYS ?? 7),
+    webhookToken: process.env.CONTACT_VOICE_WEBHOOK_TOKEN,
+  },
   rateLimit: {
     default: {
       limit: Number(process.env.RATE_LIMIT_DEFAULT_LIMIT ?? 100),

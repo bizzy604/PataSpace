@@ -32,15 +32,6 @@ describe('ConfirmationService authorization', () => {
           confirmedAt: new Date('2026-03-24T10:00:00.000Z'),
         }),
     );
-    mocks.prismaService.unlock.findUniqueOrThrow.mockResolvedValue({
-      confirmations: [{ side: PrismaConfirmationSide.INCOMING_TENANT }],
-      commission: null,
-    });
-    mocks.smsService.sendMessage.mockResolvedValue({
-      accepted: true,
-      messageId: 'sms_1',
-      provider: 'sandbox',
-    });
   };
 
   it('lets the buyer confirm only their own INCOMING side', async () => {

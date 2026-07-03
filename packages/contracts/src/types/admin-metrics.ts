@@ -35,5 +35,20 @@ export type AdminMetricsResponse = {
   supportTickets: {
     open: number;
   };
+  trust: {
+    refundsTotal: number;
+    landlordDeclinedRefunds: number;
+    landlordDeclinedShare: number;
+  };
+  flywheel: {
+    confirmedMoveIns: number;
+    seededListings: number;
+    moverToPosterRate: number;
+  };
+  successFees: {
+    partialCount: number;
+    settledCount: number;
+    collectedKes: number;
+  };
   generatedAt: string;
 };

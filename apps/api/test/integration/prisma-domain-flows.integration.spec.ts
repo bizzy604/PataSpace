@@ -7,6 +7,7 @@ import {
 import { ConfirmationSide } from '@pataspace/contracts';
 import { CreditService } from '../../src/modules/credit/credit.service';
 import { PaymentService } from '../../src/modules/payment/payment.service';
+import { UnlockRefundService } from '../../src/modules/unlock/unlock-refund.service';
 import { UnlockService } from '../../src/modules/unlock/unlock.service';
 import { ConfirmationService } from '../../src/modules/confirmation/confirmation.service';
 import { DisputeService } from '../../src/modules/dispute/dispute.service';
@@ -20,6 +21,7 @@ describe('Prisma-backed domain service flows', () => {
   let creditService: CreditService;
   let paymentService: PaymentService;
   let unlockService: UnlockService;
+  let unlockRefundService: UnlockRefundService;
   let confirmationService: ConfirmationService;
   let disputeService: DisputeService;
 
@@ -30,6 +32,7 @@ describe('Prisma-backed domain service flows', () => {
     creditService = context.get(CreditService);
     paymentService = context.get(PaymentService);
     unlockService = context.get(UnlockService);
+    unlockRefundService = context.get(UnlockRefundService);
     confirmationService = context.get(ConfirmationService);
     disputeService = context.get(DisputeService);
   });
@@ -137,7 +140,7 @@ describe('Prisma-backed domain service flows', () => {
       },
     });
 
-    expect(commission.amountKES).toBe(750);
+    expect(commission.amountKES).toBe(210);
     expect(commission.outgoingTenantId).toBe(owner.userId);
     expect(commission.status).toBe(CommissionStatus.PENDING);
 
@@ -198,7 +201,7 @@ describe('Prisma-backed domain service flows', () => {
       side: ConfirmationSide.OUTGOING_TENANT,
     });
 
-    await unlockService.refundUnlockById(
+    await unlockRefundService.refundUnlockById(
       unlockResult.payload.unlockId,
       'Listing invalidated during review follow-up.',
     );
@@ -264,8 +267,8 @@ describe('Prisma-backed domain service flows', () => {
 
     expect(spendTransaction).toMatchObject({
       status: TransactionStatus.REFUNDED,
-      amount: -2500,
-      balanceAfter: 2500,
+      amount: -300,
+      balanceAfter: 4700,
     });
     expect(spendTransaction.metadata).toMatchObject({
       refundReason: 'Listing invalidated during review follow-up.',
@@ -274,7 +277,7 @@ describe('Prisma-backed domain service flows', () => {
 
     expect(refundTransaction).toMatchObject({
       status: TransactionStatus.COMPLETED,
-      amount: 2500,
+      amount: 300,
       balanceAfter: 5000,
     });
     expect(refundTransaction.metadata).toMatchObject({
@@ -343,10 +346,10 @@ describe('Prisma-backed domain service flows', () => {
     expect(unlockRecords).toHaveLength(1);
     expect(spendTransactions).toHaveLength(1);
     expect(spendTransactions[0]).toMatchObject({
-      amount: -2500,
-      balanceAfter: 4500,
+      amount: -300,
+      balanceAfter: 6700,
     });
-    expect(balance.balance).toBe(4500);
+    expect(balance.balance).toBe(6700);
   });
 
   it('persists dispute investigation, resolution, closure, and audit history through services', async () => {

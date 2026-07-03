@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { ListingHouseType } from '@pataspace/contracts';
+import { ListingHouseType, PosterRole } from '@pataspace/contracts';
 import { CommissionStatus, ListingStatus } from '@prisma/client';
 
 export class ListingPhotoInputDto {
@@ -94,6 +94,22 @@ export class CreateListingRequestDto {
 
   @ApiProperty({ type: () => ListingVideoInputDto })
   video!: ListingVideoInputDto;
+
+  @ApiProperty({
+    example: true,
+    description:
+      'Attestation that the landlord/caretaker knows this unit is being listed. Must be true.',
+  })
+  landlordAware!: boolean;
+
+  @ApiPropertyOptional({ enum: PosterRole, example: PosterRole.OUTGOING_TENANT })
+  posterRole?: PosterRole;
+
+  @ApiPropertyOptional({
+    example: 'cmf0confirmation123',
+    description: 'Move-in confirmation that seeded this listing (mover-to-poster flow).',
+  })
+  seededFromConfirmationId?: string;
 }
 
 export class UpdateListingRequestDto extends PartialType(CreateListingRequestDto) {}
@@ -187,8 +203,20 @@ export class ListingCardDto {
   @ApiProperty({ example: '2026-05-01T00:00:00.000Z' })
   availableFrom!: string;
 
-  @ApiProperty({ example: 2500 })
+  @ApiProperty({ example: 300, description: 'Flat unlock band by unit type (credits).' })
   unlockCostCredits!: number;
+
+  @ApiProperty({
+    example: 2500,
+    description: 'Success fee paid by the mover only at confirmed move-in (KES).',
+  })
+  successFeeKes!: number;
+
+  @ApiProperty({ example: true })
+  landlordAware!: boolean;
+
+  @ApiProperty({ enum: PosterRole, example: PosterRole.OUTGOING_TENANT })
+  posterRole!: PosterRole;
 
   @ApiPropertyOptional({
     example: 'http://localhost:3000/sandbox-storage/listings/user_123/images/photo-1.jpg',
@@ -278,14 +306,50 @@ export class CreateListingResponseDto {
   @ApiProperty({ example: 'Listing created. Awaiting admin review (first 3 listings).' })
   message!: string;
 
-  @ApiProperty({ example: 2500 })
+  @ApiProperty({ example: 300, description: 'Flat unlock band by unit type (credits).' })
   unlockCostCredits!: number;
 
-  @ApiProperty({ example: 750 })
+  @ApiProperty({
+    example: 1750,
+    description: 'Poster share (70%) of the success fee if the move-in confirms (KES).',
+  })
   commission!: number;
+
+  @ApiProperty({
+    example: 2500,
+    description: 'Success fee due from the mover at confirmed move-in (KES).',
+  })
+  successFeeKes!: number;
 
   @ApiPropertyOptional({ example: '24 hours' })
   estimatedApprovalTime?: string;
+}
+
+export class SeedListingFromConfirmationRequestDto {
+  @ApiProperty({ example: 'cm8confirmation123' })
+  confirmationId!: string;
+}
+
+export class SeedListingFromConfirmationResponseDto {
+  @ApiProperty({ example: 'cm8confirmation123' })
+  seededFromConfirmationId!: string;
+
+  @ApiProperty({ enum: PosterRole, example: PosterRole.OUTGOING_TENANT })
+  posterRole!: PosterRole;
+
+  @ApiProperty({ example: 1750 })
+  estimatedEarningsKes!: number;
+
+  @ApiProperty({
+    example: 25000,
+    description: 'Rent used for the estimate (new home rent as proxy).',
+  })
+  estimateBasisRentKes!: number;
+
+  @ApiProperty({
+    example: "Leaving a house behind? It's worth ~KES 1750 on PataSpace. Post it in 2 minutes.",
+  })
+  message!: string;
 }
 
 export class UpdateListingResponseDto {

@@ -1,3 +1,9 @@
+/**
+ * Purpose: HTTP transport for listings: browse/details, owner CRUD with the
+ * landlord-awareness attestation, and the mover-to-poster seed endpoint.
+ * Why important: routes only; pricing and lifecycle rules live in services.
+ * Used by: mobile app listing flows, web browse pages.
+ */
 import {
   Body,
   Controller,
@@ -35,6 +41,9 @@ import {
   MyListingsFilters,
   PaginatedListingsResponse,
   PaginatedMyListingsResponse,
+  seedListingFromConfirmationSchema,
+  SeedListingFromConfirmationRequest,
+  SeedListingFromConfirmationResponse,
   updateListingSchema,
   UpdateListingRequest,
   UpdateListingResponse,
@@ -52,15 +61,44 @@ import {
   CreateListingResponseDto,
   ListingDetailsDto,
   MyListingsResponseDto,
+  SeedListingFromConfirmationRequestDto,
+  SeedListingFromConfirmationResponseDto,
   UpdateListingRequestDto,
   UpdateListingResponseDto,
 } from './listing.docs';
+import { ListingSeedService } from './listing-seed.service';
 import { ListingService } from './listing.service';
 
 @ApiTags('Listings')
 @Controller('listings')
 export class ListingController {
-  constructor(private readonly listingService: ListingService) {}
+  constructor(
+    private readonly listingService: ListingService,
+    private readonly listingSeedService: ListingSeedService,
+  ) {}
+
+  @ApiBearerAuth('bearer')
+  @ApiOperation({
+    summary: 'Seed a listing draft from a confirmed move-in (mover-to-poster flow)',
+    description:
+      'Returns the confirmation linkage and an earnings estimate for the unit ' +
+      'the mover is vacating. The client then runs the normal capture flow and ' +
+      'passes seededFromConfirmationId to POST /listings.',
+  })
+  @ApiBody({ type: SeedListingFromConfirmationRequestDto })
+  @ApiOkResponse({
+    type: SeedListingFromConfirmationResponseDto,
+    description: 'Seed payload for the vacated-unit listing draft.',
+  })
+  @HttpCode(200)
+  @Post('from-confirmation')
+  seedFromConfirmation(
+    @CurrentUser('id') userId: string,
+    @Body(new ZodValidationPipe(seedListingFromConfirmationSchema))
+    input: SeedListingFromConfirmationRequest,
+  ): Promise<SeedListingFromConfirmationResponse> {
+    return this.listingSeedService.seedFromConfirmation(userId, input.confirmationId);
+  }
 
   @Public()
   @UseGuards(OptionalJwtAuthGuard)

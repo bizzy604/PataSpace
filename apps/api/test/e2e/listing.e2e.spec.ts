@@ -247,6 +247,7 @@ describe('Upload, listing, and admin review flows', () => {
         availableTo: '2026-05-31T00:00:00.000Z',
         photos: media.photos,
         video: media.video,
+        landlordAware: true,
       });
   };
 

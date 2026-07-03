@@ -16,6 +16,7 @@ import { AdminUsersController } from './admin-users.controller';
 import { AdminDisputeService } from './application/admin-dispute.service';
 import { AdminListingService } from './application/admin-listing.service';
 import { AdminMetricsService } from './application/admin-metrics.service';
+import { AdminTrustMetricsService } from './application/admin-trust-metrics.service';
 import { AdminUserService } from './application/admin-user.service';
 
 @Module({
@@ -31,6 +32,7 @@ import { AdminUserService } from './application/admin-user.service';
     AdminDisputeService,
     AdminListingService,
     AdminMetricsService,
+    AdminTrustMetricsService,
     AdminUserService,
   ],
 })

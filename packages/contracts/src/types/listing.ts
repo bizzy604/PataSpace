@@ -1,4 +1,4 @@
-import { CommissionStatus, ListingHouseType, ListingStatus } from '../enums';
+import { CommissionStatus, ListingHouseType, ListingStatus, PosterRole } from '../enums';
 
 export type ListingPhotoInput = {
   url: string;
@@ -35,6 +35,9 @@ export type CreateListingRequest = {
   availableTo?: string;
   photos: ListingPhotoInput[];
   video?: ListingVideoInput;
+  landlordAware: true;
+  posterRole?: PosterRole;
+  seededFromConfirmationId?: string;
 };
 
 export type UpdateListingRequest = Partial<CreateListingRequest>;
@@ -83,6 +86,9 @@ export type ListingCard = {
   furnished: boolean;
   availableFrom: string;
   unlockCostCredits: number;
+  successFeeKes: number;
+  landlordAware: boolean;
+  posterRole: PosterRole;
   thumbnailUrl?: string;
   viewCount: number;
   unlockCount: number;
@@ -126,7 +132,20 @@ export type CreateListingResponse = {
   message: string;
   unlockCostCredits: number;
   commission: number;
+  successFeeKes: number;
   estimatedApprovalTime?: string;
+};
+
+export type SeedListingFromConfirmationRequest = {
+  confirmationId: string;
+};
+
+export type SeedListingFromConfirmationResponse = {
+  seededFromConfirmationId: string;
+  posterRole: PosterRole;
+  estimatedEarningsKes: number;
+  estimateBasisRentKes: number;
+  message: string;
 };
 
 export type UpdateListingResponse = {
