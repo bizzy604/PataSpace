@@ -5,6 +5,10 @@
  */
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api/v1';
 
+// A hung API connection must not stall page renders or leave the console
+// spinning forever — undici would otherwise wait minutes before giving up.
+const REQUEST_TIMEOUT_MS = 15_000;
+
 export type ApiError = {
   code: string;
   message: string;
@@ -46,7 +50,11 @@ export async function serverFetch<T>(path: string, token: string | null): Promis
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  const res = await fetch(`${API_BASE}${path}`, { headers, cache: 'no-store' });
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers,
+    cache: 'no-store',
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  });
   return handleResponse<T>(res);
 }
 
@@ -55,6 +63,7 @@ export async function publicServerFetch<T>(path: string, revalidate = 60): Promi
   const res = await fetch(`${API_BASE}${path}`, {
     headers: { 'Content-Type': 'application/json' },
     next: { revalidate },
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
   return handleResponse<T>(res);
 }
@@ -70,6 +79,10 @@ export async function clientFetch<T>(
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
-  const res = await fetch(`${API_BASE}${path}`, { ...init, headers });
+  const res = await fetch(`${API_BASE}${path}`, {
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    ...init,
+    headers,
+  });
   return handleResponse<T>(res);
 }
