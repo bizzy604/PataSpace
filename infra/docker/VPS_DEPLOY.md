@@ -105,8 +105,21 @@ Critical values to set correctly:
 | `DATABASE_MIGRATION_URL` | `postgresql://pataspace_migrator:<MIG_PW>@postgres:5432/pataspace` |
 | `DATABASE_ADMIN_URL` | `postgresql://postgres:<PG_PW>@postgres:5432/pataspace` |
 | `ALLOWED_ORIGINS` | Comma-separated exact origins, e.g. `https://dalakenya.com` |
+| `STORAGE_PROVIDER` | `s3` — required; sandbox storage mints upload URLs on a fake host, so every mobile upload fails with a DNS error and the API refuses to boot in production |
+| `AWS_S3_BUCKET` / `AWS_REGION` / `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | Real bucket + IAM credentials with `s3:PutObject`, `s3:GetObject`, `s3:DeleteObject`, `s3:ListBucket` on that bucket |
+| `SMS_PROVIDER` + `AT_USERNAME` / `AT_API_KEY` | `africastalking` with live credentials — sandbox SMS uses a fixed OTP and is rejected in production |
 
 All DB URLs use the compose service name `postgres` (resolves inside the network).
+
+> **Storage base URLs:** leave `STORAGE_PUBLIC_BASE_URL` / `STORAGE_CDN_BASE_URL`
+> unset unless a CDN fronts the bucket. Pointing them at `/sandbox-storage`
+> stores media URLs that 404 forever; the API rejects that value in production.
+> After boot, confirm the active provider:
+>
+> ```bash
+> docker compose -f docker-compose.vps.yml logs api | grep "Storage provider"
+> # must print: Storage provider: s3 (...)
+> ```
 
 > **`ALLOWED_ORIGINS` is exact-match, not a wildcard.** The API checks
 > `allowedOrigins.includes(origin)` (`apps/api/src/common/bootstrap/configure-app.ts`),

@@ -1,4 +1,10 @@
-import { Global, Module } from '@nestjs/common';
+/**
+ * Purpose: Wires the storage provider (sandbox | s3 | disabled) from config.
+ * Why important: Every media upload flows through the provider chosen here;
+ *   the boot log line is the fastest way to see which one a deployment runs.
+ * Used by: UploadModule, ListingModule via the global StorageService.
+ */
+import { Global, Logger, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { STORAGE_PROVIDER } from './storage.constants';
 import { DisabledStorageProvider } from './providers/disabled-storage.provider';
@@ -19,6 +25,10 @@ import { StorageService } from './storage.service';
           'http://localhost:3000/sandbox-storage';
         const cdnBaseUrl =
           configService.get<string>('infrastructure.storage.cdnBaseUrl') ?? publicBaseUrl;
+
+        new Logger('StorageModule').log(
+          `Storage provider: ${provider} (publicBaseUrl: ${publicBaseUrl})`,
+        );
 
         if (provider === 'sandbox') {
           return new SandboxStorageProvider({
