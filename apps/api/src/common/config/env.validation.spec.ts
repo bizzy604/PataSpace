@@ -1,3 +1,10 @@
+/**
+ * Purpose: Gate tests for boot-time environment validation rules.
+ * Why important: Proves misconfigured production envs (sandbox providers,
+ *   sandbox storage URLs, missing secrets) fail at startup instead of
+ *   breaking user flows silently.
+ * Used by: apps/api unit test lane (pnpm --filter @pataspace/api test:unit).
+ */
 import { envSchema } from './env.validation';
 
 describe('envSchema', () => {
@@ -62,6 +69,11 @@ describe('envSchema', () => {
     AT_USERNAME: 'pataspace',
     AT_API_KEY: 'at-api-key',
     CLERK_SECRET_KEY: 'sk_live_clerk_secret',
+    STORAGE_PROVIDER: 's3',
+    AWS_S3_BUCKET: 'pataspace-media',
+    AWS_REGION: 'us-east-1',
+    AWS_ACCESS_KEY_ID: 'prod-access-key',
+    AWS_SECRET_ACCESS_KEY: 'prod-secret-key',
   };
 
   it('accepts a fully-configured production env', () => {
@@ -82,6 +94,45 @@ describe('envSchema', () => {
         expect.objectContaining({ path: ['SMS_PROVIDER'] }),
       ]),
     );
+  });
+
+  it('rejects sandbox storage in production (upload URLs resolve to a fake host)', () => {
+    const result = envSchema.safeParse({
+      ...validProductionEnv,
+      STORAGE_PROVIDER: 'sandbox',
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: ['STORAGE_PROVIDER'] }),
+      ]),
+    );
+  });
+
+  it('rejects sandbox-storage base URLs in production (stored media would 404)', () => {
+    const result = envSchema.safeParse({
+      ...validProductionEnv,
+      STORAGE_PUBLIC_BASE_URL: 'https://api.pataspace.example/sandbox-storage',
+      STORAGE_CDN_BASE_URL: 'https://api.pataspace.example/sandbox-storage',
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: ['STORAGE_PUBLIC_BASE_URL'] }),
+        expect.objectContaining({ path: ['STORAGE_CDN_BASE_URL'] }),
+      ]),
+    );
+  });
+
+  it('still allows sandbox storage outside production', () => {
+    const result = envSchema.safeParse({
+      ...baseEnv,
+      STORAGE_PROVIDER: 'sandbox',
+    });
+
+    expect(result.success).toBe(true);
   });
 
   it('requires CLERK_SECRET_KEY in production', () => {

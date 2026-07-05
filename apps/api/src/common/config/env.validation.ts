@@ -1,4 +1,11 @@
+/**
+ * Purpose: Boot-time environment validation for the API (zod schema + refinements).
+ * Why important: Misconfigured providers must fail loudly at startup, not as
+ *   silent runtime breakage on user-facing flows (OTP, uploads, payments).
+ * Used by: ConfigModule via validateEnv in app bootstrap.
+ */
 import { z } from 'zod';
+import { requireFields, requireHttps } from './env.refinements';
 
 export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -98,6 +105,31 @@ export const envSchema = z.object({
     // secret, every Clerk-authenticated request fails closed with a generic 401
     // and the outage is silent — require it explicitly at startup.
     requireFields(context, value, ['CLERK_SECRET_KEY']);
+
+    // Sandbox storage mints upload URLs on a host that does not exist
+    // (sandbox-storage.pataspace.local), so every media upload from a real
+    // device dies at DNS and listing submission is guaranteed broken.
+    if (value.STORAGE_PROVIDER !== 's3') {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['STORAGE_PROVIDER'],
+        message:
+          'STORAGE_PROVIDER must be "s3" in production; sandbox upload URLs resolve to a fake host.',
+      });
+    }
+
+    // A base URL pointing at /sandbox-storage combined with the s3 provider
+    // stores media URLs that 404 forever. Unset these to fall back to the
+    // real bucket URL, or point them at a CDN in front of the bucket.
+    for (const field of ['STORAGE_PUBLIC_BASE_URL', 'STORAGE_CDN_BASE_URL'] as const) {
+      if (value[field]?.includes('/sandbox-storage')) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [field],
+          message: `${field} must not point at /sandbox-storage in production; unset it or use the bucket/CDN URL.`,
+        });
+      }
+    }
   }
 
   if (value.SMS_PROVIDER === 'africastalking') {
@@ -158,48 +190,4 @@ export function validateEnv(config: Record<string, unknown>) {
       : 'Environment validation failed. Check apps/api/.env against apps/api/.env.example.';
 
   throw new Error(helpMessage);
-}
-
-function requireFields(
-  context: z.RefinementCtx,
-  value: Record<string, string | number | undefined>,
-  fields: string[],
-) {
-  for (const field of fields) {
-    if (value[field] !== undefined && value[field] !== '') {
-      continue;
-    }
-
-    context.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: [field],
-      message: `${field} is required for the selected provider configuration.`,
-    });
-  }
-}
-
-function requireHttps(
-  context: z.RefinementCtx,
-  value: string | undefined,
-  field: string,
-) {
-  if (!value) {
-    return;
-  }
-
-  try {
-    const parsedUrl = new URL(value);
-
-    if (parsedUrl.protocol === 'https:') {
-      return;
-    }
-  } catch {
-    return;
-  }
-
-  context.addIssue({
-    code: z.ZodIssueCode.custom,
-    path: [field],
-    message: `${field} must use HTTPS in the selected environment.`,
-  });
 }

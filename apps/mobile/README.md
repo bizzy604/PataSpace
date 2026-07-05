@@ -18,9 +18,18 @@ pnpm --filter @pataspace/mobile start
 pnpm --filter @pataspace/mobile android
 pnpm --filter @pataspace/mobile ios
 pnpm --filter @pataspace/mobile web
+pnpm --filter @pataspace/mobile test
 pnpm --filter @pataspace/mobile build:apk
 pnpm --filter @pataspace/mobile build:ios
 ```
+
+## Tests
+
+`jest.config.js` runs gate tests for pure logic under `src/**/__tests__/`
+(no native modules, no jest-expo). Current coverage: `src/lib/capture-location.ts`
+— the GPS freshness, anti-fraud (mocked/weak fix), and address-label rules used
+by the listing capture screen. Add new pure-logic tests next to the module in
+an `__tests__` directory.
 
 ## APK Build
 

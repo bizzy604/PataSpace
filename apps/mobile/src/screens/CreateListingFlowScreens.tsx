@@ -29,6 +29,12 @@ import { Input } from '@/components/ui/input';
 import { Screen } from '@/components/ui/screen';
 import { SectionHeader } from '@/components/ui/section-header';
 import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
+import {
+  coordinateLabel,
+  isFreshFix,
+  isWeakGpsFix,
+  pickAddressLabel,
+} from '@/lib/capture-location';
 import { appRoutes } from '@/lib/routes';
 
 type NativeUnimoduleProxy = {
@@ -154,32 +160,24 @@ function MiniAction({
   );
 }
 
-async function buildLocationLabel(position: Location.LocationObject) {
-  const fallbackLabel = `${position.coords.latitude.toFixed(5)}, ${position.coords.longitude.toFixed(5)}`;
-
+async function resolveAddressLabel(position: Location.LocationObject) {
   try {
     const [address] = await Location.reverseGeocodeAsync({
       latitude: position.coords.latitude,
       longitude: position.coords.longitude,
     });
-    const parts = [address?.district, address?.street, address?.city]
-      .map((part) => part?.trim())
-      .filter(Boolean);
 
-    if (parts.length > 0) {
-      return parts.slice(0, 2).join(', ');
-    }
+    return pickAddressLabel([address?.district, address?.street, address?.city]);
   } catch {
-    return fallbackLabel;
+    return null;
   }
-
-  return fallbackLabel;
 }
 
 export function CreateListingScreen() {
   const cameraViewManagerAvailable = hasExpoCameraViewManager();
   const cameraRef = useRef<CameraView | null>(null);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const latestFixRef = useRef<Location.LocationObject | null>(null);
   const [cameraPermissionGranted, setCameraPermissionGranted] = useState<boolean | null>(null);
   const [locationPermissionGranted, setLocationPermissionGranted] = useState<boolean | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
@@ -188,7 +186,7 @@ export function CreateListingScreen() {
   const [cameraMode, setCameraMode] = useState<'picture' | 'video'>('picture');
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
-  const { draft, addDraftPhoto, updateDraft } = useMobileApp();
+  const { draft, addDraftPhoto, updateDraft, updateDraftPhoto } = useMobileApp();
   const nextPrompt = photoCapturePrompts[draft.photos.length] ?? `Extra angle ${draft.photos.length + 1}`;
 
   useEffect(() => {
@@ -244,6 +242,39 @@ export function CreateListingScreen() {
     };
   }, []);
 
+  // Keep a warm GPS fix while the screen is open so capture never waits on a
+  // cold satellite lock. Best-effort: capture falls back to a live fix.
+  useEffect(() => {
+    if (!locationPermissionGranted) {
+      return;
+    }
+
+    let active = true;
+    let subscription: Location.LocationSubscription | null = null;
+
+    Location.watchPositionAsync(
+      { accuracy: Location.Accuracy.High, timeInterval: 2000, distanceInterval: 0 },
+      (position) => {
+        latestFixRef.current = position;
+      },
+    )
+      .then((sub) => {
+        if (active) {
+          subscription = sub;
+        } else {
+          sub.remove();
+        }
+      })
+      .catch(() => {
+        // Warm-up only; handleCapture requests its own fix when this fails.
+      });
+
+    return () => {
+      active = false;
+      subscription?.remove();
+    };
+  }, [locationPermissionGranted]);
+
   async function ensurePermissions() {
     if (!cameraViewManagerAvailable) {
       setCaptureError(
@@ -275,6 +306,19 @@ export function CreateListingScreen() {
     return true;
   }
 
+  async function resolveCapturePosition() {
+    const warmFix = latestFixRef.current;
+
+    if (warmFix && isFreshFix(warmFix.timestamp, Date.now())) {
+      return warmFix;
+    }
+
+    return Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.High,
+      mayShowUserSettingsDialog: true,
+    });
+  }
+
   async function handleCapture() {
     if (isCapturing) {
       return;
@@ -290,26 +334,28 @@ export function CreateListingScreen() {
     setIsCapturing(true);
 
     try {
-      const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.72,
-        shutterSound: false,
-      });
+      // Shutter and GPS fix run in parallel; the warm watcher fix usually
+      // makes the position side instant.
+      const [photo, position] = await Promise.all([
+        cameraRef.current.takePictureAsync({
+          quality: 0.72,
+          shutterSound: false,
+        }),
+        resolveCapturePosition(),
+      ]);
 
       if (!photo?.uri) {
         throw new Error('Missing photo URI');
       }
 
-      const position = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-        mayShowUserSettingsDialog: true,
+      const weakGpsFix = isWeakGpsFix({
+        mocked: position.mocked,
+        accuracyMeters: position.coords.accuracy,
       });
-      const locationLabel = await buildLocationLabel(position);
-      const weakGpsFix =
-        position.mocked === true ||
-        (position.coords.accuracy !== null && position.coords.accuracy > 50);
+      const photoId = `draft-photo-${Date.now()}`;
 
       addDraftPhoto({
-        id: `draft-photo-${Date.now()}`,
+        id: photoId,
         label: nextPrompt,
         quality: weakGpsFix ? 'Retake' : 'Strong',
         source: { uri: photo.uri },
@@ -317,7 +363,7 @@ export function CreateListingScreen() {
           hour: '2-digit',
           minute: '2-digit',
         }),
-        locationLabel,
+        locationLabel: coordinateLabel(position.coords.latitude, position.coords.longitude),
         gps: {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
@@ -325,6 +371,14 @@ export function CreateListingScreen() {
           mocked: position.mocked,
           timestamp: position.timestamp,
         },
+      });
+
+      // Reverse geocoding is a network round trip; patch the label in the
+      // background instead of blocking the shutter on it.
+      void resolveAddressLabel(position).then((label) => {
+        if (label) {
+          updateDraftPhoto(photoId, { locationLabel: label });
+        }
       });
     } catch {
       setCaptureError('Capture failed. Try again.');
@@ -335,6 +389,7 @@ export function CreateListingScreen() {
 
   async function handleStartRecording() {
     if (!cameraRef.current || isRecording || !cameraReady) return;
+    setCaptureError('');
     setIsRecording(true);
     setRecordingSeconds(0);
     recordingTimerRef.current = setInterval(() => setRecordingSeconds((s) => s + 1), 1000);
@@ -343,9 +398,19 @@ export function CreateListingScreen() {
         maxDuration: 30,
         maxFileSize: 10 * 1024 * 1024,
       });
-      if (result?.uri) updateDraft({ video: { uri: result.uri } });
-    } catch {
-      // recording stopped externally
+      if (result?.uri) {
+        updateDraft({ video: { uri: result.uri } });
+      } else {
+        setCaptureError('Recording did not produce a video. Try again.');
+      }
+    } catch (error) {
+      // Never swallow this: a rejected recordAsync (missing permission,
+      // camera session error) previously failed with no feedback at all.
+      setCaptureError(
+        error instanceof Error && error.message
+          ? `Recording failed: ${error.message}`
+          : 'Recording failed. Try again.',
+      );
     } finally {
       setIsRecording(false);
       if (recordingTimerRef.current) { clearInterval(recordingTimerRef.current); recordingTimerRef.current = null; }
@@ -408,7 +473,10 @@ export function CreateListingScreen() {
             facing="back"
             mode={cameraMode}
             videoQuality="480p"
-            mute={false}
+            // Muted on purpose: the build strips RECORD_AUDIO from the
+            // Android manifest (recordAudioAndroid: false in app.config.ts),
+            // and expo-camera rejects unmuted recording without it.
+            mute
             onCameraReady={() => setCameraReady(true)}
             onMountError={() => setCaptureError('Camera preview failed to load.')}
             style={StyleSheet.absoluteFillObject}
@@ -437,7 +505,7 @@ export function CreateListingScreen() {
                   <Text className="text-[32px] font-semibold tracking-[-0.8px] text-white">
                     {isRecording ? `Recording ${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, '0')}` : 'Walkthrough video'}
                   </Text>
-                  <Text className="text-sm text-white/75">Max 30 seconds · 10MB · 480p</Text>
+                  <Text className="text-sm text-white/75">Max 30 seconds · 10MB · 480p · no audio</Text>
                 </>
               ) : (
                 <>
@@ -598,7 +666,7 @@ export function PhotoReviewScreen() {
           </>
         ) : (
           <CardDescription>
-            Optional. Switch to video mode on the camera screen to record a short walkthrough (max 30s / 10MB).
+            Optional. Switch to video mode on the camera screen to record a short walkthrough (max 30s / 10MB, no audio).
           </CardDescription>
         )}
       </Card>
