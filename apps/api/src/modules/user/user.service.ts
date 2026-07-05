@@ -5,7 +5,7 @@
  * Used by: JwtStrategy, ClerkJwtStrategy, UserController, and any module that needs user data.
  */
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import { Role as ContractRole, UserProfile } from '@pataspace/contracts';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/database/prisma.service';
@@ -100,21 +100,35 @@ export class UserService {
   }): Promise<StoredUser> {
     // Upsert instead of create — guards against the TOCTOU race where concurrent
     // requests from the same first-time Clerk user all pass the findStoredByClerkId
-    // check before any of them complete the insert, causing P2002 unique violations.
-    return this.prismaService.user.upsert({
-      where: { clerkId: data.clerkId },
-      create: {
-        clerkId: data.clerkId,
-        email: data.email ?? null,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        role: Role.USER,
-        isActive: true,
-        credit: { create: { balance: 0 } },
-      },
-      update: {},
-      select: userSelect,
-    });
+    // check before any of them complete the insert. The nested credit create
+    // forces Prisma onto its non-atomic select-then-insert path, so P2002 can
+    // still surface under concurrency; one retry lands on the update branch
+    // and returns the row the winning request created.
+    const upsert = () =>
+      this.prismaService.user.upsert({
+        where: { clerkId: data.clerkId },
+        create: {
+          clerkId: data.clerkId,
+          email: data.email ?? null,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          role: Role.USER,
+          isActive: true,
+          credit: { create: { balance: 0 } },
+        },
+        update: {},
+        select: userSelect,
+      });
+
+    try {
+      return await upsert();
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        return upsert();
+      }
+
+      throw error;
+    }
   }
 
   async linkClerkId(userId: string, clerkId: string): Promise<StoredUser> {
