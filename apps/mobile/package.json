@@ -8,6 +8,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
+    "test": "jest",
     "build:apk": "pnpm dlx eas-cli build --platform android --profile preview",
     "build:ios": "pnpm dlx eas-cli build --platform ios --profile preview"
   },
@@ -51,10 +52,13 @@
   },
   "devDependencies": {
     "@expo/ngrok": "^4.1.0",
+    "@types/jest": "^29.5.14",
     "@types/react": "~19.1.0",
     "babel-preset-expo": "^54.0.10",
     "dotenv": "^16.6.1",
+    "jest": "^29.7.0",
     "tailwindcss": "3.4.17",
+    "ts-jest": "^29.4.1",
     "typescript": "^5.7.3"
   }
 }

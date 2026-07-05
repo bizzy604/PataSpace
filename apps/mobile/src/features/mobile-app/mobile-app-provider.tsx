@@ -131,6 +131,7 @@ type MobileAppContextValue = {
   updateSearchFilters: (filters: Partial<SearchFilters>) => void;
   resetSearchFilters: () => void;
   addDraftPhoto: (photo: ListingDraftPhoto) => void;
+  updateDraftPhoto: (photoId: string, updates: Partial<ListingDraftPhoto>) => void;
   removeDraftPhoto: (photoId: string) => void;
   updateDraft: (draft: Partial<ListingDraft>) => void;
   resetDraft: () => void;
@@ -386,6 +387,15 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
     setDraft((current) => ({
       ...current,
       photos: [...current.photos, photo],
+    }));
+  }
+
+  function updateDraftPhoto(photoId: string, updates: Partial<ListingDraftPhoto>) {
+    setDraft((current) => ({
+      ...current,
+      photos: current.photos.map((photo) =>
+        photo.id === photoId ? { ...photo, ...updates } : photo,
+      ),
     }));
   }
 
@@ -980,6 +990,7 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
         updateSearchFilters,
         resetSearchFilters,
         addDraftPhoto,
+        updateDraftPhoto,
         removeDraftPhoto,
         updateDraft,
         resetDraft,
