@@ -7,6 +7,11 @@ const coordinateSchema = z.object({
   longitude: z.number().gte(-180).lte(180),
 });
 
+// Single source of truth for the photo-count rule. Clients must gate their
+// submit UI on these so users learn the requirement before uploading.
+export const MIN_LISTING_PHOTOS = 5;
+export const MAX_LISTING_PHOTOS = 15;
+
 const listingPaginationSchema = z.object({
   page: z.number().int().positive(),
   limit: z.number().int().positive(),
@@ -91,7 +96,7 @@ const createListingShape = z.object({
   propertyNotes: z.string().optional(),
   availableFrom: isoDateStringSchema,
   availableTo: isoDateStringSchema.optional(),
-  photos: z.array(listingPhotoInputSchema).min(5).max(15),
+  photos: z.array(listingPhotoInputSchema).min(MIN_LISTING_PHOTOS).max(MAX_LISTING_PHOTOS),
   video: listingVideoInputSchema.optional(),
   landlordAware: z.literal(true),
   posterRole: z.nativeEnum(PosterRole).default(PosterRole.OUTGOING_TENANT),

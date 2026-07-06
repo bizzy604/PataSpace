@@ -35,6 +35,7 @@ import {
   isWeakGpsFix,
   pickAddressLabel,
 } from '@/lib/capture-location';
+import { MIN_LISTING_PHOTOS, captureMoreLabel, hasEnoughPhotos } from '@/lib/listing-rules';
 import { appRoutes } from '@/lib/routes';
 
 type NativeUnimoduleProxy = {
@@ -597,21 +598,28 @@ export function PhotoReviewScreen() {
   return (
     <Screen
       bottomBar={
-        draft.photos.length > 0 ? (
+        hasEnoughPhotos(draft.photos.length) ? (
           <Link href={appRoutes.createListingDetails} asChild>
             <Button variant="dark" label="Continue" />
           </Link>
         ) : (
-          <Button disabled label="Capture a photo first" />
+          <Button disabled label={captureMoreLabel(draft.photos.length)} />
         )
       }
     >
-      <SectionHeader kicker="Post listing" title="Photos" description="Review captures" />
+      <SectionHeader
+        kicker="Post listing"
+        title="Photos"
+        description={`Review captures · at least ${MIN_LISTING_PHOTOS} photos required`}
+      />
 
       {draft.photos.length === 0 ? (
         <Card>
           <CardTitle className="text-[20px]">No photos yet</CardTitle>
-          <CardDescription>Open the camera and start capturing the rooms.</CardDescription>
+          <CardDescription>
+            Open the camera and capture the rooms. Listings need at least {MIN_LISTING_PHOTOS}{' '}
+            photos to publish.
+          </CardDescription>
         </Card>
       ) : null}
 
@@ -788,10 +796,10 @@ export function ListingReviewScreen() {
     <Screen
       bottomBar={
         <Button
-          disabled={draft.photos.length === 0 || !draft.landlordAware || isSubmitting}
+          disabled={!hasEnoughPhotos(draft.photos.length) || !draft.landlordAware || isSubmitting}
           label={
-            draft.photos.length === 0
-              ? 'Capture a photo first'
+            !hasEnoughPhotos(draft.photos.length)
+              ? captureMoreLabel(draft.photos.length)
               : !draft.landlordAware
                 ? 'Confirm the landlord knows first'
                 : isSubmitting

@@ -14,9 +14,14 @@ export type MobileThemePalette = {
   surfaceInverse: string;
   card: string;
   border: string;
+  outline: string;
   primary: string;
   primaryForeground: string;
+  primaryContainer: string;
   accentSoft: string;
+  success: string;
+  warning: string;
+  danger: string;
   shadowColor: string;
   inputPlaceholder: string;
   authGlow: string;
@@ -33,27 +38,32 @@ export const mobileThemes: Record<AppColorScheme, MobileThemePalette> = {
   light: {
     mode: 'light',
     background: '#FFFFFF',
-    foreground: '#252525',
+    foreground: '#1A1C1C',
     mutedForeground: '#8D9192',
     tertiaryForeground: '#A4A8A9',
-    surface: '#F7F8F8',
+    surface: '#F9F9F9',
     surfaceElevated: '#FFFFFF',
     surfaceSubtle: '#EDEDED',
     surfaceInverse: '#252525',
     card: '#FFFFFF',
     border: '#D8DBDC',
-    primary: '#28809A',
+    outline: '#6F797D',
+    primary: '#00667E',
     primaryForeground: '#FFFFFF',
-    accentSoft: '#E8F3F7',
+    primaryContainer: '#28809A',
+    accentSoft: '#E0EEF2',
+    success: '#34C759',
+    warning: '#FFCC00',
+    danger: '#FF3B30',
     shadowColor: '#252525',
     inputPlaceholder: '#8D9192',
-    authGlow: 'rgba(40, 128, 154, 0.12)',
-    authPanelGlow: 'rgba(40, 128, 154, 0.16)',
-    authBackdropA: 'rgba(40, 128, 154, 0.08)',
-    authBackdropB: 'rgba(40, 128, 154, 0.06)',
+    authGlow: 'rgba(0, 102, 126, 0.12)',
+    authPanelGlow: 'rgba(0, 102, 126, 0.16)',
+    authBackdropA: 'rgba(0, 102, 126, 0.08)',
+    authBackdropB: 'rgba(0, 102, 126, 0.06)',
     toggleTrack: '#FFFFFF',
     toggleBorder: '#D8DBDC',
-    toggleThumb: '#28809A',
+    toggleThumb: '#00667E',
     statusBarStyle: 'dark',
   },
   dark: {
@@ -68,9 +78,14 @@ export const mobileThemes: Record<AppColorScheme, MobileThemePalette> = {
     surfaceInverse: '#252525',
     card: '#1C2021',
     border: '#313739',
+    outline: '#8F999D',
     primary: '#28809A',
     primaryForeground: '#FFFFFF',
+    primaryContainer: '#00667E',
     accentSoft: '#1F3E48',
+    success: '#34C759',
+    warning: '#FFCC00',
+    danger: '#FF5A50',
     shadowColor: '#000000',
     inputPlaceholder: '#8D9192',
     authGlow: 'rgba(40, 128, 154, 0.18)',

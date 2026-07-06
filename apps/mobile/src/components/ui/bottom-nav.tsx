@@ -37,7 +37,7 @@ export function BottomNav() {
                 />
                 <Text
                   className={cn(
-                    'mt-1 text-[11px] font-semibold',
+                    'mt-1 font-body-medium text-caption',
                     active ? 'text-primary-foreground' : 'text-muted-foreground',
                   )}
                 >

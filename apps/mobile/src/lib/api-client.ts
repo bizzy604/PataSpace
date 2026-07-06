@@ -15,19 +15,45 @@ export class ApiRequestError extends Error {
   }
 }
 
+/**
+ * Zod validation errors arrive as details.fieldErrors; fold the first few
+ * into the message so the user sees "photos: at least 5" instead of a bare
+ * "Validation failed".
+ */
+function appendFieldErrors(message: string, details: unknown): string {
+  if (!details || typeof details !== 'object') {
+    return message;
+  }
+
+  const fieldErrors = (details as { fieldErrors?: Record<string, string[] | undefined> })
+    .fieldErrors;
+
+  if (!fieldErrors) {
+    return message;
+  }
+
+  const parts = Object.entries(fieldErrors)
+    .filter(([, messages]) => Array.isArray(messages) && messages.length > 0)
+    .slice(0, 3)
+    .map(([field, messages]) => `${field}: ${messages![0]}`);
+
+  return parts.length > 0 ? `${message}. ${parts.join('; ')}` : message;
+}
+
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     let code = 'UNKNOWN_ERROR';
     let message = `Request failed: ${res.status}`;
     try {
-      // API wraps errors as { error: { code, message }, meta: {...} }
+      // API wraps errors as { error: { code, message, details }, meta: {...} }
       const body = (await res.json()) as {
-        error?: { code?: string; message?: string };
+        error?: { code?: string; message?: string; details?: unknown };
         code?: string;
         message?: string;
       };
       code = body.error?.code ?? body.code ?? code;
       message = body.error?.message ?? body.message ?? message;
+      message = appendFieldErrors(message, body.error?.details);
     } catch {
       // ignore parse errors — keep the generic fallback
     }

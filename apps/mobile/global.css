@@ -2,33 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Design tokens for the 2026 mobile redesign. Values come from
+ * Docs/Wireframes/PataSpace Design Screens/**/pataspace_ios/DESIGN.md.
+ * Primary teal is #00667e; #28809a is the pressed/container tone. Every
+ * token is an RGB triplet so `rgb(var(--x) / <alpha-value>)` can tint it.
+ * The dark block is a derived palette (designs are light-only) — teal is
+ * brightened to #28809a in dark for legibility on near-black surfaces.
+ */
 @layer base {
   :root {
     color-scheme: light;
     --background: 255 255 255;
-    --foreground: 37 37 37;
-    --surface: 247 248 248;
+    --foreground: 26 28 28;
+    --surface: 249 249 249;
     --surface-elevated: 255 255 255;
     --surface-subtle: 237 237 237;
     --surface-inverse: 37 37 37;
     --card: 255 255 255;
     --popover: 255 255 255;
-    --primary: 40 128 154;
+    --primary: 0 102 126;
     --primary-foreground: 255 255 255;
+    --primary-container: 40 128 154;
+    --on-primary-container: 255 255 255;
     --secondary: 237 237 237;
     --secondary-foreground: 37 37 37;
-    --accent: 232 243 247;
-    --accent-soft: 232 243 247;
-    --accent-foreground: 40 128 154;
+    --accent: 224 238 242;
+    --accent-soft: 224 238 242;
+    --accent-foreground: 0 102 126;
     --border: 216 219 220;
+    --outline: 111 121 125;
+    --outline-variant: 190 200 205;
     --muted: 237 237 237;
     --muted-foreground: 141 145 146;
     --tertiary-foreground: 164 168 169;
     --fill-soft: 237 237 237;
     --fill-strong: 216 219 220;
-    --success: 45 157 120;
-    --warning: 216 154 61;
-    --danger: 211 93 93;
+    --success: 52 199 89;
+    --warning: 255 204 0;
+    --danger: 255 59 48;
+    --on-warning: 26 28 28;
   }
 
   .dark:root {
@@ -43,19 +56,24 @@
     --popover: 23 26 27;
     --primary: 40 128 154;
     --primary-foreground: 255 255 255;
+    --primary-container: 0 102 126;
+    --on-primary-container: 255 255 255;
     --secondary: 35 39 40;
     --secondary-foreground: 245 247 248;
     --accent: 31 62 72;
     --accent-soft: 31 62 72;
-    --accent-foreground: 122 191 214;
+    --accent-foreground: 131 209 238;
     --border: 49 55 57;
+    --outline: 143 153 157;
+    --outline-variant: 63 72 76;
     --muted: 35 39 40;
     --muted-foreground: 160 167 170;
     --tertiary-foreground: 127 134 136;
     --fill-soft: 23 26 27;
     --fill-strong: 49 55 57;
-    --success: 84 196 156;
-    --warning: 241 181 91;
-    --danger: 239 123 123;
+    --success: 52 199 89;
+    --warning: 255 204 0;
+    --danger: 255 90 80;
+    --on-warning: 26 28 28;
   }
 }
