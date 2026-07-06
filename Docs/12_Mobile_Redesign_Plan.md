@@ -179,7 +179,38 @@ jank before/after on a low-end Android profile). Map pins restyle to teal.
 Notes: money flows; zero logic changes. The M-Pesa polling loop in
 mpesa-processing keeps its timing exactly.
 
-- [ ] Phase 3 complete
+- [x] Phase 3 complete (2026-07-06). Unlock confirmation rebuilt as the sheet
+  layout (lock header, listing summary, unlock cost + ≈% of rent + new balance,
+  "what you'll get" checklist, refund banner, success-fee note, sticky Unlock/
+  Cancel); a shortfall now opens the insufficient_credits_modal (Dialog with a
+  wallet icon → "Top Up Wallet" routes to buy-credits, "Maybe Later" dismisses).
+  Buy-credits → payment-method layout (amount rows + M-Pesa/Card method rows +
+  phone + Confirm Payment). M-Pesa processing → STK screen (dark header, pulsing
+  phone, "STK prompt sent"/28s copy). Payment success → check circle, credits-
+  added + new-balance cards, View Receipt, Start Browsing/Done. Transactions →
+  chip filters (All/Credits Added/Unlocks/Rewards) + day groups + coloured
+  amounts. Transaction detail → status banner, big amount, detail rows, share,
+  Get Help/Request Refund. Contact revealed → dark header, unlocked banner,
+  tenant card, call/WhatsApp/maps rows, connection-status timeline (keeps
+  confirmIncoming + report-dead + dispute). Wallet home restyled by analogy
+  (teal balance card + top-up rows). New: pure helpers `lib/payments/*` (unlock
+  summary + transaction view) with 11 gate assertions, `ghost` button variant
+  (tested), Dialog `icon` prop, and a `Screen` `header` slot + `ScreenHeader`
+  primitive for the shared dark flow bar. Gates: tsc exit 0, jest 34/34.
+  Design deltas (intentional): (1) unlock cost/balance stay in the app's
+  "credits" unit, not the mockup's "KES", so the wallet reads consistently
+  end to end (credits are 1:1 with KES). (2) buy-credits keeps the package
+  (amount) selector the STK charge needs, above the method rows; PataSpace-
+  Credits is not offered as a top-up method (you can't buy credits with
+  credits) and Card is "Coming soon" since only M-Pesa is wired. (3) M-Pesa
+  processing has no STK status-poll endpoint yet (that would be an API change,
+  out of a restyle phase), so the auto-advance is a restyled "I've completed
+  the payment" action; the design's auto-advance-on-callback is deferred to
+  that backend work. (4) contact_revealed's copy icons became tap-to-act
+  (call/WhatsApp) to avoid adding a clipboard dependency; the verified-GPS map
+  preview is kept below the address as a trust signal. (5) transaction detail
+  shows only stored fields (no fabricated balance-before/after or property
+  ref). Device Expo pass (light+dark, real STK sandbox) is Amoni's step.
 
 ## Phase 4 — Post a listing (7 surfaces)
 
