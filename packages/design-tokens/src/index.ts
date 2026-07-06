@@ -33,14 +33,15 @@ export const appleHIGTokens = {
       accent: 'rgba(40, 128, 154, 0.14)',
     },
     accent: {
-      primary: '#28809A',
-      hover: '#1F677C',
+      primary: '#00667E',
+      hover: '#28809A',
+      container: '#28809A',
       foreground: '#FFFFFF',
     },
     status: {
-      success: '#2D9D78',
-      warning: '#D89A3D',
-      danger: '#D35D5D',
+      success: '#34C759',
+      warning: '#FFCC00',
+      danger: '#FF3B30',
     },
   },
   radius: {

@@ -90,7 +90,14 @@ Primitive kit in `src/components/ui/` (restyle existing, add missing):
 Phase 0 gate additions: component tests for chip/dialog/bottom-sheet
 open-close and button/input variant class output (deterministic, jest).
 
-- [ ] Phase 0 complete
+- [x] Phase 0 complete (2026-07-06). Token pipeline rethemed to #00667e across
+  global.css + tailwind.config.js + theme.ts + design-tokens; Poppins/DM Sans
+  loaded via useFonts; primitives restyled (button/input/card/badge/icon-button/
+  bottom-nav) and added (chip, bottom-sheet, dialog, fab, progress-steps,
+  list-row); variant maps extracted to `variants/*.ts` with 11 gate tests.
+  Gates: `tsc --noEmit` exit 0, jest 26/26, tailwind config loads. NOTE: headless
+  `expo export` hangs in this sandbox (zero output on two attempts, environmental
+  — not code); the on-device Expo pass is Amoni's to run.
 
 ## Phase 1 — Authentication (5 screens)
 

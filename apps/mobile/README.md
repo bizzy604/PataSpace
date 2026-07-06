@@ -11,6 +11,43 @@
 - React Native
 - NativeWind
 
+## Design system (2026 redesign)
+
+The rebuild follows `Docs/12_Mobile_Redesign_Plan.md`. Phase 0 laid the
+foundation; screens adopt it phase by phase.
+
+**Token pipeline (three files, kept in sync).** Change a colour in all three:
+
+- `global.css` — light + dark CSS variable blocks (`--primary`, `--surface-*`,
+  `--outline`, status colours). This is the runtime source of truth; the `.dark`
+  block is a derived palette (the designs are light-only).
+- `tailwind.config.js` — maps each `--token` to a Tailwind colour via
+  `rgb(var(--token) / <alpha-value>)`, plus the DESIGN.md typography scale
+  (`text-headline-sm`, `text-body-md`, …) and font families.
+- `src/lib/theme.ts` — the imperative palette for non-className consumers
+  (status bar, maps, `placeholderTextColor`).
+
+Primary teal is `#00667e`; `#28809a` is the pressed/container tone
+(`primary-container`). Radii: inputs/media 12px, cards/buttons 16px, sheets
+24px, chips full-pill.
+
+**Fonts.** Poppins (600/700) and DM Sans (400/500/700) load in
+`src/app/_layout.tsx` via `useFonts`. On React Native each weight is its own
+family, so use the family utility, not a `font-*weight*` class:
+`font-display` (Poppins Bold), `font-display-semibold`, `font-body`,
+`font-body-medium`, `font-body-bold`.
+
+**Component kit (`src/components/ui/`).** Compose screens from these; do not
+hand-roll styled views. Variant maps live in `variants/*.ts` as pure cva
+functions so they are unit-tested in the node lane.
+
+- Actions: `button` (variants default/secondary/outline/dark/danger; shapes
+  rounded/pill; sizes sm/default/lg), `icon-button`, `fab`, `chip`
+- Surfaces: `card`, `list-row`, `badge` (adds status pills), `bottom-nav`
+- Inputs: `input` (filled, optional label, teal focus border)
+- Overlays: `bottom-sheet` (Layer 3), `dialog` (centered confirm)
+- Flow: `progress-steps` (post-a-listing header)
+
 ## Local Commands
 
 ```bash
@@ -26,10 +63,19 @@ pnpm --filter @pataspace/mobile build:ios
 ## Tests
 
 `jest.config.js` runs gate tests for pure logic under `src/**/__tests__/`
-(no native modules, no jest-expo). Current coverage: `src/lib/capture-location.ts`
-— the GPS freshness, anti-fraud (mocked/weak fix), and address-label rules used
-by the listing capture screen. Add new pure-logic tests next to the module in
-an `__tests__` directory.
+(no native modules, no jest-expo). Current coverage:
+
+- `src/lib/capture-location.ts` — GPS freshness, anti-fraud (mocked/weak fix),
+  and address-label rules used by the listing capture screen.
+- `src/lib/listing-rules.ts` — the client-side photo-count contract.
+- `src/components/ui/variants/*.ts` — the primitive cva variant maps
+  (button/badge/chip/icon-button), asserting each variant resolves to the
+  intended design token.
+
+Add new pure-logic tests next to the module in an `__tests__` directory. UI
+components stay presentation-only and are verified on-device in the Expo pass;
+put testable branching in a pure `.ts` (e.g. a `variants/` cva map) so it lands
+in this lane.
 
 ## APK Build
 
