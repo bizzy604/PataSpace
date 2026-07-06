@@ -1,12 +1,21 @@
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ImageBackground, Pressable, ScrollView, Text, View } from 'react-native';
-import { formatCredits, type ListingPreview, type SearchFilters } from '@/data/mock-listings';
-import { Badge } from '@/components/ui/badge';
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { type ListingPreview, type SearchFilters } from '@/data/mock-listings';
+import { AppIcon } from '@/components/ui/app-icon';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
 import { ListingsMap } from '@/components/map/listings-map';
-import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
 import { ListingCard } from '@/components/ui/listing-card';
 import { Screen } from '@/components/ui/screen';
@@ -15,10 +24,7 @@ import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
 import {
   appRoutes,
   contactRevealedHref,
-  listingGalleryHref,
   listingHref,
-  listingStatsHref,
-  unlockHref,
 } from '@/lib/routes';
 
 function matchesBudget(listing: ListingPreview, budget: SearchFilters['selectedBudget']) {
@@ -84,88 +90,61 @@ export function filterBrowseListings(
   });
 }
 
-function ActionChip({
-  label,
-  active,
-  onPress,
-}: {
-  label: string;
-  active: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      className={active ? 'rounded-full bg-primary px-4 py-2' : 'rounded-full bg-secondary px-4 py-2'}
-      onPress={onPress}
-    >
-      <Text
-        className={
-          active
-            ? 'text-sm font-semibold text-primary-foreground'
-            : 'text-sm font-semibold text-foreground'
-        }
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
 export function SearchScreen() {
   const [query, setQuery] = useState('');
-  const { browseListings, savedListings, searchFilters, neighborhoodSuggestions, isListingUnlocked } =
-    useMobileApp();
+  const {
+    browseListings,
+    savedListings,
+    searchFilters,
+    neighborhoodSuggestions,
+    isListingUnlocked,
+    updateSearchFilters,
+  } = useMobileApp();
   const filteredListings = filterBrowseListings(browseListings, query, searchFilters);
 
   return (
     <Screen withTabBar>
-      <SectionHeader
-        kicker="Search and discover"
-        title="Search homes"
-        description="Search, save, compare"
-      />
+      <Text className="font-display text-display-02 text-foreground">Search</Text>
 
       <View className="flex-row items-center gap-3">
         <Input
           className="flex-1"
           value={query}
           onChangeText={setQuery}
-          placeholder="Search area"
+          placeholder="Search by neighborhood…"
         />
         <Link href={appRoutes.filters} asChild>
-          <IconButton icon="options-outline" />
-        </Link>
-      </View>
-
-      <View className="flex-row gap-3">
-        <Link href={appRoutes.map} asChild>
-          <Button className="flex-1" variant="outline" label="Map view" />
-        </Link>
-        <Link href={appRoutes.saved} asChild>
-          <Button className="flex-1" variant="outline" label={`Saved (${savedListings.length})`} />
+          <Pressable className="h-12 w-12 items-center justify-center rounded-[12px] bg-surface-subtle active:opacity-80">
+            <AppIcon name="options-outline" size={22} active />
+          </Pressable>
         </Link>
       </View>
 
       <View className="flex-row flex-wrap gap-2">
         {neighborhoodSuggestions.map((area) => (
-          <Badge key={area} variant={searchFilters.selectedArea === area ? 'dark' : 'secondary'}>
-            {area}
-          </Badge>
+          <Chip
+            key={area}
+            label={area}
+            active={searchFilters.selectedArea === area}
+            onPress={() =>
+              updateSearchFilters({
+                selectedArea: searchFilters.selectedArea === area ? null : area,
+              })
+            }
+          />
         ))}
       </View>
 
-      <Card>
-        <Text className="text-sm text-foreground">
-          {searchFilters.verifiedOnly ? 'Verified' : 'All'} | {searchFilters.selectedBudget} |{' '}
-          {searchFilters.selectedSize}
-        </Text>
-      </Card>
+      <Text className="font-body-medium text-label-md text-muted-foreground">
+        {filteredListings.length} {filteredListings.length === 1 ? 'result' : 'results'}
+        {savedListings.length > 0 ? ` · ${savedListings.length} saved` : ''}
+      </Text>
 
       {filteredListings.length === 0 ? (
         <Card>
-          <CardTitle className="text-[20px]">No listings match those filters</CardTitle>
+          <CardTitle>No homes match those filters</CardTitle>
           <CardDescription>
-            Reset the filter sheet or search a different area to expand the feed again.
+            Reset the filters or search a different area to expand the feed again.
           </CardDescription>
         </Card>
       ) : (
@@ -174,7 +153,7 @@ export function SearchScreen() {
             key={listing.id}
             listing={listing}
             href={isListingUnlocked(listing.id) ? contactRevealedHref(listing.id) : listingHref(listing.id)}
-            actionLabel={isListingUnlocked(listing.id) ? 'Open contact' : 'View details'}
+            actionLabel={isListingUnlocked(listing.id) ? 'Open Contact' : 'View Details'}
           />
         ))
       )}
@@ -182,97 +161,110 @@ export function SearchScreen() {
   );
 }
 
+function FilterSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <View className="gap-3">
+      <Text className="font-display text-headline-sm text-foreground">{title}</Text>
+      <View className="flex-row flex-wrap gap-2">{children}</View>
+    </View>
+  );
+}
+
 export function FiltersScreen() {
-  const { searchFilters, updateSearchFilters, resetSearchFilters, filterBudgetOptions, filterSizeOptions, neighborhoodSuggestions } =
-    useMobileApp();
+  const {
+    searchFilters,
+    updateSearchFilters,
+    resetSearchFilters,
+    filterBudgetOptions,
+    filterSizeOptions,
+    neighborhoodSuggestions,
+    browseListings,
+  } = useMobileApp();
   const router = useRouter();
+  const resultCount = filterBrowseListings(browseListings, '', searchFilters).length;
 
   return (
     <Screen
       bottomBar={
-        <View className="gap-3">
-          <Button label="Apply filters" onPress={() => router.replace(appRoutes.search)} />
-          <Button variant="outline" label="Reset" onPress={resetSearchFilters} />
+        <View className="flex-row items-center gap-4">
+          <Text className="flex-1 font-body-medium text-body-md text-muted-foreground">
+            {resultCount} {resultCount === 1 ? 'listing' : 'listings'}
+          </Text>
+          <Button className="flex-[2]" shape="pill" label="Show Results" onPress={() => router.back()} />
         </View>
       }
     >
-      <SectionHeader
-        kicker="Filter sheet"
-        title="Refine the feed"
-        description="Stay in sync with search"
-      />
+      <View className="flex-row items-center justify-between">
+        <Text className="font-display text-display-02 text-foreground">Filters</Text>
+        <Pressable className="px-2 py-1 active:opacity-70" onPress={resetSearchFilters}>
+          <Text className="font-body-medium text-body-md text-primary">Clear All</Text>
+        </Pressable>
+      </View>
 
-      <Card>
-        <Text className="text-sm font-semibold text-foreground">Verification</Text>
-        <View className="mt-4 flex-row flex-wrap gap-2">
-          <ActionChip
-            label="Verified only"
-            active={searchFilters.verifiedOnly}
-            onPress={() => updateSearchFilters({ verifiedOnly: !searchFilters.verifiedOnly })}
+      <FilterSection title="Neighborhoods">
+        <Chip
+          label="Any"
+          active={searchFilters.selectedArea === null}
+          onPress={() => updateSearchFilters({ selectedArea: null })}
+        />
+        {neighborhoodSuggestions.map((area) => (
+          <Chip
+            key={area}
+            label={area}
+            active={searchFilters.selectedArea === area}
+            onPress={() =>
+              updateSearchFilters({
+                selectedArea: searchFilters.selectedArea === area ? null : area,
+              })
+            }
           />
-          <ActionChip
-            label="Fast move"
-            active={searchFilters.fastMove}
-            onPress={() => updateSearchFilters({ fastMove: !searchFilters.fastMove })}
+        ))}
+      </FilterSection>
+
+      <FilterSection title="Rent Range">
+        {filterBudgetOptions.map((budget) => (
+          <Chip
+            key={budget}
+            label={budget}
+            active={searchFilters.selectedBudget === budget}
+            onPress={() => updateSearchFilters({ selectedBudget: budget })}
           />
-        </View>
-      </Card>
+        ))}
+      </FilterSection>
 
-      <Card>
-        <Text className="text-sm font-semibold text-foreground">Budget</Text>
-        <View className="mt-4 flex-row flex-wrap gap-2">
-          {filterBudgetOptions.map((budget) => (
-            <ActionChip
-              key={budget}
-              label={budget}
-              active={searchFilters.selectedBudget === budget}
-              onPress={() => updateSearchFilters({ selectedBudget: budget })}
-            />
-          ))}
-        </View>
-      </Card>
-
-      <Card>
-        <Text className="text-sm font-semibold text-foreground">Size</Text>
-        <View className="mt-4 flex-row flex-wrap gap-2">
-          {filterSizeOptions.map((size) => (
-            <ActionChip
-              key={size}
-              label={size}
-              active={searchFilters.selectedSize === size}
-              onPress={() => updateSearchFilters({ selectedSize: size })}
-            />
-          ))}
-        </View>
-      </Card>
-
-      <Card>
-        <Text className="text-sm font-semibold text-foreground">Area</Text>
-        <View className="mt-4 flex-row flex-wrap gap-2">
-          <ActionChip
-            label="Any"
-            active={searchFilters.selectedArea === null}
-            onPress={() => updateSearchFilters({ selectedArea: null })}
+      <FilterSection title="Bedrooms">
+        {filterSizeOptions.map((size) => (
+          <Chip
+            key={size}
+            label={size}
+            active={searchFilters.selectedSize === size}
+            onPress={() => updateSearchFilters({ selectedSize: size })}
           />
-          {neighborhoodSuggestions.map((area) => (
-            <ActionChip
-              key={area}
-              label={area}
-              active={searchFilters.selectedArea === area}
-              onPress={() => updateSearchFilters({ selectedArea: area })}
-            />
-          ))}
-        </View>
-      </Card>
+        ))}
+      </FilterSection>
+
+      <FilterSection title="Verification">
+        <Chip
+          label="Verified only"
+          active={searchFilters.verifiedOnly}
+          onPress={() => updateSearchFilters({ verifiedOnly: !searchFilters.verifiedOnly })}
+        />
+        <Chip
+          label="Fast move"
+          active={searchFilters.fastMove}
+          onPress={() => updateSearchFilters({ fastMove: !searchFilters.fastMove })}
+        />
+      </FilterSection>
     </Screen>
   );
 }
 
 export function ListingGalleryScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
-  const { getListingById, isListingUnlocked } = useMobileApp();
+  const router = useRouter();
+  const { width } = useWindowDimensions();
+  const { getListingById } = useMobileApp();
   const [slideIndex, setSlideIndex] = useState(0);
-  const [galleryWidth, setGalleryWidth] = useState(0);
   const galleryRef = useRef<ScrollView | null>(null);
   const listing = getListingById(params.id);
 
@@ -280,7 +272,7 @@ export function ListingGalleryScreen() {
     return (
       <Screen>
         <Card>
-          <CardTitle className="text-[20px]">Listing not found</CardTitle>
+          <CardTitle>Listing not found</CardTitle>
           <CardDescription>That gallery no longer has a listing attached.</CardDescription>
         </Card>
       </Screen>
@@ -288,126 +280,80 @@ export function ListingGalleryScreen() {
   }
 
   const totalSlides = listing.galleryMedia.length;
-  const currentSlide = listing.galleryMedia[slideIndex] ?? listing.galleryMedia[0];
-
-  useEffect(() => {
-    if (!galleryWidth || !galleryRef.current || slideIndex === 0) {
-      return;
-    }
-
-    galleryRef.current.scrollTo({
-      x: slideIndex * galleryWidth,
-      animated: false,
-    });
-  }, [galleryWidth, slideIndex]);
+  const coords = listing.mapLocation
+    ? `${Math.abs(listing.mapLocation.approxLatitude).toFixed(4)}° ${listing.mapLocation.approxLatitude < 0 ? 'S' : 'N'}, ${Math.abs(listing.mapLocation.approxLongitude).toFixed(4)}° ${listing.mapLocation.approxLongitude < 0 ? 'W' : 'E'}`
+    : null;
 
   function goToSlide(nextIndex: number) {
     const boundedIndex = Math.max(0, Math.min(totalSlides - 1, nextIndex));
     setSlideIndex(boundedIndex);
-
-    if (!galleryRef.current || !galleryWidth) {
-      return;
-    }
-
-    galleryRef.current.scrollTo({
-      x: boundedIndex * galleryWidth,
-      animated: true,
-    });
+    galleryRef.current?.scrollTo({ x: boundedIndex * width, animated: true });
   }
 
   return (
-    <Screen
-      bottomBar={
-        <View className="gap-3">
-          <View className="flex-row gap-3">
-            <Button
-              className="flex-1"
-              variant="outline"
-              disabled={slideIndex === 0}
-              label="Previous"
-              onPress={() => goToSlide(slideIndex - 1)}
-            />
-            <Button
-              className="flex-1"
-              disabled={slideIndex === totalSlides - 1}
-              label="Next"
-              onPress={() => goToSlide(slideIndex + 1)}
-            />
-          </View>
-          <Link href={isListingUnlocked(listing.id) ? contactRevealedHref(listing.id) : unlockHref(listing.id)} asChild>
-            <Button variant="dark" label={isListingUnlocked(listing.id) ? 'Open contact' : 'Unlock listing'} />
-          </Link>
+    <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-black">
+      <StatusBar style="light" />
+      <View className="flex-row items-center justify-between px-4 py-3">
+        <Pressable
+          className="h-10 w-10 items-center justify-center active:opacity-70"
+          hitSlop={8}
+          onPress={() => router.back()}
+          accessibilityLabel="Close gallery"
+        >
+          <AppIcon name="close" size={26} color="#FFFFFF" />
+        </Pressable>
+        <Text className="font-body-medium text-body-lg text-white">
+          {slideIndex + 1} of {totalSlides}
+        </Text>
+        <View className="h-10 w-10 items-center justify-center">
+          <AppIcon name="share-outline" size={22} color="#FFFFFF" />
         </View>
-      }
-    >
-      <SectionHeader
-        kicker={`Photo ${slideIndex + 1} of ${totalSlides}`}
-        title={listing.title}
-        description={currentSlide.label}
-      />
+      </View>
 
-      <View
-        className="overflow-hidden rounded-[32px] bg-surface-inverse shadow-floating"
-        onLayout={(event) => {
-          const width = event.nativeEvent.layout.width;
-
-          if (width !== galleryWidth) {
-            setGalleryWidth(width);
-          }
+      <ScrollView
+        ref={galleryRef}
+        className="flex-1"
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={(event) => {
+          if (!width) return;
+          setSlideIndex(Math.round(event.nativeEvent.contentOffset.x / width));
         }}
       >
-        <ScrollView
-          ref={galleryRef}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={(event) => {
-            const width = galleryWidth || event.nativeEvent.layoutMeasurement.width;
-
-            if (!width) {
-              return;
-            }
-
-            setSlideIndex(Math.round(event.nativeEvent.contentOffset.x / width));
-          }}
-        >
-          {listing.galleryMedia.map((photo) => (
-            <ImageBackground
-              key={photo.id}
-              className="h-96 bg-surface-inverse p-6"
-              imageStyle={{ borderRadius: 32 }}
-              source={photo.source}
-              style={{ width: galleryWidth || 320 }}
-            >
-              <View className="absolute inset-0 bg-black/30" />
-              <View className="flex-row items-start justify-between">
-                <Badge variant="dark">{listing.area}</Badge>
-                <Badge className="bg-primary" textClassName="text-primary-foreground">
-                  {listing.photoCount}
-                </Badge>
-              </View>
-              <View className="mt-auto gap-2">
-                <Text className="text-[30px] font-semibold tracking-[-0.8px] text-white">
-                  {photo.label}
-                </Text>
-                <Text className="text-sm text-white/70">Tenant-shot media</Text>
-              </View>
-            </ImageBackground>
-          ))}
-        </ScrollView>
-      </View>
-
-      <View className="flex-row flex-wrap gap-2">
-        {listing.galleryMedia.map((photo, index) => (
-          <ActionChip
-            key={photo.id}
-            label={`${index + 1}`}
-            active={slideIndex === index}
-            onPress={() => goToSlide(index)}
-          />
+        {listing.galleryMedia.map((photo) => (
+          <View key={photo.id} className="items-center justify-center" style={{ width }}>
+            <Image source={photo.source} resizeMode="contain" style={{ width, height: '100%' }} />
+          </View>
         ))}
-      </View>
-    </Screen>
+      </ScrollView>
+
+      {coords ? (
+        <View className="items-center py-3">
+          <View className="flex-row items-center gap-2 rounded-full bg-white/10 px-4 py-2">
+            <AppIcon name="shield-checkmark" size={16} color="#34C759" />
+            <Text className="font-body-medium text-label-md text-white">GPS Verified ({coords})</Text>
+          </View>
+        </View>
+      ) : null}
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 12, gap: 8 }}
+        className="max-h-24 py-2"
+      >
+        {listing.galleryMedia.map((photo, index) => (
+          <Pressable
+            key={photo.id}
+            onPress={() => goToSlide(index)}
+            className={`overflow-hidden rounded-[10px] border-2 ${slideIndex === index ? 'border-primary' : 'border-transparent'}`}
+          >
+            <Image source={photo.source} resizeMode="cover" className="h-16 w-20 bg-white/10" />
+          </Pressable>
+        ))}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -489,22 +435,18 @@ export function MapViewScreen() {
 
   return (
     <Screen>
-      <SectionHeader
-        kicker="Map view"
-        title="Listings by area"
-        description="Approximate pins until unlock"
-      />
+      <Text className="font-display text-display-02 text-foreground">Map View</Text>
 
       {mapListings.length === 0 ? (
         <Card>
-          <CardTitle className="text-[20px]">No listings match the current filters</CardTitle>
+          <CardTitle>No listings match the current filters</CardTitle>
           <CardDescription>
             Adjust the browse filters to repopulate the map with approximate area pins.
           </CardDescription>
         </Card>
       ) : (
         <>
-          <View className="overflow-hidden rounded-[32px] border border-border">
+          <View className="overflow-hidden rounded-[16px] border border-border">
             <ListingsMap
               listings={mapListings}
               selectedListingId={selectedListing?.id}
@@ -512,15 +454,12 @@ export function MapViewScreen() {
             />
           </View>
 
-          <Card>
-            <Text className="text-sm font-semibold text-foreground">
-              {mapListings.length} listings visible on the map
+          <View className="flex-row items-center gap-2 rounded-[12px] bg-accent-soft px-4 py-3">
+            <AppIcon name="lock-closed-outline" size={16} active />
+            <Text className="flex-1 font-body text-label-md text-foreground">
+              Approximate pins. Exact address and GPS reveal only after unlock.
             </Text>
-            <CardDescription>
-              Pins use approximate neighborhood coordinates in browse. Exact address and precise GPS
-              still reveal only after unlock.
-            </CardDescription>
-          </Card>
+          </View>
 
           {selectedListing ? (
             <ListingCard
@@ -543,25 +482,31 @@ export function SavedListingsScreen() {
   const { savedListings, isListingUnlocked } = useMobileApp();
 
   return (
-    <Screen>
-      <SectionHeader
-        kicker="Saved homes"
-        title="Favorites"
-        description="Your shortlist"
-      />
+    <Screen withTabBar>
+      <View className="gap-1">
+        <Text className="font-display text-display-02 text-foreground">Saved</Text>
+        <Text className="font-body text-body-md text-muted-foreground">
+          {savedListings.length} {savedListings.length === 1 ? 'property' : 'properties'} shortlisted
+        </Text>
+      </View>
 
       {savedListings.length === 0 ? (
-        <Card>
-          <CardTitle className="text-[20px]">No saved listings yet</CardTitle>
-          <CardDescription>Use the heart action on a listing to keep it here.</CardDescription>
-        </Card>
+        <View className="items-center gap-3 rounded-[16px] border border-border bg-surface-subtle px-6 py-12">
+          <View className="h-14 w-14 items-center justify-center rounded-full bg-accent-soft">
+            <AppIcon name="heart-outline" size={26} active />
+          </View>
+          <Text className="font-display text-headline-sm text-foreground">No saved homes yet</Text>
+          <Text className="text-center font-body text-body-md text-muted-foreground">
+            Tap the heart on any listing to keep it on your shortlist.
+          </Text>
+        </View>
       ) : (
         savedListings.map((listing) => (
           <ListingCard
             key={listing.id}
             listing={listing}
             href={isListingUnlocked(listing.id) ? contactRevealedHref(listing.id) : listingHref(listing.id)}
-            actionLabel={isListingUnlocked(listing.id) ? 'Open contact' : 'View details'}
+            actionLabel={isListingUnlocked(listing.id) ? 'Open Contact' : 'View Details'}
           />
         ))
       )}

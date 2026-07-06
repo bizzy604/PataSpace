@@ -141,7 +141,26 @@ forgot_password_phone, reset_password_form, account_locked (Clerk-owned).
 Notes: FlashList perf must not regress on the home feed (measure scroll
 jank before/after on a low-end Android profile). Map pins restyle to teal.
 
-- [ ] Phase 2 complete
+- [x] Phase 2 complete (2026-07-06). Rebuilt the shared ListingCard (clean
+  photo + availability badge, teal price, bed/bath/unlocks meta row, View
+  Details) which restyles every browse surface at once. HomeScreen → "Find
+  Your Home" feed (title + filter, search bar, teal balance card, quick chips,
+  full list). ListingDetailsScreen → hero + overlaid nav, spec chips, stat row,
+  About, GPS-verified card, amenities grid with checks + show-all, tenant
+  quote, approximate location panel, sticky Unlock Contact bar. Search, Saved,
+  Browse restyled with the new card + chips; Map view restyled (ListingsMap
+  kept); ListingGallery → dark full-screen viewer with counter, GPS-coords
+  pill, and thumbnail strip. Filters → the design's Filters/Clear All +
+  chip sections + result count + Show Results, bound to the existing filter
+  fields. Gates: tsc exit 0, jest 26/26.
+  Design deltas (intentional): filter model kept as-is, so the sheet's rent
+  "slider", county segmented control, and property-type checkboxes are
+  rendered as chips over the existing budget/area/size fields (a real slider
+  needs a numeric rent field — deferred to avoid regressing Home/Search/Map).
+  Home dropped the old latest-unlock prompt and post/track quick-actions to
+  match the browse-focused design (both still reachable via the tab bar). The
+  details Location section is a styled approximate panel, not a live map.
+  Device Expo pass (light+dark, low-end scroll) is Amoni's step.
 
 ## Phase 3 — Unlock & payments (9 surfaces)
 
