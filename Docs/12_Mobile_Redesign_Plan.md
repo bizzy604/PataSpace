@@ -113,7 +113,18 @@ Notes: keep Clerk SSO buttons and email+password flows exactly as wired
 today; `sso-callback.tsx` needs only a loading style pass. Skipped designs:
 forgot_password_phone, reset_password_form, account_locked (Clerk-owned).
 
-- [ ] Phase 1 complete
+- [x] Phase 1 complete (2026-07-06). Split the 1117-line AuthScreens.tsx into
+  `src/screens/auth/` (auth-shared, fields, Welcome, Onboarding, Register,
+  Login, VerifyOtp); routes rewired; old file deleted. New look: dark splash,
+  image onboarding carousel, AuthHeader + labeled filled fields, +254 phone
+  field, password eye, 6-box OTP with resend countdown, tinted error banner
+  with red field borders (login_error_state). Clerk logic (email+password,
+  Google/Apple SSO, email verification, needs_client_trust device code) is
+  byte-for-byte the same behaviour. Gates: tsc exit 0, jest 26/26.
+  Design deltas (intentional): email + confirm-password fields kept because
+  Clerk auth is email-based (the mockups' phone+password is aspirational);
+  "Forgot Password?" link omitted (Clerk-owned reset not built in-app).
+  Device Expo pass (light+dark) is Amoni's step.
 
 ## Phase 2 — Browse & discover (7 screens)
 
