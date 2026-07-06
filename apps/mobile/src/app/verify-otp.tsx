@@ -1,4 +1,4 @@
-import { VerifyOtpScreen } from '@/screens/AuthScreens';
+import { VerifyOtpScreen } from '@/screens/auth/VerifyOtpScreen';
 
 export default function VerifyOtpRoute() {
   return <VerifyOtpScreen />;

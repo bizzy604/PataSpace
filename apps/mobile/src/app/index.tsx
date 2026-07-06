@@ -1,4 +1,4 @@
-import { WelcomeScreen } from '@/screens/AuthScreens';
+import { WelcomeScreen } from '@/screens/auth/WelcomeScreen';
 import { HomeScreen } from '@/screens/HomeScreen';
 import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
 
