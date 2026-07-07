@@ -1,9 +1,12 @@
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
+import { AppIcon } from '@/components/ui/app-icon';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
+import { Dialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { ListRow } from '@/components/ui/list-row';
 import { Screen } from '@/components/ui/screen';
 import { SectionHeader } from '@/components/ui/section-header';
 import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
@@ -11,82 +14,148 @@ import { appRoutes } from '@/lib/routes';
 
 const pataspaceLogo = require('../../assets/PataSpace Logo.png');
 
+function SectionLabel({ children }: { children: string }) {
+  return (
+    <Text className="mt-2 font-body-bold text-label-md uppercase tracking-[1px] text-muted-foreground">
+      {children}
+    </Text>
+  );
+}
+
 export function ProfileScreen() {
-  const { user, walletBalance, savedListings, notifications, logout } = useMobileApp();
+  const { user, myListings, unlocks, savedListings, logout } = useMobileApp();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showLogout, setShowLogout] = useState(false);
+
+  const earnedKes = myListings.reduce(
+    (total, listing) =>
+      total +
+      listing.commissions
+        .filter((commission) => commission.status === 'PAID')
+        .reduce((sum, commission) => sum + commission.amountKES, 0),
+    0,
+  );
 
   async function handleLogout() {
-    if (isLoggingOut) {
-      return;
-    }
-
+    if (isLoggingOut) return;
     try {
       setIsLoggingOut(true);
       await logout();
     } finally {
       setIsLoggingOut(false);
+      setShowLogout(false);
     }
   }
 
+  const stats = [
+    { label: 'Listings', value: String(myListings.length) },
+    { label: 'Unlocks', value: String(unlocks.length) },
+    { label: 'KES Earned', value: earnedKes.toLocaleString(), highlight: true },
+  ];
+
   return (
     <Screen withTabBar>
-      <SectionHeader kicker="Profile" title={user.name} description={user.preferredArea} />
+      <View className="flex-row items-center justify-between">
+        <Text className="font-display text-display-02 text-foreground">Profile</Text>
+        <Link href={appRoutes.settings} asChild>
+          <Pressable className="h-11 w-11 items-center justify-center active:opacity-70" accessibilityLabel="Settings">
+            <AppIcon name="settings-outline" size={22} active />
+          </Pressable>
+        </Link>
+      </View>
 
-      <View className="rounded-[28px] bg-surface-inverse p-6 shadow-floating">
-        <Text className="text-xs font-semibold uppercase tracking-[1.8px] text-white/70">
-          Account
-        </Text>
-        <Text className="mt-2 text-[28px] font-semibold text-white">{user.phone}</Text>
-        <Text className="mt-2 text-sm leading-6 text-white/70">
-          Preferred areas: {user.preferredArea}
-        </Text>
+      <View className="items-center gap-2">
+        <Link href={appRoutes.editProfile} asChild>
+          <Pressable className="active:opacity-80">
+            <View className="h-24 w-24 items-center justify-center rounded-full bg-primary/10">
+              <Text className="font-display text-headline-lg text-primary">{user.initials}</Text>
+            </View>
+            <View className="absolute bottom-0 right-0 h-8 w-8 items-center justify-center rounded-full border-2 border-background bg-primary">
+              <AppIcon name="pencil" size={14} inverse />
+            </View>
+          </Pressable>
+        </Link>
+        <Text className="font-display text-headline-md text-foreground">{user.name}</Text>
+        <Text className="font-body text-body-md text-muted-foreground">{user.phone}</Text>
       </View>
 
       <View className="flex-row gap-3">
-        <Card className="flex-1">
-          <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">Credits</Text>
-          <Text className="mt-3 text-[28px] font-semibold text-foreground">
-            {walletBalance.toLocaleString()}
-          </Text>
-        </Card>
-        <Card className="flex-1">
-          <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">Saved</Text>
-          <Text className="mt-3 text-[28px] font-semibold text-foreground">{savedListings.length}</Text>
-        </Card>
-        <Card className="flex-1">
-          <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">Alerts</Text>
-          <Text className="mt-3 text-[28px] font-semibold text-foreground">{notifications.length}</Text>
-        </Card>
+        {stats.map((stat) => (
+          <View key={stat.label} className="flex-1 items-center gap-1 rounded-[16px] bg-surface-inverse p-4">
+            <Text
+              className={
+                stat.highlight
+                  ? 'font-display text-headline-md text-success'
+                  : 'font-display text-headline-md text-white'
+              }
+            >
+              {stat.value}
+            </Text>
+            <Text className="font-body text-label-md text-white/70">{stat.label}</Text>
+          </View>
+        ))}
       </View>
 
-      <View className="gap-3">
+      <SectionLabel>Account</SectionLabel>
+      <View className="gap-2">
         <Link href={appRoutes.editProfile} asChild>
-          <Button label="Edit profile" />
+          <ListRow icon="person-outline" title="Edit Profile" chevron />
         </Link>
-        <Link href={appRoutes.settings} asChild>
-          <Button variant="outline" label="Settings" />
-        </Link>
-        <Link href={appRoutes.helpCenter} asChild>
-          <Button variant="outline" label="Help center" />
-        </Link>
-        <Link href={appRoutes.notifications} asChild>
-          <Button variant="outline" label="Notifications" />
-        </Link>
-        <Link href={appRoutes.rateReview} asChild>
-          <Button variant="outline" label="Rate experience" />
-        </Link>
-        <Link href={appRoutes.appUpdate} asChild>
-          <Button variant="outline" label="App updates" />
+        <Link href={appRoutes.editProfile} asChild>
+          <ListRow icon="shield-checkmark-outline" title="Verification Status" value="Verify" chevron />
         </Link>
       </View>
 
-      <Button
-        variant="secondary"
-        label={isLoggingOut ? 'Logging out...' : 'Logout'}
-        onPress={() => {
-          void handleLogout();
+      <SectionLabel>My Activity</SectionLabel>
+      <View className="gap-2">
+        <Link href={appRoutes.myListings} asChild>
+          <ListRow icon="documents-outline" title="My Listings" value={String(myListings.length)} chevron />
+        </Link>
+        <Link href={appRoutes.transactions} asChild>
+          <ListRow icon="lock-open-outline" title="My Unlocks" value={String(unlocks.length)} chevron />
+        </Link>
+        <Link href={appRoutes.saved} asChild>
+          <ListRow icon="heart-outline" title="Saved Properties" value={String(savedListings.length)} chevron />
+        </Link>
+        <Link href={appRoutes.transactions} asChild>
+          <ListRow icon="receipt-outline" title="Transaction History" chevron />
+        </Link>
+      </View>
+
+      <SectionLabel>Support</SectionLabel>
+      <View className="gap-2">
+        <Link href={appRoutes.helpCenter} asChild>
+          <ListRow icon="help-circle-outline" title="Help Center" chevron />
+        </Link>
+        <Link href={appRoutes.contactSupport} asChild>
+          <ListRow icon="headset-outline" title="Contact Support" chevron />
+        </Link>
+        <Link href={appRoutes.dispute} asChild>
+          <ListRow icon="alert-circle-outline" title="Report an Issue" chevron />
+        </Link>
+      </View>
+
+      <SectionLabel>Account Management</SectionLabel>
+      <View className="gap-2">
+        <ListRow icon="log-out-outline" title="Logout" destructive onPress={() => setShowLogout(true)} />
+        <Link href={appRoutes.deleteAccount} asChild>
+          <ListRow icon="trash-outline" title="Delete Account" destructive />
+        </Link>
+      </View>
+
+      <Dialog
+        visible={showLogout}
+        onClose={() => setShowLogout(false)}
+        icon="log-out-outline"
+        title="Log Out?"
+        message="Are you sure you want to log out of your PataSpace account? You will need to verify your phone number again to sign back in."
+        confirm={{
+          label: isLoggingOut ? 'Logging out…' : 'Log Out',
+          variant: 'dark',
+          disabled: isLoggingOut,
+          onPress: () => void handleLogout(),
         }}
-        disabled={isLoggingOut}
+        cancel={{ label: 'Cancel', variant: 'ghost', onPress: () => setShowLogout(false) }}
       />
     </Screen>
   );
@@ -94,52 +163,88 @@ export function ProfileScreen() {
 
 export function EditProfileScreen() {
   const { user, updateProfile } = useMobileApp();
-  const [name, setName] = useState(user.name);
-  const [phone, setPhone] = useState(user.phone);
+  const [firstName, ...restName] = user.name.split(' ');
+  const [first, setFirst] = useState(firstName ?? '');
+  const [last, setLast] = useState(restName.join(' '));
   const [preferredArea, setPreferredArea] = useState(user.preferredArea);
   const [bio, setBio] = useState(user.bio);
   const router = useRouter();
 
+  function save() {
+    const fullName = `${first} ${last}`.trim() || user.name;
+    updateProfile({ name: fullName, preferredArea, bio });
+    router.back();
+  }
+
   return (
-    <Screen>
-      <SectionHeader
-        kicker="Edit profile"
-        title="Update your details"
-        description="Save changes"
+    <Screen
+      header={
+        <View className="flex-row items-center justify-between bg-surface-elevated px-4 py-3">
+          <Pressable onPress={() => router.back()} className="active:opacity-70" accessibilityLabel="Cancel">
+            <Text className="font-body-medium text-body-md text-primary">Cancel</Text>
+          </Pressable>
+          <Text className="font-display text-headline-sm text-foreground">Edit Profile</Text>
+          <Pressable onPress={save} className="active:opacity-70" accessibilityLabel="Save">
+            <Text className="font-display text-body-md text-primary">Save</Text>
+          </Pressable>
+        </View>
+      }
+    >
+      <View className="items-center gap-2 py-2">
+        <View className="h-24 w-24 items-center justify-center rounded-full bg-primary/10">
+          <Text className="font-display text-headline-lg text-primary">{user.initials}</Text>
+        </View>
+        <Text className="font-body text-label-md text-muted-foreground">
+          Photo upload coming soon
+        </Text>
+      </View>
+
+      <Input label="First Name" value={first} onChangeText={setFirst} placeholder="John" />
+      <Input label="Last Name" value={last} onChangeText={setLast} placeholder="Kamau" />
+
+      <View className="gap-2">
+        <View className="flex-row items-center justify-between">
+          <Text className="font-body-bold text-label-md text-muted-foreground">Phone Number</Text>
+          <AppIcon name="lock-closed-outline" size={14} />
+        </View>
+        <View className="min-h-12 justify-center rounded-[12px] bg-surface-subtle px-4 py-3 opacity-70">
+          <Text className="font-body text-body-lg text-muted-foreground">{user.phone}</Text>
+        </View>
+      </View>
+
+      <Input
+        label="Preferred Areas"
+        value={preferredArea}
+        onChangeText={setPreferredArea}
+        placeholder="Kilimani, Westlands"
       />
 
-      <Card className="gap-5">
-        <View className="gap-3">
-          <Text className="text-sm font-semibold text-foreground">Name</Text>
-          <Input value={name} onChangeText={setName} />
+      <View className="gap-2">
+        <View className="flex-row items-center justify-between">
+          <Text className="font-body-bold text-label-md text-muted-foreground">Bio</Text>
+          <Text className="font-body text-label-md text-muted-foreground">{bio.length}/200</Text>
         </View>
-        <View className="gap-3">
-          <Text className="text-sm font-semibold text-foreground">Phone</Text>
-          <Input value={phone} onChangeText={setPhone} />
-        </View>
-        <View className="gap-3">
-          <Text className="text-sm font-semibold text-foreground">Preferred areas</Text>
-          <Input value={preferredArea} onChangeText={setPreferredArea} />
-        </View>
-        <View className="gap-3">
-          <Text className="text-sm font-semibold text-foreground">Bio</Text>
-          <Input
-            className="min-h-28 py-4"
-            multiline
-            textAlignVertical="top"
-            value={bio}
-            onChangeText={setBio}
-          />
-        </View>
-      </Card>
+        <Input
+          className="min-h-28 py-4"
+          multiline
+          textAlignVertical="top"
+          value={bio}
+          onChangeText={(value) => setBio(value.slice(0, 200))}
+          placeholder="Tell us a bit about yourself…"
+        />
+      </View>
 
-      <Button
-        label="Save profile"
-        onPress={() => {
-          updateProfile({ name, phone, preferredArea, bio });
-          router.back();
-        }}
-      />
+      <View className="flex-row items-start gap-3 rounded-[16px] bg-surface-subtle p-4">
+        <View className="h-11 w-11 items-center justify-center rounded-full bg-primary/10">
+          <AppIcon name="shield-checkmark-outline" size={20} active />
+        </View>
+        <View className="flex-1">
+          <Text className="font-display text-body-lg text-foreground">Verify Your Identity</Text>
+          <Text className="font-body text-body-md text-muted-foreground">
+            ID verification is handled by the PataSpace team. We will reach out when it is your turn.
+          </Text>
+        </View>
+      </View>
     </Screen>
   );
 }

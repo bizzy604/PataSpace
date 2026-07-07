@@ -1,25 +1,18 @@
 /**
- * Purpose: Confirmation screen for permanent account deletion — explains the
- *   consequences and runs the deletion via useDeleteAccount.
+ * Purpose: Permanent account-deletion confirmation, presented as the design's
+ *   centered modal over the settings backdrop. Runs deletion via
+ *   useDeleteAccount.
  * Why important: Satisfies App Store 5.1.1(v) and Google Play account-deletion
- *   policy with an explicit, user-initiated, irreversible action.
- * Used by: app/delete-account.tsx route; linked from SettingsScreen.
+ *   policy with an explicit, user-initiated, irreversible action. The deletion
+ *   logic is unchanged; only the presentation is the redesign modal.
+ * Used by: app/delete-account.tsx route; linked from Settings and Profile.
  */
 import { useRouter } from 'expo-router';
-import { Alert, Text, View } from 'react-native';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Text, View } from 'react-native';
+import { Dialog } from '@/components/ui/dialog';
 import { Screen } from '@/components/ui/screen';
-import { SectionHeader } from '@/components/ui/section-header';
 import { useDeleteAccount } from '@/features/account/use-delete-account';
 import { appRoutes } from '@/lib/routes';
-
-const REMOVED_ITEMS = [
-  'Your profile and login',
-  'All your listings and their photos',
-  'Remaining credits and transaction history',
-  'Unlocks, confirmations, and saved listings',
-];
 
 export function DeleteAccountScreen() {
   const router = useRouter();
@@ -32,50 +25,38 @@ export function DeleteAccountScreen() {
     }
   }
 
-  function confirmDeletion() {
-    Alert.alert(
-      'Delete account?',
-      'This permanently deletes your account and all your data. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: runDeletion },
-      ],
-    );
-  }
-
   return (
     <Screen>
-      <SectionHeader
-        kicker="Account"
-        title="Delete your account"
-        description="This action is permanent and cannot be undone."
+      <Dialog
+        visible
+        onClose={() => router.back()}
+        icon="trash-outline"
+        tone="danger"
+        title="Delete Account?"
+        message={
+          <View className="gap-2">
+            <Text className="text-center font-body text-body-md text-muted-foreground">
+              This action is permanent. All your listings, credits, and transaction history will be
+              lost forever.
+            </Text>
+            {error ? (
+              <Text className="text-center font-body text-body-md text-danger">{error}</Text>
+            ) : null}
+          </View>
+        }
+        confirm={{
+          label: isDeleting ? 'Deleting…' : 'Delete My Account',
+          variant: 'danger',
+          disabled: isDeleting,
+          onPress: () => void runDeletion(),
+        }}
+        cancel={{
+          label: 'Keep Account',
+          variant: 'outline',
+          disabled: isDeleting,
+          onPress: () => router.back(),
+        }}
       />
-
-      <Card className="gap-3">
-        <Text className="text-sm font-semibold text-foreground">What gets deleted</Text>
-        {REMOVED_ITEMS.map((item) => (
-          <Text key={item} className="text-sm leading-6 text-muted-foreground">
-            {`• ${item}`}
-          </Text>
-        ))}
-      </Card>
-
-      {error ? <Text className="text-sm leading-6 text-destructive">{error}</Text> : null}
-
-      <View className="gap-3">
-        <Button
-          label={isDeleting ? 'Deleting…' : 'Delete my account'}
-          className="border-destructive bg-destructive"
-          disabled={isDeleting}
-          onPress={confirmDeletion}
-        />
-        <Button
-          variant="outline"
-          label="Cancel"
-          disabled={isDeleting}
-          onPress={() => router.back()}
-        />
-      </View>
     </Screen>
   );
 }

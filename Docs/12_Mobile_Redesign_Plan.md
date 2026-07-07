@@ -269,7 +269,34 @@ green untouched. Camera UI restyles around expo-camera, not instead of it.
 | logout_confirmation_modal | dialog from settings/profile |
 | delete_account_modal | `delete-account.tsx` |
 
-- [ ] Phase 5 complete
+- [x] Phase 5 complete (2026-07-07). Confirmations rebuilt with both states:
+  the "Are you moving in?" checklist (3 required checks gate the confirm) before
+  the tenant confirms, then the connection-status timeline (Contact Unlocked →
+  Property Viewed → Your Confirmation → Tenant Confirmation waiting/Send
+  Reminder → Commission Payment) plus the follow-up call/WhatsApp card and a
+  Report Issue path — confirmIncoming stays exactly as wired. Both-confirmed
+  success → the design's Connection Confirmed screen (revealed address, move-in
+  settlement card, star rating → Leave Review, View Property Details / Done),
+  keeping settleFee + the vacated-listing flywheel prompt. Profile → the tab
+  design (initials avatar + edit badge, Listings/Unlocks/KES-Earned stat cards,
+  Account/My-Activity/Support/Account-Management ListRows) with a logout Dialog.
+  Edit profile → Cancel/Save header, first/last name split over the single
+  `name` field, locked phone, preferred areas, bio 0/200. Settings → notification
+  Switches (real fields), Light/Dark appearance segmented, quick links, and the
+  logout Dialog. Delete account → the design's red confirmation modal (Dialog
+  tone="danger") running the same useDeleteAccount flow. New kit: Dialog `tone`
+  prop (primary/danger). Gates: tsc exit 0, jest 40/40.
+  Design deltas (intentional): (1) profile has no photo/verification fields in
+  the model, so the avatar shows initials and "Verification Status" links to
+  edit rather than claiming Verified; photo/ID upload is a note, not a wired
+  picker (no expo-image-picker). (2) edit keeps preferred-areas (a real field)
+  and drops the mockup's editable email (no model field); phone is read-only.
+  (3) settings exposes the three real notification toggles (push/SMS/saved-
+  search) and a Light/Dark appearance control — the mockup's Auto mode, phone/
+  profile-visibility, language/currency, change-password and biometric rows are
+  omitted (no backing fields; several are Clerk-owned). (4) "My Unlocks" links
+  to the transaction history (no dedicated unlocks list exists). Device Expo
+  pass (light+dark) is Amoni's step.
 
 ## Phase 6 — Engagement & support (8 surfaces)
 

@@ -28,6 +28,8 @@ type DialogProps = {
   message?: ReactNode;
   /** Optional icon rendered in a tinted circle above the title (centered). */
   icon?: ComponentProps<typeof AppIcon>['name'];
+  /** Icon tint: 'primary' (default, teal) or 'danger' (red, for destructive). */
+  tone?: 'primary' | 'danger';
   confirm: DialogAction;
   cancel?: DialogAction;
   className?: string;
@@ -39,6 +41,7 @@ export function Dialog({
   title,
   message,
   icon,
+  tone = 'primary',
   confirm,
   cancel,
   className,
@@ -55,8 +58,18 @@ export function Dialog({
           )}
         >
           {icon ? (
-            <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-              <AppIcon name={icon} size={28} active />
+            <View
+              className={cn(
+                'mb-4 h-16 w-16 items-center justify-center rounded-full',
+                tone === 'danger' ? 'bg-danger/10' : 'bg-primary/10',
+              )}
+            >
+              <AppIcon
+                name={icon}
+                size={28}
+                active={tone !== 'danger'}
+                color={tone === 'danger' ? '#FF3B30' : undefined}
+              />
             </View>
           ) : null}
           <Text

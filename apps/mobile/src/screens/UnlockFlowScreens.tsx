@@ -8,7 +8,7 @@
  */
 import { useState } from 'react';
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
-import { Linking, Pressable, Text, View } from 'react-native';
+import { Image, Linking, Pressable, Text, View } from 'react-native';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,9 +16,8 @@ import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { RevealedLocationMap } from '@/components/map/revealed-location-map';
 import { Screen } from '@/components/ui/screen';
 import { ScreenHeader } from '@/components/ui/screen-header';
-import { SectionHeader } from '@/components/ui/section-header';
 import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
-import { appRoutes, reportDeadHref } from '@/lib/routes';
+import { appRoutes, listingHref, reportDeadHref } from '@/lib/routes';
 
 /** Digits-only phone for tel:/wa.me links (wa.me wants no + or spaces). */
 function dialDigits(phone: string): string {
@@ -295,106 +294,151 @@ export function ConfirmationSuccessScreen() {
   const successFee = latestUnlock?.successFee;
   const prompt = latestUnlock?.vacatedListingPrompt;
   const feeSettled = !successFee || successFee.remainingKes === 0;
+  const address = latestUnlock?.contactInfo.address ?? listing?.location;
 
   return (
-    <Screen>
-      <SectionHeader
-        kicker="Both confirmed"
-        title="Connection complete"
-        description="Both sides confirmed the move. This unlock can now proceed into the commission hold window."
-      />
+    <Screen
+      bottomBar={
+        <View className="gap-1">
+          {listing ? (
+            <Link href={listingHref(listing.id)} asChild>
+              <Button shape="pill" variant="outline" label="View Property Details" />
+            </Link>
+          ) : null}
+          <Pressable
+            className="items-center py-3 active:opacity-70"
+            onPress={() => router.replace(appRoutes.home)}
+          >
+            <Text className="font-body-medium text-body-md text-muted-foreground">Done</Text>
+          </Pressable>
+        </View>
+      }
+    >
+      <View className="flex-row justify-end">
+        <Pressable
+          className="h-10 w-10 items-center justify-center active:opacity-70"
+          onPress={() => router.replace(appRoutes.home)}
+          accessibilityLabel="Close"
+        >
+          <AppIcon name="close" size={26} active />
+        </Pressable>
+      </View>
 
-      <Card>
-        <CardTitle className="text-[20px]">{listing?.title ?? 'Latest unlock'}</CardTitle>
-        <CardDescription>
-          Hold window: {latestUnlock?.holdUntil ?? '7 days after confirmation'}.
-        </CardDescription>
-      </Card>
+      <View className="items-center gap-4">
+        <View className="h-24 w-24 items-center justify-center rounded-full bg-primary/10">
+          <AppIcon name="git-compare-outline" size={44} active />
+        </View>
+        <Text className="text-center font-display text-display-02 text-primary">
+          Connection Confirmed!
+        </Text>
+        <Text className="px-6 text-center font-body text-body-lg text-muted-foreground">
+          Both parties have confirmed. Enjoy your new home!
+        </Text>
+      </View>
+
+      {listing ? (
+        <View className="flex-row items-center gap-3 rounded-[16px] bg-card p-4 shadow-card">
+          <Image className="h-16 w-16 rounded-[12px] bg-surface-subtle" resizeMode="cover" source={listing.coverImage} />
+          <View className="flex-1">
+            <Text className="font-body-medium text-label-md uppercase tracking-[1px] text-muted-foreground">
+              Revealed Address
+            </Text>
+            <Text className="font-display text-headline-sm text-foreground">{address}</Text>
+            <View className="mt-1 flex-row items-center gap-1.5">
+              <AppIcon name="calendar-outline" size={14} />
+              <Text className="font-body text-label-md text-muted-foreground">
+                Move-in: {listing.availableFrom}
+              </Text>
+            </View>
+          </View>
+        </View>
+      ) : null}
 
       {successFee ? (
-        <Card>
+        <View className="gap-3 rounded-[16px] border-l-4 border-primary bg-card p-4 shadow-card">
           <View className="flex-row items-center justify-between">
-            <CardTitle className="text-[20px]">Move-in fee</CardTitle>
-            <Badge variant={feeSettled ? 'dark' : 'secondary'}>
+            <View className="flex-row items-center gap-2">
+              <AppIcon name="cash-outline" size={20} active />
+              <Text className="font-display text-body-lg text-foreground">Move-in Settlement</Text>
+            </View>
+            <Badge variant={feeSettled ? 'success' : 'warning'}>
               {feeSettled ? 'Settled' : 'Balance due'}
             </Badge>
           </View>
-          <CardDescription>
-            KES {successFee.feeDueKes.toLocaleString()} total. Your{' '}
-            {successFee.creditsApplied.toLocaleString()} unlock credits already count toward it.
-          </CardDescription>
+          <Text className="font-body text-body-md text-muted-foreground">
+            KES {successFee.feeDueKes.toLocaleString()} total ·{' '}
+            {successFee.creditsApplied.toLocaleString()} unlock credits applied. Hold window ends{' '}
+            {latestUnlock?.holdUntil ?? '7 days after confirmation'}.
+          </Text>
           {!feeSettled ? (
-            <View className="mt-4 gap-3">
-              <Text className="text-lg font-semibold text-foreground">
-                KES {successFee.remainingKes.toLocaleString()} remaining
-              </Text>
-              <Button
-                label={settling ? 'Settling…' : 'Settle from credits'}
-                disabled={settling}
-                onPress={() => {
-                  setFeedback(null);
-                  setSettling(true);
-                  void (latestUnlock
-                    ? settleFee(latestUnlock.listingId)
-                    : Promise.resolve('error' as const)
-                  )
-                    .then((result) => {
-                      if (result === 'insufficient') {
-                        setFeedback(
-                          `Top up KES ${successFee.remainingKes.toLocaleString()} in credits first, then settle.`,
-                        );
-                        router.push(appRoutes.buyCredits);
-                      } else if (result === 'error') {
-                        setFeedback('Could not settle the fee. Try again.');
-                      }
-                    })
-                    .finally(() => setSettling(false));
-                }}
-              />
-              <Text className="text-xs text-muted-foreground">
-                Settling before key handover keeps your account active and pays the person who
-                found you this house.
-              </Text>
-            </View>
+            <Button
+              size="sm"
+              label={settling ? 'Settling…' : `Settle KES ${successFee.remainingKes.toLocaleString()} from credits`}
+              disabled={settling}
+              onPress={() => {
+                setFeedback(null);
+                setSettling(true);
+                void (latestUnlock ? settleFee(latestUnlock.listingId) : Promise.resolve('error' as const))
+                  .then((result) => {
+                    if (result === 'insufficient') {
+                      setFeedback(
+                        `Top up KES ${successFee.remainingKes.toLocaleString()} in credits first, then settle.`,
+                      );
+                      router.push(appRoutes.buyCredits);
+                    } else if (result === 'error') {
+                      setFeedback('Could not settle the fee. Try again.');
+                    }
+                  })
+                  .finally(() => setSettling(false));
+              }}
+            />
           ) : null}
-        </Card>
+        </View>
       ) : null}
 
       {prompt ? (
-        <Card>
-          <CardTitle className="text-[20px]">Leaving a house behind?</CardTitle>
-          <CardDescription>{prompt.message}</CardDescription>
-          <View className="mt-4">
-            <Button
-              label={seeding ? 'Preparing draft…' : 'Post it in 2 minutes'}
-              disabled={seeding}
-              onPress={() => {
-                setFeedback(null);
-                setSeeding(true);
-                void startSeededListing(prompt.seededFromConfirmationId)
-                  .then((result) => {
-                    if (result === 'ready') {
-                      router.push(appRoutes.createListing);
-                    } else if (result === 'already_posted') {
-                      setFeedback('You already posted this one. Check My listings.');
-                    } else {
-                      setFeedback('Could not prepare the draft. Try again.');
-                    }
-                  })
-                  .finally(() => setSeeding(false));
-              }}
-            />
-          </View>
-        </Card>
+        <View className="gap-2 rounded-[16px] bg-primary/10 p-4">
+          <Text className="font-display text-body-lg text-foreground">Leaving a house behind?</Text>
+          <Text className="font-body text-body-md text-muted-foreground">{prompt.message}</Text>
+          <Button
+            className="mt-1 self-start"
+            size="sm"
+            label={seeding ? 'Preparing draft…' : 'Post it in 2 minutes'}
+            disabled={seeding}
+            onPress={() => {
+              setFeedback(null);
+              setSeeding(true);
+              void startSeededListing(prompt.seededFromConfirmationId)
+                .then((result) => {
+                  if (result === 'ready') {
+                    router.push(appRoutes.createListing);
+                  } else if (result === 'already_posted') {
+                    setFeedback('You already posted this one. Check My listings.');
+                  } else {
+                    setFeedback('Could not prepare the draft. Try again.');
+                  }
+                })
+                .finally(() => setSeeding(false));
+            }}
+          />
+        </View>
       ) : null}
 
-      {feedback ? <Text className="text-sm text-destructive">{feedback}</Text> : null}
-
-      <View className="gap-3">
+      <View className="items-center gap-3 rounded-[16px] bg-primary/5 p-5">
+        <Text className="font-display text-headline-sm text-foreground">How was your experience?</Text>
         <Link href={appRoutes.rateReview} asChild>
-          <Button variant="secondary" label="Rate the experience" />
+          <Pressable className="flex-row gap-1 active:opacity-70">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <AppIcon key={star} name="star-outline" size={30} color="#8D9192" />
+            ))}
+          </Pressable>
+        </Link>
+        <Link href={appRoutes.rateReview} asChild>
+          <Button size="sm" variant="outline" label="Leave Review" />
         </Link>
       </View>
+
+      {feedback ? <Text className="font-body text-body-md text-danger">{feedback}</Text> : null}
     </Screen>
   );
 }
