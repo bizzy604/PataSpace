@@ -10,7 +10,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { type ListingPreview, type SearchFilters } from '@/data/mock-listings';
+import {
+  type ListingPreview,
+  type NotificationRecord,
+  type SearchFilters,
+} from '@/data/mock-listings';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
@@ -22,6 +26,14 @@ import { Screen } from '@/components/ui/screen';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { SectionHeader } from '@/components/ui/section-header';
 import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
+import {
+  filterNotifications,
+  groupNotificationsByDay,
+  notificationCategory,
+  notificationFilters,
+  type NotificationCategory,
+  type NotificationFilter,
+} from '@/lib/notifications/notification-view';
 import {
   appRoutes,
   contactRevealedHref,
@@ -515,52 +527,83 @@ export function SavedListingsScreen() {
   );
 }
 
+const NOTIFICATION_ICON: Record<
+  NotificationCategory,
+  { name: React.ComponentProps<typeof AppIcon>['name']; tint: string; color: string }
+> = {
+  unlocks: { name: 'lock-open-outline', tint: 'rgba(0,102,126,0.12)', color: '#00667E' },
+  payments: { name: 'cash-outline', tint: 'rgba(52,199,89,0.15)', color: '#34C759' },
+  listings: { name: 'home-outline', tint: 'rgba(0,102,126,0.12)', color: '#00667E' },
+  other: { name: 'notifications-outline', tint: 'rgba(0,0,0,0.06)', color: '#8D9192' },
+};
+
 export function NotificationsScreen() {
   const { notifications } = useMobileApp();
   const router = useRouter();
+  const [filter, setFilter] = useState<NotificationFilter>('all');
+  const groups = groupNotificationsByDay(filterNotifications(notifications, filter));
+
+  function navigateTo(target: NotificationRecord['target']) {
+    if (target.route === 'listing') return router.push(listingHref(target.id));
+    if (target.route === 'credits') return router.push(appRoutes.credits);
+    if (target.route === 'confirmations') return router.push(appRoutes.confirmations);
+    if (target.route === 'my-listings') return router.push(appRoutes.myListings);
+    return router.push(appRoutes.profile);
+  }
 
   return (
     <Screen>
-      <SectionHeader
-        kicker="Activity feed"
-        title="Notifications"
-        description="Recent activity"
-      />
+      <Text className="font-display text-display-02 text-foreground">Notifications</Text>
 
-      {notifications.map((notification) => (
-        <Card key={notification.id}>
-          <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">{notification.time}</Text>
-          <CardTitle className="mt-3 text-[20px]">{notification.title}</CardTitle>
-          <CardDescription>{notification.detail}</CardDescription>
-          <Button
-            className="mt-4"
-            variant="outline"
-            label="Open"
-            onPress={() => {
-              if (notification.target.route === 'listing') {
-                router.push(listingHref(notification.target.id));
-                return;
-              }
-
-              if (notification.target.route === 'credits') {
-                router.push(appRoutes.credits);
-                return;
-              }
-
-              if (notification.target.route === 'confirmations') {
-                router.push(appRoutes.confirmations);
-                return;
-              }
-
-              if (notification.target.route === 'my-listings') {
-                router.push(appRoutes.myListings);
-                return;
-              }
-
-              router.push(appRoutes.profile);
-            }}
+      <View className="flex-row flex-wrap gap-2">
+        {notificationFilters.map((chip) => (
+          <Chip
+            key={chip.key}
+            label={chip.label}
+            active={filter === chip.key}
+            onPress={() => setFilter(chip.key)}
           />
-        </Card>
+        ))}
+      </View>
+
+      {groups.length === 0 ? (
+        <View className="items-center gap-2 rounded-[16px] bg-surface-subtle py-12">
+          <AppIcon name="notifications-off-outline" size={28} />
+          <Text className="font-body text-body-md text-muted-foreground">You're all caught up</Text>
+        </View>
+      ) : null}
+
+      {groups.map((group) => (
+        <View key={group.day} className="gap-3">
+          <Text className="font-display text-headline-sm text-foreground">{group.day}</Text>
+          {group.items.map((notification) => {
+            const meta = NOTIFICATION_ICON[notificationCategory(notification.target)];
+            return (
+              <Pressable
+                key={notification.id}
+                onPress={() => navigateTo(notification.target)}
+                className="flex-row items-start gap-3 rounded-[16px] bg-card p-4 shadow-card active:opacity-90"
+              >
+                <View
+                  className="h-11 w-11 items-center justify-center rounded-full"
+                  style={{ backgroundColor: meta.tint }}
+                >
+                  <AppIcon name={meta.name} size={20} color={meta.color} />
+                </View>
+                <View className="flex-1">
+                  <Text className="font-body-medium text-body-lg text-foreground">{notification.title}</Text>
+                  <Text className="mt-0.5 font-body text-body-md text-muted-foreground">
+                    {notification.detail}
+                  </Text>
+                </View>
+                <View className="items-end gap-1">
+                  <Text className="font-body text-label-md text-muted-foreground">{notification.time}</Text>
+                  {group.day === 'Today' ? <View className="h-2 w-2 rounded-full bg-primary" /> : null}
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
       ))}
     </Screen>
   );

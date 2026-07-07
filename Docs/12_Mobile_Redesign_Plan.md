@@ -311,7 +311,32 @@ green untouched. Camera UI restyles around expo-camera, not instead of it.
 | report_success_modal | dialog in report flow |
 | app_update_new_feature | `app-update.tsx` |
 
-- [ ] Phase 6 complete
+- [x] Phase 6 complete (2026-07-07). Notifications → filter chips (All/Unlocks/
+  Payments/Listings) + Today/Earlier day groups + tinted category rows, keeping
+  the target routing. Rate review → the "Rate Your Experience" sheet (listing
+  summary, tap stars, optional comment) keeping submitReview/submitReviewForUnlock.
+  Referral → Invite Friends (gift hero, referral-code card + Copy, WhatsApp/SMS/
+  Copy-Link share via Linking+Share, Friends-Joined/Credits-Earned stats with
+  View History, How-it-works steps) with the wired phone invite kept as a
+  collapsible. Help center → search + Quick Actions (Contact Support / Report
+  Problem) + FAQ accordion over helpArticles. Contact support → Chat button +
+  WhatsApp/Email/Call channels (Linking) + the kept submitSupportMessage form.
+  Report issue → report-dead rebuilt (listing context, reason picker, details
+  0/500, evidence tiles, instant-refund banner) and the generic dispute rebuilt
+  to match; both end on the report_success modal (Dialog "Report Received").
+  App update → the new-feature spotlight (hero, NEW FEATURE pill, feature cards,
+  Try It Now / Maybe Later) carrying updateNotes. New: pure
+  `lib/notifications/notification-view` (category/filter/day-bucket) with 5 gate
+  assertions. Gates: tsc exit 0, jest 45/45.
+  Design deltas (intentional): (1) share/copy uses the native Share sheet +
+  Linking (wa.me / sms: / mailto: / tel:) since there's no clipboard dep;
+  evidence/photo upload is a decorative "coming soon" (no image picker). (2)
+  rate-review drops the mockup's Post-Anonymously toggle (submitReview takes
+  only rating+comment; no anon field). (3) contact-support omits the mockup's
+  "Open Tickets" list (no ticket data source) and keeps the real message form;
+  referral shows credits earned from rewardedReferralCount (250 each per the
+  highlight copy) rather than a hardcoded figure. Device Expo pass (light+dark)
+  is Amoni's step.
 
 ## Phase 7 — Sweep and ship
 
