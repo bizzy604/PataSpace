@@ -228,7 +228,33 @@ Notes: the 5-photo contract and capture-location logic were just fixed
 (commits bc93c5f, ee64afe); their tests in `src/lib/__tests__/` must stay
 green untouched. Camera UI restyles around expo-camera, not instead of it.
 
-- [ ] Phase 4 complete
+- [x] Phase 4 complete (2026-07-07). Camera rebuilt to the full-screen "Take
+  Photos" layout (dark bar with close + flash, 4-step progress, live preview
+  with rule-of-thirds grid + focus frame, GPS-Active + N/MAX pills, thumbnail →
+  review, big shutter, flip) — every capture/GPS/recording handler, ref, effect
+  and CameraView prop is byte-for-byte the same; only the chrome changed. Photo
+  review → the 3-col grid (COVER badge, geo pins, per-tile remove, Add More
+  tile, Property Video card) with the same photo-count gate. Details form →
+  sectioned "Property Details" (Basic Info, Property Type, Amenities, Description
+  0/500, Availability & Contact) keeping every draft field the submit payload
+  needs. Review → "Review Listing" (preview card, teal Potential Earnings,
+  amber Important Notes, What-happens-next timeline, terms checkbox) with the
+  same submit gate + submitDraft. Submitted, my-listings, my-listing, and
+  listing-stats restyled by analogy onto the kit. New: pure
+  `lib/listings/amenities-field` (toggle presets over the comma string, no model
+  change) with 6 gate assertions; a tested `ghost`-era kit reused. Gates: tsc
+  exit 0, jest 40/40 (listing-rules + capture-location untouched and green).
+  Design deltas (intentional): (1) flash + flip are additive UI wired to the
+  CameraView props; capture/GPS logic unchanged. (2) walkthrough video is
+  recorded in-app (the just-fixed expo-camera flow), so the mockup's review
+  "Upload Video" becomes "Record Video" → camera video mode, not a gallery
+  picker (that needs expo-image-picker, out of a restyle phase). (3) the form
+  keeps the extra fields the API needs (title, deposit, county, location,
+  landlord contact, move reason) that the mockup omits, and drops the mockup's
+  bedrooms/bathrooms/furnished steppers since there are no draft fields for them
+  (houseType already captures size; adding them is a contract change). (4)
+  "Drag to reorder" copy dropped — no reorder action is wired. Device Expo pass
+  (real camera + GPS capture, on-device recording) is Amoni's step.
 
 ## Phase 5 — Connections & profile (8 surfaces)
 

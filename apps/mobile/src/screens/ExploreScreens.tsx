@@ -19,6 +19,7 @@ import { ListingsMap } from '@/components/map/listings-map';
 import { Input } from '@/components/ui/input';
 import { ListingCard } from '@/components/ui/listing-card';
 import { Screen } from '@/components/ui/screen';
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { SectionHeader } from '@/components/ui/section-header';
 import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
 import {
@@ -364,54 +365,54 @@ export function ListingStatsScreen() {
 
   if (!listing) {
     return (
-      <Screen>
+      <Screen header={<ScreenHeader title="Listing Stats" />}>
         <Card>
-          <CardTitle className="text-[20px]">Listing not found</CardTitle>
+          <CardTitle>Listing not found</CardTitle>
           <CardDescription>There is no analytics surface for that listing anymore.</CardDescription>
         </Card>
       </Screen>
     );
   }
 
-  return (
-    <Screen>
-      <SectionHeader
-        kicker="Listing analytics"
-        title={`${listing.area} performance`}
-        description="Views, saves, unlocks"
-      />
+  const statCards = [
+    { icon: 'eye-outline' as const, label: 'Views', value: listing.stats.views },
+    { icon: 'lock-open-outline' as const, label: 'Unlocks', value: listing.stats.unlocks },
+    { icon: 'heart-outline' as const, label: 'Saves', value: listing.stats.saves },
+  ];
 
-      <View className="flex-row gap-3">
-        <Card className="flex-1">
-          <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">Views</Text>
-          <Text className="mt-3 text-[28px] font-semibold text-foreground">{listing.stats.views}</Text>
-        </Card>
-        <Card className="flex-1">
-          <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">Unlocks</Text>
-          <Text className="mt-3 text-[28px] font-semibold text-foreground">{listing.stats.unlocks}</Text>
-        </Card>
-        <Card className="flex-1">
-          <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">Saves</Text>
-          <Text className="mt-3 text-[28px] font-semibold text-foreground">{listing.stats.saves}</Text>
-        </Card>
+  return (
+    <Screen header={<ScreenHeader title="Listing Stats" />}>
+      <View className="gap-1">
+        <Text className="font-display text-headline-md text-foreground">{listing.area}</Text>
+        <Text className="font-body text-body-md text-muted-foreground">Performance overview</Text>
       </View>
 
-      <Card>
-        <CardTitle className="text-[20px]">Unlock economics</CardTitle>
-        <CardDescription>
+      <View className="flex-row gap-3">
+        {statCards.map((stat) => (
+          <View key={stat.label} className="flex-1 gap-2 rounded-[16px] bg-card p-4 shadow-card">
+            <AppIcon name={stat.icon} size={18} active />
+            <Text className="font-display text-headline-md text-foreground">{stat.value}</Text>
+            <Text className="font-body text-label-md text-muted-foreground">{stat.label}</Text>
+          </View>
+        ))}
+      </View>
+
+      <View className="gap-2 rounded-[16px] bg-card p-5 shadow-card">
+        <Text className="font-display text-headline-sm text-foreground">Unlock economics</Text>
+        <Text className="font-body text-body-md text-muted-foreground">
           Unlock cost is {listing.unlockCost}. The mover pays a KES{' '}
           {listing.successFeeKes.toLocaleString()} success fee only at confirmed move-in, and you
           earn {listing.commissionAmount} of it.
-        </CardDescription>
-      </Card>
+        </Text>
+      </View>
 
-      <Card>
-        <CardTitle className="text-[20px]">Freshness</CardTitle>
-        <CardDescription>
-          Last strong activity was {listing.stats.freshness}. Refreshing the gallery and handover notes
-          usually improves conversion in busy areas.
-        </CardDescription>
-      </Card>
+      <View className="gap-2 rounded-[16px] bg-card p-5 shadow-card">
+        <Text className="font-display text-headline-sm text-foreground">Freshness</Text>
+        <Text className="font-body text-body-md text-muted-foreground">
+          Last strong activity was {listing.stats.freshness}. Refreshing the gallery and handover
+          notes usually improves conversion in busy areas.
+        </Text>
+      </View>
     </Screen>
   );
 }
