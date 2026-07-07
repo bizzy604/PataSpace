@@ -1,13 +1,22 @@
+/**
+ * Purpose: Owner listing detail — hero, performance, payout, the move-out
+ *   confirmation each incoming unlock needs, and the commission timeline.
+ * Why important: Where the supply side confirms move-outs so commission can
+ *   proceed; restyled onto the redesign kit with no data-flow changes.
+ * Used by: app/my-listing.tsx.
+ */
 import { useEffect, useState } from 'react';
 import { Link, useLocalSearchParams } from 'expo-router';
-import { ImageBackground, Text, View } from 'react-native';
+import { Image, Text, View } from 'react-native';
 import type { ReceivedUnlockRecord } from '@pataspace/contracts';
+import { AppIcon } from '@/components/ui/app-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
-import { SectionHeader } from '@/components/ui/section-header';
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
+import { appRoutes, listingGalleryHref, listingStatsHref } from '@/lib/routes';
 
 function OutgoingUnlockRow({
   unlock,
@@ -21,29 +30,29 @@ function OutgoingUnlockRow({
   const blocked = unlock.isRefunded || unlock.status === 'disputed';
 
   return (
-    <View className="rounded-2xl bg-secondary px-4 py-3">
+    <View className="gap-2 rounded-[12px] bg-surface-subtle p-4">
       <View className="flex-row items-center justify-between gap-3">
-        <Text className="text-sm font-semibold text-foreground">
+        <Text className="font-body-medium text-body-md text-foreground">
           Unlock · {unlock.incomingConfirmed ? 'tenant confirmed' : 'tenant pending'}
         </Text>
-        <Badge variant={unlock.outgoingConfirmed ? 'dark' : 'secondary'}>
+        <Badge variant={unlock.outgoingConfirmed ? 'success' : 'warning'}>
           {unlock.outgoingConfirmed ? 'You confirmed' : 'Action needed'}
         </Badge>
       </View>
-      {error ? <Text className="mt-2 text-xs text-destructive">{error}</Text> : null}
+      {error ? <Text className="font-body text-label-md text-danger">{error}</Text> : null}
       {unlock.outgoingConfirmed ? (
-        <Text className="mt-2 text-xs text-muted-foreground">
+        <Text className="font-body text-label-md text-muted-foreground">
           Your move-out is confirmed. Commission unlocks once both sides agree.
         </Text>
       ) : blocked ? (
-        <Text className="mt-2 text-xs text-muted-foreground">
+        <Text className="font-body text-label-md text-muted-foreground">
           {unlock.isRefunded
             ? 'This unlock was refunded; no confirmation needed.'
             : 'This unlock is under dispute. Resolve it before confirming.'}
         </Text>
       ) : (
         <Button
-          className="mt-3"
+          size="sm"
           label={submitting ? 'Recording…' : 'Confirm I am moving out'}
           disabled={submitting}
           onPress={() => {
@@ -62,11 +71,6 @@ function OutgoingUnlockRow({
     </View>
   );
 }
-import {
-  appRoutes,
-  listingGalleryHref,
-  listingStatsHref,
-} from '@/lib/routes';
 
 export function MyListingDetailsScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
@@ -78,7 +82,9 @@ export function MyListingDetailsScreen() {
     refreshReceivedUnlocks,
   } = useMobileApp();
   const listing = getListingById(params.id);
-  const listingRow = myListings.find((item) => item.id === (Array.isArray(params.id) ? params.id[0] : params.id));
+  const listingRow = myListings.find(
+    (item) => item.id === (Array.isArray(params.id) ? params.id[0] : params.id),
+  );
 
   // Pull the latest received unlocks on open so a freshly unlocked listing shows
   // its pending confirmation immediately, not only after the sign-in sync.
@@ -94,9 +100,9 @@ export function MyListingDetailsScreen() {
 
   if (!listing || !listingRow) {
     return (
-      <Screen>
+      <Screen header={<ScreenHeader title="Listing" />}>
         <Card>
-          <CardTitle className="text-[20px]">Listing not found</CardTitle>
+          <CardTitle>Listing not found</CardTitle>
           <CardDescription>
             That owner listing is no longer available in the current demo data.
           </CardDescription>
@@ -105,106 +111,80 @@ export function MyListingDetailsScreen() {
     );
   }
 
+  const statusVariant = listingRow.status === 'Live' ? 'success' : 'warning';
+
   return (
     <Screen
+      header={<ScreenHeader title="Listing" />}
       bottomBar={
         <View className="flex-row gap-3">
           <Link href={listingGalleryHref(listing.id)} asChild>
-            <Button className="flex-1" variant="outline" label="Photo gallery" />
+            <Button className="flex-1" shape="pill" variant="outline" label="Photo Gallery" />
           </Link>
           <Link href={listingStatsHref(listing.id)} asChild>
-            <Button className="flex-1" label="Listing stats" />
+            <Button className="flex-1" shape="pill" label="Listing Stats" />
           </Link>
         </View>
       }
     >
-      <SectionHeader
-        kicker="Outgoing dashboard"
-        title={listing.title}
-        description={listingRow.updated}
-      />
-
-      <ImageBackground
-        className="h-72 overflow-hidden rounded-[32px] bg-surface-inverse p-6 shadow-floating"
-        imageStyle={{ borderRadius: 32 }}
-        source={listing.coverImage}
-      >
-        <View className="absolute inset-0 bg-black/32" />
-        <View className="flex-row items-start justify-between">
-          <Badge variant={listingRow.status === 'Live' ? 'dark' : 'secondary'}>
-            {listingRow.status}
-          </Badge>
-          <Badge className="bg-primary" textClassName="text-primary-foreground">
-            {listing.photoCount}
-          </Badge>
+      <View className="overflow-hidden rounded-[16px] bg-card shadow-card">
+        <View className="relative">
+          <Image className="h-52 w-full bg-surface-subtle" resizeMode="cover" source={listing.coverImage} />
+          <View className="absolute left-3 top-3">
+            <Badge variant={statusVariant}>{listingRow.status}</Badge>
+          </View>
+          <View className="absolute right-3 top-3 rounded-full bg-black/60 px-2.5 py-1">
+            <Text className="font-body-medium text-caption text-white">{listing.photoCount}</Text>
+          </View>
         </View>
-
-        <View className="mt-auto gap-2">
-          <Text className="text-[30px] font-semibold tracking-[-0.8px] text-white">
-            {listing.area}
-          </Text>
-          <Text className="text-sm text-white/75" numberOfLines={1}>
-            {listing.price} | {listing.location}
-          </Text>
-        </View>
-      </ImageBackground>
-
-      <View className="gap-2">
-        <Text className="text-[32px] font-semibold tracking-[-0.8px] text-foreground">
-          {listing.price}
-        </Text>
-        <Text className="text-[15px] leading-6 text-muted-foreground">{listing.location}</Text>
-        <View className="flex-row flex-wrap gap-2">
-          {listing.tags.map((tag) => (
-            <Badge key={tag} variant="secondary">
-              {tag}
-            </Badge>
-          ))}
+        <View className="gap-2 p-4">
+          <Text className="font-display text-headline-md text-primary">{listing.price}</Text>
+          <View className="flex-row items-center gap-1.5">
+            <AppIcon name="location-outline" size={15} active />
+            <Text className="font-body text-body-md text-muted-foreground">{listing.location}</Text>
+          </View>
+          <View className="flex-row flex-wrap gap-2">
+            {listing.tags.map((tag) => (
+              <View key={tag} className="rounded-full bg-surface-subtle px-3 py-1">
+                <Text className="font-body-medium text-label-md text-foreground">{tag}</Text>
+              </View>
+            ))}
+          </View>
         </View>
       </View>
 
       <View className="flex-row gap-3">
-        <Card className="flex-1">
-          <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">Views</Text>
-          <Text className="mt-2 text-[24px] font-semibold text-foreground">{listingRow.views}</Text>
-        </Card>
-        <Card className="flex-1">
-          <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">Unlocks</Text>
-          <Text className="mt-2 text-[24px] font-semibold text-foreground">{listingRow.unlocks}</Text>
-        </Card>
-        <Card className="flex-1">
-          <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">Status</Text>
-          <Text className="mt-2 text-[20px] font-semibold text-foreground">{listingRow.status}</Text>
-        </Card>
+        {[
+          { label: 'Views', value: listingRow.views },
+          { label: 'Unlocks', value: listingRow.unlocks },
+          { label: 'Status', value: listingRow.status },
+        ].map((stat) => (
+          <View key={stat.label} className="flex-1 gap-1 rounded-[16px] bg-card p-4 shadow-card">
+            <Text className="font-body text-label-md text-muted-foreground">{stat.label}</Text>
+            <Text className="font-display text-body-lg text-foreground">{stat.value}</Text>
+          </View>
+        ))}
       </View>
 
-      <Card>
-        <CardTitle className="text-[20px]">Performance</CardTitle>
-        <CardDescription>
-          {listing.stats.views} views, {listing.stats.unlocks} unlocks, and {listing.stats.saves} saves
-          in the current prototype data.
-        </CardDescription>
-      </Card>
+      <View className="gap-2 rounded-[16px] bg-card p-5 shadow-card">
+        <Text className="font-display text-headline-sm text-foreground">Payout status</Text>
+        <Text className="font-body text-body-md text-muted-foreground">{listingRow.payout}</Text>
+      </View>
 
-      <Card>
-        <CardTitle className="text-[20px]">Payout status</CardTitle>
-        <CardDescription>{listingRow.payout}</CardDescription>
-      </Card>
-
-      <Card>
-        <CardTitle className="text-[20px]">Confirm your move-out</CardTitle>
+      <View className="gap-3 rounded-[16px] bg-card p-5 shadow-card">
+        <Text className="font-display text-headline-sm text-foreground">Confirm your move-out</Text>
         {receivedUnlocks.length === 0 ? (
-          <CardDescription>
-            No one has unlocked this listing yet. When an incoming tenant unlocks it,
-            confirm your move-out here so the commission can proceed.
-          </CardDescription>
+          <Text className="font-body text-body-md text-muted-foreground">
+            No one has unlocked this listing yet. When an incoming tenant unlocks it, confirm your
+            move-out here so the commission can proceed.
+          </Text>
         ) : pendingConfirmation.length === 0 ? (
-          <CardDescription>
-            Nothing needs your confirmation right now. Confirmed unlocks move to the
-            commission timeline below.
-          </CardDescription>
+          <Text className="font-body text-body-md text-muted-foreground">
+            Nothing needs your confirmation right now. Confirmed unlocks move to the commission
+            timeline below.
+          </Text>
         ) : (
-          <View className="mt-4 gap-3">
+          <View className="gap-3">
             {pendingConfirmation.map((unlock) => (
               <OutgoingUnlockRow
                 key={unlock.unlockId}
@@ -214,32 +194,27 @@ export function MyListingDetailsScreen() {
             ))}
           </View>
         )}
-      </Card>
+      </View>
 
-      <Card>
-        <CardTitle className="text-[20px]">Commission timeline</CardTitle>
+      <View className="gap-3 rounded-[16px] bg-card p-5 shadow-card">
+        <Text className="font-display text-headline-sm text-foreground">Commission timeline</Text>
         {listingRow.commissions.length === 0 ? (
-          <CardDescription>
+          <Text className="font-body text-body-md text-muted-foreground">
             No commissions yet. They appear here once both parties confirm an unlock.
-          </CardDescription>
+          </Text>
         ) : (
-          <View className="mt-4 gap-3">
+          <View className="gap-3">
             {listingRow.commissions.map((commission) => (
-              <View
-                key={commission.unlockId}
-                className="rounded-2xl bg-secondary px-4 py-3"
-              >
+              <View key={commission.unlockId} className="gap-1 rounded-[12px] bg-surface-subtle p-4">
                 <View className="flex-row items-center justify-between gap-3">
-                  <Text className="text-sm font-semibold text-foreground">
+                  <Text className="font-body-medium text-body-md text-foreground">
                     KES {commission.amountKES.toLocaleString()}
                   </Text>
-                  <Badge
-                    variant={commission.status === 'PAID' ? 'dark' : 'secondary'}
-                  >
+                  <Badge variant={commission.status === 'PAID' ? 'success' : 'secondary'}>
                     {commission.status}
                   </Badge>
                 </View>
-                <Text className="mt-1 text-xs text-muted-foreground">
+                <Text className="font-body text-label-md text-muted-foreground">
                   {commission.paidAt
                     ? `Paid ${new Date(commission.paidAt).toLocaleDateString('en-KE')}`
                     : commission.eligibleAt
@@ -250,33 +225,30 @@ export function MyListingDetailsScreen() {
             ))}
           </View>
         )}
-      </Card>
+      </View>
 
-      <Card>
-        <CardTitle className="text-[20px]">Review note</CardTitle>
-        <CardDescription>{listingRow.reviewNote}</CardDescription>
-      </Card>
+      <View className="gap-2 rounded-[16px] bg-card p-5 shadow-card">
+        <Text className="font-display text-headline-sm text-foreground">Review note</Text>
+        <Text className="font-body text-body-md text-muted-foreground">{listingRow.reviewNote}</Text>
+      </View>
 
-      <Card>
-        <CardTitle className="text-[20px]">Listing summary</CardTitle>
-        <CardDescription>{listing.blurb}</CardDescription>
-      </Card>
+      <View className="gap-2 rounded-[16px] bg-card p-5 shadow-card">
+        <Text className="font-display text-headline-sm text-foreground">Listing summary</Text>
+        <Text className="font-body text-body-md text-muted-foreground">{listing.blurb}</Text>
+        <Text className="mt-2 font-body-medium text-label-md text-muted-foreground">Move-out context</Text>
+        <Text className="font-body text-body-md text-muted-foreground">{listing.moveReason}</Text>
+      </View>
 
-      <Card>
-        <CardTitle className="text-[20px]">Move-out context</CardTitle>
-        <CardDescription>{listing.moveReason}</CardDescription>
-      </Card>
-
-      <Card>
-        <CardTitle className="text-[20px]">Amenities</CardTitle>
-        <View className="mt-4 flex-row flex-wrap gap-2">
+      <View className="gap-3 rounded-[16px] bg-card p-5 shadow-card">
+        <Text className="font-display text-headline-sm text-foreground">Amenities</Text>
+        <View className="flex-row flex-wrap gap-2">
           {listing.amenities.map((amenity) => (
-            <View key={amenity} className="rounded-full bg-secondary px-4 py-2">
-              <Text className="text-sm font-medium text-foreground">{amenity}</Text>
+            <View key={amenity} className="rounded-full bg-surface-subtle px-3 py-1.5">
+              <Text className="font-body-medium text-label-md text-foreground">{amenity}</Text>
             </View>
           ))}
         </View>
-      </Card>
+      </View>
     </Screen>
   );
 }

@@ -7,14 +7,15 @@
  */
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import { UnlockDeadReason } from '@pataspace/contracts';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
+import { Dialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Screen } from '@/components/ui/screen';
-import { SectionHeader } from '@/components/ui/section-header';
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
 import { appRoutes } from '@/lib/routes';
 
@@ -49,13 +50,14 @@ export function ReportDeadScreen() {
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [received, setReceived] = useState(false);
   const listing = getListingById(params.id);
 
   if (!listing) {
     return (
-      <Screen>
+      <Screen header={<ScreenHeader title="Report Issue" />}>
         <Card>
-          <CardTitle className="text-[20px]">Unlock not found</CardTitle>
+          <CardTitle>Unlock not found</CardTitle>
           <CardDescription>This unlock no longer exists or was already refunded.</CardDescription>
         </Card>
       </Screen>
@@ -64,11 +66,11 @@ export function ReportDeadScreen() {
 
   return (
     <Screen
+      header={<ScreenHeader title="Report Issue" />}
       bottomBar={
         <Button
-          label={
-            submitting ? 'Refunding…' : reason ? 'Report and refund my credits' : 'Pick a reason'
-          }
+          shape="pill"
+          label={submitting ? 'Refunding…' : 'Submit Report'}
           disabled={!reason || submitting}
           onPress={() => {
             if (!reason) return;
@@ -77,7 +79,7 @@ export function ReportDeadScreen() {
             void reportDeadUnlock(listing.id, reason, comment.trim() || undefined)
               .then((result) => {
                 if (result === 'refunded') {
-                  router.replace(appRoutes.credits);
+                  setReceived(true);
                 } else {
                   setFeedback('Could not process the refund. Try again.');
                 }
@@ -87,49 +89,95 @@ export function ReportDeadScreen() {
         />
       }
     >
-      <SectionHeader
-        kicker="Report dead listing"
-        title={listing.title}
-        description="Tell us why this house did not work out. Your credits refund instantly."
-      />
+      <View className="flex-row items-center gap-3 rounded-[16px] bg-card p-3 shadow-card">
+        <Image className="h-16 w-16 rounded-[12px] bg-surface-subtle" resizeMode="cover" source={listing.coverImage} />
+        <View className="flex-1">
+          <Text className="font-body-medium text-label-md uppercase tracking-[1px] text-muted-foreground">
+            Listing Context
+          </Text>
+          <Text className="font-display text-headline-sm text-foreground">{listing.title}</Text>
+          <Text className="font-body text-label-md text-muted-foreground">Ref: {listing.id}</Text>
+        </View>
+      </View>
 
-      <View className="gap-3">
+      <Text className="font-body-bold text-label-md text-muted-foreground">What went wrong?</Text>
+      <View className="gap-2">
         {REASON_OPTIONS.map((option) => (
           <Pressable
             key={option.value}
             accessibilityRole="radio"
             accessibilityState={{ selected: reason === option.value }}
             onPress={() => setReason(option.value)}
+            className={
+              reason === option.value
+                ? 'flex-row items-start gap-3 rounded-[12px] border-2 border-primary bg-surface-subtle p-4'
+                : 'flex-row items-start gap-3 rounded-[12px] border border-border bg-surface-subtle p-4'
+            }
           >
-            <Card className={reason === option.value ? 'border border-primary' : ''}>
-              <View className="flex-row items-center gap-3">
-                <AppIcon
-                  active={reason === option.value}
-                  name={reason === option.value ? 'radio-button-on' : 'radio-button-off'}
-                  size={22}
-                />
-                <View className="flex-1">
-                  <CardTitle className="text-[16px]">{option.label}</CardTitle>
-                  <CardDescription>{option.detail}</CardDescription>
-                </View>
-              </View>
-            </Card>
+            <AppIcon
+              active={reason === option.value}
+              name={reason === option.value ? 'radio-button-on' : 'radio-button-off'}
+              size={22}
+            />
+            <View className="flex-1">
+              <Text className="font-body-medium text-body-lg text-foreground">{option.label}</Text>
+              <Text className="font-body text-label-md text-muted-foreground">{option.detail}</Text>
+            </View>
           </Pressable>
         ))}
       </View>
 
-      <Card>
-        <CardTitle className="text-[16px]">Anything else? (optional)</CardTitle>
+      <View className="gap-2">
+        <View className="flex-row items-center justify-between">
+          <Text className="font-body-bold text-label-md text-muted-foreground">Details</Text>
+          <Text className="font-body text-label-md text-muted-foreground">{comment.length}/500</Text>
+        </View>
         <Input
-          className="mt-3"
+          className="min-h-28 py-4"
           value={comment}
-          onChangeText={setComment}
-          placeholder="What happened?"
+          onChangeText={(value) => setComment(value.slice(0, 500))}
+          placeholder="Please describe exactly what happened…"
           multiline
+          textAlignVertical="top"
         />
-      </Card>
+      </View>
 
-      {feedback ? <Text className="text-sm text-destructive">{feedback}</Text> : null}
+      <View className="flex-row items-start gap-3 rounded-[16px] bg-primary/5 p-4">
+        <AppIcon name="information-circle" size={20} active />
+        <View className="flex-1">
+          <Text className="font-display text-body-md text-primary">Instant refund</Text>
+          <Text className="mt-1 font-body text-body-md text-muted-foreground">
+            Reason-coded reports refund your unlock credits immediately. False reports violate our
+            terms; our trust and safety team reviews all submissions.
+          </Text>
+        </View>
+      </View>
+
+      {feedback ? (
+        <View className="flex-row items-center gap-2 rounded-[16px] bg-danger/10 p-4">
+          <AppIcon name="alert-circle" size={18} color="#FF3B30" />
+          <Text className="flex-1 font-body text-body-md text-danger">{feedback}</Text>
+        </View>
+      ) : null}
+
+      <Dialog
+        visible={received}
+        onClose={() => {
+          setReceived(false);
+          router.replace(appRoutes.credits);
+        }}
+        icon="checkmark-circle"
+        title="Report Received"
+        message="Your unlock credits have been refunded. Thank you for helping us keep PataSpace safe — our team will review your report within 24 hours."
+        confirm={{
+          label: 'Got it',
+          variant: 'dark',
+          onPress: () => {
+            setReceived(false);
+            router.replace(appRoutes.credits);
+          },
+        }}
+      />
     </Screen>
   );
 }

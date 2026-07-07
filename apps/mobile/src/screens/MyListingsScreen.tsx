@@ -1,54 +1,24 @@
+/**
+ * Purpose: Owner dashboard — post a listing, filter by status, and track each
+ *   listing's views, unlocks, payout, and review note.
+ * Why important: The supply side's home base; restyled onto the redesign kit
+ *   (no data or navigation changes).
+ * Used by: app/my-listings.tsx.
+ */
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
-import { ImageBackground, Pressable, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
+import { AppIcon } from '@/components/ui/app-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardDescription, CardTitle } from '@/components/ui/card';
-import { IconButton } from '@/components/ui/icon-button';
+import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
-import { SectionHeader } from '@/components/ui/section-header';
 import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
 import { appRoutes, myListingHref, myListingsHref, type MyListingsFilter } from '@/lib/routes';
 
-function SummaryCard({
-  label,
-  value,
-  active,
-  onPress,
-}: {
-  label: string;
-  value: string;
-  active: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      className={
-        active
-          ? 'flex-1 rounded-[24px] border border-transparent bg-primary p-5 shadow-card active:opacity-90'
-          : 'flex-1 rounded-[24px] border border-border bg-card p-5 shadow-card active:opacity-90'
-      }
-      onPress={onPress}
-    >
-      <Text
-        className={
-          active
-            ? 'text-xs uppercase tracking-[1.8px] text-primary-foreground/80'
-            : 'text-xs uppercase tracking-[1.8px] text-tertiary-foreground'
-        }
-      >
-        {label}
-      </Text>
-      <Text
-        className={
-          active
-            ? 'mt-2 text-[28px] font-semibold tracking-[-0.6px] text-primary-foreground'
-            : 'mt-2 text-[28px] font-semibold tracking-[-0.6px] text-foreground'
-        }
-      >
-        {value}
-      </Text>
-    </Pressable>
-  );
+function statusBadgeVariant(status: string): 'success' | 'warning' | 'secondary' {
+  if (status === 'Live') return 'success';
+  if (status === 'Review') return 'warning';
+  return 'secondary';
 }
 
 export function MyListingsScreen() {
@@ -67,170 +37,122 @@ export function MyListingsScreen() {
   const unlockTotal = myListings.reduce((total, listing) => total + Number(listing.unlocks), 0);
 
   const filteredListings = myListings.filter((listing) => {
-    if (activeFilter === 'active') {
-      return listing.status === 'Live';
-    }
-
-    if (activeFilter === 'pending') {
-      return listing.status === 'Review';
-    }
-
-    if (activeFilter === 'unlocks') {
-      return Number(listing.unlocks) > 0;
-    }
-
+    if (activeFilter === 'active') return listing.status === 'Live';
+    if (activeFilter === 'pending') return listing.status === 'Review';
+    if (activeFilter === 'unlocks') return Number(listing.unlocks) > 0;
     return true;
   });
 
-  const filterTitle =
-    activeFilter === 'active'
-      ? 'Active listings'
-      : activeFilter === 'pending'
-        ? 'Pending review'
-        : activeFilter === 'unlocks'
-          ? 'Listings with unlocks'
-          : 'My listings';
-
-  const filterDescription =
-    activeFilter === 'active'
-      ? 'Live listings currently visible to incoming tenants.'
-      : activeFilter === 'pending'
-        ? 'Listings still waiting for review and publish.'
-        : activeFilter === 'unlocks'
-          ? 'Listings already getting buyer activity.'
-          : 'Track listing status, views, unlocks, and payout progress.';
+  const chips: { key: MyListingsFilter | 'all'; label: string }[] = [
+    { key: 'all', label: 'All' },
+    { key: 'active', label: `Active ${activeCount}` },
+    { key: 'pending', label: `Pending ${reviewCount}` },
+    { key: 'unlocks', label: `Unlocks ${unlockTotal}` },
+  ];
 
   return (
     <Screen>
-      <SectionHeader kicker="Outgoing dashboard" title={filterTitle} description={filterDescription} />
-
-      <View className="flex-row items-center justify-between rounded-[28px] bg-secondary p-4">
-        <View className="flex-1">
-          <Text className="text-xs font-semibold uppercase tracking-[1.8px] text-muted-foreground">
-            Quick action
-          </Text>
-          <Text className="mt-2 text-lg font-semibold text-foreground">Post a new listing</Text>
-        </View>
+      <View className="flex-row items-center justify-between">
+        <Text className="font-display text-display-02 text-foreground">My Listings</Text>
         <Link href={appRoutes.createListing} asChild>
-          <IconButton icon="camera-outline" />
+          <Pressable
+            className="h-11 w-11 items-center justify-center rounded-full bg-primary active:opacity-80"
+            accessibilityLabel="Post a new listing"
+          >
+            <AppIcon name="add" size={24} inverse />
+          </Pressable>
         </Link>
       </View>
 
-      <View className="flex-row gap-3">
-        <SummaryCard
-          active={activeFilter === 'active'}
-          label="Active"
-          value={String(activeCount)}
-          onPress={() => router.replace(myListingsHref('active'))}
-        />
-        <SummaryCard
-          active={activeFilter === 'pending'}
-          label="Pending"
-          value={String(reviewCount)}
-          onPress={() => router.replace(myListingsHref('pending'))}
-        />
-        <SummaryCard
-          active={activeFilter === 'unlocks'}
-          label="Unlocks"
-          value={String(unlockTotal)}
-          onPress={() => router.replace(myListingsHref('unlocks'))}
-        />
-      </View>
-
-      {activeFilter ? (
-        <Button
-          variant="outline"
-          label="View all listings"
-          onPress={() => router.replace(myListingsHref())}
-        />
-      ) : null}
-
       <View className="flex-row flex-wrap gap-2">
-        <Badge variant="dark">Live</Badge>
-        <Badge variant="secondary">Review</Badge>
-        <Badge variant="secondary">Closed</Badge>
+        {chips.map((chip) => (
+          <Chip
+            key={chip.key}
+            label={chip.label}
+            active={(activeFilter ?? 'all') === chip.key}
+            onPress={() =>
+              router.replace(chip.key === 'all' ? myListingsHref() : myListingsHref(chip.key))
+            }
+          />
+        ))}
       </View>
 
       {filteredListings.length === 0 ? (
-        <Card>
-          <CardTitle className="text-[20px]">Nothing here yet</CardTitle>
-          <CardDescription>No listings match this view right now.</CardDescription>
-        </Card>
+        <View className="items-center gap-3 rounded-[16px] bg-surface-subtle py-12">
+          <AppIcon name="home-outline" size={28} />
+          <Text className="font-body text-body-md text-muted-foreground">
+            No listings in this view yet.
+          </Text>
+          <Link href={appRoutes.createListing} asChild>
+            <Button size="sm" label="Post a listing" />
+          </Link>
+        </View>
       ) : null}
 
       {filteredListings.map((listing) => {
-        const listingPreview = getListingById(listing.id);
+        const preview = getListingById(listing.id);
 
         return (
-          <Card key={listing.id} className="gap-4 p-4">
-            {listingPreview ? (
-              <ImageBackground
-                className="h-44 overflow-hidden rounded-[22px] bg-surface-inverse p-4"
-                imageStyle={{ borderRadius: 22 }}
-                source={listingPreview.coverImage}
-              >
-                <View className="absolute inset-0 bg-black/35" />
-                <View className="flex-row items-start justify-between">
-                  <Badge variant={listing.status === 'Live' ? 'dark' : 'secondary'}>
-                    {listing.status}
-                  </Badge>
-                  <Badge className="bg-primary" textClassName="text-primary-foreground">
-                    {listingPreview.photoCount}
-                  </Badge>
+          <Link key={listing.id} href={myListingHref(listing.id)} asChild>
+            <Pressable className="overflow-hidden rounded-[16px] bg-card shadow-card active:opacity-95">
+              {preview ? (
+                <View className="relative">
+                  <Image
+                    className="h-40 w-full bg-surface-subtle"
+                    resizeMode="cover"
+                    source={preview.coverImage}
+                  />
+                  <View className="absolute left-3 top-3">
+                    <Badge variant={statusBadgeVariant(listing.status)}>{listing.status}</Badge>
+                  </View>
+                  <View className="absolute right-3 top-3 rounded-full bg-black/60 px-2.5 py-1">
+                    <Text className="font-body-medium text-caption text-white">{preview.photoCount}</Text>
+                  </View>
                 </View>
-                <View className="mt-auto gap-1">
-                  <Text className="text-lg font-semibold text-primary-foreground">
-                    {listingPreview.area}
-                  </Text>
-                  <Text className="text-sm text-white/75" numberOfLines={1}>
-                    {listingPreview.price} | {listingPreview.location}
-                  </Text>
-                </View>
-              </ImageBackground>
-            ) : null}
+              ) : null}
 
-            <View className="flex-row items-start justify-between gap-3">
-              <View className="flex-1 gap-2">
-                {!listingPreview ? (
-                  <Badge variant={listing.status === 'Live' ? 'dark' : 'secondary'}>
-                    {listing.status}
-                  </Badge>
+              <View className="gap-3 p-4">
+                <View className="flex-row items-start justify-between gap-3">
+                  <View className="flex-1">
+                    <Text className="font-display text-headline-sm text-foreground">{listing.title}</Text>
+                    <Text className="mt-0.5 font-body text-label-md text-muted-foreground">
+                      {listing.updated}
+                    </Text>
+                  </View>
+                  {!preview ? (
+                    <Badge variant={statusBadgeVariant(listing.status)}>{listing.status}</Badge>
+                  ) : null}
+                </View>
+
+                <View className="flex-row gap-3">
+                  <View className="flex-1 gap-1 rounded-[12px] bg-surface-subtle p-3">
+                    <Text className="font-body text-label-md text-muted-foreground">Views</Text>
+                    <Text className="font-display text-body-lg text-foreground">{listing.views}</Text>
+                  </View>
+                  <View className="flex-1 gap-1 rounded-[12px] bg-surface-subtle p-3">
+                    <Text className="font-body text-label-md text-muted-foreground">Unlocks</Text>
+                    <Text className="font-display text-body-lg text-foreground">{listing.unlocks}</Text>
+                  </View>
+                </View>
+
+                <View className="gap-1 rounded-[12px] bg-surface-subtle p-3">
+                  <Text className="font-body text-label-md text-muted-foreground">Payout status</Text>
+                  <Text className="font-body text-body-md text-foreground">{listing.payout}</Text>
+                </View>
+
+                {listing.reviewNote ? (
+                  <View className="flex-row items-center gap-1.5">
+                    <AppIcon name="information-circle-outline" size={15} />
+                    <Text className="flex-1 font-body text-label-md text-muted-foreground">
+                      {listing.reviewNote}
+                    </Text>
+                  </View>
                 ) : null}
-                <CardTitle className="text-[20px]">{listing.title}</CardTitle>
-                <CardDescription className="mt-0">{listing.updated}</CardDescription>
               </View>
-              <Link href={myListingHref(listing.id)} asChild>
-                <Button size="sm" label="Open" />
-              </Link>
-            </View>
-
-            <View className="flex-row gap-3">
-              <View className="flex-1 rounded-[18px] bg-secondary p-4">
-                <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">Views</Text>
-                <Text className="mt-2 text-lg font-semibold text-foreground">{listing.views}</Text>
-              </View>
-              <View className="flex-1 rounded-[18px] bg-secondary p-4">
-                <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">Unlocks</Text>
-                <Text className="mt-2 text-lg font-semibold text-foreground">{listing.unlocks}</Text>
-              </View>
-            </View>
-
-            <View className="rounded-[18px] bg-secondary p-4">
-              <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">Payout status</Text>
-              <Text className="mt-2 text-[15px] leading-6 text-foreground">{listing.payout}</Text>
-            </View>
-
-            <View className="rounded-[18px] bg-secondary p-4">
-              <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">Review note</Text>
-              <Text className="mt-2 text-[15px] leading-6 text-foreground">{listing.reviewNote}</Text>
-            </View>
-          </Card>
+            </Pressable>
+          </Link>
         );
       })}
-
-      <Link href={appRoutes.createListing} asChild>
-        <Button variant="outline" label="Create another listing" />
-      </Link>
     </Screen>
   );
 }

@@ -1,111 +1,160 @@
 /**
- * Purpose: Settings screen — notification/appearance controls plus the account
- *   "danger zone" entry point to permanent account deletion.
+ * Purpose: Settings — notification toggles, appearance, quick links, log out,
+ *   and the account "danger zone" entry to permanent deletion.
  * Why important: Hosts the in-app delete-account link required by App Store /
- *   Play Store policy; extracted from ProfileScreens.tsx to respect the file-size rule.
+ *   Play Store policy; restyled onto the redesign kit with no logic changes.
  * Used by: app/settings.tsx route.
  */
-import { Link } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { ColorSchemeToggle } from '@/components/ui/color-scheme-toggle';
+import { useState } from 'react';
+import { Link, useRouter } from 'expo-router';
+import { Pressable, Switch, Text, View } from 'react-native';
+import { Dialog } from '@/components/ui/dialog';
+import { ListRow } from '@/components/ui/list-row';
 import { Screen } from '@/components/ui/screen';
-import { SectionHeader } from '@/components/ui/section-header';
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
 import { appRoutes } from '@/lib/routes';
 
+function SectionLabel({ children }: { children: string }) {
+  return (
+    <Text className="mt-2 font-body-bold text-label-md uppercase tracking-[1px] text-muted-foreground">
+      {children}
+    </Text>
+  );
+}
+
 function ToggleRow({
   label,
+  subtitle,
   value,
-  onPress,
+  onValueChange,
+  divider,
 }: {
   label: string;
+  subtitle?: string;
   value: boolean;
-  onPress: () => void;
+  onValueChange: (next: boolean) => void;
+  divider?: boolean;
 }) {
+  const { theme } = useMobileApp();
   return (
-    <Pressable
-      className="flex-row items-center justify-between rounded-[20px] bg-secondary p-4"
-      onPress={onPress}
-      accessibilityRole="switch"
-      accessibilityState={{ checked: value }}
+    <View
+      className={`flex-row items-center justify-between gap-3 px-4 py-3 ${divider ? 'border-b border-border' : ''}`}
     >
-      <Text className="text-sm font-semibold text-foreground">{label}</Text>
-      <View
-        className={value ? 'rounded-full bg-primary px-3 py-1.5' : 'rounded-full bg-card px-3 py-1.5'}
-      >
-        <Text
-          className={
-            value ? 'text-xs font-semibold text-primary-foreground' : 'text-xs font-semibold text-foreground'
-          }
-        >
-          {value ? 'On' : 'Off'}
-        </Text>
+      <View className="flex-1">
+        <Text className="font-body-medium text-body-lg text-foreground">{label}</Text>
+        {subtitle ? (
+          <Text className="font-body text-label-md text-muted-foreground">{subtitle}</Text>
+        ) : null}
       </View>
-    </Pressable>
+      <Switch
+        value={value}
+        onValueChange={onValueChange}
+        trackColor={{ true: theme.primary, false: theme.outline }}
+        thumbColor="#FFFFFF"
+      />
+    </View>
   );
 }
 
 export function SettingsScreen() {
-  const { settings, updateSettings } = useMobileApp();
+  const { settings, updateSettings, colorScheme, setColorSchemePreference, logout } = useMobileApp();
+  const router = useRouter();
+  const [showLogout, setShowLogout] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  async function handleLogout() {
+    if (isLoggingOut) return;
+    try {
+      setIsLoggingOut(true);
+      await logout();
+    } finally {
+      setIsLoggingOut(false);
+      setShowLogout(false);
+    }
+  }
 
   return (
-    <Screen>
-      <SectionHeader
-        kicker="Settings"
-        title="Notifications and appearance"
-        description="Push, SMS, saved search, theme"
-      />
-
-      <Card className="items-center gap-4">
-        <Text className="text-xs font-semibold uppercase tracking-[1.8px] text-muted-foreground">
-          Appearance
-        </Text>
-        <ColorSchemeToggle showLabels />
-        <Text className="text-center text-sm leading-6 text-muted-foreground">
-          Switch the mobile app between the light and dark presentation at any time.
-        </Text>
-      </Card>
-
-      <View className="gap-3">
+    <Screen header={<ScreenHeader title="Settings" onBack={() => router.back()} />}>
+      <SectionLabel>Notifications</SectionLabel>
+      <View className="rounded-[16px] bg-card shadow-card">
         <ToggleRow
-          label="Push notifications"
+          label="Push Notifications"
           value={settings.pushNotifications}
-          onPress={() => updateSettings({ pushNotifications: !settings.pushNotifications })}
+          onValueChange={(next) => updateSettings({ pushNotifications: next })}
+          divider
         />
         <ToggleRow
-          label="SMS alerts"
+          label="SMS Alerts"
+          subtitle="Unlocks, confirmations, and payments"
           value={settings.smsAlerts}
-          onPress={() => updateSettings({ smsAlerts: !settings.smsAlerts })}
+          onValueChange={(next) => updateSettings({ smsAlerts: next })}
+          divider
         />
         <ToggleRow
-          label="Saved-search alerts"
+          label="Saved-search Alerts"
           value={settings.savedSearchAlerts}
-          onPress={() => updateSettings({ savedSearchAlerts: !settings.savedSearchAlerts })}
+          onValueChange={(next) => updateSettings({ savedSearchAlerts: next })}
         />
       </View>
 
-      <View className="gap-3">
+      <SectionLabel>Appearance</SectionLabel>
+      <View className="flex-row gap-1 rounded-full bg-surface-subtle p-1">
+        {(['light', 'dark'] as const).map((scheme) => (
+          <Pressable
+            key={scheme}
+            onPress={() => setColorSchemePreference(scheme)}
+            className={
+              colorScheme === scheme
+                ? 'flex-1 items-center rounded-full bg-card py-2.5 shadow-card'
+                : 'flex-1 items-center rounded-full py-2.5'
+            }
+          >
+            <Text
+              className={
+                colorScheme === scheme
+                  ? 'font-body-medium text-body-md text-foreground'
+                  : 'font-body-medium text-body-md text-muted-foreground'
+              }
+            >
+              {scheme === 'light' ? 'Light' : 'Dark'}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <SectionLabel>More</SectionLabel>
+      <View className="gap-2">
         <Link href={appRoutes.helpCenter} asChild>
-          <Button variant="outline" label="Help center" />
+          <ListRow icon="help-circle-outline" title="Help Center" chevron />
         </Link>
         <Link href={appRoutes.appUpdate} asChild>
-          <Button variant="outline" label="What is new" />
+          <ListRow icon="sparkles-outline" title="What's New" chevron />
         </Link>
       </View>
 
-      <Card className="gap-3">
-        <Text className="text-xs font-semibold uppercase tracking-[1.8px] text-destructive">
-          Danger zone
-        </Text>
-        <Text className="text-sm leading-6 text-muted-foreground">
-          Permanently delete your account and all associated listings, credits, and history.
-        </Text>
+      <SectionLabel>Account Management</SectionLabel>
+      <View className="gap-2">
+        <ListRow icon="log-out-outline" title="Log Out" destructive onPress={() => setShowLogout(true)} />
         <Link href={appRoutes.deleteAccount} asChild>
-          <Button variant="outline" label="Delete account" className="border-destructive" />
+          <ListRow icon="trash-outline" title="Delete Account" destructive />
         </Link>
-      </Card>
+      </View>
+
+      <Dialog
+        visible={showLogout}
+        onClose={() => setShowLogout(false)}
+        icon="log-out-outline"
+        title="Log Out?"
+        message="Are you sure you want to log out of your PataSpace account? You will need to verify your phone number again to sign back in."
+        confirm={{
+          label: isLoggingOut ? 'Logging out…' : 'Log Out',
+          variant: 'dark',
+          disabled: isLoggingOut,
+          onPress: () => void handleLogout(),
+        }}
+        cancel={{ label: 'Cancel', variant: 'ghost', onPress: () => setShowLogout(false) }}
+      />
     </Screen>
   );
 }

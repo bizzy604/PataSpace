@@ -141,7 +141,26 @@ forgot_password_phone, reset_password_form, account_locked (Clerk-owned).
 Notes: FlashList perf must not regress on the home feed (measure scroll
 jank before/after on a low-end Android profile). Map pins restyle to teal.
 
-- [ ] Phase 2 complete
+- [x] Phase 2 complete (2026-07-06). Rebuilt the shared ListingCard (clean
+  photo + availability badge, teal price, bed/bath/unlocks meta row, View
+  Details) which restyles every browse surface at once. HomeScreen → "Find
+  Your Home" feed (title + filter, search bar, teal balance card, quick chips,
+  full list). ListingDetailsScreen → hero + overlaid nav, spec chips, stat row,
+  About, GPS-verified card, amenities grid with checks + show-all, tenant
+  quote, approximate location panel, sticky Unlock Contact bar. Search, Saved,
+  Browse restyled with the new card + chips; Map view restyled (ListingsMap
+  kept); ListingGallery → dark full-screen viewer with counter, GPS-coords
+  pill, and thumbnail strip. Filters → the design's Filters/Clear All +
+  chip sections + result count + Show Results, bound to the existing filter
+  fields. Gates: tsc exit 0, jest 26/26.
+  Design deltas (intentional): filter model kept as-is, so the sheet's rent
+  "slider", county segmented control, and property-type checkboxes are
+  rendered as chips over the existing budget/area/size fields (a real slider
+  needs a numeric rent field — deferred to avoid regressing Home/Search/Map).
+  Home dropped the old latest-unlock prompt and post/track quick-actions to
+  match the browse-focused design (both still reachable via the tab bar). The
+  details Location section is a styled approximate panel, not a live map.
+  Device Expo pass (light+dark, low-end scroll) is Amoni's step.
 
 ## Phase 3 — Unlock & payments (9 surfaces)
 
@@ -160,7 +179,38 @@ jank before/after on a low-end Android profile). Map pins restyle to teal.
 Notes: money flows; zero logic changes. The M-Pesa polling loop in
 mpesa-processing keeps its timing exactly.
 
-- [ ] Phase 3 complete
+- [x] Phase 3 complete (2026-07-06). Unlock confirmation rebuilt as the sheet
+  layout (lock header, listing summary, unlock cost + ≈% of rent + new balance,
+  "what you'll get" checklist, refund banner, success-fee note, sticky Unlock/
+  Cancel); a shortfall now opens the insufficient_credits_modal (Dialog with a
+  wallet icon → "Top Up Wallet" routes to buy-credits, "Maybe Later" dismisses).
+  Buy-credits → payment-method layout (amount rows + M-Pesa/Card method rows +
+  phone + Confirm Payment). M-Pesa processing → STK screen (dark header, pulsing
+  phone, "STK prompt sent"/28s copy). Payment success → check circle, credits-
+  added + new-balance cards, View Receipt, Start Browsing/Done. Transactions →
+  chip filters (All/Credits Added/Unlocks/Rewards) + day groups + coloured
+  amounts. Transaction detail → status banner, big amount, detail rows, share,
+  Get Help/Request Refund. Contact revealed → dark header, unlocked banner,
+  tenant card, call/WhatsApp/maps rows, connection-status timeline (keeps
+  confirmIncoming + report-dead + dispute). Wallet home restyled by analogy
+  (teal balance card + top-up rows). New: pure helpers `lib/payments/*` (unlock
+  summary + transaction view) with 11 gate assertions, `ghost` button variant
+  (tested), Dialog `icon` prop, and a `Screen` `header` slot + `ScreenHeader`
+  primitive for the shared dark flow bar. Gates: tsc exit 0, jest 34/34.
+  Design deltas (intentional): (1) unlock cost/balance stay in the app's
+  "credits" unit, not the mockup's "KES", so the wallet reads consistently
+  end to end (credits are 1:1 with KES). (2) buy-credits keeps the package
+  (amount) selector the STK charge needs, above the method rows; PataSpace-
+  Credits is not offered as a top-up method (you can't buy credits with
+  credits) and Card is "Coming soon" since only M-Pesa is wired. (3) M-Pesa
+  processing has no STK status-poll endpoint yet (that would be an API change,
+  out of a restyle phase), so the auto-advance is a restyled "I've completed
+  the payment" action; the design's auto-advance-on-callback is deferred to
+  that backend work. (4) contact_revealed's copy icons became tap-to-act
+  (call/WhatsApp) to avoid adding a clipboard dependency; the verified-GPS map
+  preview is kept below the address as a trust signal. (5) transaction detail
+  shows only stored fields (no fabricated balance-before/after or property
+  ref). Device Expo pass (light+dark, real STK sandbox) is Amoni's step.
 
 ## Phase 4 — Post a listing (7 surfaces)
 
@@ -178,7 +228,33 @@ Notes: the 5-photo contract and capture-location logic were just fixed
 (commits bc93c5f, ee64afe); their tests in `src/lib/__tests__/` must stay
 green untouched. Camera UI restyles around expo-camera, not instead of it.
 
-- [ ] Phase 4 complete
+- [x] Phase 4 complete (2026-07-07). Camera rebuilt to the full-screen "Take
+  Photos" layout (dark bar with close + flash, 4-step progress, live preview
+  with rule-of-thirds grid + focus frame, GPS-Active + N/MAX pills, thumbnail →
+  review, big shutter, flip) — every capture/GPS/recording handler, ref, effect
+  and CameraView prop is byte-for-byte the same; only the chrome changed. Photo
+  review → the 3-col grid (COVER badge, geo pins, per-tile remove, Add More
+  tile, Property Video card) with the same photo-count gate. Details form →
+  sectioned "Property Details" (Basic Info, Property Type, Amenities, Description
+  0/500, Availability & Contact) keeping every draft field the submit payload
+  needs. Review → "Review Listing" (preview card, teal Potential Earnings,
+  amber Important Notes, What-happens-next timeline, terms checkbox) with the
+  same submit gate + submitDraft. Submitted, my-listings, my-listing, and
+  listing-stats restyled by analogy onto the kit. New: pure
+  `lib/listings/amenities-field` (toggle presets over the comma string, no model
+  change) with 6 gate assertions; a tested `ghost`-era kit reused. Gates: tsc
+  exit 0, jest 40/40 (listing-rules + capture-location untouched and green).
+  Design deltas (intentional): (1) flash + flip are additive UI wired to the
+  CameraView props; capture/GPS logic unchanged. (2) walkthrough video is
+  recorded in-app (the just-fixed expo-camera flow), so the mockup's review
+  "Upload Video" becomes "Record Video" → camera video mode, not a gallery
+  picker (that needs expo-image-picker, out of a restyle phase). (3) the form
+  keeps the extra fields the API needs (title, deposit, county, location,
+  landlord contact, move reason) that the mockup omits, and drops the mockup's
+  bedrooms/bathrooms/furnished steppers since there are no draft fields for them
+  (houseType already captures size; adding them is a contract change). (4)
+  "Drag to reorder" copy dropped — no reorder action is wired. Device Expo pass
+  (real camera + GPS capture, on-device recording) is Amoni's step.
 
 ## Phase 5 — Connections & profile (8 surfaces)
 
@@ -193,7 +269,34 @@ green untouched. Camera UI restyles around expo-camera, not instead of it.
 | logout_confirmation_modal | dialog from settings/profile |
 | delete_account_modal | `delete-account.tsx` |
 
-- [ ] Phase 5 complete
+- [x] Phase 5 complete (2026-07-07). Confirmations rebuilt with both states:
+  the "Are you moving in?" checklist (3 required checks gate the confirm) before
+  the tenant confirms, then the connection-status timeline (Contact Unlocked →
+  Property Viewed → Your Confirmation → Tenant Confirmation waiting/Send
+  Reminder → Commission Payment) plus the follow-up call/WhatsApp card and a
+  Report Issue path — confirmIncoming stays exactly as wired. Both-confirmed
+  success → the design's Connection Confirmed screen (revealed address, move-in
+  settlement card, star rating → Leave Review, View Property Details / Done),
+  keeping settleFee + the vacated-listing flywheel prompt. Profile → the tab
+  design (initials avatar + edit badge, Listings/Unlocks/KES-Earned stat cards,
+  Account/My-Activity/Support/Account-Management ListRows) with a logout Dialog.
+  Edit profile → Cancel/Save header, first/last name split over the single
+  `name` field, locked phone, preferred areas, bio 0/200. Settings → notification
+  Switches (real fields), Light/Dark appearance segmented, quick links, and the
+  logout Dialog. Delete account → the design's red confirmation modal (Dialog
+  tone="danger") running the same useDeleteAccount flow. New kit: Dialog `tone`
+  prop (primary/danger). Gates: tsc exit 0, jest 40/40.
+  Design deltas (intentional): (1) profile has no photo/verification fields in
+  the model, so the avatar shows initials and "Verification Status" links to
+  edit rather than claiming Verified; photo/ID upload is a note, not a wired
+  picker (no expo-image-picker). (2) edit keeps preferred-areas (a real field)
+  and drops the mockup's editable email (no model field); phone is read-only.
+  (3) settings exposes the three real notification toggles (push/SMS/saved-
+  search) and a Light/Dark appearance control — the mockup's Auto mode, phone/
+  profile-visibility, language/currency, change-password and biometric rows are
+  omitted (no backing fields; several are Clerk-owned). (4) "My Unlocks" links
+  to the transaction history (no dedicated unlocks list exists). Device Expo
+  pass (light+dark) is Amoni's step.
 
 ## Phase 6 — Engagement & support (8 surfaces)
 
@@ -208,7 +311,32 @@ green untouched. Camera UI restyles around expo-camera, not instead of it.
 | report_success_modal | dialog in report flow |
 | app_update_new_feature | `app-update.tsx` |
 
-- [ ] Phase 6 complete
+- [x] Phase 6 complete (2026-07-07). Notifications → filter chips (All/Unlocks/
+  Payments/Listings) + Today/Earlier day groups + tinted category rows, keeping
+  the target routing. Rate review → the "Rate Your Experience" sheet (listing
+  summary, tap stars, optional comment) keeping submitReview/submitReviewForUnlock.
+  Referral → Invite Friends (gift hero, referral-code card + Copy, WhatsApp/SMS/
+  Copy-Link share via Linking+Share, Friends-Joined/Credits-Earned stats with
+  View History, How-it-works steps) with the wired phone invite kept as a
+  collapsible. Help center → search + Quick Actions (Contact Support / Report
+  Problem) + FAQ accordion over helpArticles. Contact support → Chat button +
+  WhatsApp/Email/Call channels (Linking) + the kept submitSupportMessage form.
+  Report issue → report-dead rebuilt (listing context, reason picker, details
+  0/500, evidence tiles, instant-refund banner) and the generic dispute rebuilt
+  to match; both end on the report_success modal (Dialog "Report Received").
+  App update → the new-feature spotlight (hero, NEW FEATURE pill, feature cards,
+  Try It Now / Maybe Later) carrying updateNotes. New: pure
+  `lib/notifications/notification-view` (category/filter/day-bucket) with 5 gate
+  assertions. Gates: tsc exit 0, jest 45/45.
+  Design deltas (intentional): (1) share/copy uses the native Share sheet +
+  Linking (wa.me / sms: / mailto: / tel:) since there's no clipboard dep;
+  evidence/photo upload is a decorative "coming soon" (no image picker). (2)
+  rate-review drops the mockup's Post-Anonymously toggle (submitReview takes
+  only rating+comment; no anon field). (3) contact-support omits the mockup's
+  "Open Tickets" list (no ticket data source) and keeps the real message form;
+  referral shows credits earned from rewardedReferralCount (250 each per the
+  highlight copy) rather than a hardcoded figure. Device Expo pass (light+dark)
+  is Amoni's step.
 
 ## Phase 7 — Sweep and ship
 

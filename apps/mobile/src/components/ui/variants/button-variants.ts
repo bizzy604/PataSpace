@@ -18,6 +18,7 @@ export const buttonVariants = cva(
         outline: 'border-2 border-primary bg-transparent',
         dark: 'border-transparent bg-surface-inverse shadow-floating',
         danger: 'border-transparent bg-danger shadow-card',
+        ghost: 'border-transparent bg-transparent',
       },
       size: {
         sm: 'min-h-10 px-4 py-2.5',
@@ -45,6 +46,7 @@ export const buttonTextVariants = cva('text-center font-display tracking-[-0.2px
       outline: 'text-primary',
       dark: 'text-primary-foreground',
       danger: 'text-primary-foreground',
+      ghost: 'text-muted-foreground',
     },
     size: {
       sm: 'text-label-md',
