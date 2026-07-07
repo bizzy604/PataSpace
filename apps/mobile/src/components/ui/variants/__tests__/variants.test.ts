@@ -32,6 +32,13 @@ describe('buttonVariants', () => {
     expect(text).toContain('text-primary-foreground');
     expect(buttonTextVariants({ variant: 'outline' })).toContain('text-primary');
   });
+
+  it('ghost is a borderless transparent text button (modal "Maybe Later")', () => {
+    const ghost = buttonVariants({ variant: 'ghost' });
+    expect(ghost).toContain('bg-transparent');
+    expect(ghost).toContain('border-transparent');
+    expect(buttonTextVariants({ variant: 'ghost' })).toContain('text-muted-foreground');
+  });
 });
 
 describe('badgeVariants status pills', () => {

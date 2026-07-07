@@ -13,9 +13,10 @@ import {
   Text,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import {
   countyOptions,
-  createListingSteps,
   draftCameraSequence,
   estimateListingPricing,
   formatListingHouseType,
@@ -24,10 +25,11 @@ import {
 } from '@/data/mock-listings';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Button } from '@/components/ui/button';
-import { Card, CardDescription, CardTitle } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
 import { Input } from '@/components/ui/input';
+import { ProgressSteps } from '@/components/ui/progress-steps';
 import { Screen } from '@/components/ui/screen';
-import { SectionHeader } from '@/components/ui/section-header';
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
 import {
   coordinateLabel,
@@ -35,7 +37,17 @@ import {
   isWeakGpsFix,
   pickAddressLabel,
 } from '@/lib/capture-location';
-import { MIN_LISTING_PHOTOS, captureMoreLabel, hasEnoughPhotos } from '@/lib/listing-rules';
+import {
+  AMENITY_PRESETS,
+  hasAmenity,
+  toggleAmenity,
+} from '@/lib/listings/amenities-field';
+import {
+  MAX_LISTING_PHOTOS,
+  MIN_LISTING_PHOTOS,
+  captureMoreLabel,
+  hasEnoughPhotos,
+} from '@/lib/listing-rules';
 import { appRoutes } from '@/lib/routes';
 
 type NativeUnimoduleProxy = {
@@ -77,28 +89,30 @@ function Field({
   onChangeText,
   placeholder,
   multiline,
+  keyboardType,
 }: {
   label: string;
   value: string;
   onChangeText: (value: string) => void;
   placeholder: string;
   multiline?: boolean;
+  keyboardType?: ComponentProps<typeof Input>['keyboardType'];
 }) {
   return (
-    <View className="gap-3">
-      <Text className="text-sm font-semibold text-foreground">{label}</Text>
-      <Input
-        className={multiline ? 'min-h-28 py-4' : undefined}
-        multiline={multiline}
-        textAlignVertical={multiline ? 'top' : 'center'}
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-      />
-    </View>
+    <Input
+      label={label}
+      className={multiline ? 'min-h-28 py-4' : undefined}
+      multiline={multiline}
+      keyboardType={keyboardType}
+      textAlignVertical={multiline ? 'top' : 'center'}
+      value={value}
+      onChangeText={onChangeText}
+      placeholder={placeholder}
+    />
   );
 }
 
+/** Full-pill choice row (county, house type) using the shared Chip. */
 function ChoiceField<T extends string>({
   label,
   value,
@@ -111,52 +125,18 @@ function ChoiceField<T extends string>({
   onChange: (value: T) => void;
 }) {
   return (
-    <View className="gap-3">
-      <Text className="text-sm font-semibold text-foreground">{label}</Text>
-      <View className="flex-row flex-wrap gap-3">
-        {options.map((option) => {
-          const isSelected = option.value === value;
-
-          return (
-            <Pressable
-              key={option.value}
-              accessibilityRole="button"
-              className={[
-                'rounded-full border px-4 py-3',
-                isSelected ? 'border-transparent bg-primary' : 'border-border bg-secondary',
-              ].join(' ')}
-              onPress={() => onChange(option.value)}
-            >
-              <Text
-                className={[
-                  'text-sm font-semibold',
-                  isSelected ? 'text-primary-foreground' : 'text-foreground',
-                ].join(' ')}
-              >
-                {option.label}
-              </Text>
-            </Pressable>
-          );
-        })}
+    <View className="gap-2">
+      <Text className="font-body-bold text-label-md text-muted-foreground">{label}</Text>
+      <View className="flex-row flex-wrap gap-2">
+        {options.map((option) => (
+          <Chip
+            key={option.value}
+            label={option.label}
+            active={option.value === value}
+            onPress={() => onChange(option.value)}
+          />
+        ))}
       </View>
-    </View>
-  );
-}
-
-function MiniAction({
-  icon,
-  label,
-  value,
-}: {
-  icon: ComponentProps<typeof AppIcon>['name'];
-  label: string;
-  value: string;
-}) {
-  return (
-    <View className="flex-1 rounded-[22px] bg-secondary p-4">
-      <AppIcon name={icon} size={18} />
-      <Text className="mt-4 text-xs uppercase tracking-[1.8px] text-muted-foreground">{label}</Text>
-      <Text className="mt-1 text-base font-semibold text-foreground">{value}</Text>
     </View>
   );
 }
@@ -187,6 +167,9 @@ export function CreateListingScreen() {
   const [cameraMode, setCameraMode] = useState<'picture' | 'video'>('picture');
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [flashMode, setFlashMode] = useState<'off' | 'on' | 'auto'>('auto');
+  const [facing, setFacing] = useState<'back' | 'front'>('back');
+  const router = useRouter();
   const { draft, addDraftPhoto, updateDraft, updateDraftPhoto } = useMobileApp();
   const nextPrompt = photoCapturePrompts[draft.photos.length] ?? `Extra angle ${draft.photos.length + 1}`;
 
@@ -422,305 +405,383 @@ export function CreateListingScreen() {
     cameraRef.current?.stopRecording();
   }
 
-  const previewStrip = draft.photos.slice(-3).reverse();
   const canRenderLiveCamera = cameraViewManagerAvailable && cameraPermissionGranted;
-  const recordingLabel = isRecording
-    ? `Stop  ${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, '0')}`
-    : draft.video?.uri ? 'Re-record walkthrough' : 'Record walkthrough (optional)';
-  const captureLabel = !cameraViewManagerAvailable
-    ? 'Camera unavailable in this build'
-    : isCapturing
-      ? 'Saving...'
-      : `Capture ${nextPrompt}`;
+  const lastCapture = draft.photos[draft.photos.length - 1];
+  const recordingClock = `${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, '0')}`;
+  const flashIcon =
+    flashMode === 'on' ? 'flash' : flashMode === 'off' ? 'flash-off-outline' : 'flash-outline';
 
   return (
-    <Screen
-      bottomBar={
-        <View className="gap-3">
-          {cameraMode === 'picture' ? (
-            <Button
-              disabled={isCapturing || !cameraReady || !cameraViewManagerAvailable}
-              label={captureLabel}
-              onPress={() => void handleCapture()}
-            />
-          ) : (
-            <Button
-              disabled={!cameraReady || !cameraViewManagerAvailable}
-              variant={isRecording ? 'dark' : 'default'}
-              label={recordingLabel}
-              onPress={isRecording ? handleStopRecording : () => void handleStartRecording()}
-            />
-          )}
-          <View className="flex-row gap-3">
-            <Button
-              className="flex-1"
-              variant="outline"
-              label={cameraMode === 'picture' ? '🎥 Video' : '📷 Photos'}
-              onPress={() => { if (!isRecording) setCameraMode((m) => m === 'picture' ? 'video' : 'picture'); }}
-            />
-            <Link href={appRoutes.createListingPhotos} asChild>
-              <Button className="flex-1" variant="outline" label={`Review ${draft.photos.length}`} />
-            </Link>
-          </View>
+    <View className="flex-1 bg-black">
+      <StatusBar style="light" />
+
+      {/* Top bar: close, title, flash */}
+      <SafeAreaView edges={['top']} className="bg-black/90">
+        <View className="flex-row items-center justify-between px-3 py-2">
+          <Pressable
+            className="h-11 w-11 items-center justify-center active:opacity-70"
+            onPress={() => router.back()}
+            accessibilityLabel="Close camera"
+          >
+            <AppIcon name="close" size={26} color="#FFFFFF" />
+          </Pressable>
+          <Text className="font-display text-headline-sm text-white">Take Photos</Text>
+          <Pressable
+            className="h-11 w-11 items-center justify-center active:opacity-70"
+            onPress={() => setFlashMode((m) => (m === 'auto' ? 'on' : m === 'on' ? 'off' : 'auto'))}
+            accessibilityLabel={`Flash ${flashMode}`}
+          >
+            <AppIcon name={flashIcon} size={22} color="#FFFFFF" />
+          </Pressable>
         </View>
-      }
-    >
-      <SectionHeader kicker="Post listing" title="Camera" description="Live capture with GPS" />
+        <View className="flex-row gap-1 px-4 pb-2">
+          <View className="h-1 flex-1 rounded-full bg-primary" />
+          <View className="h-1 flex-1 rounded-full bg-white/20" />
+          <View className="h-1 flex-1 rounded-full bg-white/20" />
+          <View className="h-1 flex-1 rounded-full bg-white/20" />
+        </View>
+      </SafeAreaView>
 
-      {canRenderLiveCamera ? (
-        <View className="h-[420px] overflow-hidden rounded-[32px] bg-surface-inverse shadow-floating">
-          <CameraView
-            ref={cameraRef}
-            facing="back"
-            mode={cameraMode}
-            videoQuality="480p"
-            // Muted on purpose: the build strips RECORD_AUDIO from the
-            // Android manifest (recordAudioAndroid: false in app.config.ts),
-            // and expo-camera rejects unmuted recording without it.
-            mute
-            onCameraReady={() => setCameraReady(true)}
-            onMountError={() => setCaptureError('Camera preview failed to load.')}
-            style={StyleSheet.absoluteFillObject}
-          />
-          <View className="absolute inset-0 justify-between p-6" pointerEvents="none">
-            <View className="flex-row items-center justify-between">
-              <View className="rounded-full bg-black/40 px-4 py-2">
-                <Text className="text-xs font-semibold uppercase tracking-[1.8px] text-white/80">
-                  Next shot
-                </Text>
-              </View>
-              <View className="rounded-full bg-primary px-4 py-2">
-                <Text className="text-xs font-semibold uppercase tracking-[1.8px] text-primary-foreground">
-                  {draft.photos.length} saved
-                </Text>
-              </View>
+      {/* Camera preview */}
+      <View className="flex-1">
+        {canRenderLiveCamera ? (
+          <>
+            <CameraView
+              ref={cameraRef}
+              facing={facing}
+              mode={cameraMode}
+              flash={flashMode}
+              videoQuality="480p"
+              // Muted on purpose: the build strips RECORD_AUDIO from the
+              // Android manifest (recordAudioAndroid: false in app.config.ts),
+              // and expo-camera rejects unmuted recording without it.
+              mute
+              onCameraReady={() => setCameraReady(true)}
+              onMountError={() => setCaptureError('Camera preview failed to load.')}
+              style={StyleSheet.absoluteFillObject}
+            />
+            <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+              <View className="absolute inset-y-0 w-px bg-white/20" style={{ left: '33.33%' }} />
+              <View className="absolute inset-y-0 w-px bg-white/20" style={{ left: '66.66%' }} />
+              <View className="absolute inset-x-0 h-px bg-white/20" style={{ top: '33.33%' }} />
+              <View className="absolute inset-x-0 h-px bg-white/20" style={{ top: '66.66%' }} />
+              <View
+                className="absolute rounded-[8px] border border-white/60"
+                style={{ left: '12%', right: '12%', top: '28%', bottom: '28%' }}
+              />
             </View>
-
-            <View className="items-center justify-center">
-              <View className="h-56 w-[78%] rounded-[28px] border border-white/70 bg-transparent" />
-            </View>
-
-            <View className="gap-2">
-              {cameraMode === 'video' ? (
-                <>
-                  <Text className="text-[32px] font-semibold tracking-[-0.8px] text-white">
-                    {isRecording ? `Recording ${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, '0')}` : 'Walkthrough video'}
-                  </Text>
-                  <Text className="text-sm text-white/75">Max 30 seconds · 10MB · 480p · no audio</Text>
-                </>
+          </>
+        ) : (
+          <ImageBackground
+            className="flex-1 justify-end p-6"
+            source={draftCameraSequence[0].source}
+          >
+            <View className="absolute inset-0 bg-black/60" />
+            <View className="gap-3">
+              <Text className="font-display text-headline-md text-white">
+                {cameraViewManagerAvailable ? 'Camera permission needed' : 'Camera preview unavailable'}
+              </Text>
+              {cameraViewManagerAvailable ? (
+                <Button label="Enable camera and GPS" onPress={() => void ensurePermissions()} />
               ) : (
-                <>
-                  <Text className="text-[32px] font-semibold tracking-[-0.8px] text-white">{nextPrompt}</Text>
-                  <Text className="text-sm text-white/75">
-                    {locationPermissionGranted ? 'GPS ready' : 'Enable GPS to capture'}
-                  </Text>
-                </>
+                <Text className="font-body text-body-md text-white/80">
+                  Install a fresh development build or reopen the app in a runtime with camera support.
+                </Text>
               )}
             </View>
-          </View>
-        </View>
-      ) : (
-        <ImageBackground
-          className="h-[420px] overflow-hidden rounded-[32px] bg-surface-inverse p-6 shadow-floating"
-          imageStyle={{ borderRadius: 32 }}
-          source={draftCameraSequence[0].source}
-        >
-          <View className="absolute inset-0 bg-black/30" />
-          <View className="mt-auto gap-3">
-            <Text className="text-[30px] font-semibold tracking-[-0.8px] text-white">
-              {cameraViewManagerAvailable ? 'Camera permission needed' : 'Camera preview unavailable'}
-            </Text>
-            {cameraViewManagerAvailable ? (
-              <Button
-                label="Enable camera and GPS"
-                onPress={() => {
-                  void ensurePermissions();
-                }}
+          </ImageBackground>
+        )}
+      </View>
+
+      {/* Bottom controls */}
+      <SafeAreaView edges={['bottom']} className="bg-black/90">
+        <View className="gap-4 px-5 pb-2 pt-4">
+          {captureError ? (
+            <Text className="text-center font-body text-body-md text-danger">{captureError}</Text>
+          ) : null}
+
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5">
+              <AppIcon
+                name="location"
+                size={14}
+                color={locationPermissionGranted ? '#34C759' : '#FF3B30'}
               />
-            ) : (
-              <Text className="text-sm text-white/80">
-                Install a fresh development build or reopen the app in a runtime with camera support.
+              <Text className="font-body-medium text-label-md text-white">
+                {locationPermissionGranted ? 'GPS Active' : 'GPS off'}
               </Text>
-            )}
+            </View>
+            <View className="rounded-full bg-white/10 px-3 py-1.5">
+              <Text className="font-body-medium text-label-md text-white">
+                {cameraMode === 'video'
+                  ? isRecording
+                    ? `● ${recordingClock}`
+                    : 'Max 30s video'
+                  : `${draft.photos.length}/${MAX_LISTING_PHOTOS} photos`}
+              </Text>
+            </View>
           </View>
-        </ImageBackground>
-      )}
 
-      {captureError ? (
-        <Card>
-          <Text className="text-sm font-semibold text-primary">{captureError}</Text>
-        </Card>
-      ) : null}
+          <View className="flex-row justify-center gap-6">
+            <Pressable
+              onPress={() => {
+                if (!isRecording) setCameraMode('picture');
+              }}
+              accessibilityLabel="Photo mode"
+            >
+              <Text
+                className={
+                  cameraMode === 'picture'
+                    ? 'font-display text-body-md text-white'
+                    : 'font-body-medium text-body-md text-white/50'
+                }
+              >
+                Photo
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setCameraMode('video')}
+              accessibilityLabel="Video mode"
+            >
+              <Text
+                className={
+                  cameraMode === 'video'
+                    ? 'font-display text-body-md text-white'
+                    : 'font-body-medium text-body-md text-white/50'
+                }
+              >
+                Video
+              </Text>
+            </Pressable>
+          </View>
 
-      <View className="flex-row gap-3">
-        <MiniAction icon="camera-outline" label="Mode" value="Live camera" />
-        <MiniAction
-          icon="location-outline"
-          label="GPS"
-          value={locationPermissionGranted ? 'Attached' : 'Required'}
-        />
-      </View>
+          <View className="flex-row items-center justify-between">
+            {lastCapture ? (
+              <Link href={appRoutes.createListingPhotos} asChild>
+                <Pressable
+                  className="h-14 w-14 overflow-hidden rounded-[12px] border border-white/40 active:opacity-80"
+                  accessibilityLabel={`Review ${draft.photos.length} photos`}
+                >
+                  <Image className="h-full w-full" source={lastCapture.source} />
+                </Pressable>
+              </Link>
+            ) : (
+              <View className="h-14 w-14 rounded-[12px] border border-white/20" />
+            )}
 
-      {previewStrip.length > 0 ? (
-        <View className="gap-3">
-          <Text className="text-xs font-semibold uppercase tracking-[1.8px] text-muted-foreground">
-            Recent captures
-          </Text>
-          <View className="flex-row gap-3">
-            {previewStrip.map((photo) => (
-              <Image
-                key={photo.id}
-                className="h-24 flex-1 rounded-[20px] bg-secondary"
-                source={photo.source}
-              />
-            ))}
+            {cameraMode === 'picture' ? (
+              <Pressable
+                disabled={isCapturing || !cameraReady || !cameraViewManagerAvailable}
+                onPress={() => void handleCapture()}
+                accessibilityLabel="Capture photo"
+                className="h-[74px] w-[74px] items-center justify-center rounded-full border-4 border-white/70 active:opacity-80"
+                style={{ opacity: isCapturing || !cameraReady || !cameraViewManagerAvailable ? 0.5 : 1 }}
+              >
+                <View className="h-[58px] w-[58px] rounded-full bg-white" />
+              </Pressable>
+            ) : (
+              <Pressable
+                disabled={!cameraReady || !cameraViewManagerAvailable}
+                onPress={isRecording ? handleStopRecording : () => void handleStartRecording()}
+                accessibilityLabel={isRecording ? 'Stop recording' : 'Start recording'}
+                className="h-[74px] w-[74px] items-center justify-center rounded-full border-4 border-white/70 active:opacity-80"
+                style={{ opacity: !cameraReady || !cameraViewManagerAvailable ? 0.5 : 1 }}
+              >
+                {isRecording ? (
+                  <View className="h-7 w-7 rounded-[6px] bg-danger" />
+                ) : (
+                  <View className="h-[58px] w-[58px] rounded-full bg-danger" />
+                )}
+              </Pressable>
+            )}
+
+            <Pressable
+              onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
+              accessibilityLabel="Flip camera"
+              className="h-14 w-14 items-center justify-center rounded-full bg-white/10 active:opacity-70"
+            >
+              <AppIcon name="camera-reverse-outline" size={24} color="#FFFFFF" />
+            </Pressable>
           </View>
         </View>
-      ) : null}
-
-      <View className="gap-3">
-        {createListingSteps.map((item) => (
-          <Card key={item.step}>
-            <Text className="text-xs font-semibold uppercase tracking-[1.8px] text-tertiary-foreground">
-              Step {item.step}
-            </Text>
-            <Text className="mt-2 text-lg font-semibold text-foreground">{item.title}</Text>
-          </Card>
-        ))}
-      </View>
-    </Screen>
+      </SafeAreaView>
+    </View>
   );
 }
 
 export function PhotoReviewScreen() {
   const { draft, removeDraftPhoto, updateDraft } = useMobileApp();
+  const router = useRouter();
+  const enough = hasEnoughPhotos(draft.photos.length);
 
   return (
     <Screen
+      header={
+        <ScreenHeader
+          title="Review Photos"
+          right={
+            <Pressable
+              disabled={!enough}
+              onPress={() => router.push(appRoutes.createListingDetails)}
+              accessibilityLabel="Next"
+              className="active:opacity-70"
+            >
+              <Text
+                className={
+                  enough
+                    ? 'font-body-medium text-body-md text-primary-container'
+                    : 'font-body-medium text-body-md text-white/40'
+                }
+              >
+                Next
+              </Text>
+            </Pressable>
+          }
+        />
+      }
       bottomBar={
-        hasEnoughPhotos(draft.photos.length) ? (
+        enough ? (
           <Link href={appRoutes.createListingDetails} asChild>
-            <Button variant="dark" label="Continue" />
+            <Button shape="pill" label="Continue to Details" />
           </Link>
         ) : (
-          <Button disabled label={captureMoreLabel(draft.photos.length)} />
+          <Button shape="pill" disabled label={captureMoreLabel(draft.photos.length)} />
         )
       }
     >
-      <SectionHeader
-        kicker="Post listing"
-        title="Photos"
-        description={`Review captures · at least ${MIN_LISTING_PHOTOS} photos required`}
-      />
+      <View className="flex-row items-start justify-between">
+        <View className="flex-1 pr-3">
+          <Text className="font-display text-headline-md text-foreground">Listing Photos</Text>
+          <Text className="mt-1 font-body text-body-md text-muted-foreground">
+            The first photo is your cover. At least {MIN_LISTING_PHOTOS} required.
+          </Text>
+        </View>
+        <View className="rounded-full bg-surface-subtle px-3 py-1">
+          <Text className="font-body-medium text-label-md text-muted-foreground">
+            {draft.photos.length}/{MAX_LISTING_PHOTOS}
+          </Text>
+        </View>
+      </View>
 
-      {draft.photos.length === 0 ? (
-        <Card>
-          <CardTitle className="text-[20px]">No photos yet</CardTitle>
-          <CardDescription>
-            Open the camera and capture the rooms. Listings need at least {MIN_LISTING_PHOTOS}{' '}
-            photos to publish.
-          </CardDescription>
-        </Card>
-      ) : null}
-
-      {draft.photos.map((photo, index) => (
-        <Card key={photo.id} className="gap-4 p-4">
-          <Image className="h-52 w-full rounded-[22px]" source={photo.source} />
-          <View className="gap-1">
-            <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">
-              Shot {index + 1}
-            </Text>
-            <CardTitle className="text-[20px]">{photo.label}</CardTitle>
-            <CardDescription>{photo.capturedAt ?? 'Captured now'}</CardDescription>
-            <Text className="text-sm text-muted-foreground">
-              {photo.locationLabel ?? 'GPS unavailable'}
-            </Text>
+      <View className="flex-row flex-wrap gap-3">
+        {draft.photos.map((photo, index) => (
+          <View
+            key={photo.id}
+            className="aspect-square w-[31%] overflow-hidden rounded-[12px] bg-surface-subtle"
+          >
+            <Image className="h-full w-full" source={photo.source} />
+            {index === 0 ? (
+              <View className="absolute left-1.5 top-1.5 rounded-full bg-primary px-2 py-0.5">
+                <Text className="font-body-medium text-caption text-primary-foreground">COVER</Text>
+              </View>
+            ) : null}
+            <Pressable
+              className="absolute right-1.5 top-1.5 h-6 w-6 items-center justify-center rounded-full bg-black/60 active:opacity-80"
+              onPress={() => removeDraftPhoto(photo.id)}
+              accessibilityLabel={`Remove photo ${index + 1}`}
+            >
+              <AppIcon name="close" size={14} color="#FFFFFF" />
+            </Pressable>
             {photo.gps ? (
-              <Text className="text-xs text-muted-foreground">
-                {photo.gps.mocked
-                  ? 'Mocked location flagged. Retake with a live fix.'
-                  : photo.gps.accuracyMeters !== null &&
-                      photo.gps.accuracyMeters !== undefined
-                    ? `Approx. accuracy +/-${Math.round(photo.gps.accuracyMeters)}m`
-                    : 'GPS accuracy unavailable'}
-              </Text>
+              <View className="absolute bottom-1.5 left-1.5 flex-row items-center gap-1 rounded-full bg-black/60 px-1.5 py-0.5">
+                <AppIcon name="location" size={10} color="#FFFFFF" />
+                <Text className="font-body text-caption text-white">
+                  {photo.gps.mocked ? 'Check' : 'Geo'}
+                </Text>
+              </View>
             ) : null}
           </View>
-          <View className="flex-row gap-3">
-            <Button
-              className="flex-1"
-              variant="secondary"
-              label="Remove"
-              onPress={() => removeDraftPhoto(photo.id)}
-            />
-            <Link href={appRoutes.createListing} asChild>
-              <Button className="flex-1" variant="outline" label="Retake" />
-            </Link>
-          </View>
-        </Card>
-      ))}
+        ))}
 
-      <Card>
-        <CardTitle className="text-xl">Video walkthrough</CardTitle>
-        {draft.video?.uri ? (
-          <>
-            <CardDescription>Walkthrough recorded · uploads with listing · max 10MB</CardDescription>
-            <Button
-              className="mt-4"
-              variant="secondary"
-              label="Remove video"
-              onPress={() => updateDraft({ video: undefined })}
-            />
-          </>
-        ) : (
-          <CardDescription>
-            Optional. Switch to video mode on the camera screen to record a short walkthrough (max 30s / 10MB, no audio).
-          </CardDescription>
-        )}
-      </Card>
+        <Link href={appRoutes.createListing} asChild>
+          <Pressable className="aspect-square w-[31%] items-center justify-center gap-1 rounded-[12px] border border-dashed border-outline active:opacity-70">
+            <AppIcon name="camera" size={26} active />
+            <Text className="font-body-medium text-label-md text-primary">Add More</Text>
+          </Pressable>
+        </Link>
+      </View>
+
+      <View className="flex-row items-start gap-3 rounded-[16px] bg-card p-4 shadow-card">
+        <View className="h-11 w-11 items-center justify-center rounded-full bg-primary/10">
+          <AppIcon name="videocam" size={20} active />
+        </View>
+        <View className="flex-1">
+          <Text className="font-display text-body-lg text-foreground">
+            Property Video <Text className="font-body text-body-md text-muted-foreground">(Optional)</Text>
+          </Text>
+          <Text className="mt-1 font-body text-body-md text-muted-foreground">
+            Record a short walk-through to attract more buyers. 30 second max, no audio.
+          </Text>
+          {draft.video?.uri ? (
+            <View className="mt-3 flex-row items-center gap-2">
+              <AppIcon name="checkmark-circle" size={18} color="#34C759" />
+              <Text className="flex-1 font-body-medium text-body-md text-foreground">Walkthrough recorded</Text>
+              <Pressable onPress={() => updateDraft({ video: undefined })} className="active:opacity-70">
+                <Text className="font-body-medium text-body-md text-danger">Remove</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <Link href={appRoutes.createListing} asChild>
+              <Button className="mt-3 self-start" size="sm" variant="outline" label="Record Video" />
+            </Link>
+          )}
+        </View>
+      </View>
     </Screen>
   );
 }
 
 export function ListingDetailsFormScreen() {
   const { draft, updateDraft } = useMobileApp();
-  const countyChoices = countyOptions.map((county) => ({
-    label: county,
-    value: county,
-  }));
+  const router = useRouter();
+  const countyChoices = countyOptions.map((county) => ({ label: county, value: county }));
+  const descriptionLength = draft.description.length;
 
   return (
     <Screen
+      header={
+        <ScreenHeader
+          title="Property Details"
+          right={
+            <Pressable
+              onPress={() => router.back()}
+              accessibilityLabel="Save and go back"
+              className="active:opacity-70"
+            >
+              <Text className="font-body-medium text-body-md text-primary-container">Save</Text>
+            </Pressable>
+          }
+        />
+      }
       bottomBar={
         <Link href={appRoutes.createListingReview} asChild>
-          <Button label="Review" />
+          <Button shape="pill" label="Continue" />
         </Link>
       }
     >
-      <SectionHeader
-        kicker="Post listing"
-        title="Details"
-        description="County, house type, rent, move date, contact"
-      />
+      <ProgressSteps count={3} current={1} label="Post a listing" />
 
-      <Card className="gap-5">
+      <View className="gap-4 rounded-[16px] bg-card p-5 shadow-card">
+        <Text className="font-display text-headline-sm text-foreground">Basic Info</Text>
         <Field
           label="Title"
           value={draft.title}
           onChangeText={(value) => updateDraft({ title: value })}
           placeholder="Sunny 1BR near Ngong Road"
         />
-        <ChoiceField
-          label="County"
-          value={draft.county}
-          options={countyChoices}
-          onChange={(value) => updateDraft({ county: value })}
+        <Field
+          label="Monthly Rent (KES)"
+          value={draft.monthlyRent}
+          onChangeText={(value) => updateDraft({ monthlyRent: value })}
+          placeholder="22000"
+          keyboardType="number-pad"
         />
-        <ChoiceField
-          label="House type"
-          value={draft.houseType}
-          options={houseTypeOptions}
-          onChange={(value) => updateDraft({ houseType: value })}
+        <Field
+          label="Deposit (KES)"
+          value={draft.deposit}
+          onChangeText={(value) => updateDraft({ deposit: value })}
+          placeholder="22000"
+          keyboardType="number-pad"
         />
         <Field
           label="Neighborhood"
@@ -734,18 +795,65 @@ export function ListingDetailsFormScreen() {
           onChangeText={(value) => updateDraft({ location: value })}
           placeholder="Ngong Road, Nairobi"
         />
-        <Field
-          label="Monthly rent"
-          value={draft.monthlyRent}
-          onChangeText={(value) => updateDraft({ monthlyRent: value })}
-          placeholder="22000"
+        <ChoiceField
+          label="County"
+          value={draft.county}
+          options={countyChoices}
+          onChange={(value) => updateDraft({ county: value })}
         />
-        <Field
-          label="Deposit"
-          value={draft.deposit}
-          onChangeText={(value) => updateDraft({ deposit: value })}
-          placeholder="22000"
+        <View className="flex-row items-center gap-2">
+          <AppIcon name="checkmark-circle" size={18} color="#34C759" />
+          <Text className="font-body-medium text-body-md text-foreground">GPS Verified Location</Text>
+          <Text className="font-body text-label-md text-muted-foreground">· from your photos</Text>
+        </View>
+      </View>
+
+      <View className="gap-4 rounded-[16px] bg-card p-5 shadow-card">
+        <Text className="font-display text-headline-sm text-foreground">Property Type</Text>
+        <ChoiceField
+          label="Type & size"
+          value={draft.houseType}
+          options={houseTypeOptions}
+          onChange={(value) => updateDraft({ houseType: value })}
         />
+      </View>
+
+      <View className="gap-4 rounded-[16px] bg-card p-5 shadow-card">
+        <Text className="font-display text-headline-sm text-foreground">Amenities</Text>
+        <View className="flex-row flex-wrap gap-2">
+          {AMENITY_PRESETS.map((amenity) => (
+            <Chip
+              key={amenity}
+              label={amenity}
+              active={hasAmenity(draft.amenities, amenity)}
+              onPress={() => updateDraft({ amenities: toggleAmenity(draft.amenities, amenity) })}
+            />
+          ))}
+        </View>
+        <Field
+          label="Other amenities"
+          value={draft.amenities}
+          onChangeText={(value) => updateDraft({ amenities: value })}
+          placeholder="Parking, water backup, caretaker"
+        />
+      </View>
+
+      <View className="gap-4 rounded-[16px] bg-card p-5 shadow-card">
+        <Text className="font-display text-headline-sm text-foreground">Description</Text>
+        <Field
+          label="About the home"
+          value={draft.description}
+          onChangeText={(value) => updateDraft({ description: value.slice(0, 500) })}
+          placeholder="Describe the property, neighborhood vibes, rules…"
+          multiline
+        />
+        <Text className="text-right font-body text-label-md text-muted-foreground">
+          {descriptionLength}/500
+        </Text>
+      </View>
+
+      <View className="gap-4 rounded-[16px] bg-card p-5 shadow-card">
+        <Text className="font-display text-headline-sm text-foreground">Availability & Contact</Text>
         <Field
           label="Available from"
           value={draft.availableFrom}
@@ -753,10 +861,11 @@ export function ListingDetailsFormScreen() {
           placeholder="April 15, 2026"
         />
         <Field
-          label="Landlord contact"
+          label="Landlord / caretaker contact"
           value={draft.landlordPhone}
           onChangeText={(value) => updateDraft({ landlordPhone: value })}
           placeholder="+254 711 020 304"
+          keyboardType="phone-pad"
         />
         <Field
           label="Move reason"
@@ -764,21 +873,7 @@ export function ListingDetailsFormScreen() {
           onChangeText={(value) => updateDraft({ moveReason: value })}
           placeholder="Relocating closer to work"
         />
-        <Field
-          label="Amenities"
-          value={draft.amenities}
-          onChangeText={(value) => updateDraft({ amenities: value })}
-          placeholder="Parking, water backup, caretaker"
-          multiline
-        />
-        <Field
-          label="Description"
-          value={draft.description}
-          onChangeText={(value) => updateDraft({ description: value })}
-          placeholder="Describe the home honestly."
-          multiline
-        />
-      </Card>
+      </View>
     </Screen>
   );
 }
@@ -791,20 +886,23 @@ export function ListingReviewScreen() {
   const monthlyRent = Number(draft.monthlyRent) || 0;
   const pricing = estimateListingPricing(draft.houseType, monthlyRent);
   const heroPhoto = draft.photos[0];
+  const canSubmit = hasEnoughPhotos(draft.photos.length) && draft.landlordAware && !isSubmitting;
 
   return (
     <Screen
+      header={<ScreenHeader title="Review Listing" />}
       bottomBar={
         <Button
-          disabled={!hasEnoughPhotos(draft.photos.length) || !draft.landlordAware || isSubmitting}
+          shape="pill"
+          disabled={!canSubmit}
           label={
             !hasEnoughPhotos(draft.photos.length)
               ? captureMoreLabel(draft.photos.length)
               : !draft.landlordAware
-                ? 'Confirm the landlord knows first'
+                ? 'Confirm the details first'
                 : isSubmitting
                   ? 'Uploading photos…'
-                  : 'Submit listing'
+                  : 'Submit Listing'
           }
           onPress={async () => {
             setSubmitError('');
@@ -813,115 +911,144 @@ export function ListingReviewScreen() {
               await submitDraft();
               router.replace(appRoutes.listingSubmitted);
             } catch (err) {
-              setSubmitError(err instanceof Error ? err.message : 'Upload failed. Check your connection and try again.');
+              setSubmitError(
+                err instanceof Error ? err.message : 'Upload failed. Check your connection and try again.',
+              );
               setIsSubmitting(false);
             }
           }}
         />
       }
     >
-      <SectionHeader kicker="Post listing" title="Review" description="One last check" />
-
-      {heroPhoto ? (
-        <ImageBackground
-          className="h-72 overflow-hidden rounded-[28px] bg-surface-inverse p-5 shadow-floating"
-          imageStyle={{ borderRadius: 28 }}
-          source={heroPhoto.source}
-        >
-          <View className="absolute inset-0 bg-black/24" />
-          <View className="mt-auto gap-2">
-            <Text className="text-[28px] font-semibold tracking-[-0.8px] text-white">{draft.title}</Text>
-            <Text className="text-sm text-white/75">
-              {heroPhoto.locationLabel ?? `${draft.area}, ${draft.county}`}
-            </Text>
-          </View>
-        </ImageBackground>
-      ) : (
-        <Card>
-          <CardTitle className="text-[20px]">No photo captured</CardTitle>
-          <CardDescription>Capture at least one room with GPS before submitting.</CardDescription>
-        </Card>
-      )}
-
-      <View className="flex-row gap-3">
-        <Card className="flex-1">
-          <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">Rent</Text>
-          <Text className="mt-2 text-[24px] font-semibold text-foreground">
-            KES {monthlyRent.toLocaleString()}
-          </Text>
-        </Card>
-        <Card className="flex-1">
-          <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">Unlock</Text>
-          <Text className="mt-2 text-[24px] font-semibold text-foreground">
-            {pricing.unlockCredits.toLocaleString()} credits
-          </Text>
-        </Card>
+      <View className="gap-1">
+        <Text className="font-display text-headline-md text-foreground">Listing Preview</Text>
+        <Text className="font-body text-body-md text-muted-foreground">
+          This is how your property will appear to potential buyers.
+        </Text>
       </View>
 
-      <Card>
-        <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">
-          You earn on confirmed move-in
-        </Text>
-        <Text className="mt-2 text-[24px] font-semibold text-foreground">
-          KES {pricing.posterEarningsKes.toLocaleString()}
-        </Text>
-        <CardDescription>
-          70% of the KES {pricing.successFeeKes.toLocaleString()} success fee the mover pays only
-          when they move in.
-        </CardDescription>
-      </Card>
+      <View className="overflow-hidden rounded-[16px] bg-card shadow-card">
+        {heroPhoto ? (
+          <View className="relative">
+            <Image className="h-56 w-full bg-surface-subtle" resizeMode="cover" source={heroPhoto.source} />
+            <View className="absolute left-3 top-3 flex-row items-center gap-1 rounded-full bg-black/60 px-2.5 py-1">
+              <AppIcon name="shield-checkmark" size={13} color="#FFFFFF" />
+              <Text className="font-body-medium text-caption text-white">New</Text>
+            </View>
+          </View>
+        ) : (
+          <View className="h-56 w-full items-center justify-center bg-surface-subtle">
+            <AppIcon name="camera" size={28} />
+            <Text className="mt-2 font-body text-body-md text-muted-foreground">No photo captured</Text>
+          </View>
+        )}
+        <View className="gap-2 p-4">
+          <Text className="font-display text-headline-sm text-foreground">
+            {draft.title || 'Untitled listing'}
+          </Text>
+          <View className="flex-row items-center gap-1.5">
+            <AppIcon name="location-outline" size={15} active />
+            <Text className="font-body text-body-md text-muted-foreground">
+              {draft.area}
+              {draft.county ? `, ${draft.county}` : ''}
+            </Text>
+          </View>
+          <View className="h-px bg-border" />
+          <View className="flex-row items-end justify-between">
+            <View>
+              <Text className="font-body-medium text-label-md uppercase tracking-[1px] text-muted-foreground">
+                Asking Price
+              </Text>
+              <Text className="font-display text-headline-md text-primary">
+                KES {monthlyRent.toLocaleString()}
+                <Text className="font-body text-body-md text-muted-foreground">/mo</Text>
+              </Text>
+            </View>
+            <View className="flex-row items-center gap-1.5 rounded-full bg-surface-subtle px-3 py-1.5">
+              <AppIcon name="bed-outline" size={16} active />
+              <Text className="font-body-medium text-label-md text-foreground">
+                {formatListingHouseType(draft.houseType)}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      <View className="flex-row items-center gap-4 rounded-[16px] bg-primary p-5">
+        <View className="h-12 w-12 items-center justify-center rounded-[12px] bg-white/15">
+          <AppIcon name="cash-outline" size={24} color="#FFFFFF" />
+        </View>
+        <View className="flex-1">
+          <Text className="font-body-medium text-label-md text-white/80">Potential Earnings</Text>
+          <Text className="font-display text-headline-md text-white">
+            KES {pricing.posterEarningsKes.toLocaleString()}
+          </Text>
+          <Text className="font-body text-label-md text-white/70">
+            Paid on confirmed move-in (70% of the success fee)
+          </Text>
+        </View>
+      </View>
+
+      <View className="gap-2 rounded-[16px] bg-warning/15 p-4">
+        <View className="flex-row items-center gap-2">
+          <AppIcon name="warning-outline" size={18} color="#B8860B" />
+          <Text className="font-display text-body-lg text-on-warning">Important Notes</Text>
+        </View>
+        {[
+          'Manual review required before publishing',
+          `Earn KES ${pricing.posterEarningsKes.toLocaleString()} on a confirmed move-in`,
+          'Review usually takes 24–48 hours',
+        ].map((note) => (
+          <View key={note} className="flex-row gap-2">
+            <Text className="font-body text-body-md text-on-warning">•</Text>
+            <Text className="flex-1 font-body text-body-md text-on-warning">{note}</Text>
+          </View>
+        ))}
+      </View>
+
+      <View className="gap-4 rounded-[16px] bg-card p-5 shadow-card">
+        <Text className="font-display text-headline-sm text-foreground">What happens next</Text>
+        {[
+          { icon: 'checkmark-circle' as const, done: true, title: 'Submit Listing', body: 'Review details and submit for moderation.' },
+          { icon: 'time-outline' as const, done: false, title: 'Manual Review', body: 'Our team verifies the property details.' },
+          { icon: 'megaphone-outline' as const, done: false, title: 'Go Live & Earn', body: 'Listing becomes public and you start earning.' },
+        ].map((step, index, all) => (
+          <View key={step.title} className="flex-row gap-3">
+            <View className="items-center">
+              <AppIcon name={step.icon} size={20} color={step.done ? '#00667E' : '#8D9192'} />
+              {index < all.length - 1 ? <View className="mt-1 w-px flex-1 bg-border" /> : null}
+            </View>
+            <View className="flex-1 pb-1">
+              <Text className="font-body-medium text-body-lg text-foreground">{step.title}</Text>
+              <Text className="font-body text-body-md text-muted-foreground">{step.body}</Text>
+            </View>
+          </View>
+        ))}
+      </View>
 
       <Pressable
         accessibilityRole="checkbox"
         accessibilityState={{ checked: draft.landlordAware }}
         onPress={() => updateDraft({ landlordAware: !draft.landlordAware })}
+        className="flex-row items-start gap-3"
       >
-        <Card className={draft.landlordAware ? 'border border-primary' : ''}>
-          <View className="flex-row items-center gap-3">
-            <AppIcon
-              active={draft.landlordAware}
-              name={draft.landlordAware ? 'checkmark-circle' : 'ellipse-outline'}
-              size={22}
-            />
-            <View className="flex-1">
-              <CardTitle className="text-[16px]">
-                The landlord or caretaker knows this unit is being listed
-              </CardTitle>
-              <CardDescription>
-                Required. Talking to them first prevents declined move-ins later.
-              </CardDescription>
-            </View>
-          </View>
-        </Card>
+        <AppIcon
+          active={draft.landlordAware}
+          name={draft.landlordAware ? 'checkbox' : 'square-outline'}
+          size={22}
+        />
+        <Text className="flex-1 font-body text-body-md text-muted-foreground">
+          I confirm all details are accurate, the landlord or caretaker knows this unit is listed,
+          and I agree to the <Text className="text-primary">Terms of Service</Text> and{' '}
+          <Text className="text-primary">Listing Policy</Text>.
+        </Text>
       </Pressable>
 
-      <View className="flex-row gap-3">
-        <Card className="flex-1">
-          <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">County</Text>
-          <Text className="mt-2 text-lg font-semibold text-foreground">{draft.county}</Text>
-        </Card>
-        <Card className="flex-1">
-          <Text className="text-xs uppercase tracking-[1.8px] text-muted-foreground">House type</Text>
-          <Text className="mt-2 text-lg font-semibold text-foreground">
-            {formatListingHouseType(draft.houseType)}
-          </Text>
-        </Card>
-      </View>
-
-      <Card>
-        <CardTitle className="text-[20px]">Summary</CardTitle>
-        <CardDescription>
-          {draft.photos.length} photos | {draft.area}, {draft.county} | {draft.availableFrom}
-        </CardDescription>
-        <Text className="mt-2 text-sm text-muted-foreground">
-          {formatListingHouseType(draft.houseType)} | {draft.landlordPhone}
-        </Text>
-      </Card>
-
       {submitError ? (
-        <Card>
-          <Text className="text-sm font-semibold text-primary">{submitError}</Text>
-        </Card>
+        <View className="flex-row items-start gap-2 rounded-[16px] bg-danger/10 p-4">
+          <AppIcon name="alert-circle" size={18} color="#FF3B30" />
+          <Text className="flex-1 font-body text-body-md text-danger">{submitError}</Text>
+        </View>
       ) : null}
     </Screen>
   );
@@ -931,23 +1058,45 @@ export function ListingSubmittedScreen() {
   const { latestSubmittedListing } = useMobileApp();
 
   return (
-    <Screen>
-      <SectionHeader kicker="Post listing" title="Submitted" description="Now on your dashboard" />
+    <Screen
+      bottomBar={
+        <View className="gap-3">
+          <Link href={appRoutes.myListings} asChild>
+            <Button shape="pill" label="Open My Listings" />
+          </Link>
+          <Link href={appRoutes.createListing} asChild>
+            <Button shape="pill" variant="outline" label="Post Another" />
+          </Link>
+        </View>
+      }
+    >
+      <View className="items-center gap-6 pt-10">
+        <View className="h-28 w-28 items-center justify-center rounded-full bg-primary shadow-floating">
+          <AppIcon name="checkmark" size={56} inverse />
+        </View>
+        <View className="items-center gap-2">
+          <Text className="text-center font-display text-display-02 text-foreground">
+            Listing Submitted!
+          </Text>
+          <Text className="px-6 text-center font-body text-body-lg text-muted-foreground">
+            Your listing is now in review. We usually approve within 24–48 hours.
+          </Text>
+        </View>
+      </View>
 
-      <Card>
-        <CardTitle className="text-[20px]">{latestSubmittedListing?.title ?? 'Latest listing'}</CardTitle>
-        <CardDescription>
-          {latestSubmittedListing?.status ?? 'Review'} | {latestSubmittedListing?.updated ?? 'Just now'}
-        </CardDescription>
-      </Card>
-
-      <View className="gap-3">
-        <Link href={appRoutes.myListings} asChild>
-          <Button label="Open my listings" />
-        </Link>
-        <Link href={appRoutes.createListing} asChild>
-          <Button variant="outline" label="Post another" />
-        </Link>
+      <View className="gap-1 rounded-[16px] bg-surface-subtle p-5">
+        <Text className="font-body-medium text-label-md uppercase tracking-[1px] text-muted-foreground">
+          Submitted
+        </Text>
+        <Text className="font-display text-headline-sm text-foreground">
+          {latestSubmittedListing?.title ?? 'Latest listing'}
+        </Text>
+        <View className="mt-2 flex-row items-center gap-2">
+          <AppIcon name="time-outline" size={16} />
+          <Text className="font-body text-body-md text-muted-foreground">
+            {latestSubmittedListing?.status ?? 'Review'} · {latestSubmittedListing?.updated ?? 'Just now'}
+          </Text>
+        </View>
       </View>
     </Screen>
   );

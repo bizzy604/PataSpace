@@ -10,6 +10,8 @@ type ScreenProps = ScrollViewProps & {
   className?: string;
   withTabBar?: boolean;
   bottomBar?: ReactNode;
+  /** Fixed header rendered above the scroll area (e.g. the dark ScreenHeader). */
+  header?: ReactNode;
 };
 
 export function Screen({
@@ -17,6 +19,7 @@ export function Screen({
   contentContainerStyle,
   withTabBar = false,
   bottomBar,
+  header,
   ...props
 }: ScreenProps) {
   const { theme } = useMobileApp();
@@ -26,6 +29,7 @@ export function Screen({
     <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-background">
       <StatusBar style={theme.statusBarStyle} />
       <View className="flex-1 bg-background">
+        {header}
         <ScrollView
           className={cn('flex-1 bg-background', className)}
           contentContainerStyle={[
