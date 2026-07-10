@@ -29,6 +29,11 @@ const config: ExpoConfig = {
     'expo-router',
     'expo-font',
     'expo-web-browser',
+    // Required since @clerk/expo v3.6: the SDK ships native modules (ClerkExpo
+    // etc.), and this plugin applies the Gradle/Xcode settings their build
+    // needs. The app binary must be rebuilt whenever @clerk/expo changes —
+    // Expo Go cannot run this app anymore.
+    '@clerk/expo',
     [
       'expo-build-properties',
       {

@@ -13,7 +13,7 @@
     "build:ios": "pnpm dlx eas-cli build --platform ios --profile preview"
   },
   "dependencies": {
-    "@clerk/expo": "^3.6.5",
+    "@clerk/expo": "3.7.3",
     "@expo-google-fonts/dm-sans": "^0.4.2",
     "@expo-google-fonts/poppins": "^0.4.1",
     "@expo/metro-runtime": "~6.1.2",
