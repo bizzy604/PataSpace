@@ -269,12 +269,20 @@ export function BuyCreditsScreen() {
   );
 }
 
+const MPESA_POLL_INTERVAL_MS = 3000;
+const MPESA_SLOW_AFTER_MS = 60000;
+
 export function MpesaProcessingScreen() {
-  const { pendingTopUp, walletPackages, completeTopUp, refreshWallet } = useMobileApp();
-  const [isConfirming, setIsConfirming] = useState(false);
+  const { pendingTopUp, walletPackages, pollTopUp } = useMobileApp();
+  const [tookTooLong, setTookTooLong] = useState(false);
   const router = useRouter();
   const selectedPackage = walletPackages.find((item) => item.id === pendingTopUp?.packageId);
   const pulse = useRef(new Animated.Value(0)).current;
+  const hasPending = Boolean(pendingTopUp);
+  // pollTopUp is a fresh closure each provider render; hold the latest in a ref
+  // so the poll interval below isn't torn down and recreated on every render.
+  const pollRef = useRef(pollTopUp);
+  pollRef.current = pollTopUp;
 
   useEffect(() => {
     const loop = Animated.loop(
@@ -286,6 +294,50 @@ export function MpesaProcessingScreen() {
     loop.start();
     return () => loop.stop();
   }, [pulse]);
+
+  // Poll the wallet until the M-Pesa callback credits it server-side, then
+  // advance. We never self-attest success; the balance rise is the signal.
+  useEffect(() => {
+    if (!hasPending) return;
+    let active = true;
+    const startedAt = Date.now();
+
+    async function tick() {
+      const status = await pollRef.current();
+      if (!active) return;
+      if (status === 'completed') {
+        router.replace(appRoutes.paymentSuccess);
+        return;
+      }
+      if (Date.now() - startedAt >= MPESA_SLOW_AFTER_MS) {
+        setTookTooLong(true);
+      }
+    }
+
+    const interval = setInterval(() => void tick(), MPESA_POLL_INTERVAL_MS);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [hasPending, router]);
+
+  if (!hasPending) {
+    return (
+      <Screen header={<ScreenHeader title="Processing Payment" back={false} />}>
+        <View className="items-center gap-4 pt-16">
+          <View className="h-20 w-20 items-center justify-center rounded-full bg-surface-subtle">
+            <AppIcon name="card-outline" size={32} active />
+          </View>
+          <Text className="text-center font-display text-headline-sm text-foreground">
+            No payment in progress
+          </Text>
+          <Link href={appRoutes.buyCredits} asChild>
+            <Button label="Buy credits" />
+          </Link>
+        </View>
+      </Screen>
+    );
+  }
 
   return (
     <Screen header={<ScreenHeader title="Processing Payment" back={false} />}>
@@ -311,7 +363,13 @@ export function MpesaProcessingScreen() {
             Check your phone for the M-Pesa prompt
           </Text>
           <Text className="font-body text-body-md text-muted-foreground">
-            This usually takes <Text className="font-body-bold text-foreground">28 seconds</Text>
+            {tookTooLong ? (
+              'Taking longer than usual — keep this screen open.'
+            ) : (
+              <>
+                This usually takes <Text className="font-body-bold text-foreground">28 seconds</Text>
+              </>
+            )}
           </Text>
         </View>
 
@@ -323,18 +381,6 @@ export function MpesaProcessingScreen() {
       </View>
 
       <View className="gap-3 pt-6">
-        <Button
-          shape="pill"
-          label={isConfirming ? 'Confirming…' : "I've completed the payment"}
-          disabled={isConfirming}
-          onPress={async () => {
-            if (isConfirming) return;
-            setIsConfirming(true);
-            await refreshWallet();
-            completeTopUp();
-            router.replace(appRoutes.paymentSuccess);
-          }}
-        />
         <Link href={appRoutes.contactSupport} asChild>
           <Pressable className="items-center py-2 active:opacity-70">
             <Text className="font-body-medium text-body-md text-primary">Having trouble?</Text>

@@ -13,13 +13,13 @@ export function SectionHeader({ kicker, title, description, className }: Section
   return (
     <MotionView className={cn('gap-1.5', className)} distance={10}>
       {kicker ? (
-        <Text className="text-[11px] font-semibold uppercase tracking-[2.4px] text-muted-foreground">
+        <Text className="font-body-bold text-label-md uppercase tracking-[1px] text-muted-foreground">
           {kicker}
         </Text>
       ) : null}
-      <Text className="text-[32px] font-semibold tracking-[-1px] text-foreground">{title}</Text>
+      <Text className="font-display text-display-02 text-foreground">{title}</Text>
       {description ? (
-        <Text className="text-[14px] leading-5 text-muted-foreground" numberOfLines={2}>
+        <Text className="font-body text-body-md text-muted-foreground" numberOfLines={2}>
           {description}
         </Text>
       ) : null}

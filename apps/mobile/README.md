@@ -13,8 +13,11 @@
 
 ## Design system (2026 redesign)
 
-The rebuild follows `Docs/12_Mobile_Redesign_Plan.md`. Phase 0 laid the
-foundation; screens adopt it phase by phase.
+The rebuild follows `Docs/12_Mobile_Redesign_Plan.md` and is complete: Phase 0
+laid the foundation, Phases 1-6 rebuilt every designed surface (auth, browse,
+payments, post-a-listing, connections/profile, engagement/support), and Phase 7
+swept dead code and shipped. Restyle-only throughout: screens keep their route
+files and API/business logic.
 
 **Token pipeline (three files, kept in sync).** Change a colour in all three:
 
@@ -28,8 +31,9 @@ foundation; screens adopt it phase by phase.
   (status bar, maps, `placeholderTextColor`).
 
 Primary teal is `#00667e`; `#28809a` is the pressed/container tone
-(`primary-container`). Radii: inputs/media 12px, cards/buttons 16px, sheets
-24px, chips full-pill.
+(`primary-container`). Radii: inputs/media 12px, cards/buttons 16px, chips
+full-pill. Status colours (`success`/`warning`/`danger`) render their icons
+with the shared hex constants where cva tints are not available.
 
 **Fonts.** Poppins (600/700) and DM Sans (400/500/700) load in
 `src/app/_layout.tsx` via `useFonts`. On React Native each weight is its own
@@ -41,12 +45,19 @@ family, so use the family utility, not a `font-*weight*` class:
 hand-roll styled views. Variant maps live in `variants/*.ts` as pure cva
 functions so they are unit-tested in the node lane.
 
-- Actions: `button` (variants default/secondary/outline/dark/danger; shapes
-  rounded/pill; sizes sm/default/lg), `icon-button`, `fab`, `chip`
-- Surfaces: `card`, `list-row`, `badge` (adds status pills), `bottom-nav`
+- Actions: `button` (variants default/secondary/outline/dark/danger/ghost;
+  shapes rounded/pill; sizes sm/default/lg), `chip` (full-pill filter)
+- Surfaces: `card`, `list-row` (settings/profile rows), `badge` (status pills)
 - Inputs: `input` (filled, optional label, teal focus border)
-- Overlays: `bottom-sheet` (Layer 3), `dialog` (centered confirm)
+- Overlay: `dialog` (centered confirm; optional `icon` and `tone`
+  primary/danger — used by insufficient-credits, logout, delete, report-success)
+- Chrome: `screen` (scroll body with `header` + `bottomBar` slots and optional
+  `withTabBar`), `screen-header` (dark flow bar with back + one action),
+  `section-header`, `bottom-nav`, `app-icon`, `motion-view`
 - Flow: `progress-steps` (post-a-listing header)
+
+Screens present as full routes styled to match the mockups' sheets; there is no
+modal bottom-sheet primitive.
 
 ## Local Commands
 
@@ -68,9 +79,15 @@ pnpm --filter @pataspace/mobile build:ios
 - `src/lib/capture-location.ts` — GPS freshness, anti-fraud (mocked/weak fix),
   and address-label rules used by the listing capture screen.
 - `src/lib/listing-rules.ts` — the client-side photo-count contract.
+- `src/lib/listings/amenities-field.ts` — toggling preset amenities over the
+  comma-separated draft string.
+- `src/lib/payments/*` — unlock summary (balance/percent), transaction view
+  (filter/group/sign), and top-up status (the M-Pesa balance-poll completion
+  rule).
+- `src/lib/notifications/notification-view.ts` — notification category, chip
+  filter, and Today/Earlier day bucketing.
 - `src/components/ui/variants/*.ts` — the primitive cva variant maps
-  (button/badge/chip/icon-button), asserting each variant resolves to the
-  intended design token.
+  (button/badge/chip), asserting each variant resolves to the intended token.
 
 Add new pure-logic tests next to the module in an `__tests__` directory. UI
 components stay presentation-only and are verified on-device in the Expo pass;
@@ -150,6 +167,26 @@ variables, build/submit commands, version bumps, and the compliance checklist.
 - Place business and API interaction logic in feature-level modules instead of route files.
 - Keep mobile-specific constraints aligned with the backend listing and unlock workflows.
 
-## Current Gaps
+## Money flow note (M-Pesa)
 
-- The app includes the intended navigation surface but still needs deeper backend integration and fuller feature modularization.
+Buying credits triggers a real STK push via `POST /credits/purchase`. The
+processing screen does **not** self-attest success: it captures the wallet
+balance before the push and polls `GET /credits/balance` every few seconds
+(`src/lib/payments/top-up-status.ts`), advancing to the success screen only once
+the balance rises — i.e. after the server's `mpesa-callback` webhook credits the
+wallet. No new endpoint was needed.
+
+## Post-redesign backlog (backend / wiring)
+
+Deferred from the restyle phases; none block the current behaviour:
+
+- Photo/ID/evidence upload (avatar, report evidence): add `expo-image-picker`,
+  reuse the existing S3 path in `src/lib/api/uploads.ts`.
+- Phone/profile-visibility privacy settings (needs a settings field +
+  server-side contact masking).
+- Richer transaction receipt (balance before/after, payment method, property
+  ref on the transaction DTO); listing bathrooms/furnished as structured
+  fields; support ticket tracking; anonymous-review flag; referral reward from
+  server config. Each is a contract + backend change.
+- Device niceties: biometric login (`expo-local-authentication`), Auto/system
+  theme (Appearance API), i18n language/currency.

@@ -350,7 +350,31 @@ green untouched. Camera UI restyles around expo-camera, not instead of it.
   on-device smoke test of the four money paths: browse→unlock→pay,
   post listing, confirm connection, report issue.
 
-- [ ] Phase 7 complete
+- [x] Phase 7 complete (2026-07-07). **M-Pesa polling fix** (folded in at
+  Amoni's request): the processing screen no longer self-attests success. It
+  captures the wallet balance before the STK push and polls
+  `GET /credits/balance` every 3s, advancing to payment-success only once the
+  balance rises (the server `mpesa-callback` webhook credits it). No new API —
+  the fix is client-side over existing endpoints. New pure
+  `lib/payments/top-up-status` (balance-clear + timeout rule) with 3 gate
+  assertions; provider gains `pollTopUp` and drops the old self-attested
+  `completeTopUp` + the dead `selectTopUp`; `PendingTopUp` now carries
+  `balanceBefore` + `transactionId`.
+  **Dead-code sweep:** deleted 5 unused Phase-0 primitives (`icon-button`,
+  `stat-card`, `color-scheme-toggle`, `fab`, `bottom-sheet`) + `icon-button-
+  variants` and its test block; removed the dead `authGlow`/`authPanelGlow`
+  theme keys.
+  **Token consistency:** fixed `section-header` and `app-launch-screen` which
+  still used `font-semibold` (renders in the system font on RN, not Poppins) →
+  now `font-display`/`font-body` + the type scale; restyled the `create-listing`
+  entry (stale dark card + "will be built next" copy) onto the kit. A repo-wide
+  grep confirms zero `font-semibold`/`font-medium` left in screens/components.
+  **README** updated (kit list, tests, money-flow note, post-redesign backlog).
+  Gates: tsc exit 0, jest 47/47.
+  **Amoni's step (environmental, cannot run in this sandbox):** the EAS cloud
+  preview build (`pnpm --filter @pataspace/mobile build:apk`, needs Expo
+  credentials) and the on-device light+dark full pass + the four money-path
+  smoke tests. The headless Metro bundle hangs here, so every gate ran locally.
 
 ## Measurable outcome
 

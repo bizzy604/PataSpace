@@ -57,7 +57,8 @@ import {
   createListing as createListingApi,
   seedListingFromConfirmation as seedListingFromConfirmationApi,
 } from '@/lib/api/listings';
-import { fetchCreditBalance, purchaseCredits } from '@/lib/api/credits';
+import { fetchCreditBalance, fetchTransactions, purchaseCredits } from '@/lib/api/credits';
+import { hasTopUpCleared } from '@/lib/payments/top-up-status';
 import { createDispute as createDisputeApi } from '@/lib/api/disputes';
 import { createSupportTicket as createSupportTicketApi } from '@/lib/api/support';
 import { createReview as createReviewApi } from '@/lib/api/reviews';
@@ -75,11 +76,15 @@ import {
   type ReferralRecord,
   type UnlockDeadReason,
 } from '@pataspace/contracts';
-import { useMobileApiSync } from './use-mobile-api-sync';
+import { creditTransactionToRecord, useMobileApiSync } from './use-mobile-api-sync';
 
 type PendingTopUp = {
   packageId: string;
   phone: string;
+  /** Wallet balance captured just before the STK push, to detect crediting. */
+  balanceBefore: number;
+  /** Purchase transaction id returned by /credits/purchase. */
+  transactionId?: string;
 };
 
 type MobileAppContextValue = {
@@ -136,9 +141,8 @@ type MobileAppContextValue = {
   updateDraft: (draft: Partial<ListingDraft>) => void;
   resetDraft: () => void;
   submitDraft: () => Promise<MyListingRow>;
-  selectTopUp: (packageId: string, phone: string) => void;
-  completeTopUp: () => TransactionRecord | undefined;
   initiatePurchase: (packageId: string, phone: string) => Promise<void>;
+  pollTopUp: () => Promise<'completed' | 'pending'>;
   refreshWallet: () => Promise<void>;
   unlockListing: (
     listingId: string,
@@ -509,20 +513,26 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
     return myListing;
   }
 
-  function selectTopUp(packageId: string, phone: string) {
-    setPendingTopUp({
-      packageId,
-      phone: normalizePhone(phone) || user.phone,
-    });
-  }
-
   async function initiatePurchase(packageId: string, phone: string): Promise<void> {
     const normalizedPhone = normalizePhone(phone) || user.phone;
-    setPendingTopUp({ packageId, phone: normalizedPhone });
-    await purchaseCredits(getToken, {
+    // Capture the authoritative balance before the STK push so pollTopUp can
+    // detect the M-Pesa callback crediting the wallet server-side.
+    let balanceBefore = walletBalance;
+    try {
+      balanceBefore = (await fetchCreditBalance(getToken)).balance;
+    } catch {
+      // Fall back to the last-synced balance if the pre-check fetch fails.
+    }
+    const response = await purchaseCredits(getToken, {
       package: packageId as CreditPurchasePackage,
       paymentMethod: 'mpesa',
       phoneNumber: normalizedPhone,
+    });
+    setPendingTopUp({
+      packageId,
+      phone: normalizedPhone,
+      balanceBefore,
+      transactionId: response.transactionId,
     });
   }
 
@@ -535,33 +545,32 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  function completeTopUp() {
-    if (!pendingTopUp) {
-      return undefined;
+  /**
+   * Poll the wallet once for the pending top-up. Returns 'completed' only when
+   * the server balance has risen above the pre-push balance (the M-Pesa
+   * callback credited it), reconciling the real balance + transactions from the
+   * API; otherwise 'pending'. Replaces the old self-attested completeTopUp so
+   * the success screen never shows before payment actually clears.
+   */
+  async function pollTopUp(): Promise<'completed' | 'pending'> {
+    if (!pendingTopUp) return 'pending';
+    let balance: number;
+    try {
+      balance = (await fetchCreditBalance(getToken)).balance;
+    } catch {
+      return 'pending';
     }
-
-    const selectedPackage = walletPackages.find((item) => item.id === pendingTopUp.packageId);
-
-    if (!selectedPackage) {
-      return undefined;
+    if (!hasTopUpCleared(pendingTopUp.balanceBefore, balance)) {
+      return 'pending';
     }
-
-    const creditedAmount =
-      selectedPackage.credits +
-      Number(selectedPackage.bonus.replace(/\D/g, '') || '0');
-    const transaction: TransactionRecord = {
-      id: `txn-topup-${Date.now()}`,
-      type: 'topup',
-      title: `M-Pesa ${selectedPackage.label} package`,
-      status: 'Completed',
-      amount: selectedPackage.price,
-      credits: `+${creditedAmount.toLocaleString()} credits`,
-      date: 'Just now',
-      detail: `Payment received from ${pendingTopUp.phone}.`,
-    };
-
-    setWalletBalance((current) => current + creditedAmount);
-    setTransactions((current) => [transaction, ...current]);
+    setWalletBalance(balance);
+    try {
+      const response = await fetchTransactions(getToken);
+      setTransactions(response.data.map(creditTransactionToRecord));
+    } catch {
+      // Balance already reconciled; the transaction list refreshes on next sync.
+    }
+    const creditedAmount = balance - pendingTopUp.balanceBefore;
     pushNotification({
       id: `notif-topup-${Date.now()}`,
       title: 'Credits added',
@@ -570,8 +579,7 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
       target: { route: 'credits' },
     });
     setPendingTopUp(null);
-
-    return transaction;
+    return 'completed';
   }
 
   async function unlockListing(
@@ -995,8 +1003,7 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
         updateDraft,
         resetDraft,
         submitDraft,
-        selectTopUp,
-        completeTopUp,
+        pollTopUp,
         initiatePurchase,
         refreshWallet,
         unlockListing,
