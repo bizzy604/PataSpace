@@ -24,8 +24,6 @@ export type MobileThemePalette = {
   danger: string;
   shadowColor: string;
   inputPlaceholder: string;
-  authGlow: string;
-  authPanelGlow: string;
   authBackdropA: string;
   authBackdropB: string;
   toggleTrack: string;
@@ -57,8 +55,6 @@ export const mobileThemes: Record<AppColorScheme, MobileThemePalette> = {
     danger: '#FF3B30',
     shadowColor: '#252525',
     inputPlaceholder: '#8D9192',
-    authGlow: 'rgba(0, 102, 126, 0.12)',
-    authPanelGlow: 'rgba(0, 102, 126, 0.16)',
     authBackdropA: 'rgba(0, 102, 126, 0.08)',
     authBackdropB: 'rgba(0, 102, 126, 0.06)',
     toggleTrack: '#FFFFFF',
@@ -88,8 +84,6 @@ export const mobileThemes: Record<AppColorScheme, MobileThemePalette> = {
     danger: '#FF5A50',
     shadowColor: '#000000',
     inputPlaceholder: '#8D9192',
-    authGlow: 'rgba(40, 128, 154, 0.18)',
-    authPanelGlow: 'rgba(40, 128, 154, 0.22)',
     authBackdropA: 'rgba(40, 128, 154, 0.12)',
     authBackdropB: 'rgba(40, 128, 154, 0.08)',
     toggleTrack: '#171A1B',

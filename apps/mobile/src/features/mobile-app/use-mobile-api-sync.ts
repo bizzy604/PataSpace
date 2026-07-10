@@ -78,7 +78,7 @@ function transactionTypeLabel(type: TransactionType): string {
   return 'Credit top-up';
 }
 
-function creditTransactionToRecord(tx: CreditTransaction): TransactionRecord {
+export function creditTransactionToRecord(tx: CreditTransaction): TransactionRecord {
   const delta = tx.balanceAfter - tx.balanceBefore;
   const absAmount = Math.abs(tx.amount);
   const type: TransactionRecord['type'] =

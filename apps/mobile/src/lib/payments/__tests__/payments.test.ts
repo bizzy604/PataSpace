@@ -1,4 +1,5 @@
 import { balanceAfterUnlock, canAffordUnlock, unlockRentPercent } from '../unlock-summary';
+import { hasTopUpCleared, topUpPollStatus } from '../top-up-status';
 import {
   filterTransactions,
   groupTransactionsByDate,
@@ -22,6 +23,29 @@ describe('unlock-summary', () => {
     expect(unlockRentPercent(2000, 20000)).toBe(10);
     expect(unlockRentPercent(2000, 0)).toBeNull();
     expect(unlockRentPercent(2000, -5)).toBeNull();
+  });
+});
+
+describe('top-up-status', () => {
+  it('clears only when the polled balance rises above the pre-push balance', () => {
+    expect(hasTopUpCleared(5000, 10000)).toBe(true);
+    expect(hasTopUpCleared(5000, 5000)).toBe(false);
+    expect(hasTopUpCleared(5000, 4000)).toBe(false);
+  });
+
+  it('reports completed as soon as the balance rises, regardless of elapsed time', () => {
+    expect(
+      topUpPollStatus({ balanceBefore: 5000, currentBalance: 10000, elapsedMs: 1000, timeoutMs: 120000 }),
+    ).toBe('completed');
+  });
+
+  it('stays pending until the timeout, then reports timed_out (screen keeps polling)', () => {
+    expect(
+      topUpPollStatus({ balanceBefore: 5000, currentBalance: 5000, elapsedMs: 3000, timeoutMs: 120000 }),
+    ).toBe('pending');
+    expect(
+      topUpPollStatus({ balanceBefore: 5000, currentBalance: 5000, elapsedMs: 120000, timeoutMs: 120000 }),
+    ).toBe('timed_out');
   });
 });
 

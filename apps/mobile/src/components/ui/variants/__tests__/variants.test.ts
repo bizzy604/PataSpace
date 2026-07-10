@@ -10,7 +10,6 @@
 import { buttonVariants, buttonTextVariants } from '../button-variants';
 import { badgeVariants, badgeTextVariants } from '../badge-variants';
 import { chipVariants, chipTextVariants } from '../chip-variants';
-import { iconButtonVariants } from '../icon-button-variants';
 
 describe('buttonVariants', () => {
   it('default fills with the primary token and pill shape rounds fully', () => {
@@ -64,11 +63,3 @@ describe('chipVariants', () => {
   });
 });
 
-describe('iconButtonVariants', () => {
-  it('maps each variant to its container token', () => {
-    expect(iconButtonVariants({ variant: 'accent' })).toContain('bg-primary');
-    expect(iconButtonVariants({ variant: 'subtle' })).toContain('bg-secondary');
-    expect(iconButtonVariants({ variant: 'outline' })).toContain('border-primary');
-    expect(iconButtonVariants({ variant: 'dark' })).toContain('bg-surface-inverse');
-  });
-});

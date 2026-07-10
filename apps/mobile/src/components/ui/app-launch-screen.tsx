@@ -85,10 +85,8 @@ export function AppLaunchScreen() {
         </Animated.View>
 
         <View className="mt-8 items-center gap-2">
-          <Text className="text-[28px] font-semibold tracking-[-0.7px] text-foreground">
-            PataSpace
-          </Text>
-          <Text className="max-w-[240px] text-center text-[14px] leading-6 text-muted-foreground">
+          <Text className="font-display text-headline-lg text-foreground">PataSpace</Text>
+          <Text className="max-w-[240px] text-center font-body text-body-md text-muted-foreground">
             Verified housing handovers for faster, safer moves.
           </Text>
         </View>
