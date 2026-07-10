@@ -3,8 +3,11 @@
 @tailwind utilities;
 
 /*
- * Design tokens for the 2026 mobile redesign. Values come from
- * Docs/Wireframes/PataSpace Design Screens/**/pataspace_ios/DESIGN.md.
+ * Design tokens for the 2026 mobile redesign. Values come from the
+ * pataspace_ios/DESIGN.md copies under Docs/Wireframes/PataSpace Design
+ * Screens/. (Never put a glob with star-slash in this comment: CSS block
+ * comments end at the first star-slash, and the leaked text kills the
+ * Tailwind compile, which hangs Metro at 99.9%.)
  * Primary teal is #00667e; #28809a is the pressed/container tone. Every
  * token is an RGB triplet so `rgb(var(--x) / <alpha-value>)` can tint it.
  * The dark block is a derived palette (designs are light-only) — teal is

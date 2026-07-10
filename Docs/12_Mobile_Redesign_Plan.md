@@ -95,9 +95,11 @@ open-close and button/input variant class output (deterministic, jest).
   loaded via useFonts; primitives restyled (button/input/card/badge/icon-button/
   bottom-nav) and added (chip, bottom-sheet, dialog, fab, progress-steps,
   list-row); variant maps extracted to `variants/*.ts` with 11 gate tests.
-  Gates: `tsc --noEmit` exit 0, jest 26/26, tailwind config loads. NOTE: headless
-  `expo export` hangs in this sandbox (zero output on two attempts, environmental
-  — not code); the on-device Expo pass is Amoni's to run.
+  Gates: `tsc --noEmit` exit 0, jest 26/26, tailwind config loads. NOTE: the
+  "environmental" `expo export` hang recorded here was NOT environmental — it
+  was a `*/` inside a global.css comment (a glob path) that truncated the
+  comment and broke the Tailwind compile, hanging Metro at 99.9%. Fixed
+  2026-07-10 with a gate test (`src/lib/__tests__/global-css.test.ts`).
 
 ## Phase 1 — Authentication (5 screens)
 
@@ -374,7 +376,9 @@ green untouched. Camera UI restyles around expo-camera, not instead of it.
   **Amoni's step (environmental, cannot run in this sandbox):** the EAS cloud
   preview build (`pnpm --filter @pataspace/mobile build:apk`, needs Expo
   credentials) and the on-device light+dark full pass + the four money-path
-  smoke tests. The headless Metro bundle hangs here, so every gate ran locally.
+  smoke tests. The Metro bundle hang blocking this was root-caused 2026-07-10:
+  a `*/` in a global.css comment killed the Tailwind compile (see Phase 0 note).
+  `expo export --platform android` now completes; the device pass is unblocked.
 
 ## Measurable outcome
 
