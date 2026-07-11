@@ -1,3 +1,10 @@
+/**
+ * Purpose: BullMQ queue registry: job submission to the default,
+ * notifications, and payments queues, plus the Redis-backed health probe.
+ * Why important: async work (SMS, callbacks-to-be) rides these queues; the
+ * health check is what readiness reports for queue infrastructure.
+ * Used by: infrastructure consumers via QueueModule, app health checks.
+ */
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JobsOptions, Queue } from 'bullmq';
@@ -48,7 +55,10 @@ export class QueueService implements OnModuleDestroy {
   async healthCheck() {
     try {
       const client = await this.queues[DEFAULT_QUEUE_NAME].client;
-      await client.ping();
+      // bullmq 5.80 types `client` as IRedisClient, which no longer exposes
+      // ping(). hgetall on a throwaway key is a typed, harmless round trip
+      // that proves the connection is alive just as well.
+      await client.hgetall('pataspace:queue:healthcheck');
 
       return {
         status: 'up' as const,
