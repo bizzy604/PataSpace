@@ -364,6 +364,7 @@ export async function completeSandboxPurchase(
 
   return request(context.app.getHttpServer())
     .post('/api/v1/payments/mpesa-callback')
+    .set('x-mpesa-callback-secret', process.env.MPESA_CALLBACK_SECRET ?? '')
     .send(callbackPayload)
     .expect(200);
 }

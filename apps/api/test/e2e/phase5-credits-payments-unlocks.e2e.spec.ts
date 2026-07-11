@@ -331,6 +331,7 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
 
     await request(app.getHttpServer())
       .post('/api/v1/payments/mpesa-callback')
+      .set('x-mpesa-callback-secret', process.env.MPESA_CALLBACK_SECRET ?? '')
       .send(callbackPayload)
       .expect(200);
 
@@ -355,6 +356,7 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
 
     await request(app.getHttpServer())
       .post('/api/v1/payments/mpesa-callback')
+      .set('x-mpesa-callback-secret', process.env.MPESA_CALLBACK_SECRET ?? '')
       .send(callbackPayload)
       .expect(200);
 
@@ -409,6 +411,7 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
 
     await request(app.getHttpServer())
       .post('/api/v1/payments/mpesa-callback')
+      .set('x-mpesa-callback-secret', process.env.MPESA_CALLBACK_SECRET ?? '')
       .send({
         Body: {
           stkCallback: {
@@ -459,6 +462,7 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
 
     await request(app.getHttpServer())
       .post('/api/v1/payments/mpesa-callback')
+      .set('x-mpesa-callback-secret', process.env.MPESA_CALLBACK_SECRET ?? '')
       .send({
         Body: {
           stkCallback: {
