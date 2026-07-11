@@ -1,8 +1,9 @@
 /**
- * Purpose: Gate tests for the refund engine: instant credit refunds, spend
- * reversal, commission cancellation, proxy-session expiry, and dead reasons.
+ * Purpose: Gate tests for the refund engine: instant credit refunds, the
+ * atomic refund claim, spend reversal, commission cancellation,
+ * proxy-session expiry, and dead reasons.
  * Why important: automatic refunds are the brand promise; a broken refund
- * path is a trust incident.
+ * path is a trust incident, and a lost claim race mints credits.
  * Used by: jest unit lane (pnpm test:unit).
  */
 import { ConflictException } from '@nestjs/common';
@@ -11,12 +12,9 @@ import {
   TransactionStatus,
   UnlockDeadReason,
 } from '@prisma/client';
-import { encryptField } from '../../common/security/encryption.util';
 import { UnlockRefundService } from './unlock-refund.service';
 
 describe('UnlockRefundService', () => {
-  const encryptionKey = '12345678901234567890123456789012';
-
   const createRefundService = () => {
     const prismaService = {
       unlock: {
@@ -25,38 +23,26 @@ describe('UnlockRefundService', () => {
       $transaction: jest.fn(),
     };
     const creditService = {
-      getCurrentBalanceValue: jest.fn(),
       invalidateBalanceCache: jest.fn(),
       refundCredits: jest.fn(),
-    };
-    const listingCacheService = {
-      invalidateListing: jest.fn(),
     };
     const proxySessionService = {
       expireForUnlock: jest.fn(),
     };
-    const smsService = {
-      sendMessage: jest.fn(),
-    };
-    const configService = {
-      get: jest.fn().mockImplementation((key: string) =>
-        key === 'security.encryptionKey' ? encryptionKey : undefined,
-      ),
+    const notifier = {
+      afterRefund: jest.fn(),
     };
 
     return {
       creditService,
-      listingCacheService,
+      notifier,
       prismaService,
       proxySessionService,
-      smsService,
       service: new UnlockRefundService(
         prismaService as never,
         creditService as never,
-        listingCacheService as never,
         proxySessionService as never,
-        smsService as never,
-        configService as never,
+        notifier as never,
       ),
     };
   };
@@ -72,45 +58,42 @@ describe('UnlockRefundService', () => {
       metadata: {
         listingId: 'listing_1',
       },
-      status: TransactionStatus.COMPLETED,
     },
     commission: {
       id: 'commission_1',
       status: CommissionStatus.PENDING,
     },
     buyer: {
-      phoneNumberEncrypted: encryptField('+254712345678', encryptionKey),
+      phoneNumberEncrypted: 'enc_buyer_phone',
     },
     ...overrides,
   });
 
-  it('refunds an unlock, marks the spend as refunded, cancels commission, and expires the proxy session', async () => {
+  const createTransactionClient = (unlock: unknown, claimCount = 1) => ({
+    commission: {
+      update: jest.fn(),
+    },
+    creditTransaction: {
+      update: jest.fn(),
+    },
+    unlock: {
+      findUnique: jest.fn().mockResolvedValue(unlock),
+      updateMany: jest.fn().mockResolvedValue({ count: claimCount }),
+    },
+    successFee: {
+      deleteMany: jest.fn(),
+    },
+  });
+
+  it('claims the unlock atomically, refunds, cancels commission, and notifies', async () => {
     const {
       creditService,
-      listingCacheService,
+      notifier,
       prismaService,
       proxySessionService,
       service,
-      smsService,
     } = createRefundService();
-    const transactionClient = {
-      commission: {
-        update: jest.fn(),
-      },
-      creditTransaction: {
-        update: jest.fn(),
-      },
-      unlock: {
-        findUnique: jest.fn().mockResolvedValue(createRefundableUnlock()),
-        update: jest.fn(),
-      },
-      proxySession: {
-        updateMany: jest.fn(),
-      },
-      successFee: {
-        deleteMany: jest.fn(),
-      },
-    };
+    const transactionClient = createTransactionClient(createRefundableUnlock());
 
     prismaService.$transaction.mockImplementation(async (callback: Function) =>
       callback(transactionClient),
@@ -123,20 +106,22 @@ describe('UnlockRefundService', () => {
 
     await service.refundUnlockById('unlock_1', 'Listing invalidated');
 
+    expect(transactionClient.unlock.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: 'unlock_1',
+        isRefunded: false,
+      },
+      data: expect.objectContaining({
+        isRefunded: true,
+        refundReason: 'Listing invalidated',
+        deadReason: null,
+      }),
+    });
     expect(creditService.refundCredits).toHaveBeenCalledWith(
       transactionClient,
       expect.objectContaining({
         amount: 300,
         userId: 'buyer_1',
-      }),
-    );
-    expect(transactionClient.unlock.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          isRefunded: true,
-          refundReason: 'Listing invalidated',
-          deadReason: null,
-        }),
       }),
     );
     expect(proxySessionService.expireForUnlock).toHaveBeenCalledWith(
@@ -166,33 +151,36 @@ describe('UnlockRefundService', () => {
       }),
     });
     expect(creditService.invalidateBalanceCache).toHaveBeenCalledWith('buyer_1');
-    expect(listingCacheService.invalidateListing).toHaveBeenCalledWith('listing_1');
-    expect(smsService.sendMessage).toHaveBeenCalledWith(
-      '+254712345678',
-      'Your unlock has been refunded on PataSpace. Reason: Listing invalidated',
+    expect(notifier.afterRefund).toHaveBeenCalledWith({
+      listingId: 'listing_1',
+      buyerPhoneEncrypted: 'enc_buyer_phone',
+      reason: 'Listing invalidated',
+    });
+  });
+
+  it('does not credit when another trigger already claimed the refund', async () => {
+    const { creditService, notifier, prismaService, service } = createRefundService();
+    // The unlock read as refundable, but the concurrent winner committed
+    // first, so the claim matches zero rows.
+    const transactionClient = createTransactionClient(createRefundableUnlock(), 0);
+
+    prismaService.$transaction.mockImplementation(async (callback: Function) =>
+      callback(transactionClient),
     );
+
+    await service.refundUnlockById('unlock_1', 'Listing invalidated');
+
+    expect(creditService.refundCredits).not.toHaveBeenCalled();
+    expect(transactionClient.creditTransaction.update).not.toHaveBeenCalled();
+    expect(transactionClient.commission.update).not.toHaveBeenCalled();
+    expect(transactionClient.successFee.deleteMany).not.toHaveBeenCalled();
+    expect(creditService.invalidateBalanceCache).not.toHaveBeenCalled();
+    expect(notifier.afterRefund).not.toHaveBeenCalled();
   });
 
   it('records the dead reason on reason-coded refunds', async () => {
     const { creditService, prismaService, service } = createRefundService();
-    const transactionClient = {
-      commission: {
-        update: jest.fn(),
-      },
-      creditTransaction: {
-        update: jest.fn(),
-      },
-      unlock: {
-        findUnique: jest.fn().mockResolvedValue(createRefundableUnlock()),
-        update: jest.fn(),
-      },
-      proxySession: {
-        updateMany: jest.fn(),
-      },
-      successFee: {
-        deleteMany: jest.fn(),
-      },
-    };
+    const transactionClient = createTransactionClient(createRefundableUnlock());
 
     prismaService.$transaction.mockImplementation(async (callback: Function) =>
       callback(transactionClient),
@@ -207,7 +195,7 @@ describe('UnlockRefundService', () => {
       deadReason: UnlockDeadReason.LANDLORD_DECLINED,
     });
 
-    expect(transactionClient.unlock.update).toHaveBeenCalledWith(
+    expect(transactionClient.unlock.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
           deadReason: UnlockDeadReason.LANDLORD_DECLINED,
@@ -226,19 +214,15 @@ describe('UnlockRefundService', () => {
 
   it('rejects unlock refunds once the commission has already been paid', async () => {
     const { creditService, prismaService, service } = createRefundService();
-    const transactionClient = {
-      unlock: {
-        findUnique: jest.fn().mockResolvedValue(
-          createRefundableUnlock({
-            creditTransaction: null,
-            commission: {
-              id: 'commission_1',
-              status: CommissionStatus.PAID,
-            },
-          }),
-        ),
-      },
-    };
+    const transactionClient = createTransactionClient(
+      createRefundableUnlock({
+        creditTransaction: null,
+        commission: {
+          id: 'commission_1',
+          status: CommissionStatus.PAID,
+        },
+      }),
+    );
 
     prismaService.$transaction.mockImplementation(async (callback: Function) =>
       callback(transactionClient),
@@ -248,5 +232,23 @@ describe('UnlockRefundService', () => {
       service.refundUnlockById('unlock_1', 'Listing invalidated'),
     ).rejects.toBeInstanceOf(ConflictException);
     expect(creditService.refundCredits).not.toHaveBeenCalled();
+    expect(transactionClient.unlock.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('skips unlocks that are already refunded', async () => {
+    const { creditService, notifier, prismaService, service } = createRefundService();
+    const transactionClient = createTransactionClient(
+      createRefundableUnlock({ isRefunded: true }),
+    );
+
+    prismaService.$transaction.mockImplementation(async (callback: Function) =>
+      callback(transactionClient),
+    );
+
+    await service.refundUnlockById('unlock_1', 'Listing invalidated');
+
+    expect(transactionClient.unlock.updateMany).not.toHaveBeenCalled();
+    expect(creditService.refundCredits).not.toHaveBeenCalled();
+    expect(notifier.afterRefund).not.toHaveBeenCalled();
   });
 });
