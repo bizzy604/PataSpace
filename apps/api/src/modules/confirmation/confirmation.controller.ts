@@ -30,7 +30,7 @@ import {
   SettleSuccessFeeResponseDto,
 } from './confirmation.docs';
 import { ConfirmationService } from './confirmation.service';
-import { SuccessFeeService } from './success-fee.service';
+import { SuccessFeeSettlementService } from './success-fee-settlement.service';
 
 @ApiTags('Confirmations')
 @ApiBearerAuth('bearer')
@@ -38,7 +38,7 @@ import { SuccessFeeService } from './success-fee.service';
 export class ConfirmationController {
   constructor(
     private readonly confirmationService: ConfirmationService,
-    private readonly successFeeService: SuccessFeeService,
+    private readonly successFeeSettlementService: SuccessFeeSettlementService,
   ) {}
 
   @ApiOperation({ summary: 'Confirm a connection for an unlocked listing' })
@@ -73,7 +73,7 @@ export class ConfirmationController {
     @CurrentUser('id') userId: string,
     @Body(new ZodValidationPipe(settleSuccessFeeSchema)) input: SettleSuccessFeeRequest,
   ): Promise<SettleSuccessFeeResponse> {
-    const result = await this.successFeeService.settleFromCredits(userId, input.unlockId);
+    const result = await this.successFeeSettlementService.settleFromCredits(userId, input.unlockId);
 
     return {
       unlockId: input.unlockId,

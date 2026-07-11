@@ -1,11 +1,10 @@
 /**
- * Purpose: Gate tests for the success-fee engine: fee snapshot, credit
- * capture, 70/30 commission math, credit settlement, and mover gating.
- * Why important: this is the revenue engine; a math error here misprices
- * liabilities and poster payouts (spec section 4.3 worked examples).
+ * Purpose: Gate tests for success-fee capture: fee snapshot, credit
+ * capture, 70/30 commission math, and mover gating.
+ * Why important: this books the revenue engine's liabilities; a math error
+ * here misprices poster payouts (spec section 4.3 worked examples).
  * Used by: jest unit lane (pnpm test:unit).
  */
-import { HttpException } from '@nestjs/common';
 import { SuccessFeeService } from './success-fee.service';
 
 describe('SuccessFeeService', () => {
@@ -14,26 +13,15 @@ describe('SuccessFeeService', () => {
       $transaction: jest.fn(),
       successFee: {
         findFirst: jest.fn(),
-        findUnique: jest.fn(),
       },
-    };
-    const creditService = {
-      getCurrentBalanceValue: jest.fn(),
-      invalidateBalanceCache: jest.fn(),
-      spendCredits: jest.fn(),
     };
     const configService = {
       get: jest.fn().mockReturnValue(undefined),
     };
 
     return {
-      creditService,
       prismaService,
-      service: new SuccessFeeService(
-        prismaService as never,
-        creditService as never,
-        configService as never,
-      ),
+      service: new SuccessFeeService(prismaService as never, configService as never),
     };
   };
 
@@ -156,119 +144,6 @@ describe('SuccessFeeService', () => {
       }),
     );
     expect(summary.remainingKes).toBe(0);
-  });
-
-  it('settles the remaining balance from wallet credits and syncs the commission', async () => {
-    const { creditService, prismaService, service } = createService();
-    const settledFee = {
-      id: 'fee_1',
-      feeDueKes: 2500,
-      creditsApplied: 300,
-      cashCollectedKes: 2200,
-      status: 'SETTLED',
-    };
-    const transactionClient = {
-      successFee: {
-        update: jest.fn().mockResolvedValue(settledFee),
-      },
-      commission: {
-        updateMany: jest.fn(),
-      },
-    };
-
-    prismaService.successFee.findUnique.mockResolvedValue({
-      id: 'fee_1',
-      unlockId: 'unlock_1',
-      moverId: 'buyer_1',
-      feeDueKes: 2500,
-      creditsApplied: 300,
-      cashCollectedKes: 0,
-      status: 'PARTIAL',
-    });
-    creditService.getCurrentBalanceValue.mockResolvedValue(3000);
-    creditService.spendCredits.mockResolvedValue({ balanceAfter: 800 });
-    prismaService.$transaction.mockImplementation(async (callback: Function) =>
-      callback(transactionClient),
-    );
-
-    const result = await service.settleFromCredits('buyer_1', 'unlock_1');
-
-    expect(creditService.spendCredits).toHaveBeenCalledWith(
-      transactionClient,
-      expect.objectContaining({
-        amount: 2200,
-        userId: 'buyer_1',
-      }),
-    );
-    // Commission becomes 70% of the fully collected 2,500 = 1,750.
-    expect(transactionClient.commission.updateMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: {
-          amountKES: 1750,
-        },
-      }),
-    );
-    expect(result.fee.status).toBe('SETTLED');
-    expect(result.newBalance).toBe(800);
-    expect(creditService.invalidateBalanceCache).toHaveBeenCalledWith('buyer_1');
-  });
-
-  it('rejects settlement without enough credits, naming the shortfall', async () => {
-    const { creditService, prismaService, service } = createService();
-
-    prismaService.successFee.findUnique.mockResolvedValue({
-      id: 'fee_1',
-      unlockId: 'unlock_1',
-      moverId: 'buyer_1',
-      feeDueKes: 2500,
-      creditsApplied: 300,
-      cashCollectedKes: 0,
-      status: 'PARTIAL',
-    });
-    creditService.getCurrentBalanceValue.mockResolvedValue(1000);
-
-    await expect(service.settleFromCredits('buyer_1', 'unlock_1')).rejects.toMatchObject({
-      status: 402,
-    });
-    expect(creditService.spendCredits).not.toHaveBeenCalled();
-  });
-
-  it('rejects settlement attempts from anyone but the mover', async () => {
-    const { prismaService, service } = createService();
-
-    prismaService.successFee.findUnique.mockResolvedValue({
-      id: 'fee_1',
-      unlockId: 'unlock_1',
-      moverId: 'buyer_1',
-      feeDueKes: 2500,
-      creditsApplied: 300,
-      cashCollectedKes: 0,
-      status: 'PARTIAL',
-    });
-
-    await expect(service.settleFromCredits('intruder_1', 'unlock_1')).rejects.toBeInstanceOf(
-      HttpException,
-    );
-  });
-
-  it('reports settled fees idempotently', async () => {
-    const { creditService, prismaService, service } = createService();
-
-    prismaService.successFee.findUnique.mockResolvedValue({
-      id: 'fee_1',
-      unlockId: 'unlock_1',
-      moverId: 'buyer_1',
-      feeDueKes: 2500,
-      creditsApplied: 300,
-      cashCollectedKes: 2200,
-      status: 'SETTLED',
-    });
-    creditService.getCurrentBalanceValue.mockResolvedValue(800);
-
-    const result = await service.settleFromCredits('buyer_1', 'unlock_1');
-
-    expect(result.alreadySettled).toBe(true);
-    expect(creditService.spendCredits).not.toHaveBeenCalled();
   });
 
   it('flags movers with unsettled fees for unlock gating', async () => {
