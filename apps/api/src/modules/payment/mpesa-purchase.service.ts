@@ -7,9 +7,10 @@
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { TransactionStatus } from '@prisma/client';
 import { MpesaCallbackRequest } from '@pataspace/contracts';
-import { hashLookupValue, normalizePhoneNumber } from '../../common/security/encryption.util';
+import { hashLookupValue } from '../../common/security/encryption.util';
 import { PrismaService } from '../../common/database/prisma.service';
 import { MpesaClient } from '../../infrastructure/payment/mpesa.client';
+import { parseStkCallback } from './mpesa-callback.util';
 import { mergeMetadata, readNumberMetadata, readStringMetadata } from './payment-metadata.util';
 import { PaymentFulfillmentService, PaymentSettlementRecord } from './payment-fulfillment.service';
 
@@ -49,19 +50,44 @@ export class MpesaPurchaseService {
       return { checkoutRequestId: response.checkoutRequestId };
     } catch (error) {
       const reason = error instanceof Error ? error.message : 'STK push failed';
-      this.logger.error('STK push failed', JSON.stringify({ reason }));
+      this.logger.error('STK push failed', JSON.stringify({ reason, transactionId }));
 
-      await this.prismaService.creditTransaction.update({
-        where: { id: transactionId },
-        data: { status: TransactionStatus.FAILED, metadata: mergeMetadata(null, { failureReason: reason }) },
-      });
+      await this.markStkPushFailed(transactionId, reason);
 
       throw new ServiceUnavailableException({ code: 'MPESA_UNAVAILABLE', message: 'M-Pesa service is currently unavailable' });
     }
   }
 
+  // The failure note must merge into the existing metadata — replacing it
+  // would destroy paymentAmountKES and the phone fields that reconciliation
+  // and support depend on.
+  private async markStkPushFailed(transactionId: string, reason: string) {
+    try {
+      const existing = await this.prismaService.creditTransaction.findUnique({
+        where: { id: transactionId },
+        select: { metadata: true },
+      });
+
+      await this.prismaService.creditTransaction.update({
+        where: { id: transactionId },
+        data: {
+          status: TransactionStatus.FAILED,
+          metadata: mergeMetadata(existing?.metadata ?? null, { failureReason: reason }),
+        },
+      });
+    } catch (markError) {
+      this.logger.error(
+        'Failed to mark STK transaction as FAILED; row stays PENDING for reconciliation',
+        JSON.stringify({
+          transactionId,
+          reason: markError instanceof Error ? markError.message : 'unknown',
+        }),
+      );
+    }
+  }
+
   async handleCallback(input: MpesaCallbackRequest) {
-    const cb = this.parseCallback(input);
+    const cb = parseStkCallback(input);
     const tx = await this.fulfillment.findPurchaseTransactionByLookup(cb.checkoutRequestId, cb.mpesaReceiptNumber);
 
     if (!tx || tx.status !== TransactionStatus.PENDING) {
@@ -108,7 +134,22 @@ export class MpesaPurchaseService {
 
       try {
         const query = await this.mpesaClient.queryStkPush({ checkoutRequestId: tx.mpesaTransactionId });
+
+        // No decision from Daraja (still processing, or the response shape
+        // dropped ResultCode). Settling on a guessed code is how credits get
+        // granted for payments that never happened — leave the row PENDING.
+        if (query.resultCode === null) {
+          this.logger.warn('STK query indeterminate; leaving pending', JSON.stringify({ transactionId: tx.id }));
+          continue;
+        }
+
         const fallbackAmount = readNumberMetadata(tx.metadata, 'paymentAmountKES');
+
+        if (query.resultCode === 0 && fallbackAmount === null) {
+          this.logger.warn('STK query succeeded but expected amount is unknown; leaving pending', JSON.stringify({ transactionId: tx.id }));
+          continue;
+        }
+
         const resolvedPhone = query.phoneNumber ?? readStringMetadata(tx.metadata, 'callbackPhoneNumber') ?? readStringMetadata(tx.metadata, 'requestedPhoneNumber');
 
         const record: PaymentSettlementRecord = {
@@ -121,38 +162,25 @@ export class MpesaPurchaseService {
           resultDesc: query.resultDesc,
         };
 
-        if (query.resultCode === 0 && fallbackAmount !== null) {
+        if (query.resultCode === 0) {
           await this.fulfillment.processSuccessfulPayment(tx.id, record);
         } else {
           await this.fulfillment.processFailedPayment(tx.id, query.resultCode, query.resultDesc, record);
         }
 
         count += 1;
-      } catch {
+      } catch (error) {
+        this.logger.warn(
+          'STK reconcile query failed; will retry next tick',
+          JSON.stringify({
+            transactionId: tx.id,
+            reason: error instanceof Error ? error.message : 'unknown',
+          }),
+        );
         continue;
       }
     }
 
     return count;
-  }
-
-  private parseCallback(input: MpesaCallbackRequest) {
-    const payload = input.Body.stkCallback;
-    const items = payload.CallbackMetadata?.Item ?? [];
-    const amountValue = items.find((i) => i.Name === 'Amount')?.Value;
-    const phoneValue = items.find((i) => i.Name === 'PhoneNumber')?.Value;
-    const receiptValue = items.find((i) => i.Name === 'MpesaReceiptNumber')?.Value;
-    const normalizedPhone = phoneValue != null ? normalizePhoneNumber(String(phoneValue)) : null;
-
-    return {
-      checkoutRequestId: payload.CheckoutRequestID,
-      merchantRequestId: payload.MerchantRequestID,
-      resultCode: payload.ResultCode,
-      resultDesc: payload.ResultDesc,
-      amount: amountValue != null ? Number(amountValue) : null,
-      mpesaReceiptNumber: typeof receiptValue === 'string' ? receiptValue : null,
-      phoneNumber: normalizedPhone,
-      phoneNumberHash: normalizedPhone ? hashLookupValue(normalizedPhone) : null,
-    };
   }
 }

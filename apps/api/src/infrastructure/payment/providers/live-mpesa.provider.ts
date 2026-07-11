@@ -1,3 +1,11 @@
+/**
+ * Purpose: Real Daraja adapter: STK push, B2C payout, and status queries
+ * against Safaricom's production/sandbox API with OAuth per call.
+ * Why important: every shilling that moves in production moves through this
+ * file; response mapping here decides what the rest of the system believes
+ * about a payment. Request plumbing lives in live-mpesa.support.ts.
+ * Used by: mpesa.module.ts (provider binding), MpesaClient consumers.
+ */
 import { Buffer } from 'buffer';
 import axios, { AxiosInstance, isAxiosError } from 'axios';
 import {
@@ -10,19 +18,13 @@ import {
   MpesaStkPushResponse,
   MpesaStkQueryRequest,
 } from '../mpesa.types';
-
-type LiveMpesaConfig = {
-  baseUrl: string;
-  callbackUrl: string;
-  consumerKey: string;
-  consumerSecret: string;
-  initiatorName: string;
-  passkey: string;
-  resultUrl: string;
-  securityCredential: string;
-  shortcode: string;
-  timeoutUrl: string;
-};
+import {
+  darajaTimestamp,
+  LiveMpesaConfig,
+  parseResultCode,
+  stkPassword,
+  toMpesaPhone,
+} from './live-mpesa.support';
 
 export class LiveMpesaProvider implements MpesaProvider {
   private readonly httpClient: AxiosInstance;
@@ -40,22 +42,19 @@ export class LiveMpesaProvider implements MpesaProvider {
   }
 
   async stkPush(payload: MpesaStkPushRequest): Promise<MpesaStkPushResponse> {
-    const timestamp = this.getTimestamp();
-    const password = Buffer.from(
-      `${this.config.shortcode}${this.config.passkey}${timestamp}`,
-    ).toString('base64');
+    const timestamp = darajaTimestamp();
     const accessToken = await this.getAccessToken();
     const response = await this.httpClient.post(
       '/mpesa/stkpush/v1/processrequest',
       {
         BusinessShortCode: this.config.shortcode,
-        Password: password,
+        Password: stkPassword(this.config.shortcode, this.config.passkey, timestamp),
         Timestamp: timestamp,
         TransactionType: 'CustomerPayBillOnline',
         Amount: Math.round(payload.amount),
-        PartyA: this.toMpesaPhone(payload.phoneNumber),
+        PartyA: toMpesaPhone(payload.phoneNumber),
         PartyB: this.config.shortcode,
-        PhoneNumber: this.toMpesaPhone(payload.phoneNumber),
+        PhoneNumber: toMpesaPhone(payload.phoneNumber),
         CallBackURL: this.config.callbackUrl,
         AccountReference: payload.accountReference,
         TransactionDesc: `PataSpace credits for ${payload.accountReference}`,
@@ -88,7 +87,7 @@ export class LiveMpesaProvider implements MpesaProvider {
         CommandID: 'BusinessPayment',
         Amount: Math.round(payload.amount),
         PartyA: this.config.shortcode,
-        PartyB: this.toMpesaPhone(payload.phoneNumber),
+        PartyB: toMpesaPhone(payload.phoneNumber),
         Remarks: payload.remarks ?? 'PataSpace commission payout',
         QueueTimeOutURL: this.config.timeoutUrl,
         ResultURL: this.config.resultUrl,
@@ -134,16 +133,21 @@ export class LiveMpesaProvider implements MpesaProvider {
         },
       );
 
-      const resultCode = Number(response.data?.ResultCode ?? -1);
-      // Daraja returns 0 only when the transaction was located AND completed.
-      // Any other code means it's still in flight, missing, or failed —
-      // safer to surface as pending so the caller retries or re-queries.
-      const outcome: MpesaB2CQueryResponse['outcome'] = resultCode === 0 ? 'success' : 'pending';
+      // The transaction-status API is itself async: this synchronous ack
+      // normally carries no ResultCode (the real result lands on the
+      // ResultURL later), so the common path here is 'pending'. Only an
+      // explicit 0 in the ack may read as success; anything else stays
+      // 'pending' so the caller re-queries or re-issues with the same
+      // OriginatorConversationID.
+      const resultCode = parseResultCode(response.data?.ResultCode);
+      const outcome: MpesaB2CQueryResponse['outcome'] =
+        resultCode === 0 ? 'success' : 'pending';
 
       return {
         outcome,
         conversationId: response.data?.ConversationID,
-        mpesaReceiptNumber: response.data?.TransactionID ?? response.data?.MpesaReceiptNumber,
+        mpesaReceiptNumber:
+          response.data?.TransactionID ?? response.data?.MpesaReceiptNumber,
         resultDesc:
           response.data?.ResultDesc ?? response.data?.ResponseDescription,
       };
@@ -158,16 +162,13 @@ export class LiveMpesaProvider implements MpesaProvider {
   }
 
   async queryStkPush(payload: MpesaStkQueryRequest) {
-    const timestamp = this.getTimestamp();
-    const password = Buffer.from(
-      `${this.config.shortcode}${this.config.passkey}${timestamp}`,
-    ).toString('base64');
+    const timestamp = darajaTimestamp();
     const accessToken = await this.getAccessToken();
     const response = await this.httpClient.post(
       '/mpesa/stkpushquery/v1/query',
       {
         BusinessShortCode: this.config.shortcode,
-        Password: password,
+        Password: stkPassword(this.config.shortcode, this.config.passkey, timestamp),
         Timestamp: timestamp,
         CheckoutRequestID: payload.checkoutRequestId,
       },
@@ -180,8 +181,8 @@ export class LiveMpesaProvider implements MpesaProvider {
 
     return {
       checkoutRequestId: payload.checkoutRequestId,
-      responseCode: String(response.data.ResponseCode ?? '0'),
-      resultCode: Number(response.data.ResultCode ?? 0),
+      responseCode: String(response.data.ResponseCode ?? ''),
+      resultCode: parseResultCode(response.data.ResultCode),
       resultDesc:
         (response.data.ResultDesc as string | undefined) ??
         (response.data.ResponseDescription as string | undefined) ??
@@ -217,28 +218,5 @@ export class LiveMpesaProvider implements MpesaProvider {
     });
 
     return response.data.access_token as string;
-  }
-
-  private getTimestamp() {
-    const date = new Date();
-    const parts = [
-      date.getFullYear(),
-      this.pad(date.getMonth() + 1),
-      this.pad(date.getDate()),
-      this.pad(date.getHours()),
-      this.pad(date.getMinutes()),
-      this.pad(date.getSeconds()),
-    ];
-
-    return parts.join('');
-  }
-
-  private pad(value: number) {
-    return String(value).padStart(2, '0');
-  }
-
-  // Daraja requires 2547XXXXXXXX — strip leading '+' if present.
-  private toMpesaPhone(phoneNumber: string): string {
-    return phoneNumber.startsWith('+') ? phoneNumber.slice(1) : phoneNumber;
   }
 }
