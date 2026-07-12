@@ -11,3 +11,17 @@ export type UserProfile = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type RequestPhoneVerificationRequest = {
+  phoneNumber: string;
+};
+
+export type VerifyPhoneVerificationRequest = {
+  phoneNumber: string;
+  code: string;
+};
+
+export type PhoneVerificationRequestResponse = {
+  message: string;
+  expiresIn: number;
+};
