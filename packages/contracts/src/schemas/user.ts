@@ -13,3 +13,17 @@ export const userProfileSchema = z.object({
   createdAt: isoDateStringSchema,
   updatedAt: isoDateStringSchema,
 });
+
+export const requestPhoneVerificationSchema = z.object({
+  phoneNumber: phoneNumberSchema,
+});
+
+export const verifyPhoneVerificationSchema = z.object({
+  phoneNumber: phoneNumberSchema,
+  code: z.string().regex(/^\d{4,6}$/),
+});
+
+export const phoneVerificationRequestResponseSchema = z.object({
+  message: z.string().min(1),
+  expiresIn: z.number().int().positive(),
+});
