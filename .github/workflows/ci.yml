@@ -86,11 +86,11 @@ jobs:
       MPESA_CONSUMER_SECRET: sandbox-consumer-secret
       MPESA_SHORTCODE: 174379
       MPESA_PASSKEY: sandbox-passkey
-      MPESA_CALLBACK_URL: http://localhost:3000/api/v1/payments/mpesa-callback
+      MPESA_CALLBACK_URL: http://localhost:3000/api/v1/payments/mpesa-callback?token=test-callback-secret
       MPESA_INITIATOR_NAME: live-initiator-name
       MPESA_SECURITY_CREDENTIAL: live-security-credential
-      MPESA_RESULT_URL: http://localhost:3000/api/v1/payments/mpesa-result
-      MPESA_TIMEOUT_URL: http://localhost:3000/api/v1/payments/mpesa-timeout
+      MPESA_RESULT_URL: http://localhost:3000/api/v1/payments/mpesa-b2c-callback?token=test-callback-secret
+      MPESA_TIMEOUT_URL: http://localhost:3000/api/v1/payments/mpesa-b2c-timeout?token=test-callback-secret
 
     steps:
       - uses: actions/checkout@v7

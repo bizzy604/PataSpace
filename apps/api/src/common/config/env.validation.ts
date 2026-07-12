@@ -5,7 +5,11 @@
  * Used by: ConfigModule via validateEnv in app bootstrap.
  */
 import { z } from 'zod';
-import { requireFields, requireHttps } from './env.refinements';
+import {
+  requireFields,
+  requireHttps,
+  requireMpesaCallbackContracts,
+} from './env.refinements';
 
 export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -169,6 +173,9 @@ export const envSchema = z.object({
     requireHttps(context, value.MPESA_RESULT_URL, 'MPESA_RESULT_URL');
     requireHttps(context, value.MPESA_TIMEOUT_URL, 'MPESA_TIMEOUT_URL');
   }
+
+  // Applies in every mode: a misrouted callback URL starves payments silently.
+  requireMpesaCallbackContracts(context, value);
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

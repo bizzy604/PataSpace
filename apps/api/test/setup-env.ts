@@ -47,15 +47,20 @@ process.env.MPESA_CONSUMER_KEY ??= 'sandbox-consumer-key';
 process.env.MPESA_CONSUMER_SECRET ??= 'sandbox-consumer-secret';
 process.env.MPESA_SHORTCODE ??= '174379';
 process.env.MPESA_PASSKEY ??= 'sandbox-passkey';
-process.env.MPESA_CALLBACK_URL ??= 'http://localhost:3001/api/v1/payments/mpesa-callback';
+// Callback URLs must point at the registered webhook routes and carry the
+// query token (env validation enforces both — Safaricom cannot send headers).
+process.env.MPESA_CALLBACK_URL ??=
+  'http://localhost:3001/api/v1/payments/mpesa-callback?token=test-callback-secret';
 // Pinned here so the lane is hermetic: process.env beats any developer
 // apps/api/.env value inside Nest's ConfigModule, and the specs send this
 // same header, exercising the callback auth path end to end.
 process.env.MPESA_CALLBACK_SECRET ??= 'test-callback-secret';
 process.env.MPESA_INITIATOR_NAME ??= 'test-initiator';
 process.env.MPESA_SECURITY_CREDENTIAL ??= 'test-security-credential';
-process.env.MPESA_RESULT_URL ??= 'http://localhost:3001/api/v1/payments/mpesa-result';
-process.env.MPESA_TIMEOUT_URL ??= 'http://localhost:3001/api/v1/payments/mpesa-timeout';
+process.env.MPESA_RESULT_URL ??=
+  'http://localhost:3001/api/v1/payments/mpesa-b2c-callback?token=test-callback-secret';
+process.env.MPESA_TIMEOUT_URL ??=
+  'http://localhost:3001/api/v1/payments/mpesa-b2c-timeout?token=test-callback-secret';
 process.env.AT_BASE_URL ??= 'https://api.africastalking.com';
 process.env.AT_USERNAME ??= 'sandbox';
 process.env.AT_API_KEY ??= 'sandbox-api-key';

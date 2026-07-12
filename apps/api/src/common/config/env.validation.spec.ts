@@ -176,4 +176,58 @@ describe('envSchema', () => {
       ]),
     );
   });
+
+  describe('M-Pesa callback URL contracts', () => {
+    it('rejects callback URLs pointing at routes that are not registered', () => {
+      // The exact incident this guards: templates shipped /mpesa-result and
+      // /mpesa-timeout, which 404 — the real routes are /mpesa-b2c-callback
+      // and /mpesa-b2c-timeout.
+      const result = envSchema.safeParse({
+        ...baseEnv,
+        MPESA_RESULT_URL: 'http://localhost:3000/api/v1/payments/mpesa-result',
+        MPESA_TIMEOUT_URL: 'http://localhost:3000/api/v1/payments/mpesa-timeout',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error?.issues).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ path: ['MPESA_RESULT_URL'] }),
+          expect.objectContaining({ path: ['MPESA_TIMEOUT_URL'] }),
+        ]),
+      );
+    });
+
+    it('requires the query token on every callback URL once the secret is set', () => {
+      const result = envSchema.safeParse({
+        ...baseEnv,
+        MPESA_CALLBACK_SECRET: 'a-long-callback-secret-value',
+        MPESA_CALLBACK_URL: 'http://localhost:3000/api/v1/payments/mpesa-callback',
+        MPESA_RESULT_URL:
+          'http://localhost:3000/api/v1/payments/mpesa-b2c-callback?token=wrong-secret',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error?.issues).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ path: ['MPESA_CALLBACK_URL'] }),
+          expect.objectContaining({ path: ['MPESA_RESULT_URL'] }),
+        ]),
+      );
+    });
+
+    it('accepts correctly-routed callback URLs carrying the secret token', () => {
+      const result = envSchema.safeParse({
+        ...baseEnv,
+        MPESA_CALLBACK_SECRET: 'a-long-callback-secret-value',
+        MPESA_CALLBACK_URL:
+          'http://localhost:3000/api/v1/payments/mpesa-callback?token=a-long-callback-secret-value',
+        MPESA_RESULT_URL:
+          'http://localhost:3000/api/v1/payments/mpesa-b2c-callback?token=a-long-callback-secret-value',
+        MPESA_TIMEOUT_URL:
+          'http://localhost:3000/api/v1/payments/mpesa-b2c-timeout?token=a-long-callback-secret-value',
+      });
+
+      expect(result.success).toBe(true);
+    });
+  });
 });
