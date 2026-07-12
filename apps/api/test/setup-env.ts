@@ -48,6 +48,10 @@ process.env.MPESA_CONSUMER_SECRET ??= 'sandbox-consumer-secret';
 process.env.MPESA_SHORTCODE ??= '174379';
 process.env.MPESA_PASSKEY ??= 'sandbox-passkey';
 process.env.MPESA_CALLBACK_URL ??= 'http://localhost:3001/api/v1/payments/mpesa-callback';
+// Pinned here so the lane is hermetic: process.env beats any developer
+// apps/api/.env value inside Nest's ConfigModule, and the specs send this
+// same header, exercising the callback auth path end to end.
+process.env.MPESA_CALLBACK_SECRET ??= 'test-callback-secret';
 process.env.MPESA_INITIATOR_NAME ??= 'test-initiator';
 process.env.MPESA_SECURITY_CREDENTIAL ??= 'test-security-credential';
 process.env.MPESA_RESULT_URL ??= 'http://localhost:3001/api/v1/payments/mpesa-result';

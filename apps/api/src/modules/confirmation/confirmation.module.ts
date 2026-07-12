@@ -12,12 +12,18 @@ import { UserModule } from '../user/user.module';
 import { ConfirmationController } from './confirmation.controller';
 import { ConfirmationNotifierService } from './confirmation-notifier.service';
 import { ConfirmationService } from './confirmation.service';
+import { SuccessFeeSettlementService } from './success-fee-settlement.service';
 import { SuccessFeeService } from './success-fee.service';
 
 @Module({
   imports: [CreditModule, UnlockModule, UserModule],
   controllers: [ConfirmationController],
-  providers: [ConfirmationService, ConfirmationNotifierService, SuccessFeeService],
+  providers: [
+    ConfirmationService,
+    ConfirmationNotifierService,
+    SuccessFeeSettlementService,
+    SuccessFeeService,
+  ],
   exports: [ConfirmationService, SuccessFeeService],
 })
 export class ConfirmationModule {}

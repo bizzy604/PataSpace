@@ -1,3 +1,11 @@
+/**
+ * Purpose: Contract between the M-Pesa client and its providers (live,
+ * sandbox, disabled): request/response shapes and outcome semantics.
+ * Why important: settlement decisions hang off these fields; the null
+ * semantics on resultCode are what keep "no answer" from reading as "paid".
+ * Used by: mpesa.client.ts, providers/*, mpesa-purchase.service.ts,
+ * commission-payout.job.ts.
+ */
 export type ProviderHealth = {
   status: 'up' | 'degraded' | 'down';
   provider: string;
@@ -43,7 +51,13 @@ export type MpesaB2CResponse = {
 export type MpesaStkQueryResponse = {
   checkoutRequestId: string;
   responseCode: string;
-  resultCode: number;
+  /**
+   * Final Daraja result code, or null when Daraja gave no decision (the
+   * field is absent while a transaction is still processing, and gateway
+   * edge cases can drop or mangle it). Callers must treat null as "no
+   * decision yet" — never as success or failure.
+   */
+  resultCode: number | null;
   resultDesc: string;
   mpesaReceiptNumber?: string;
   phoneNumber?: string;

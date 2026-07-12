@@ -15,6 +15,7 @@ import { VoiceWebhookController } from './contact/voice-webhook.controller';
 import { ReceivedUnlockService } from './received-unlock.service';
 import { ReportDeadService } from './report-dead.service';
 import { UnlockController } from './unlock.controller';
+import { UnlockRefundNotifier } from './unlock-refund-notifier';
 import { UnlockRefundService } from './unlock-refund.service';
 import { UnlockService } from './unlock.service';
 
@@ -23,6 +24,7 @@ import { UnlockService } from './unlock.service';
   controllers: [UnlockController, VoiceWebhookController],
   providers: [
     UnlockService,
+    UnlockRefundNotifier,
     UnlockRefundService,
     ReportDeadService,
     ReceivedUnlockService,
