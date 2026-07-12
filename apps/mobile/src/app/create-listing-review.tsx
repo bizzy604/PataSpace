@@ -1,4 +1,4 @@
-import { ListingReviewScreen } from '@/screens/CreateListingFlowScreens';
+import { ListingReviewScreen } from '@/screens/ListingReviewScreen';
 
 export default function CreateListingReviewRoute() {
   return <ListingReviewScreen />;
