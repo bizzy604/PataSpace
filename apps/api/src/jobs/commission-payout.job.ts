@@ -1,7 +1,15 @@
+/**
+ * Purpose: Daily commission payout sweep: promotes eligible commissions,
+ * recovers stalled claims, flags overdue settlements for ops, and hands each
+ * due commission to the processor under a cross-replica advisory lock.
+ * Why important: this loop pays posters. The stale-recovery split matters:
+ * unsent claims are safe to retry, but submitted ones must wait for the
+ * settlement result — flipping them back would risk a double payout.
+ * Used by: JobsModule (scheduled via @nestjs/schedule).
+ */
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { randomUUID } from 'crypto';
-import { CommissionStatus, DisputeStatus, Prisma } from '@prisma/client';
+import { CommissionStatus, DisputeStatus } from '@prisma/client';
 import { PrismaService } from '../common/database/prisma.service';
 import { RequestContextService } from '../common/request-context/request-context.service';
 import {
@@ -9,27 +17,28 @@ import {
   releaseAdvisoryLock,
   tryAdvisoryLock,
 } from '../common/database/advisory-lock.util';
-import { MpesaClient } from '../infrastructure/payment/mpesa.client';
-import { MpesaB2CQueryResponse } from '../infrastructure/payment/mpesa.types';
-import { SmsService } from '../infrastructure/sms/sms.service';
-import { UserService } from '../modules/user/user.service';
+import { CommissionPayoutProcessor, PayoutCandidate } from './commission-payout.processor';
+import {
+  CommissionPayoutRecorder,
+  SETTLEMENT_OVERDUE_NOTE,
+} from './commission-payout.recorder';
+
+const BLOCKING_DISPUTE_STATUSES = new Set<DisputeStatus>([
+  DisputeStatus.OPEN,
+  DisputeStatus.INVESTIGATING,
+]);
 
 @Injectable()
 export class CommissionPayoutJob {
   private readonly logger = new Logger(CommissionPayoutJob.name);
   private readonly batchSize = 50;
-  private readonly maxAttempts = 3;
-  private readonly staleProcessingMs = 30 * 60 * 1000;
-  private readonly blockingDisputeStatuses = new Set<DisputeStatus>([
-    DisputeStatus.OPEN,
-    DisputeStatus.INVESTIGATING,
-  ]);
+  private readonly staleUnsentMs = 30 * 60 * 1000;
+  private readonly settlementOverdueMs = 24 * 60 * 60 * 1000;
 
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly mpesaClient: MpesaClient,
-    private readonly smsService: SmsService,
-    private readonly userService: UserService,
+    private readonly processor: CommissionPayoutProcessor,
+    private readonly recorder: CommissionPayoutRecorder,
     private readonly requestContext: RequestContextService,
   ) {}
 
@@ -72,39 +81,28 @@ export class CommissionPayoutJob {
   }
 
   async processCommissionPayouts(now = new Date()) {
-    const [recoveredProcessing, promotedToDue] = await Promise.all([
-      this.recoverStaleProcessingCommissions(now),
+    const [recoveredProcessing, promotedToDue, settlementOverdue] = await Promise.all([
+      this.recoverStaleUnsentCommissions(now),
       this.promoteEligibleCommissions(now),
+      this.flagOverdueSettlements(now),
     ]);
 
     const dueCommissions = await this.prismaService.commission.findMany({
       where: {
         status: CommissionStatus.DUE,
-        eligibleAt: {
-          lte: now,
-        },
+        eligibleAt: { lte: now },
       },
-      orderBy: {
-        eligibleAt: 'asc',
-      },
+      orderBy: { eligibleAt: 'asc' },
       take: this.batchSize,
       include: {
         unlock: {
           include: {
-            dispute: {
-              select: {
-                status: true,
-              },
-            },
+            dispute: { select: { status: true } },
             listing: {
               select: {
                 id: true,
                 neighborhood: true,
-                user: {
-                  select: {
-                    phoneNumberEncrypted: true,
-                  },
-                },
+                user: { select: { phoneNumberEncrypted: true } },
               },
             },
           },
@@ -115,8 +113,10 @@ export class CommissionPayoutJob {
     const summary = {
       recoveredProcessing,
       promotedToDue,
+      settlementOverdue,
       candidates: dueCommissions.length,
       paid: 0,
+      submitted: 0,
       retried: 0,
       deadLettered: 0,
       blockedByDispute: 0,
@@ -126,23 +126,19 @@ export class CommissionPayoutJob {
     for (const commission of dueCommissions) {
       if (
         commission.unlock.dispute &&
-        this.blockingDisputeStatuses.has(commission.unlock.dispute.status)
+        BLOCKING_DISPUTE_STATUSES.has(commission.unlock.dispute.status)
       ) {
         summary.blockedByDispute += 1;
         continue;
       }
 
-      const result = await this.processSingleCommission(commission, now);
+      const result = await this.processor.process(commission as PayoutCandidate, now);
 
-      if (result === 'paid') {
-        summary.paid += 1;
-      } else if (result === 'retry') {
-        summary.retried += 1;
-      } else if (result === 'dead-letter') {
-        summary.deadLettered += 1;
-      } else {
-        summary.skipped += 1;
-      }
+      if (result === 'paid') summary.paid += 1;
+      else if (result === 'submitted') summary.submitted += 1;
+      else if (result === 'retry') summary.retried += 1;
+      else if (result === 'dead-letter') summary.deadLettered += 1;
+      else summary.skipped += 1;
     }
 
     this.logger.log(
@@ -160,26 +156,27 @@ export class CommissionPayoutJob {
     const result = await this.prismaService.commission.updateMany({
       where: {
         status: CommissionStatus.PENDING,
-        eligibleAt: {
-          lte: now,
-        },
+        eligibleAt: { lte: now },
       },
-      data: {
-        status: CommissionStatus.DUE,
-      },
+      data: { status: CommissionStatus.DUE },
     });
 
     return result.count;
   }
 
-  private async recoverStaleProcessingCommissions(now: Date) {
-    const staleBefore = new Date(now.getTime() - this.staleProcessingMs);
+  /**
+   * Recovers PROCESSING rows that never reached Safaricom (no acceptance
+   * ConversationID recorded). Rows WITH a recorded submission are excluded:
+   * their money may have moved, so only a settlement signal or an operator
+   * may resolve them (see flagOverdueSettlements).
+   */
+  private async recoverStaleUnsentCommissions(now: Date) {
+    const staleBefore = new Date(now.getTime() - this.staleUnsentMs);
     const result = await this.prismaService.commission.updateMany({
       where: {
         status: CommissionStatus.PROCESSING,
-        lastAttemptAt: {
-          lt: staleBefore,
-        },
+        mpesaTransactionId: null,
+        lastAttemptAt: { lt: staleBefore },
       },
       data: {
         status: CommissionStatus.DUE,
@@ -190,309 +187,36 @@ export class CommissionPayoutJob {
     return result.count;
   }
 
-  private async processSingleCommission(
-    commission: Prisma.CommissionGetPayload<{
-      include: {
-        unlock: {
-          include: {
-            dispute: {
-              select: {
-                status: true;
-              };
-            };
-            listing: {
-              select: {
-                id: true;
-                neighborhood: true;
-                user: {
-                  select: {
-                    phoneNumberEncrypted: true;
-                  };
-                };
-              };
-            };
-          };
-        };
-      };
-    }>,
-    now: Date,
-  ): Promise<'paid' | 'retry' | 'dead-letter' | 'skipped'> {
-    const claimed = await this.prismaService.commission.updateMany({
+  private async flagOverdueSettlements(now: Date) {
+    const overdueBefore = new Date(now.getTime() - this.settlementOverdueMs);
+    const overdue = await this.prismaService.commission.findMany({
       where: {
-        id: commission.id,
-        status: CommissionStatus.DUE,
-      },
-      data: {
         status: CommissionStatus.PROCESSING,
-        lastAttemptAt: now,
-        lastAttemptError: null,
-      },
-    });
-
-    if (claimed.count === 0) {
-      return 'skipped';
-    }
-
-    const freshDispute = await this.prismaService.dispute.findUnique({
-      where: {
-        unlockId: commission.unlockId,
+        mpesaTransactionId: { not: null },
+        lastAttemptAt: { lt: overdueBefore },
+        NOT: { lastAttemptError: SETTLEMENT_OVERDUE_NOTE },
       },
       select: {
-        status: true,
+        id: true,
+        amountKES: true,
+        mpesaTransactionId: true,
+        originatorConversationId: true,
+        lastAttemptAt: true,
       },
     });
 
-    if (freshDispute && this.blockingDisputeStatuses.has(freshDispute.status)) {
-      await this.prismaService.commission.update({
-        where: {
-          id: commission.id,
-        },
-        data: {
-          status: CommissionStatus.DUE,
-          lastAttemptError: 'Blocked by dispute after payout claim',
-        },
-      });
-
-      return 'skipped';
+    if (overdue.length === 0) {
+      return 0;
     }
 
-    const encryptedPhone = commission.unlock.listing.user.phoneNumberEncrypted;
-    if (!encryptedPhone) {
-      this.logger.warn(`Commission ${commission.id}: tenant has no phone number, skipping payout`);
-      return 'skipped';
-    }
-    const phoneNumber = this.userService.decryptPhoneNumber(encryptedPhone);
-    const originatorConversationId = await this.ensureOriginatorConversationId(commission);
-    const isRetry = commission.paymentAttempts > 0;
+    this.logger.error(
+      JSON.stringify({
+        event: 'job.commission-payout.settlement-overdue',
+        commissionIds: overdue.map((commission) => commission.id),
+        at: now.toISOString(),
+      }),
+    );
 
-    // On retries we positively confirm with Safaricom before re-issuing. A
-    // crash between a successful B2C and the local PAID write would otherwise
-    // cause a re-issue — Safaricom dedupes via OriginatorConversationID, but
-    // querying first gives us the receipt/conversation id to mark PAID
-    // immediately rather than waiting for the next reconciliation tick.
-    if (isRetry) {
-      const queryOutcome = await this.queryExistingPayout(
-        commission.id,
-        originatorConversationId,
-      );
-
-      if (queryOutcome?.outcome === 'success') {
-        await this.markCommissionPaid(commission, originatorConversationId, now, {
-          conversationId: queryOutcome.conversationId,
-          mpesaReceiptNumber: queryOutcome.mpesaReceiptNumber,
-        });
-        await this.sendSmsQuietly(
-          phoneNumber,
-          `You've received ${commission.amountKES} KES from PataSpace. Check your M-Pesa.`,
-        );
-        return 'paid';
-      }
-
-      if (queryOutcome?.outcome === 'failed') {
-        const reason = queryOutcome.resultDesc ?? 'M-Pesa reported the previous payout as failed';
-        await this.markCommissionDeadLettered(commission, reason, now);
-        return 'dead-letter';
-      }
-
-      // pending | unsupported → fall through to re-issue with the same id
-    }
-
-    try {
-      const payout = await this.mpesaClient.b2c({
-        phoneNumber,
-        amount: commission.amountKES,
-        remarks: `PataSpace commission payout ${commission.id}`,
-        originatorConversationId,
-      });
-
-      await this.markCommissionPaid(commission, originatorConversationId, now, {
-        conversationId: payout.conversationId,
-      });
-
-      await this.sendSmsQuietly(
-        phoneNumber,
-        `You've received ${commission.amountKES} KES from PataSpace. Check your M-Pesa.`,
-      );
-
-      return 'paid';
-    } catch (error) {
-      const attempts = commission.paymentAttempts + 1;
-      const terminalFailure = attempts >= this.maxAttempts;
-      const errorMessage = error instanceof Error ? error.message : 'Commission payout failed';
-
-      await this.recordPayoutFailure(commission, attempts, terminalFailure, errorMessage, now);
-
-      this.logger.error(
-        JSON.stringify({
-          event: 'job.commission-payout.failure',
-          commissionId: commission.id,
-          attempts,
-          terminalFailure,
-          error: errorMessage,
-        }),
-      );
-
-      return terminalFailure ? 'dead-letter' : 'retry';
-    }
-  }
-
-  private async sendSmsQuietly(phoneNumber: string, message: string) {
-    try {
-      await this.smsService.sendMessage(phoneNumber, message);
-    } catch {
-      return;
-    }
-  }
-
-  /**
-   * Returns the stable OriginatorConversationID for this commission.
-   * On the first attempt the column is null — we generate a UUID and persist
-   * it BEFORE the B2C call so any subsequent retry passes the same id and
-   * Safaricom can dedupe instead of double-paying.
-   */
-  private async ensureOriginatorConversationId(commission: {
-    id: string;
-    originatorConversationId: string | null;
-  }): Promise<string> {
-    if (commission.originatorConversationId) {
-      return commission.originatorConversationId;
-    }
-
-    const id = `pataspace-${randomUUID()}`;
-    await this.prismaService.commission.update({
-      where: { id: commission.id },
-      data: { originatorConversationId: id },
-    });
-    return id;
-  }
-
-  /**
-   * Best-effort B2C status lookup. Swallows provider errors so they cannot
-   * crash the payout run — caller treats `null` the same as "pending"
-   * (proceed with the re-issue path).
-   */
-  private async queryExistingPayout(
-    commissionId: string,
-    originatorConversationId: string,
-  ): Promise<MpesaB2CQueryResponse | null> {
-    try {
-      return await this.mpesaClient.queryB2CTransaction({ originatorConversationId });
-    } catch (error) {
-      this.logger.warn(
-        JSON.stringify({
-          event: 'job.commission-payout.query-error',
-          commissionId,
-          originatorConversationId,
-          error: error instanceof Error ? error.message : 'unknown',
-        }),
-      );
-      return null;
-    }
-  }
-
-  private async markCommissionPaid(
-    commission: { id: string; amountKES: number; unlock: { listing: { neighborhood: string } } },
-    originatorConversationId: string,
-    now: Date,
-    payout: { conversationId?: string; mpesaReceiptNumber?: string },
-  ) {
-    await this.prismaService.$transaction(async (tx) => {
-      await tx.commission.update({
-        where: { id: commission.id },
-        data: {
-          status: CommissionStatus.PAID,
-          paidAt: now,
-          mpesaTransactionId: payout.conversationId ?? originatorConversationId,
-          mpesaReceiptNumber: payout.mpesaReceiptNumber ?? undefined,
-          lastAttemptAt: now,
-          lastAttemptError: null,
-        },
-      });
-
-      await tx.auditLog.create({
-        data: {
-          action: 'commission.paid',
-          entityType: 'Commission',
-          entityId: commission.id,
-          metadata: {
-            amountKES: commission.amountKES,
-            conversationId: payout.conversationId ?? null,
-            mpesaReceiptNumber: payout.mpesaReceiptNumber ?? null,
-            originatorConversationId,
-            neighborhood: commission.unlock.listing.neighborhood,
-          } satisfies Prisma.InputJsonObject,
-        },
-      });
-    });
-  }
-
-  private async markCommissionDeadLettered(
-    commission: { id: string; amountKES: number; paymentAttempts: number; unlock: { listing: { id: string } } },
-    reason: string,
-    now: Date,
-  ) {
-    const attempts = commission.paymentAttempts + 1;
-    await this.prismaService.$transaction(async (tx) => {
-      await tx.commission.update({
-        where: { id: commission.id },
-        data: {
-          status: CommissionStatus.FAILED,
-          paymentAttempts: attempts,
-          lastAttemptAt: now,
-          lastAttemptError: reason,
-        },
-      });
-
-      await tx.auditLog.create({
-        data: {
-          action: 'commission.dead_lettered',
-          entityType: 'Commission',
-          entityId: commission.id,
-          metadata: {
-            amountKES: commission.amountKES,
-            error: reason,
-            listingId: commission.unlock.listing.id,
-            paymentAttempts: attempts,
-            reason: 'mpesa_query_returned_failed',
-          } satisfies Prisma.InputJsonObject,
-        },
-      });
-    });
-  }
-
-  private async recordPayoutFailure(
-    commission: { id: string; amountKES: number; unlock: { listing: { id: string } } },
-    attempts: number,
-    terminalFailure: boolean,
-    errorMessage: string,
-    now: Date,
-  ) {
-    await this.prismaService.$transaction(async (tx) => {
-      await tx.commission.update({
-        where: { id: commission.id },
-        data: {
-          status: terminalFailure ? CommissionStatus.FAILED : CommissionStatus.DUE,
-          paymentAttempts: attempts,
-          lastAttemptAt: now,
-          lastAttemptError: errorMessage,
-        },
-      });
-
-      if (terminalFailure) {
-        await tx.auditLog.create({
-          data: {
-            action: 'commission.dead_lettered',
-            entityType: 'Commission',
-            entityId: commission.id,
-            metadata: {
-              amountKES: commission.amountKES,
-              error: errorMessage,
-              listingId: commission.unlock.listing.id,
-              paymentAttempts: attempts,
-            } satisfies Prisma.InputJsonObject,
-          },
-        });
-      }
-    });
+    return this.recorder.flagSettlementOverdue(overdue);
   }
 }

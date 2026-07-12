@@ -5,8 +5,9 @@
  * defaulted ResultCode of 0 would grant credits for unconfirmed payments.
  * Used by: jest unit lane (pnpm test:unit).
  */
+import { MpesaDuplicateSubmissionError } from '../mpesa.types';
 import { LiveMpesaProvider } from './live-mpesa.provider';
-import { parseResultCode } from './live-mpesa.support';
+import { isDuplicateSubmissionResponse, parseResultCode } from './live-mpesa.support';
 
 describe('LiveMpesaProvider', () => {
   const config = {
@@ -135,6 +136,48 @@ describe('LiveMpesaProvider', () => {
         }),
         expect.anything(),
       );
+    });
+  });
+
+  describe('b2c duplicate-submission mapping', () => {
+    const axiosError = (data: unknown) =>
+      Object.assign(new Error('Request failed with status code 400'), {
+        isAxiosError: true,
+        response: { status: 400, data },
+      });
+
+    it('maps a duplicate OriginatorConversationID rejection to its own error type', async () => {
+      const { httpClient, provider } = createProvider();
+      httpClient.post.mockRejectedValue(
+        axiosError({ errorMessage: 'Duplicate OriginatorConversationID', errorCode: '500.002.1001' }),
+      );
+
+      await expect(
+        provider.b2c({ phoneNumber: '+254712345678', amount: 750, originatorConversationId: 'pataspace-1' }),
+      ).rejects.toBeInstanceOf(MpesaDuplicateSubmissionError);
+    });
+
+    it('rethrows other b2c errors untouched', async () => {
+      const { httpClient, provider } = createProvider();
+      httpClient.post.mockRejectedValue(axiosError({ errorMessage: 'Insufficient funds' }));
+
+      await expect(
+        provider.b2c({ phoneNumber: '+254712345678', amount: 750, originatorConversationId: 'pataspace-1' }),
+      ).rejects.toThrow('Request failed with status code 400');
+    });
+  });
+
+  describe('isDuplicateSubmissionResponse', () => {
+    it.each([
+      [{ errorMessage: 'Duplicate OriginatorConversationID' }, true],
+      [{ errorMessage: 'The Originator Conversation ID is duplicate.' }, true],
+      [{ ResponseDescription: 'DUPLICATE originatorConversationId detected' }, true],
+      [{ errorMessage: 'Insufficient funds' }, false],
+      [{ errorMessage: 'Duplicate request' }, false],
+      [null, false],
+      ['duplicate', false],
+    ])('classifies %j as %p', (body, expected) => {
+      expect(isDuplicateSubmissionResponse(body)).toBe(expected);
     });
   });
 
