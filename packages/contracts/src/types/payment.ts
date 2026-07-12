@@ -111,3 +111,14 @@ export type MpesaB2CResultRequest = {
     };
   };
 };
+
+export type MpesaB2CTimeoutRequest = {
+  Result?: {
+    OriginatorConversationID?: string;
+    ConversationID?: string;
+    ResultCode?: number;
+    ResultDesc?: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+};

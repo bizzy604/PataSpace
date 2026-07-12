@@ -27,6 +27,8 @@ import {
 import {
   MpesaB2CResultRequest,
   mpesaB2CResultSchema,
+  MpesaB2CTimeoutRequest,
+  mpesaB2CTimeoutSchema,
   MpesaCallbackAckResponse,
   mpesaCallbackSchema,
   MpesaCallbackRequest,
@@ -39,6 +41,7 @@ import { Public } from '../../common/decorators/public.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { ApiRateLimit } from '../../common/throttling/rate-limit.decorator';
 import { CommissionCallbackService } from '../commission-callback/commission-callback.service';
+import { CommissionTimeoutService } from '../commission-callback/commission-timeout.service';
 import {
   MpesaCallbackAckResponseDto,
   MpesaCallbackRequestDto,
@@ -77,6 +80,7 @@ export class PaymentWebhookController {
     private readonly paymentService: PaymentService,
     private readonly configService: ConfigService,
     private readonly commissionCallbackService: CommissionCallbackService,
+    private readonly commissionTimeoutService: CommissionTimeoutService,
   ) {}
 
   @Public()
@@ -121,6 +125,32 @@ export class PaymentWebhookController {
   ): Promise<MpesaCallbackAckResponse> {
     this.assertCallbackAuthorized(headerSecret ?? querySecret);
     await this.commissionCallbackService.handleB2CResult(input);
+    return { ResultCode: 0, ResultDesc: 'Accepted' };
+  }
+
+  @Public()
+  @ApiOperation({
+    summary: 'Receive M-Pesa B2C queue-timeout callbacks for commission payouts',
+    description:
+      'Safaricom POSTs here when a payout request expires unprocessed. The matching ' +
+      'PROCESSING commission returns to DUE for a dedupe-safe re-issue.',
+  })
+  @ApiHeader({
+    name: 'x-mpesa-callback-secret',
+    required: false,
+    description:
+      'Shared secret to authenticate Safaricom callbacks when MPESA_CALLBACK_SECRET is set.',
+  })
+  @ApiOkResponse({ type: MpesaCallbackAckResponseDto, description: 'Timeout callback accepted.' })
+  @HttpCode(200)
+  @Post('mpesa-b2c-timeout')
+  async handleMpesaB2CTimeout(
+    @Headers('x-mpesa-callback-secret') headerSecret: string | undefined,
+    @Query('token') querySecret: string | undefined,
+    @Body(new ZodValidationPipe(mpesaB2CTimeoutSchema)) input: MpesaB2CTimeoutRequest,
+  ): Promise<MpesaCallbackAckResponse> {
+    this.assertCallbackAuthorized(headerSecret ?? querySecret);
+    await this.commissionTimeoutService.handleB2CTimeout(input);
     return { ResultCode: 0, ResultDesc: 'Accepted' };
   }
 
