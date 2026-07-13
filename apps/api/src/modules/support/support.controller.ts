@@ -20,9 +20,13 @@ import {
   CreateSupportTicketRequest,
   CreateSupportTicketResponse,
   PaginatedSupportTicketsResponse,
+  postSupportMessageSchema,
+  PostSupportMessageRequest,
   supportTicketsQuerySchema,
+  SupportTicketMessageRecord,
   SupportTicketRecord,
   SupportTicketsFilters,
+  SupportTicketThreadResponse,
 } from '@pataspace/contracts';
 import { Role } from '@prisma/client';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -33,12 +37,16 @@ import {
   SupportTicketRecordDto,
 } from './support.docs';
 import { SupportService } from './support.service';
+import { SupportThreadService } from './support-thread.service';
 
 @ApiTags('Support')
 @ApiBearerAuth('bearer')
 @Controller('support/tickets')
 export class SupportController {
-  constructor(private readonly supportService: SupportService) {}
+  constructor(
+    private readonly supportService: SupportService,
+    private readonly threadService: SupportThreadService,
+  ) {}
 
   @ApiOperation({ summary: 'File a new support ticket' })
   @ApiBody({ type: CreateSupportTicketRequestDto })
@@ -81,5 +89,29 @@ export class SupportController {
     @Param('id') ticketId: string,
   ): Promise<SupportTicketRecord> {
     return this.supportService.getTicket(userId, role, ticketId);
+  }
+
+  @ApiOperation({ summary: 'Read the message thread on a ticket you own' })
+  @ApiParam({ name: 'id', example: 'cm8support123' })
+  @Get(':id/messages')
+  getThread(
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: Role,
+    @Param('id') ticketId: string,
+  ): Promise<SupportTicketThreadResponse> {
+    return this.threadService.getThread(userId, role, ticketId);
+  }
+
+  @ApiOperation({ summary: 'Reply on a ticket you own' })
+  @ApiParam({ name: 'id', example: 'cm8support123' })
+  @HttpCode(201)
+  @Post(':id/messages')
+  postMessage(
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: Role,
+    @Param('id') ticketId: string,
+    @Body(new ZodValidationPipe(postSupportMessageSchema)) input: PostSupportMessageRequest,
+  ): Promise<SupportTicketMessageRecord> {
+    return this.threadService.postMessage(userId, role, ticketId, input);
   }
 }

@@ -7,10 +7,11 @@
 import { Module } from '@nestjs/common';
 import { SupportController } from './support.controller';
 import { SupportService } from './support.service';
+import { SupportThreadService } from './support-thread.service';
 
 @Module({
   controllers: [SupportController],
-  providers: [SupportService],
+  providers: [SupportService, SupportThreadService],
   exports: [SupportService],
 })
 export class SupportModule {}

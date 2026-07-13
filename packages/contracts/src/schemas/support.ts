@@ -6,7 +6,7 @@
  * Used by: apps/api support module (zod validation pipe), web support form.
  */
 import { z } from 'zod';
-import { SupportTicketStatus } from '../enums';
+import { Role, SupportTicketStatus } from '../enums';
 import { isoDateStringSchema, paginationMetaSchema, paginationQuerySchema } from './common';
 
 export const createSupportTicketSchema = z.object({
@@ -38,4 +38,24 @@ export const paginatedSupportTicketsResponseSchema = z.object({
     hasNext: z.boolean(),
     hasPrev: z.boolean(),
   }),
+});
+
+// Shared thread contracts — used by both the tenant inbox and the admin
+// triage workspace so a message renders identically on either side.
+export const postSupportMessageSchema = z.object({
+  body: z.string().trim().min(1).max(2000),
+});
+
+export const supportTicketMessageRecordSchema = z.object({
+  id: z.string().min(1),
+  authorId: z.string().min(1),
+  authorRole: z.nativeEnum(Role),
+  authorName: z.string(),
+  body: z.string().min(1),
+  createdAt: isoDateStringSchema,
+});
+
+export const supportTicketThreadResponseSchema = z.object({
+  ticketId: z.string().min(1),
+  messages: z.array(supportTicketMessageRecordSchema),
 });

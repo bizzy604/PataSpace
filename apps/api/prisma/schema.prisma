@@ -74,6 +74,12 @@ enum SupportTicketStatus {
   CLOSED
 }
 
+enum SupportTicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
 enum ReviewerSide {
   INCOMING_TENANT
   OUTGOING_TENANT
@@ -150,6 +156,8 @@ model User {
   uploadedAssets       UploadedAsset[]
   auditLogs            AuditLog[]
   supportTickets       SupportTicket[]
+  assignedTickets      SupportTicket[]        @relation("AssignedTickets")
+  supportMessages      SupportTicketMessage[] @relation("SupportMessages")
   reviews              UnlockReview[]
   referralsSent        Referral[]        @relation("ReferralsSent")
   referralsReceived    Referral[]        @relation("ReferralsReceived")
@@ -508,22 +516,42 @@ model UnlockReview {
 }
 
 model SupportTicket {
-  id              String              @id @default(cuid())
+  id              String                @id @default(cuid())
   userId          String
   subject         String
-  message         String              @db.Text
-  status          SupportTicketStatus @default(OPEN)
+  message         String                @db.Text
+  status          SupportTicketStatus   @default(OPEN)
+  priority        SupportTicketPriority @default(MEDIUM)
+  assignedToId    String?
   relatedUnlockId String?
   channel         String?
-  adminNotes      String?             @db.Text
+  adminNotes      String?               @db.Text
   resolvedAt      DateTime?
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignedTo      User?                 @relation("AssignedTickets", fields: [assignedToId], references: [id], onDelete: SetNull)
+  messages        SupportTicketMessage[]
 
   @@index([userId, createdAt])
   @@index([status])
+  @@index([priority])
+  @@index([assignedToId])
   @@map("support_tickets")
+}
+
+model SupportTicketMessage {
+  id         String        @id @default(cuid())
+  ticketId   String
+  authorId   String
+  authorRole Role
+  body       String        @db.Text
+  createdAt  DateTime      @default(now())
+  ticket     SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author     User          @relation("SupportMessages", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt])
+  @@map("support_ticket_messages")
 }
 
 model SavedListing {
