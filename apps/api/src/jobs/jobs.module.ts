@@ -37,6 +37,7 @@ import { ReferralRewardJob } from './referral-reward.job';
   ],
   exports: [
     CommissionPayoutJob,
+    CommissionPayoutProcessor,
     PaymentReconciliationJob,
     ConfirmationFollowupJob,
     ListingCleanupJob,

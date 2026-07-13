@@ -36,6 +36,9 @@ Admin console (Clerk session + ADMIN role required):
 - `/admin`: operations dashboard (GET /admin/metrics)
 - `/admin/listings`: moderation queue + full catalogue CRUD (edit, soft delete)
 - `/admin/users`: account directory with ban/unban
+- `/admin/finance`: payout summary + commission payout ledger with retry for
+  failed B2C payouts (GET /admin/finance/summary, /transactions; POST
+  /admin/finance/commissions/:id/retry)
 - `/admin/disputes`: dispute queue with investigate/resolve/close
 
 Everything else redirects to `/` via `proxy.ts` middleware.

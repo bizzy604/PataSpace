@@ -7,9 +7,12 @@
  */
 import type {
   AdminDisputesResponse,
+  AdminFinanceSummaryResponse,
   AdminListingsResponse,
   AdminMetricsResponse,
+  AdminPayoutLedgerResponse,
   AdminPendingListingsResponse,
+  AdminRetryPayoutResponse,
   AdminUpdateListingRequest,
   AdminUserActionResponse,
   AdminUserDetail,
@@ -131,4 +134,26 @@ export function closeDispute(getToken: GetToken, disputeId: string) {
   return clientFetch<DisputeRecord>(`/disputes/${disputeId}/close`, getToken, {
     method: 'POST',
   });
+}
+
+export function fetchFinanceSummary(getToken: GetToken) {
+  return clientFetch<AdminFinanceSummaryResponse>('/admin/finance/summary', getToken);
+}
+
+export function fetchPayoutLedger(
+  getToken: GetToken,
+  params: { page?: number; status?: string; search?: string } = {},
+) {
+  return clientFetch<AdminPayoutLedgerResponse>(
+    `/admin/finance/transactions${toQuery(params)}`,
+    getToken,
+  );
+}
+
+export function retryPayout(getToken: GetToken, commissionId: string) {
+  return clientFetch<AdminRetryPayoutResponse>(
+    `/admin/finance/commissions/${commissionId}/retry`,
+    getToken,
+    { method: 'POST' },
+  );
 }

@@ -19,6 +19,7 @@ const sections = [
   { label: 'Dashboard', href: '/admin' },
   { label: 'Listings', href: '/admin/listings' },
   { label: 'Users', href: '/admin/users' },
+  { label: 'Finance', href: '/admin/finance' },
   { label: 'Disputes', href: '/admin/disputes' },
 ] as const;
 

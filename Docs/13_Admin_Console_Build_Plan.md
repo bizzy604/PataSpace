@@ -48,10 +48,33 @@ Cross-cutting notes:
 
 ## Phases
 
-### Phase 1 — Financial reconciliation and payouts
+### Phase 1 — Financial reconciliation and payouts — DONE (2026-07-13)
 
 Highest ops value and closest to the in-flight money work
 (`fix/api-money-phase-2`, `Docs/FINTECH_MONEY_AUDIT.md`).
+
+Shipped:
+- `GET /admin/finance/summary` — pending / failed / paid-this-month /
+  paid-YTD buckets, all live DB aggregates, plus a distinct-partner count.
+- `GET /admin/finance/transactions` — paginated commission payout ledger with
+  status filter + search (id, M-Pesa ref, unlock, neighborhood).
+- `POST /admin/finance/commissions/:id/retry` — FAILED-only, claim-guarded
+  flip to DUE that preserves `paymentAttempts` (so the processor's
+  confirm-before-resend guard still fires — no double payout), audit-logged as
+  `commission.payout_retried`, then runs the processor inline and returns the
+  live outcome.
+- Web: `/admin/finance` page (summary tiles + ledger + retry), Finance nav
+  entry.
+- Tests: `admin-finance.service.spec.ts`, `admin-payout-retry.service.spec.ts`
+  (8 unit tests), plus a live-app e2e in `public-admin-api-surface.e2e.spec.ts`
+  covering the ledger, summary, retry 409/404 guards, and the 403 admin gate.
+
+Scope decision: the ledger is the **commission payout ledger only** (what the
+wireframe's "Transaction Ledger" shows and what retry operates on). A unified
+ledger that also folds in tenant credit purchases was dropped from Phase 1 —
+mixing two differently-shaped tables breaks clean pagination and the retry
+action only makes sense for payouts. Credit-purchase history is a separate
+future ledger, noted here rather than forced into this one.
 
 - API: new `admin-finance.controller.ts` + `application/admin-finance.service.ts`
   - `GET /admin/finance/summary` — pending payout total/count, paid this
