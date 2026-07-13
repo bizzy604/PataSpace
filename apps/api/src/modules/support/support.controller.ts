@@ -58,9 +58,10 @@ export class SupportController {
   @Post()
   createTicket(
     @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: Role,
     @Body(new ZodValidationPipe(createSupportTicketSchema)) input: CreateSupportTicketRequest,
   ): Promise<CreateSupportTicketResponse> {
-    return this.supportService.createTicket(userId, input);
+    return this.supportService.createTicket(userId, role, input);
   }
 
   @ApiOperation({ summary: 'List the authenticated user support tickets' })

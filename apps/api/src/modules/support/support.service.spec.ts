@@ -10,6 +10,10 @@ import { SupportService } from './support.service';
 
 describe('SupportService', () => {
   const createService = () => {
+    const tx = {
+      supportTicket: { create: jest.fn() },
+      supportTicketMessage: { create: jest.fn() },
+    };
     const prismaService = {
       $transaction: jest.fn(),
       supportTicket: {
@@ -25,6 +29,7 @@ describe('SupportService', () => {
 
     return {
       prismaService,
+      tx,
       service: new SupportService(prismaService as never),
     };
   };
@@ -44,21 +49,32 @@ describe('SupportService', () => {
     ...overrides,
   });
 
-  it('creates a ticket without an unlock reference', async () => {
-    const { prismaService, service } = createService();
-    prismaService.supportTicket.create.mockResolvedValue(buildTicket());
+  it('creates a ticket and seeds the thread with the original body', async () => {
+    const { prismaService, tx, service } = createService();
+    prismaService.$transaction.mockImplementation(
+      async (cb: (t: typeof tx) => Promise<unknown>) => cb(tx),
+    );
+    tx.supportTicket.create.mockResolvedValue(buildTicket());
 
-    const result = await service.createTicket('user_1', {
+    const result = await service.createTicket('user_1', Role.USER, {
       subject: 'STK push stuck',
       message: 'Pending for fifteen minutes.',
     });
 
-    expect(prismaService.supportTicket.create).toHaveBeenCalledWith({
+    expect(tx.supportTicket.create).toHaveBeenCalledWith({
       data: {
         userId: 'user_1',
         subject: 'STK push stuck',
         message: 'Pending for fifteen minutes.',
         relatedUnlockId: null,
+      },
+    });
+    expect(tx.supportTicketMessage.create).toHaveBeenCalledWith({
+      data: {
+        ticketId: 'support_1',
+        authorId: 'user_1',
+        authorRole: Role.USER,
+        body: 'Pending for fifteen minutes.',
       },
     });
     expect(result.status).toBe(SupportTicketStatus.OPEN);
@@ -73,7 +89,7 @@ describe('SupportService', () => {
     });
 
     await expect(
-      service.createTicket('user_1', {
+      service.createTicket('user_1', Role.USER, {
         subject: 'Cannot reach tenant',
         message: 'Tenant has not picked up the phone.',
         relatedUnlockId: 'unlock_99',
