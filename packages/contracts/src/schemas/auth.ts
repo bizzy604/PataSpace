@@ -39,6 +39,51 @@ export const loginSchema = z.object({
   password: passwordSchema,
 });
 
+/*
+ * Email-identifier auth (Clerk removal, Docs/14 Phase 0). Additive for now:
+ * the API still consumes the phone-identifier schemas above. Phase 1 makes
+ * these canonical (login/register swap to email) and deletes the phone
+ * login variant. Email is normalized (trim + lowercase) at the edge so the
+ * API's unique-email lookup never sees case duplicates.
+ */
+export const emailSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .email();
+
+export const emailRegisterSchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+  firstName: z.string().min(2),
+  lastName: z.string().min(2),
+  // Phone stays required: listings, contact unlock, and M-Pesa need it, and
+  // it is the OTP target for verification and password recovery.
+  phoneNumber: phoneNumberSchema,
+});
+
+export const emailLoginSchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+});
+
+export const forgotPasswordSchema = z.object({
+  email: emailSchema,
+});
+
+// Response is identical whether or not the account exists (anti-enumeration);
+// no userId, and expiresIn is the constant OTP window.
+export const forgotPasswordResponseSchema = z.object({
+  message: z.string().min(1),
+  expiresIn: z.number().int().positive(),
+});
+
+export const resetPasswordSchema = z.object({
+  email: emailSchema,
+  code: z.string().regex(/^\d{4,6}$/),
+  newPassword: passwordSchema,
+});
+
 export const refreshSchema = z.object({
   refreshToken: z.string().min(1),
 });
@@ -54,6 +99,9 @@ export const authUserSchema = z.object({
   lastName: z.string().min(2),
   role: z.nativeEnum(Role),
   phoneVerified: z.boolean(),
+  // Optional until Phase 1 backfills it into toAuthUser; existing clients
+  // parsing sessions without an email must keep working.
+  email: emailSchema.nullable().optional(),
 });
 
 export const authTokensSchema = z.object({

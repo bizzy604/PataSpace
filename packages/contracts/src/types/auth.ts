@@ -7,6 +7,9 @@ export type AuthUser = {
   lastName: string;
   role: Role;
   phoneVerified: boolean;
+  // Optional until the email-identifier migration (Docs/14) Phase 1
+  // populates it server-side.
+  email?: string | null;
 };
 
 export type AuthTokens = {
@@ -42,6 +45,39 @@ export type ResendOtpRequest = {
 export type LoginRequest = {
   phoneNumber: string;
   password: string;
+};
+
+/*
+ * Email-identifier auth (Clerk removal, Docs/14 Phase 0). Additive: Phase 1
+ * makes these the canonical register/login shapes and removes the phone
+ * login variant above.
+ */
+export type EmailRegisterRequest = {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+};
+
+export type EmailLoginRequest = {
+  email: string;
+  password: string;
+};
+
+export type ForgotPasswordRequest = {
+  email: string;
+};
+
+export type ForgotPasswordResponse = {
+  message: string;
+  expiresIn: number;
+};
+
+export type ResetPasswordRequest = {
+  email: string;
+  code: string;
+  newPassword: string;
 };
 
 export type RefreshRequest = {

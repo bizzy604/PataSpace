@@ -75,7 +75,30 @@ validate, mark the phase complete here, then start the next.
 Gates: contracts build, schema unit tests (valid/invalid email, password
 rules, OTP shape), version bump noted in the package changelog.
 
-- [ ] Phase 0 complete
+- [x] Phase 0 complete (2026-07-13). Landed as **additive** schemas rather
+  than replacing `registerSchema`/`loginSchema` in place: `emailSchema`,
+  `emailRegisterSchema`, `emailLoginSchema`, `forgotPasswordSchema` +
+  `forgotPasswordResponseSchema` (anti-enumeration shape, no userId),
+  `resetPasswordSchema` (OTP shape shared with verify-otp) in
+  `schemas/auth.ts`, mirrored in `types/auth.ts`
+  (`EmailRegisterRequest`/`EmailLoginRequest`/`ForgotPasswordRequest`/
+  `ForgotPasswordResponse`/`ResetPasswordRequest`). `authUserSchema`/
+  `AuthUser` gained an optional nullable `email` so existing sessions still
+  parse. Phone-identifier schemas are untouched — Phase 1 swaps the API to
+  the email schemas and deletes them, matching the "contracts first, then
+  consume" ground rule without a broken intermediate state. New test lane:
+  `pnpm --filter @pataspace/contracts test` (jest + ts-jest, added since
+  the package had none), 15 gate tests in
+  `schemas/__tests__/auth.schemas.test.ts` covering email normalization,
+  password-policy rejection cases, OTP shape, and the anti-enumeration
+  response shape. Version bumped 0.1.0 → 0.2.0, `CHANGELOG.md` added (the
+  package had none).
+  Gates: `pnpm --filter @pataspace/contracts build` exit 0; contracts jest
+  15/15; `apps/mobile` `tsc --noEmit` exit 0 against the updated package;
+  `apps/api` unit suite 373/373 (67 suites) unaffected — a pre-existing
+  `admin-finance` typecheck error and 4 DB-backed e2e/integration auth
+  tests (no local Postgres in this sandbox) are unrelated to this change,
+  confirmed by reproducing both with the contracts diff stashed out.
 
 ## Phase 1 — API: native auth goes email-first, Clerk strategy dies
 
