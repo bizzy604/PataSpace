@@ -9,7 +9,7 @@ export const userProfileSchema = z.object({
   lastName: z.string().min(2),
   role: z.nativeEnum(Role),
   phoneVerified: z.boolean(),
-  email: z.string().email().optional(),
+  email: z.string().email().nullable(),
   createdAt: isoDateStringSchema,
   updatedAt: isoDateStringSchema,
 });

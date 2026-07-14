@@ -2,7 +2,7 @@
  * Purpose: HTTP transport for the authenticated user's own profile and account.
  * Why important: Exposes `GET /users/me` and the `DELETE /users/me` account-deletion
  *   endpoint that App Store / Play Store policy requires; stays thin, delegating to services.
- * Used by: mobile and web clients via the global Clerk/JWT auth guard.
+ * Used by: mobile and web clients via the global JWT auth guard.
  */
 import { Controller, Delete, Get, HttpCode } from '@nestjs/common';
 import {

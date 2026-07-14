@@ -1,5 +1,25 @@
 # @pataspace/contracts changelog
 
+## 0.3.0 — 2026-07-13
+
+**Breaking.** Docs/14 Phase 1: `registerSchema`/`loginSchema` and their
+types (`RegisterRequest`/`LoginRequest`) are now email-identified —
+`emailRegisterSchema`/`emailLoginSchema` and their duplicate types from
+0.2.0 are folded into these canonical names and removed. Any consumer
+still sending `phoneNumber`+`password` to `/auth/login` or expecting
+`RegisterRequest.email` to be optional must update.
+
+- `registerSchema`: `email` (required, unique identifier) replaces the
+  optional `email` field; `phoneNumber` stays required (OTP target).
+- `loginSchema`: `email` + `password` (was `phoneNumber` + `password`).
+- `authUserSchema` / `AuthUser`: `email` is now always present in the
+  shape, but nullable — accounts created before this migration may still
+  have none.
+- Unaffected: `verifyOtpSchema`, `resendOtpSchema`, `refreshSchema`,
+  `logoutSchema` (still phone/token based — phone is still the OTP and
+  recovery channel), `forgotPasswordSchema` / `resetPasswordSchema` (added
+  in 0.2.0, unchanged).
+
 ## 0.2.0 — 2026-07-11
 
 Email-identifier auth contract (Clerk removal, Docs/14 Phase 0). Additive:

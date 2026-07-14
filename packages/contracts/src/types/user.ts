@@ -7,7 +7,7 @@ export type UserProfile = {
   lastName: string;
   role: Role;
   phoneVerified: boolean;
-  email?: string;
+  email: string | null;
   createdAt: string;
   updatedAt: string;
 };

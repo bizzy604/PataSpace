@@ -9,12 +9,20 @@ export const passwordSchema = z
   .regex(/[0-9]/, 'Must include at least one number')
   .regex(/[^A-Za-z0-9]/, 'Must include at least one special character');
 
+export const emailSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .email();
+
 export const registerSchema = z.object({
-  phoneNumber: phoneNumberSchema,
+  email: emailSchema,
   password: passwordSchema,
   firstName: z.string().min(2),
   lastName: z.string().min(2),
-  email: z.string().email().optional(),
+  // Phone stays required: listings, contact unlock, and M-Pesa all need it,
+  // and it is the OTP target for verification and password recovery.
+  phoneNumber: phoneNumberSchema,
 });
 
 export const registerResponseSchema = z.object({
@@ -35,34 +43,6 @@ export const resendOtpSchema = z.object({
 export const resendOtpResponseSchema = registerResponseSchema;
 
 export const loginSchema = z.object({
-  phoneNumber: phoneNumberSchema,
-  password: passwordSchema,
-});
-
-/*
- * Email-identifier auth (Clerk removal, Docs/14 Phase 0). Additive for now:
- * the API still consumes the phone-identifier schemas above. Phase 1 makes
- * these canonical (login/register swap to email) and deletes the phone
- * login variant. Email is normalized (trim + lowercase) at the edge so the
- * API's unique-email lookup never sees case duplicates.
- */
-export const emailSchema = z
-  .string()
-  .trim()
-  .toLowerCase()
-  .email();
-
-export const emailRegisterSchema = z.object({
-  email: emailSchema,
-  password: passwordSchema,
-  firstName: z.string().min(2),
-  lastName: z.string().min(2),
-  // Phone stays required: listings, contact unlock, and M-Pesa need it, and
-  // it is the OTP target for verification and password recovery.
-  phoneNumber: phoneNumberSchema,
-});
-
-export const emailLoginSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
 });
@@ -99,9 +79,10 @@ export const authUserSchema = z.object({
   lastName: z.string().min(2),
   role: z.nativeEnum(Role),
   phoneVerified: z.boolean(),
-  // Optional until Phase 1 backfills it into toAuthUser; existing clients
-  // parsing sessions without an email must keep working.
-  email: emailSchema.nullable().optional(),
+  // Nullable, not optional-but-absent: every account has an email post
+  // Clerk-removal, but accounts created before this migration (or via the
+  // orphaned Clerk path) may still have none.
+  email: emailSchema.nullable(),
 });
 
 export const authTokensSchema = z.object({

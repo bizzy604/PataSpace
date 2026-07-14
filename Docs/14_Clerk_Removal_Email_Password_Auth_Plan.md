@@ -143,7 +143,56 @@ enumeration-safe responses, refresh-token revocation on reset; e2e auth
 suite; unlock→pay e2e against a natively-authed user; `pnpm --filter
 @pataspace/api build`.
 
-- [ ] Phase 1 complete
+- [x] Phase 1 complete (2026-07-13). `auth.service.ts` was already 510 lines
+  before this change (over the module cap even pre-Clerk), so the touch
+  triggered a real split rather than a patch: `application/registration.
+  service.ts` (register/verify-otp/resend-otp), `application/password-
+  recovery.service.ts` (forgot/reset-password, new), `application/auth-
+  token.service.ts` (access/refresh token issuance — extracted, was
+  duplicated inline), `application/auth-otp.service.ts` (OTP issue/
+  validate/consume — extracted, was duplicated across register/verify/
+  resend), `domain/auth-eligibility.policy.ts` (pure active/banned/
+  verified checks). `auth.service.ts` itself is now session-only (login/
+  refresh/logout), 96 lines. `AuthController` gained `forgot-password`
+  (200, anti-enumeration) and `reset-password` (204) with new rate-limit
+  profiles. `register`/`login` now key on email (`userService.
+  findStoredByEmail`); phone stays required at registration and is the
+  OTP/recovery channel via the existing SMS rails — no email provider
+  needed. Clerk removed: `clerk-jwt.strategy.ts` and `infrastructure/
+  clerk/` deleted, both guards collapsed to `AuthGuard('jwt')`,
+  `UserService.createFromClerk/linkClerkId/findStoredByClerkId` deleted,
+  `AccountDeletionService` no longer calls a Clerk adapter,
+  `CLERK_SECRET_KEY`/`CLERK_PUBLISHABLE_KEY` dropped from
+  `env.validation.ts`/`app.config.ts`/`.env.example`/
+  `infra/docker/.env.vps.example` (web's `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+  is untouched — Phase 3's to remove). `payment.service.ts:58` hardened to
+  a bare `!user.phoneVerified` check; the found bug — a stale `clerkId`
+  exempted a never-verified account from the M-Pesa phone gate — has a
+  named regression test. `users.clerkId` stays in the schema (unused,
+  orphaned) per the plan; drops in Phase 4. Contracts also bumped to
+  0.3.0 in this phase (breaking: `registerSchema`/`loginSchema` and
+  `RegisterRequest`/`LoginRequest` are now email-identified;
+  `UserProfile.email` changed from optional-undefined to required-
+  nullable to match `AuthUser`) since the API had to consume the
+  canonical shapes, not the additive Phase-0 aliases.
+  Gates: contracts build + 15/15 tests; api `tsc --noEmit` clean on every
+  file this phase touched; api unit suite 68 suites / 384 tests green
+  (auth: 6 suites / 42 tests, all new or rewritten); `pnpm --filter
+  @pataspace/api build` exit 0.
+  **Concern (environmental, not code):** no local Postgres in this
+  sandbox, so the DB-backed e2e auth suite and the unlock→pay e2e are
+  unverified here — same gap Phase 0 hit. The data-check query
+  (`SELECT count(*) FROM users WHERE "clerkId" IS NOT NULL`) also needs a
+  live DB; run both before Phase 2/3 start. **A second Claude Code session
+  was concurrently committing an unrelated Admin Console build
+  (`Docs/13_Admin_Console_Build_Plan.md`) in this same working directory
+  during this phase** — its in-flight `support.service.ts` edit was mid-
+  break when the unit suite ran (excluded from the count above), and a
+  verification `git stash -u` briefly held its uncommitted files before
+  popping them back intact. No collision with this phase's files; flagging
+  because two agents sharing one working tree is exactly what the
+  parallel-session-safe architecture guidance in CLAUDE.md is for, and
+  this phase and that one weren't run in separate worktrees.
 
 ## Phase 2 — Mobile: SecureStore JWT auth, Clerk SDK deleted
 

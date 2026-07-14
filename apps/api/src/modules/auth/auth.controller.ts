@@ -1,9 +1,4 @@
-import {
-  Body,
-  Controller,
-  HttpCode,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 import {
   ApiBody,
   ApiBearerAuth,
@@ -15,6 +10,9 @@ import {
 } from '@nestjs/swagger';
 import {
   AuthSessionResponse,
+  ForgotPasswordRequest,
+  forgotPasswordSchema,
+  ForgotPasswordResponse,
   loginSchema,
   LoginRequest,
   LogoutRequest,
@@ -28,6 +26,8 @@ import {
   RegisterResponse,
   registerSchema,
   RefreshResponse,
+  resetPasswordSchema,
+  ResetPasswordRequest,
   verifyOtpSchema,
   VerifyOtpRequest,
 } from '@pataspace/contracts';
@@ -37,6 +37,8 @@ import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { ApiRateLimit } from '../../common/throttling/rate-limit.decorator';
 import {
   AuthSessionResponseDto,
+  ForgotPasswordRequestDto,
+  ForgotPasswordResponseDto,
   LoginRequestDto,
   LogoutRequestDto,
   RefreshRequestDto,
@@ -45,17 +47,24 @@ import {
   RegisterResponseDto,
   ResendOtpRequestDto,
   ResendOtpResponseDto,
+  ResetPasswordRequestDto,
   VerifyOtpRequestDto,
 } from './auth.docs';
 import { AuthService } from './auth.service';
+import { PasswordRecoveryService } from './application/password-recovery.service';
+import { RegistrationService } from './application/registration.service';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly registrationService: RegistrationService,
+    private readonly passwordRecoveryService: PasswordRecoveryService,
+  ) {}
 
   @Public()
-  @ApiOperation({ summary: 'Register a user and send an OTP to verify the phone number' })
+  @ApiOperation({ summary: 'Register with email + password and send an OTP to verify the phone number' })
   @ApiBody({ type: RegisterRequestDto })
   @ApiCreatedResponse({
     type: RegisterResponseDto,
@@ -66,7 +75,7 @@ export class AuthController {
   register(
     @Body(new ZodValidationPipe(registerSchema)) input: RegisterRequest,
   ): Promise<RegisterResponse> {
-    return this.authService.register(input);
+    return this.registrationService.register(input);
   }
 
   @Public()
@@ -82,7 +91,7 @@ export class AuthController {
   verifyOtp(
     @Body(new ZodValidationPipe(verifyOtpSchema)) input: VerifyOtpRequest,
   ): Promise<AuthSessionResponse> {
-    return this.authService.verifyOtp(input);
+    return this.registrationService.verifyOtp(input);
   }
 
   @Public()
@@ -98,12 +107,12 @@ export class AuthController {
   resendOtp(
     @Body(new ZodValidationPipe(resendOtpSchema)) input: ResendOtpRequest,
   ): Promise<ResendOtpResponse> {
-    return this.authService.resendOtp(input);
+    return this.registrationService.resendOtp(input);
   }
 
   @Public()
   @HttpCode(200)
-  @ApiOperation({ summary: 'Authenticate with phone number and password' })
+  @ApiOperation({ summary: 'Authenticate with email and password' })
   @ApiBody({ type: LoginRequestDto })
   @ApiOkResponse({
     type: AuthSessionResponseDto,
@@ -113,6 +122,37 @@ export class AuthController {
   @Post('login')
   login(@Body(new ZodValidationPipe(loginSchema)) input: LoginRequest): Promise<AuthSessionResponse> {
     return this.authService.login(input);
+  }
+
+  @Public()
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Request a password-reset OTP for the account with this email' })
+  @ApiBody({ type: ForgotPasswordRequestDto })
+  @ApiOkResponse({
+    type: ForgotPasswordResponseDto,
+    description: 'Same response whether or not the email is registered (anti-enumeration).',
+  })
+  @ApiRateLimit('authForgotPassword')
+  @Post('forgot-password')
+  forgotPassword(
+    @Body(new ZodValidationPipe(forgotPasswordSchema)) input: ForgotPasswordRequest,
+  ): Promise<ForgotPasswordResponse> {
+    return this.passwordRecoveryService.forgotPassword(input);
+  }
+
+  @Public()
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Set a new password using the OTP sent by forgot-password' })
+  @ApiBody({ type: ResetPasswordRequestDto })
+  @ApiNoContentResponse({
+    description: 'Password reset; every existing session for the account was revoked.',
+  })
+  @ApiRateLimit('authResetPassword')
+  @Post('reset-password')
+  async resetPassword(
+    @Body(new ZodValidationPipe(resetPasswordSchema)) input: ResetPasswordRequest,
+  ) {
+    await this.passwordRecoveryService.resetPassword(input);
   }
 
   @Public()

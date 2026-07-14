@@ -68,7 +68,6 @@ describe('envSchema', () => {
     SMS_PROVIDER: 'africastalking',
     AT_USERNAME: 'pataspace',
     AT_API_KEY: 'at-api-key',
-    CLERK_SECRET_KEY: 'sk_live_clerk_secret',
     STORAGE_PROVIDER: 's3',
     AWS_S3_BUCKET: 'pataspace-media',
     AWS_REGION: 'us-east-1',
@@ -133,19 +132,6 @@ describe('envSchema', () => {
     });
 
     expect(result.success).toBe(true);
-  });
-
-  it('requires CLERK_SECRET_KEY in production', () => {
-    const { CLERK_SECRET_KEY, ...withoutClerk } = validProductionEnv;
-    void CLERK_SECRET_KEY;
-    const result = envSchema.safeParse(withoutClerk);
-
-    expect(result.success).toBe(false);
-    expect(result.error?.issues).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ path: ['CLERK_SECRET_KEY'] }),
-      ]),
-    );
   });
 
   it('requires a callback secret and HTTPS callback URLs in live M-Pesa mode', () => {

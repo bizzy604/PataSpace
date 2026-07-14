@@ -116,8 +116,8 @@ export class AdminUserService {
         where: { id: userId },
         data: { isActive: false, isBanned: true, banReason: input.reason },
       });
-      // Backend-issued sessions die immediately; Clerk sessions are rejected
-      // by the clerk-jwt strategy's isBanned check on their next request.
+      // Refresh tokens die immediately; the current access token (if any)
+      // is rejected on its next request by JwtStrategy's isBanned check.
       await tx.refreshToken.deleteMany({ where: { userId } });
       await tx.auditLog.create({
         data: {

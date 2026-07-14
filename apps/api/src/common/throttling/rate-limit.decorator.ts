@@ -5,6 +5,8 @@ export const rateLimitProfiles = {
   authVerifyOtp: { limit: 3, ttlSeconds: 3600 },
   authResendOtp: { limit: 3, ttlSeconds: 3600 },
   authLogin: { limit: 5, ttlSeconds: 3600 },
+  authForgotPassword: { limit: 3, ttlSeconds: 3600 },
+  authResetPassword: { limit: 5, ttlSeconds: 3600 },
   listingCreate: { limit: 10, ttlSeconds: 86400 },
   unlockCreate: { limit: 10, ttlSeconds: 86400 },
   creditPurchase: { limit: 10, ttlSeconds: 86400 },

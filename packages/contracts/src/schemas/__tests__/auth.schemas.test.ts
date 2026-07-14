@@ -1,6 +1,6 @@
 /**
- * Purpose: Gate-test the email-identifier auth schemas (Docs/14 Phase 0).
- * Why important: These schemas become the register/login contract for all
+ * Purpose: Gate-test the email-identifier auth schemas (Docs/14 Phase 1).
+ * Why important: These schemas are the register/login contract for all
  *   three apps after Clerk removal; a silent loosening (weak password
  *   accepted, malformed email passing, OTP shape drift) is an auth bug in
  *   every client at once.
@@ -9,8 +9,6 @@
 import {
   authSessionSchema,
   authUserSchema,
-  emailLoginSchema,
-  emailRegisterSchema,
   forgotPasswordResponseSchema,
   forgotPasswordSchema,
   loginSchema,
@@ -27,9 +25,9 @@ const validRegister = {
   phoneNumber: '+254712345678',
 };
 
-describe('emailRegisterSchema', () => {
+describe('registerSchema (email-identifier)', () => {
   it('accepts a valid registration and normalizes the email', () => {
-    const parsed = emailRegisterSchema.parse(validRegister);
+    const parsed = registerSchema.parse(validRegister);
     expect(parsed.email).toBe('amoni@example.com');
   });
 
@@ -42,13 +40,13 @@ describe('emailRegisterSchema', () => {
     ['no number', { ...validRegister, password: 'Strong!pass' }],
     ['no special char', { ...validRegister, password: 'Str0ngpass' }],
   ])('rejects %s', (_label, input) => {
-    expect(emailRegisterSchema.safeParse(input).success).toBe(false);
+    expect(registerSchema.safeParse(input).success).toBe(false);
   });
 });
 
-describe('emailLoginSchema', () => {
+describe('loginSchema (email-identifier)', () => {
   it('accepts email + password and normalizes the email', () => {
-    const parsed = emailLoginSchema.parse({
+    const parsed = loginSchema.parse({
       email: '  User@Example.com ',
       password: 'Str0ng!pass',
     });
@@ -57,7 +55,7 @@ describe('emailLoginSchema', () => {
 
   it('rejects a phone number in place of an email', () => {
     expect(
-      emailLoginSchema.safeParse({ email: '+254712345678', password: 'Str0ng!pass' }).success,
+      loginSchema.safeParse({ email: '+254712345678', password: 'Str0ng!pass' }).success,
     ).toBe(false);
   });
 });
@@ -82,41 +80,28 @@ describe('forgot/reset password schemas', () => {
   });
 });
 
-describe('backward compatibility (Phase 0 is additive)', () => {
-  const legacySession = {
-    accessToken: 'a'.repeat(10),
-    refreshToken: 'r'.repeat(10),
-    user: {
-      id: 'user-1',
-      phoneNumber: '+254712345678',
-      firstName: 'Amoni',
-      lastName: 'Kevin',
-      role: Role.USER,
-      phoneVerified: true,
-    },
+describe('authUserSchema / authSessionSchema', () => {
+  const baseUser = {
+    id: 'user-1',
+    phoneNumber: '+254712345678',
+    firstName: 'Amoni',
+    lastName: 'Kevin',
+    role: Role.USER,
+    phoneVerified: true,
   };
 
-  it('phone-identifier register/login schemas still parse (API still on them)', () => {
-    expect(
-      registerSchema.safeParse({
-        phoneNumber: '+254712345678',
-        password: 'Str0ng!pass',
-        firstName: 'Amoni',
-        lastName: 'Kevin',
-      }).success,
-    ).toBe(true);
-    expect(
-      loginSchema.safeParse({ phoneNumber: '+254712345678', password: 'Str0ng!pass' }).success,
-    ).toBe(true);
+  it('email is required in the shape but may be null (pre-migration accounts)', () => {
+    expect(authUserSchema.safeParse({ ...baseUser, email: 'a@b.co' }).success).toBe(true);
+    expect(authUserSchema.safeParse({ ...baseUser, email: null }).success).toBe(true);
+    expect(authUserSchema.safeParse(baseUser).success).toBe(false);
   });
 
-  it('a session without an email still parses; with one it parses too', () => {
-    expect(authSessionSchema.safeParse(legacySession).success).toBe(true);
-    expect(
-      authUserSchema.safeParse({ ...legacySession.user, email: 'a@b.co' }).success,
-    ).toBe(true);
-    expect(
-      authUserSchema.safeParse({ ...legacySession.user, email: null }).success,
-    ).toBe(true);
+  it('a full session parses with an emailed user', () => {
+    const session = {
+      accessToken: 'a'.repeat(10),
+      refreshToken: 'r'.repeat(10),
+      user: { ...baseUser, email: 'a@b.co' },
+    };
+    expect(authSessionSchema.safeParse(session).success).toBe(true);
   });
 });

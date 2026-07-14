@@ -61,7 +61,6 @@ export default () => ({
     refreshTokenTtlDays: Number(process.env.REFRESH_TOKEN_TTL_DAYS ?? 30),
     refreshTokenTransport: process.env.REFRESH_TOKEN_TRANSPORT ?? 'json',
     encryptionKey: process.env.APP_ENCRYPTION_KEY,
-    clerkSecretKey: process.env.CLERK_SECRET_KEY,
     otpTtlSeconds: Number(process.env.OTP_TTL_SECONDS ?? 300),
     otpMaxAttempts: Number(process.env.OTP_MAX_ATTEMPTS ?? 3),
     sandboxOtpCode: process.env.OTP_SANDBOX_CODE ?? '123456',
