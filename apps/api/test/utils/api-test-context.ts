@@ -26,6 +26,7 @@ export type ApiTestContext = {
   prismaService: PrismaService;
   createForwardedFor: () => string;
   createPhoneNumber: () => string;
+  createEmail: () => string;
   cleanupPhoneNumber: (phoneNumber: string) => Promise<void>;
   get: <T>(token: string | symbol | Function) => T;
   close: () => Promise<void>;
@@ -108,6 +109,10 @@ export async function createApiTestContext(
       const phoneNumber = `+2547${suffix}`;
       createdPhoneNumbers.push(phoneNumber);
       return phoneNumber;
+    },
+    createEmail: () => {
+      const suffix = `${Date.now()}${Math.floor(Math.random() * 100000)}`.slice(-10);
+      return `e2e-${suffix}@pataspace.test`;
     },
     cleanupPhoneNumber,
     get: <T>(token: string | symbol | Function): T => app.get<T>(token as never),

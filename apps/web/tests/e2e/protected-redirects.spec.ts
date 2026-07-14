@@ -1,5 +1,5 @@
 /**
- * Purpose: Verify the middleware's two gates — /admin requires a Clerk
+ * Purpose: Verify the middleware's two gates — /admin requires a NextAuth
  *   session, and retired tenant routes bounce back to the landing page.
  * Why important: Confirms proxy.ts is wired so the console never leaks to
  *   signed-out visitors and the old tenant surface stays gone.

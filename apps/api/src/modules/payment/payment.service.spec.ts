@@ -13,7 +13,6 @@ import { PaymentService } from './payment.service';
 describe('PaymentService (orchestrator)', () => {
   const createStoredUser = (overrides = {}) => ({
     id: 'user_1',
-    clerkId: null,
     phoneVerified: true,
     isActive: true,
     isBanned: false,
@@ -150,7 +149,7 @@ describe('PaymentService (orchestrator)', () => {
   describe('createPurchase — Stellar path', () => {
     it('does not require phoneVerified for stellar purchases', async () => {
       const { service, userService } = createService();
-      userService.findStoredById.mockResolvedValue(createStoredUser({ phoneVerified: false, clerkId: null }));
+      userService.findStoredById.mockResolvedValue(createStoredUser({ phoneVerified: false }));
 
       const result = await service.createPurchase('user_1', {
         package: '5_credits',

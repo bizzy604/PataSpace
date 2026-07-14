@@ -53,6 +53,7 @@ type CreateDisputeFixtureOptions = {
 
 export type VerifiedUserFixture = {
   accessToken: string;
+  email: string;
   password: string;
   phoneNumber: string;
   userId: string;
@@ -64,17 +65,20 @@ export async function createVerifiedUser(
 ): Promise<VerifiedUserFixture> {
   const role = options.role ?? Role.USER;
   const phoneNumber = context.createPhoneNumber();
+  const email = options.email ?? context.createEmail();
   const password = options.password ?? 'SecurePassword123!';
 
+  // Registration is email-identified but still phone-OTP verified: email is
+  // the login credential, phone is the OTP target (Docs/14 email-auth).
   await request(context.app.getHttpServer())
     .post('/api/v1/auth/register')
     .set('X-Forwarded-For', context.createForwardedFor())
     .send({
-      phoneNumber,
+      email,
       password,
       firstName: options.firstName ?? (role === Role.ADMIN ? 'Admin' : 'User'),
       lastName: options.lastName ?? 'Tester',
-      email: options.email,
+      phoneNumber,
     })
     .expect(201);
 
@@ -90,6 +94,7 @@ export async function createVerifiedUser(
   if (role === Role.USER) {
     return {
       accessToken: verifyResponse.body.accessToken as string,
+      email,
       password,
       phoneNumber,
       userId: verifyResponse.body.user.id as string,
@@ -109,13 +114,14 @@ export async function createVerifiedUser(
     .post('/api/v1/auth/login')
     .set('X-Forwarded-For', context.createForwardedFor())
     .send({
-      phoneNumber,
+      email,
       password,
     })
     .expect(200);
 
   return {
     accessToken: loginResponse.body.accessToken as string,
+    email,
     password,
     phoneNumber,
     userId: verifyResponse.body.user.id as string,

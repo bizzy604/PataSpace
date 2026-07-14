@@ -224,4 +224,72 @@ describe('Main public and admin API surface', () => {
       'Listing photos are incomplete for moderation.',
     );
   });
+
+  it('exposes the finance payout ledger and guards the retry action', async () => {
+    const owner = await createVerifiedUser(context);
+    const admin = await createVerifiedUser(context, { role: Role.ADMIN });
+    const buyer = await createVerifiedUser(context);
+    const financeNeighborhood = `Finance-${Date.now()}`;
+    const listing = await createListing(context, owner.accessToken, 'phase8-finance', {
+      neighborhood: financeNeighborhood,
+      monthlyRent: 30000,
+    });
+    await approveListing(context, admin.accessToken, listing.body.id);
+
+    const purchase = await createCreditPurchase(context, buyer.accessToken, buyer.phoneNumber, '10_credits');
+    await completeSandboxPurchase(context, {
+      phoneNumber: buyer.phoneNumber,
+      transactionId: purchase.body.transactionId,
+    });
+    const unlock = await createUnlock(context, {
+      accessToken: buyer.accessToken,
+      listingId: listing.body.id,
+    });
+    await createConfirmation(context, buyer.accessToken, unlock.body.unlockId, 'INCOMING_TENANT');
+    await createConfirmation(context, owner.accessToken, unlock.body.unlockId, 'OUTGOING_TENANT');
+
+    // Both confirmations upsert a PENDING commission for the poster.
+    const commission = await context.prismaService.commission.findUniqueOrThrow({
+      where: { unlockId: unlock.body.unlockId },
+      select: { id: true },
+    });
+
+    const ledger = await request(context.app.getHttpServer())
+      .get('/api/v1/admin/finance/transactions')
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .expect(200);
+    const ledgerRow = ledger.body.data.find(
+      (row: { unlockId: string }) => row.unlockId === unlock.body.unlockId,
+    );
+    expect(ledgerRow).toMatchObject({
+      status: 'PENDING',
+      payee: { id: owner.userId },
+      listing: { neighborhood: financeNeighborhood },
+    });
+
+    const summary = await request(context.app.getHttpServer())
+      .get('/api/v1/admin/finance/summary')
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .expect(200);
+    expect(summary.body.pendingPayouts.count).toBeGreaterThanOrEqual(1);
+    expect(summary.body.pendingPayouts.partners).toBeGreaterThanOrEqual(1);
+    expect(typeof summary.body.generatedAt).toBe('string');
+
+    // A PENDING payout is not retryable — only dead-lettered (FAILED) ones are.
+    await request(context.app.getHttpServer())
+      .post(`/api/v1/admin/finance/commissions/${commission.id}/retry`)
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .expect(409);
+
+    await request(context.app.getHttpServer())
+      .post('/api/v1/admin/finance/commissions/does-not-exist/retry')
+      .set('Authorization', `Bearer ${admin.accessToken}`)
+      .expect(404);
+
+    // The whole surface is ADMIN-gated.
+    await request(context.app.getHttpServer())
+      .get('/api/v1/admin/finance/summary')
+      .set('Authorization', `Bearer ${buyer.accessToken}`)
+      .expect(403);
+  });
 });

@@ -1,18 +1,17 @@
 /**
- * Purpose: Hook that runs the account-deletion flow — calls the API, then signs
- *   the user out of Clerk — exposing loading and error state.
+ * Purpose: Hook that runs the account-deletion flow — calls the API, then
+ *   clears the local session — exposing loading and error state.
  * Why important: Centralizes the irreversible deletion sequence so the screen
  *   stays declarative and the steps can't drift apart.
  * Used by: DeleteAccountScreen.
  */
 import { useState } from 'react';
-import { useAuth, useClerk } from '@clerk/expo';
 import { ApiRequestError } from '@/lib/api-client';
+import { useAuthSession } from '@/features/auth/auth-provider';
 import { deleteAccountApi } from './delete-account-api';
 
 export function useDeleteAccount() {
-  const { getToken } = useAuth();
-  const { signOut } = useClerk();
+  const { getToken, logout } = useAuthSession();
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,7 +24,10 @@ export function useDeleteAccount() {
     setIsDeleting(true);
     try {
       await deleteAccountApi(getToken);
-      await signOut();
+      // The account (and its refresh tokens) is already gone server-side —
+      // logout's best-effort POST /auth/logout may 401/404, which is fine;
+      // clearing local session state is what matters here.
+      await logout();
       return true;
     } catch (err) {
       setError(

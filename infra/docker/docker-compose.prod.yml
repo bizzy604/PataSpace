@@ -87,6 +87,14 @@ services:
     image: ${WEB_IMAGE:-ghcr.io/bizzy604/pataspace-web:latest}
     environment:
       PORT: 3000
+      # NextAuth refuses to boot without this (MissingSecret) — generate with
+      # `openssl rand -base64 32`.
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env}
+      AUTH_URL: ${AUTH_URL:?set AUTH_URL in .env}
+      # Server-only: NextAuth's Credentials provider and jwt-refresh callback
+      # call the API over the compose network directly instead of round-
+      # tripping through the edge nginx.
+      API_INTERNAL_BASE_URL: http://api:3001/api/v1
     expose: ["3000"]
     depends_on:
       api:

@@ -21,7 +21,7 @@ test.describe('landing page', () => {
     expect(errors).toEqual([]);
   });
 
-  test('the /admin/sign-in route serves the Clerk sign-in screen', async ({ page }) => {
+  test('the /admin/sign-in route serves the credentials sign-in form', async ({ page }) => {
     await page.goto('/admin/sign-in');
     await expect(page).toHaveURL(/\/admin\/sign-in/);
     await expect(page.getByRole('heading', { name: /Admin sign in/i })).toBeVisible();

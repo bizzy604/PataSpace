@@ -11,6 +11,9 @@ import { ListingModule } from '../modules/listing/listing.module';
 import { PaymentModule } from '../modules/payment/payment.module';
 import { UserModule } from '../modules/user/user.module';
 import { CommissionPayoutJob } from './commission-payout.job';
+import { CommissionPayoutProcessor } from './commission-payout.processor';
+import { CommissionPayoutRecorder } from './commission-payout.recorder';
+import { CommissionSettlementConfirmer } from './commission-settlement.confirmer';
 import { ConfirmationFollowupJob } from './confirmation-followup.job';
 import { ListingCleanupJob } from './listing-cleanup.job';
 import { MoverPosterReminderJob } from './mover-poster-reminder.job';
@@ -22,6 +25,9 @@ import { ReferralRewardJob } from './referral-reward.job';
   imports: [UserModule, PaymentModule, ConfirmationModule, CreditModule, ListingModule],
   providers: [
     CommissionPayoutJob,
+    CommissionPayoutProcessor,
+    CommissionPayoutRecorder,
+    CommissionSettlementConfirmer,
     PaymentReconciliationJob,
     ConfirmationFollowupJob,
     ListingCleanupJob,
@@ -31,6 +37,7 @@ import { ReferralRewardJob } from './referral-reward.job';
   ],
   exports: [
     CommissionPayoutJob,
+    CommissionPayoutProcessor,
     PaymentReconciliationJob,
     ConfirmationFollowupJob,
     ListingCleanupJob,

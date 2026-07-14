@@ -5,7 +5,11 @@
  * Used by: ConfigModule via validateEnv in app bootstrap.
  */
 import { z } from 'zod';
-import { requireFields, requireHttps } from './env.refinements';
+import {
+  requireFields,
+  requireHttps,
+  requireMpesaCallbackContracts,
+} from './env.refinements';
 
 export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -32,8 +36,6 @@ export const envSchema = z.object({
   REQUEST_ID_HEADER: z.string().min(1).default('x-request-id'),
   APP_ENCRYPTION_KEY: z.string().min(32),
   APP_HASH_PEPPER: z.string().min(16).optional(),
-  CLERK_SECRET_KEY: z.string().min(1).optional(),
-  CLERK_PUBLISHABLE_KEY: z.string().min(1).optional(),
   OTP_TTL_SECONDS: z.coerce.number().int().positive().default(300),
   OTP_MAX_ATTEMPTS: z.coerce.number().int().positive().default(3),
   OTP_SANDBOX_CODE: z.string().regex(/^\d{4,6}$/).default('123456'),
@@ -101,11 +103,6 @@ export const envSchema = z.object({
       });
     }
 
-    // Clerk is the identity provider for the web and mobile clients. Without the
-    // secret, every Clerk-authenticated request fails closed with a generic 401
-    // and the outage is silent — require it explicitly at startup.
-    requireFields(context, value, ['CLERK_SECRET_KEY']);
-
     // Sandbox storage mints upload URLs on a host that does not exist
     // (sandbox-storage.pataspace.local), so every media upload from a real
     // device dies at DNS and listing submission is guaranteed broken.
@@ -169,6 +166,9 @@ export const envSchema = z.object({
     requireHttps(context, value.MPESA_RESULT_URL, 'MPESA_RESULT_URL');
     requireHttps(context, value.MPESA_TIMEOUT_URL, 'MPESA_TIMEOUT_URL');
   }
+
+  // Applies in every mode: a misrouted callback URL starves payments silently.
+  requireMpesaCallbackContracts(context, value);
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

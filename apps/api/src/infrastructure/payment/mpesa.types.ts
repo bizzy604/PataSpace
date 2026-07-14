@@ -86,6 +86,20 @@ export type MpesaB2CQueryResponse = {
   resultDesc?: string;
 };
 
+/**
+ * Thrown when Safaricom rejects a B2C submission because the
+ * OriginatorConversationID was already used. This is a SUCCESS signal for
+ * idempotency: the original submission exists and its settlement result will
+ * arrive on the ResultURL — callers must keep waiting, never re-issue or
+ * dead-letter.
+ */
+export class MpesaDuplicateSubmissionError extends Error {
+  constructor(message = 'Duplicate B2C submission: OriginatorConversationID already used') {
+    super(message);
+    this.name = 'MpesaDuplicateSubmissionError';
+  }
+}
+
 export interface MpesaProvider {
   stkPush(payload: MpesaStkPushRequest): Promise<MpesaStkPushResponse>;
   b2c(payload: MpesaB2CRequest): Promise<MpesaB2CResponse>;

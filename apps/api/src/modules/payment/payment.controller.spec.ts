@@ -45,13 +45,19 @@ describe('PaymentWebhookController', () => {
       handleB2CResult: jest.fn().mockResolvedValue({ kind: 'no_state_change', commissionId: 'c1' }),
     };
 
+    const commissionTimeoutService = {
+      handleB2CTimeout: jest.fn().mockResolvedValue({ kind: 'ignored' }),
+    };
+
     return {
       controller: new PaymentWebhookController(
         paymentService as never,
         configService as never,
         commissionCallbackService as never,
+        commissionTimeoutService as never,
       ),
       commissionCallbackService,
+      commissionTimeoutService,
       paymentService,
     };
   };
@@ -115,5 +121,30 @@ describe('PaymentWebhookController', () => {
       ResultDesc: 'Accepted',
     });
     expect(paymentService.handleMpesaCallback).toHaveBeenCalledWith(callbackPayload);
+  });
+
+  it('routes authorized B2C queue-timeout callbacks to the timeout service', async () => {
+    const { controller, commissionTimeoutService } = createController('live-callback-secret-12345');
+    const timeoutPayload = {
+      Result: { OriginatorConversationID: 'pataspace-1', ResultDesc: 'Timed out' },
+    };
+
+    await expect(
+      controller.handleMpesaB2CTimeout(
+        undefined,
+        'live-callback-secret-12345',
+        timeoutPayload as never,
+      ),
+    ).resolves.toEqual({ ResultCode: 0, ResultDesc: 'Accepted' });
+    expect(commissionTimeoutService.handleB2CTimeout).toHaveBeenCalledWith(timeoutPayload);
+  });
+
+  it('rejects unauthorized B2C queue-timeout callbacks', async () => {
+    const { controller, commissionTimeoutService } = createController('live-callback-secret-12345');
+
+    await expect(
+      controller.handleMpesaB2CTimeout(undefined, undefined, { Result: {} } as never),
+    ).rejects.toThrow(UnauthorizedException);
+    expect(commissionTimeoutService.handleB2CTimeout).not.toHaveBeenCalled();
   });
 });

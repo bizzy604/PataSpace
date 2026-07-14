@@ -28,19 +28,29 @@ export class SupportService {
 
   async createTicket(
     userId: string,
+    role: Role,
     input: CreateSupportTicketRequest,
   ): Promise<CreateSupportTicketResponse> {
     if (input.relatedUnlockId) {
       await this.assertOwnedUnlock(userId, input.relatedUnlockId);
     }
 
-    const ticket = await this.prismaService.supportTicket.create({
-      data: {
-        userId,
-        subject: input.subject.trim(),
-        message: input.message.trim(),
-        relatedUnlockId: input.relatedUnlockId ?? null,
-      },
+    const body = input.message.trim();
+    // Seed the thread with the original body so a new ticket reads the same as
+    // a migration-backfilled one: the complaint is the first message.
+    const ticket = await this.prismaService.$transaction(async (tx) => {
+      const created = await tx.supportTicket.create({
+        data: {
+          userId,
+          subject: input.subject.trim(),
+          message: body,
+          relatedUnlockId: input.relatedUnlockId ?? null,
+        },
+      });
+      await tx.supportTicketMessage.create({
+        data: { ticketId: created.id, authorId: userId, authorRole: role, body },
+      });
+      return created;
     });
 
     return this.toRecord(ticket);

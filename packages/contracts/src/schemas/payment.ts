@@ -115,3 +115,22 @@ export const mpesaB2CResultSchema = z.object({
       .optional(),
   }),
 });
+
+/**
+ * Daraja B2C queue-timeout payload (QueueTimeOutURL). Safaricom posts here
+ * when a request expires unprocessed; the shape is looser than the result
+ * payload, so accept any Result envelope and read identifiers defensively.
+ */
+export const mpesaB2CTimeoutSchema = z
+  .object({
+    Result: z
+      .object({
+        OriginatorConversationID: z.string().min(1).optional(),
+        ConversationID: z.string().optional(),
+        ResultCode: z.coerce.number().int().optional(),
+        ResultDesc: z.string().optional(),
+      })
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();

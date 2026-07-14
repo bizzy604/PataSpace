@@ -1,7 +1,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { ClerkProvider } from '@clerk/nextjs';
-import { shadcn } from '@clerk/ui/themes';
+import { SessionProvider } from 'next-auth/react';
 import { Inter } from 'next/font/google';
 import { ReactNode } from 'react';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -26,12 +25,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={inter.variable}>
       <body className="font-sans antialiased">
-        <ClerkProvider
-          appearance={{ theme: shadcn }}
-          signInUrl="/admin/sign-in"
-          signInFallbackRedirectUrl="/admin"
-          afterSignOutUrl="/"
-        >
+        <SessionProvider>
           <TooltipProvider>
             <a
               href="#main-content"
@@ -43,7 +37,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               {children}
             </main>
           </TooltipProvider>
-        </ClerkProvider>
+        </SessionProvider>
       </body>
     </html>
   );

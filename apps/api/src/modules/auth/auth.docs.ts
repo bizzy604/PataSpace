@@ -1,9 +1,9 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
 export class RegisterRequestDto {
-  @ApiProperty({ example: '+254712345678' })
-  phoneNumber!: string;
+  @ApiProperty({ example: 'john@example.com' })
+  email!: string;
 
   @ApiProperty({ example: 'SecurePassword123!' })
   password!: string;
@@ -14,8 +14,8 @@ export class RegisterRequestDto {
   @ApiProperty({ example: 'Doe' })
   lastName!: string;
 
-  @ApiPropertyOptional({ example: 'john@example.com' })
-  email?: string;
+  @ApiProperty({ example: '+254712345678', description: 'Verified via OTP after registration' })
+  phoneNumber!: string;
 }
 
 export class RegisterResponseDto {
@@ -54,11 +54,35 @@ export class ResendOtpResponseDto {
 }
 
 export class LoginRequestDto {
-  @ApiProperty({ example: '+254712345678' })
-  phoneNumber!: string;
+  @ApiProperty({ example: 'john@example.com' })
+  email!: string;
 
   @ApiProperty({ example: 'SecurePassword123!' })
   password!: string;
+}
+
+export class ForgotPasswordRequestDto {
+  @ApiProperty({ example: 'john@example.com' })
+  email!: string;
+}
+
+export class ForgotPasswordResponseDto {
+  @ApiProperty({ example: 'If an account exists for this email, an OTP has been sent to the phone on file.' })
+  message!: string;
+
+  @ApiProperty({ example: 300 })
+  expiresIn!: number;
+}
+
+export class ResetPasswordRequestDto {
+  @ApiProperty({ example: 'john@example.com' })
+  email!: string;
+
+  @ApiProperty({ example: '123456' })
+  code!: string;
+
+  @ApiProperty({ example: 'NewSecurePassword123!' })
+  newPassword!: string;
 }
 
 export class RefreshRequestDto {
@@ -89,6 +113,9 @@ export class AuthUserResponseDto {
 
   @ApiProperty({ example: true })
   phoneVerified!: boolean;
+
+  @ApiProperty({ example: 'john@example.com', nullable: true })
+  email!: string | null;
 }
 
 export class AuthSessionResponseDto {

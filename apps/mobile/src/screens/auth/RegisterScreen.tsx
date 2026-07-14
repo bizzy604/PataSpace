@@ -1,39 +1,38 @@
 /**
- * Purpose: Create-account screen. Restyle of the old register to
- *   Authentication/phone_registration — header, labeled fields, sticky
- *   Continue, legal note, and Google/Apple SSO. Clerk sign-up logic (email +
- *   password + phone/name metadata, email verification) is unchanged.
- * Why important: Entry point for new accounts; the Clerk email auth must keep
- *   working exactly as before while the surface matches the new design.
+ * Purpose: Create-account screen. Collects email + password + names + phone,
+ *   calls POST /auth/register, then routes to VerifyOtpScreen (phone OTP,
+ *   unchanged endpoint) — Authentication/phone_registration chrome (header,
+ *   labeled fields, sticky Continue, legal note) is unchanged.
+ * Why important: Entry point for new accounts.
  * Used by: app/register.tsx.
+ *
+ * Design delta: Google/Apple SSO buttons, the "Or sign up with" divider, and
+ * the Clerk captcha mount point are removed — SSO is dropped entirely per
+ * the migration plan (decision 3), not deferred. Email verification via
+ * Clerk's sendEmailCode is gone too: verification rides the phone-OTP rails
+ * already used elsewhere (decision 1), so this screen routes straight to
+ * VerifyOtpScreen with the registered phone number.
  */
 import { useState } from 'react';
-import { useAuth, useSignUp } from '@clerk/expo';
-import { Platform, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { appRoutes } from '@/lib/routes';
+import { useAuthSession } from '@/features/auth/auth-provider';
+import { appRoutes, verifyOtpHref } from '@/lib/routes';
 import {
-  AuthDivider,
   AuthError,
   AuthHeader,
   AuthScreen,
-  SocialAuthButton,
-  buildSocialMetadata,
-  getClerkErrorMessage,
-  getSocialProviderLabel,
+  getApiErrorMessage,
   isValidEmail,
-  normalizePhoneForMetadata,
-  useSocialAuthFlow,
-  type SocialStrategy,
+  normalizePhoneForApi,
+  passwordPolicyError,
 } from './auth-shared';
 import { PasswordField, PhoneField } from './fields';
 
 export function RegisterScreen() {
-  const { isSignedIn } = useAuth();
-  const { signUp, fetchStatus } = useSignUp();
-  const { pendingStrategy, authenticateWithSocial } = useSocialAuthFlow();
+  const { register } = useAuthSession();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
@@ -41,34 +40,11 @@ export function RegisterScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
-  if (!signUp || isSignedIn || signUp.status === 'complete') {
-    return null;
-  }
-
-  const isBusy = fetchStatus === 'fetching' || pendingStrategy !== null;
-
-  async function continueWithSocial(strategy: SocialStrategy) {
-    if (phone.replace(/\D/g, '').length < 9) {
-      setError(
-        `Enter a valid Kenyan phone number before continuing with ${getSocialProviderLabel(strategy)}.`,
-      );
-      return;
-    }
-    setError('');
-    const result = await authenticateWithSocial({
-      strategy,
-      fallbackRoute: appRoutes.register,
-      unsafeMetadata: buildSocialMetadata({ firstName, lastName, phone }),
-    });
-    if (!result.ok && !result.cancelled) {
-      setError(result.message);
-    }
-  }
-
   async function submitRegister() {
-    if (!signUp) return;
+    if (isSubmitting) return;
     if (!firstName.trim() || !lastName.trim()) {
       setError('Enter your full name.');
       return;
@@ -81,8 +57,9 @@ export function RegisterScreen() {
       setError('Enter a valid email address.');
       return;
     }
-    if (password.trim().length < 8) {
-      setError('Use a password with at least 8 characters.');
+    const passwordError = passwordPolicyError(password);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
     if (password !== confirmPassword) {
@@ -90,28 +67,24 @@ export function RegisterScreen() {
       return;
     }
 
-    const { error: signUpError } = await signUp.password({
-      emailAddress: emailAddress.trim(),
-      password,
-      unsafeMetadata: {
-        phone: normalizePhoneForMetadata(phone),
+    const normalizedPhone = normalizePhoneForApi(phone);
+
+    setIsSubmitting(true);
+    try {
+      await register({
+        email: emailAddress.trim().toLowerCase(),
+        password,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-      },
-    });
-    if (signUpError) {
-      setError(getClerkErrorMessage(signUpError, 'Could not create your account.'));
-      return;
+        phoneNumber: normalizedPhone,
+      });
+      setError('');
+      router.push(verifyOtpHref(normalizedPhone));
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Could not create your account.'));
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const { error: verificationError } = await signUp.verifications.sendEmailCode();
-    if (verificationError) {
-      setError(getClerkErrorMessage(verificationError, 'Could not send the verification code.'));
-      return;
-    }
-
-    setError('');
-    router.push(appRoutes.verifyOtp);
   }
 
   return (
@@ -120,9 +93,9 @@ export function RegisterScreen() {
       footer={
         <View className="gap-3">
           <Button
-            label={fetchStatus === 'fetching' ? 'Creating account…' : 'Continue'}
+            label={isSubmitting ? 'Creating account…' : 'Continue'}
             onPress={submitRegister}
-            disabled={isBusy}
+            disabled={isSubmitting}
           />
           <Text className="text-center font-body text-label-md text-muted-foreground">
             By tapping “Continue”, you agree to PataSpace’s{' '}
@@ -138,7 +111,7 @@ export function RegisterScreen() {
             Enter Your Details
           </Text>
           <Text className="font-body text-body-md text-muted-foreground">
-            We’ll send a verification code to confirm your email.
+            We’ll send a verification code to confirm your phone number.
           </Text>
         </View>
 
@@ -158,31 +131,11 @@ export function RegisterScreen() {
 
         <AuthError message={error} />
 
-        <AuthDivider label="Or sign up with" />
-        <View className="gap-3">
-          <SocialAuthButton
-            strategy="oauth_google"
-            pendingStrategy={pendingStrategy}
-            disabled={isBusy}
-            onPress={() => void continueWithSocial('oauth_google')}
-          />
-          {Platform.OS === 'ios' ? (
-            <SocialAuthButton
-              strategy="oauth_apple"
-              pendingStrategy={pendingStrategy}
-              disabled={isBusy}
-              onPress={() => void continueWithSocial('oauth_apple')}
-            />
-          ) : null}
-        </View>
-
         <Pressable className="items-center py-2" onPress={() => router.replace(appRoutes.login)}>
           <Text className="font-body text-body-md text-muted-foreground">
             Already have an account? <Text className="font-body-bold text-primary">Log in</Text>
           </Text>
         </Pressable>
-
-        <View nativeID="clerk-captcha" />
       </View>
     </AuthScreen>
   );

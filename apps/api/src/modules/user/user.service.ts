@@ -1,11 +1,11 @@
 /**
  * Purpose: User lookup, creation, and profile transformation for the user module.
- * Why important: Central source of truth for resolving a request principal to a DB record,
- *   supporting both phone-based (OTP) and Clerk SSO user creation paths.
- * Used by: JwtStrategy, ClerkJwtStrategy, UserController, and any module that needs user data.
+ * Why important: Central source of truth for resolving a request principal to a DB record.
+ * Used by: JwtStrategy, UserController, AuthService/RegistrationService/PasswordRecoveryService,
+ *   and any module that needs user data.
  */
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, Role } from '@prisma/client';
+import { Role } from '@prisma/client';
 import { Role as ContractRole, UserProfile } from '@pataspace/contracts';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/database/prisma.service';
@@ -15,9 +15,8 @@ import {
   normalizePhoneNumber,
 } from '../../common/security/encryption.util';
 
-const userSelect = {
+export const userSelect = {
   id: true,
-  clerkId: true,
   phoneNumberEncrypted: true,
   phoneVerified: true,
   email: true,
@@ -35,7 +34,6 @@ const userSelect = {
 
 export type StoredUser = {
   id: string;
-  clerkId: string | null;
   phoneNumberEncrypted: string | null;
   phoneVerified: boolean;
   email: string | null;
@@ -85,60 +83,6 @@ export class UserService {
     });
   }
 
-  async findStoredByClerkId(clerkId: string) {
-    return this.prismaService.user.findUnique({
-      where: { clerkId },
-      select: userSelect,
-    });
-  }
-
-  async createFromClerk(data: {
-    clerkId: string;
-    email?: string;
-    firstName: string;
-    lastName: string;
-  }): Promise<StoredUser> {
-    // Upsert instead of create — guards against the TOCTOU race where concurrent
-    // requests from the same first-time Clerk user all pass the findStoredByClerkId
-    // check before any of them complete the insert. The nested credit create
-    // forces Prisma onto its non-atomic select-then-insert path, so P2002 can
-    // still surface under concurrency; one retry lands on the update branch
-    // and returns the row the winning request created.
-    const upsert = () =>
-      this.prismaService.user.upsert({
-        where: { clerkId: data.clerkId },
-        create: {
-          clerkId: data.clerkId,
-          email: data.email ?? null,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          role: Role.USER,
-          isActive: true,
-          credit: { create: { balance: 0 } },
-        },
-        update: {},
-        select: userSelect,
-      });
-
-    try {
-      return await upsert();
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        return upsert();
-      }
-
-      throw error;
-    }
-  }
-
-  async linkClerkId(userId: string, clerkId: string): Promise<StoredUser> {
-    return this.prismaService.user.update({
-      where: { id: userId },
-      data: { clerkId },
-      select: userSelect,
-    });
-  }
-
   async getProfileOrThrow(userId: string): Promise<UserProfile> {
     const user = await this.findStoredById(userId);
     if (!user) {
@@ -160,13 +104,13 @@ export class UserService {
       lastName: user.lastName,
       role: user.role as unknown as ContractRole,
       phoneVerified: user.phoneVerified,
+      email: user.email,
     };
   }
 
   toUserProfile(user: StoredUser): UserProfile {
     return {
       ...this.toAuthUser(user),
-      email: user.email ?? undefined,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
     };

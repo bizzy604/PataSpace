@@ -4,7 +4,7 @@
  * Used by: apps/api support module, mobile MobileAppProvider support flows,
  *   web /support page.
  */
-import type { SupportTicketStatus } from '../enums';
+import type { Role, SupportTicketStatus } from '../enums';
 
 export type CreateSupportTicketRequest = {
   subject: string;
@@ -45,4 +45,22 @@ export type SupportTicketsPagination = {
 export type PaginatedSupportTicketsResponse = {
   data: SupportTicketRecord[];
   pagination: SupportTicketsPagination;
+};
+
+export type PostSupportMessageRequest = {
+  body: string;
+};
+
+export type SupportTicketMessageRecord = {
+  id: string;
+  authorId: string;
+  authorRole: Role;
+  authorName: string;
+  body: string;
+  createdAt: string;
+};
+
+export type SupportTicketThreadResponse = {
+  ticketId: string;
+  messages: SupportTicketMessageRecord[];
 };

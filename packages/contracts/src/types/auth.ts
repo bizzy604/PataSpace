@@ -7,6 +7,9 @@ export type AuthUser = {
   lastName: string;
   role: Role;
   phoneVerified: boolean;
+  // Nullable: every account has an email post Clerk-removal, but accounts
+  // created before this migration may still have none.
+  email: string | null;
 };
 
 export type AuthTokens = {
@@ -23,11 +26,11 @@ export type RegisterResponse = {
 export type ResendOtpResponse = RegisterResponse;
 
 export type RegisterRequest = {
-  phoneNumber: string;
+  email: string;
   password: string;
   firstName: string;
   lastName: string;
-  email?: string;
+  phoneNumber: string;
 };
 
 export type VerifyOtpRequest = {
@@ -40,8 +43,23 @@ export type ResendOtpRequest = {
 };
 
 export type LoginRequest = {
-  phoneNumber: string;
+  email: string;
   password: string;
+};
+
+export type ForgotPasswordRequest = {
+  email: string;
+};
+
+export type ForgotPasswordResponse = {
+  message: string;
+  expiresIn: number;
+};
+
+export type ResetPasswordRequest = {
+  email: string;
+  code: string;
+  newPassword: string;
 };
 
 export type RefreshRequest = {

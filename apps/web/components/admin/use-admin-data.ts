@@ -1,19 +1,21 @@
 /**
  * Purpose: Small data-loading hook for admin console panels — runs a fetcher
- *   with the Clerk token, tracks loading/error state, and exposes reload.
+ *   with the API access token from the NextAuth session, tracks
+ *   loading/error state, and exposes reload.
  * Why important: Every admin panel follows the same load → act → reload
  *   cycle; this keeps that plumbing out of the page components.
  * Used by: components/admin panels and the /admin dashboard.
  */
 'use client';
 
-import { useAuth } from '@clerk/nextjs';
+import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 type GetToken = () => Promise<string | null>;
 
 export function useAdminData<T>(fetcher: (getToken: GetToken) => Promise<T>) {
-  const { getToken } = useAuth();
+  const { data: session } = useSession();
+  const getToken = useCallback<GetToken>(async () => session?.accessToken ?? null, [session]);
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

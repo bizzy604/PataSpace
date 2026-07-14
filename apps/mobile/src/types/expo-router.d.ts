@@ -25,6 +25,7 @@ type StaticRoute =
   | `/dispute`
   | `/edit-profile`
   | `/filters`
+  | `/forgot-password`
   | `/help-center`
   | `/login`
   | `/listing`
@@ -43,6 +44,7 @@ type StaticRoute =
   | `/referral`
   | `/register`
   | `/report-dead`
+  | `/reset-password`
   | `/saved`
   | `/search`
   | `/settings`
@@ -63,6 +65,7 @@ type StaticHrefInput =
   | { pathname: `/confirmations`; params?: Router.UnknownInputParams }
   | { pathname: `/contact-revealed`; params: { id: string | number } }
   | { pathname: `/report-dead`; params: { id: string | number } }
+  | { pathname: `/reset-password`; params: { email: string } }
   | { pathname: `/contact-support`; params?: Router.UnknownInputParams }
   | { pathname: `/create-listing`; params?: Router.UnknownInputParams }
   | { pathname: `/create-listing-details`; params?: Router.UnknownInputParams }
@@ -73,6 +76,7 @@ type StaticHrefInput =
   | { pathname: `/dispute`; params?: Router.UnknownInputParams }
   | { pathname: `/edit-profile`; params?: Router.UnknownInputParams }
   | { pathname: `/filters`; params?: Router.UnknownInputParams }
+  | { pathname: `/forgot-password`; params?: Router.UnknownInputParams }
   | { pathname: `/help-center`; params?: Router.UnknownInputParams }
   | { pathname: `/login`; params?: Router.UnknownInputParams }
   | { pathname: `/listing`; params: { id: string | number } }
@@ -108,6 +112,7 @@ type StaticHrefOutput =
   | { pathname: `/confirmations`; params?: Router.UnknownOutputParams }
   | { pathname: `/contact-revealed`; params: { id: string } }
   | { pathname: `/report-dead`; params: { id: string } }
+  | { pathname: `/reset-password`; params: { email: string } }
   | { pathname: `/contact-support`; params?: Router.UnknownOutputParams }
   | { pathname: `/create-listing`; params?: Router.UnknownOutputParams }
   | { pathname: `/create-listing-details`; params?: Router.UnknownOutputParams }
@@ -118,6 +123,7 @@ type StaticHrefOutput =
   | { pathname: `/dispute`; params?: Router.UnknownOutputParams }
   | { pathname: `/edit-profile`; params?: Router.UnknownOutputParams }
   | { pathname: `/filters`; params?: Router.UnknownOutputParams }
+  | { pathname: `/forgot-password`; params?: Router.UnknownOutputParams }
   | { pathname: `/help-center`; params?: Router.UnknownOutputParams }
   | { pathname: `/login`; params?: Router.UnknownOutputParams }
   | { pathname: `/listing`; params: { id: string } }

@@ -89,6 +89,7 @@ describe('Auth and user flows', () => {
 
   it('registers, verifies OTP, returns profile, refreshes, and logs out', async () => {
     const phoneNumber = createPhoneNumber();
+    const email = `alice.${phoneNumber.slice(-4)}@example.com`;
     const password = 'SecurePassword123!';
     const forwardedFor = createForwardedFor();
 
@@ -96,11 +97,11 @@ describe('Auth and user flows', () => {
       .post('/api/v1/auth/register')
       .set('X-Forwarded-For', forwardedFor)
       .send({
-        phoneNumber,
+        email,
         password,
         firstName: 'Alice',
         lastName: 'Otieno',
-        email: `alice.${phoneNumber.slice(-4)}@example.com`,
+        phoneNumber,
       })
       .expect(201);
 
@@ -147,7 +148,7 @@ describe('Auth and user flows', () => {
       .post('/api/v1/auth/login')
       .set('X-Forwarded-For', createForwardedFor())
       .send({
-        phoneNumber,
+        email,
         password,
       })
       .expect(200);
@@ -192,8 +193,9 @@ describe('Auth and user flows', () => {
       .expect(401);
   });
 
-  it('rejects duplicate verified registration, wrong OTP, and wrong password login', async () => {
+  it('rejects duplicate email registration, phone reuse, wrong OTP, and wrong password login', async () => {
     const phoneNumber = createPhoneNumber();
+    const email = `brian.${phoneNumber.slice(-4)}@example.com`;
     const password = 'SecurePassword123!';
     const forwardedFor = createForwardedFor();
 
@@ -201,10 +203,11 @@ describe('Auth and user flows', () => {
       .post('/api/v1/auth/register')
       .set('X-Forwarded-For', forwardedFor)
       .send({
-        phoneNumber,
+        email,
         password,
         firstName: 'Brian',
         lastName: 'Njoroge',
+        phoneNumber,
       })
       .expect(201);
 
@@ -217,18 +220,35 @@ describe('Auth and user flows', () => {
       })
       .expect(200);
 
-    const duplicateResponse = await request(app.getHttpServer())
+    // Same email (primary identifier) on a verified account → email conflict.
+    const duplicateEmailResponse = await request(app.getHttpServer())
       .post('/api/v1/auth/register')
       .set('X-Forwarded-For', createForwardedFor())
       .send({
-        phoneNumber,
+        email,
         password,
         firstName: 'Brian',
         lastName: 'Njoroge',
+        phoneNumber: createPhoneNumber(),
       })
       .expect(409);
 
-    expect(duplicateResponse.body.error.code).toBe('PHONE_ALREADY_REGISTERED');
+    expect(duplicateEmailResponse.body.error.code).toBe('EMAIL_ALREADY_REGISTERED');
+
+    // Fresh email but a phone already tied to a verified account → phone conflict.
+    const phoneReuseResponse = await request(app.getHttpServer())
+      .post('/api/v1/auth/register')
+      .set('X-Forwarded-For', createForwardedFor())
+      .send({
+        email: `someone.else.${phoneNumber.slice(-4)}@example.com`,
+        password,
+        firstName: 'Brian',
+        lastName: 'Njoroge',
+        phoneNumber,
+      })
+      .expect(409);
+
+    expect(phoneReuseResponse.body.error.code).toBe('PHONE_ALREADY_REGISTERED');
 
     const pendingPhoneNumber = createPhoneNumber();
 
@@ -236,10 +256,11 @@ describe('Auth and user flows', () => {
       .post('/api/v1/auth/register')
       .set('X-Forwarded-For', createForwardedFor())
       .send({
-        phoneNumber: pendingPhoneNumber,
+        email: `carol.${pendingPhoneNumber.slice(-4)}@example.com`,
         password,
         firstName: 'Carol',
         lastName: 'Kamau',
+        phoneNumber: pendingPhoneNumber,
       })
       .expect(201);
 
@@ -258,7 +279,7 @@ describe('Auth and user flows', () => {
       .post('/api/v1/auth/login')
       .set('X-Forwarded-For', createForwardedFor())
       .send({
-        phoneNumber,
+        email,
         password: 'WrongPassword123!',
       })
       .expect(401);

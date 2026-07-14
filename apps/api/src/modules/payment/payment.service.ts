@@ -55,7 +55,7 @@ export class PaymentService {
       throw new HttpException({ code: 'USER_NOT_FOUND', message: 'User profile was not found' }, HttpStatus.NOT_FOUND);
     }
 
-    if (!user.phoneVerified && !user.clerkId && input.paymentMethod === 'mpesa') {
+    if (!user.phoneVerified && input.paymentMethod === 'mpesa') {
       throw new ForbiddenException({ code: 'PHONE_NOT_VERIFIED', message: 'Verify your phone number before purchasing credits' });
     }
 

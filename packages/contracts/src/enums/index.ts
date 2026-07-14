@@ -66,6 +66,12 @@ export enum SupportTicketStatus {
   CLOSED = 'CLOSED',
 }
 
+export enum SupportTicketPriority {
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH',
+}
+
 export enum ReviewerSide {
   INCOMING_TENANT = 'INCOMING_TENANT',
   OUTGOING_TENANT = 'OUTGOING_TENANT',

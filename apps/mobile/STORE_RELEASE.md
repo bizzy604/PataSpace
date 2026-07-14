@@ -18,11 +18,9 @@ uploads them to App Store Connect and Google Play. Config lives in
 1. **Public production API.** `EXPO_PUBLIC_API_BASE_URL` must be a public
    **HTTPS** URL. Reviewers run the app on their own network — a LAN/localhost
    API is an automatic rejection. ([api-client.ts](src/lib/api-client.ts))
-2. **Production Clerk instance.** Use a `pk_live_…` publishable key, not
-   `pk_test_…`. ([_layout.tsx](src/app/_layout.tsx))
-3. **In-app account deletion.** Required by Apple 5.1.1(v) and Google. See the
+2. **In-app account deletion.** Required by Apple 5.1.1(v) and Google. See the
    account-deletion flow in Settings.
-4. **Payments position.** Buying credits to unlock listings uses M-Pesa. Apple
+3. **Payments position.** Buying credits to unlock listings uses M-Pesa. Apple
    3.1.1 demands In-App Purchase for *digital* goods; 3.1.3(e) permits external
    payment for **real-world services**. Be ready to justify the real-world-service
    classification in App Review notes — this is the top iOS rejection risk.
@@ -47,7 +45,6 @@ each environment (`development`, `preview`, `production`) once:
 ```bash
 cd apps/mobile
 eas env:create --environment production --name EXPO_PUBLIC_API_BASE_URL --value "https://api.<domain>/api/v1" --visibility plaintext
-eas env:create --environment production --name EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY --value "pk_live_…" --visibility plaintext
 eas env:create --environment production --name GOOGLE_MAPS_API_KEY --value "<android-maps-key>" --visibility sensitive
 ```
 
@@ -108,7 +105,7 @@ Everything else (signing credentials, `EXPO_PUBLIC_*`) is resolved by EAS, not C
 
 ## Common pitfalls
 
-- Missing `EXPO_PUBLIC_*` in the EAS environment → blank API base / Clerk crash on
-  launch (the app `throw`s if the publishable key is absent).
+- Missing `EXPO_PUBLIC_*` in the EAS environment → blank API base URL, so every
+  request fails at launch (auth bootstrap included).
 - Adaptive-icon foreground needs safe-zone padding or Android crops the logo.
 - Forgetting to bump `buildNumber`/`versionCode` → store rejects the duplicate.

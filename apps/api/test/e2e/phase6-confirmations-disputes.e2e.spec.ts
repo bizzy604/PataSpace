@@ -65,16 +65,18 @@ describe('Phase 6 confirmations, disputes, and admin review flows', () => {
 
   const createVerifiedUser = async (role: Role = Role.USER) => {
     const phoneNumber = createPhoneNumber();
+    const email = `user.${phoneNumber.replace('+', '')}@example.com`;
     const password = 'SecurePassword123!';
 
     await request(app.getHttpServer())
       .post('/api/v1/auth/register')
       .set('X-Forwarded-For', createForwardedFor())
       .send({
-        phoneNumber,
+        email,
         password,
         firstName: role === Role.ADMIN ? 'Admin' : 'User',
         lastName: 'Tester',
+        phoneNumber,
       })
       .expect(201);
 
@@ -109,7 +111,7 @@ describe('Phase 6 confirmations, disputes, and admin review flows', () => {
       .post('/api/v1/auth/login')
       .set('X-Forwarded-For', createForwardedFor())
       .send({
-        phoneNumber,
+        email,
         password,
       })
       .expect(200);

@@ -3,7 +3,7 @@
  * against Safaricom's production/sandbox API with OAuth per call.
  * Why important: every shilling that moves in production moves through this
  * file; response mapping here decides what the rest of the system believes
- * about a payment. Request plumbing lives in live-mpesa.support.ts.
+ * about a payment. Request bodies and parsing live in live-mpesa.support.ts.
  * Used by: mpesa.module.ts (provider binding), MpesaClient consumers.
  */
 import { Buffer } from 'buffer';
@@ -13,17 +13,21 @@ import {
   MpesaB2CQueryResponse,
   MpesaB2CRequest,
   MpesaB2CResponse,
+  MpesaDuplicateSubmissionError,
   MpesaProvider,
   MpesaStkPushRequest,
   MpesaStkPushResponse,
   MpesaStkQueryRequest,
 } from '../mpesa.types';
 import {
+  buildB2CBody,
+  buildStkPushBody,
+  buildTransactionStatusBody,
   darajaTimestamp,
+  isDuplicateSubmissionResponse,
   LiveMpesaConfig,
   parseResultCode,
   stkPassword,
-  toMpesaPhone,
 } from './live-mpesa.support';
 
 export class LiveMpesaProvider implements MpesaProvider {
@@ -42,28 +46,9 @@ export class LiveMpesaProvider implements MpesaProvider {
   }
 
   async stkPush(payload: MpesaStkPushRequest): Promise<MpesaStkPushResponse> {
-    const timestamp = darajaTimestamp();
-    const accessToken = await this.getAccessToken();
-    const response = await this.httpClient.post(
+    const response = await this.post(
       '/mpesa/stkpush/v1/processrequest',
-      {
-        BusinessShortCode: this.config.shortcode,
-        Password: stkPassword(this.config.shortcode, this.config.passkey, timestamp),
-        Timestamp: timestamp,
-        TransactionType: 'CustomerPayBillOnline',
-        Amount: Math.round(payload.amount),
-        PartyA: toMpesaPhone(payload.phoneNumber),
-        PartyB: this.config.shortcode,
-        PhoneNumber: toMpesaPhone(payload.phoneNumber),
-        CallBackURL: this.config.callbackUrl,
-        AccountReference: payload.accountReference,
-        TransactionDesc: `PataSpace credits for ${payload.accountReference}`,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      },
+      buildStkPushBody(this.config, payload, darajaTimestamp()),
     );
 
     return {
@@ -75,62 +60,40 @@ export class LiveMpesaProvider implements MpesaProvider {
   }
 
   async b2c(payload: MpesaB2CRequest): Promise<MpesaB2CResponse> {
-    const accessToken = await this.getAccessToken();
     const originatorConversationId =
       payload.originatorConversationId ?? `pataspace_${Date.now()}`;
-    const response = await this.httpClient.post(
-      '/mpesa/b2c/v3/paymentrequest',
-      {
-        OriginatorConversationID: originatorConversationId,
-        InitiatorName: this.config.initiatorName,
-        SecurityCredential: this.config.securityCredential,
-        CommandID: 'BusinessPayment',
-        Amount: Math.round(payload.amount),
-        PartyA: this.config.shortcode,
-        PartyB: toMpesaPhone(payload.phoneNumber),
-        Remarks: payload.remarks ?? 'PataSpace commission payout',
-        QueueTimeOutURL: this.config.timeoutUrl,
-        ResultURL: this.config.resultUrl,
-        Occasion: 'PataSpace payout',
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      },
-    );
 
-    return {
-      conversationId: response.data.ConversationID,
-      originatorConversationId:
-        response.data.OriginatorConversationID ?? originatorConversationId,
-      responseCode: response.data.ResponseCode,
-      responseDescription: response.data.ResponseDescription,
-    };
+    try {
+      const response = await this.post(
+        '/mpesa/b2c/v3/paymentrequest',
+        buildB2CBody(this.config, payload, originatorConversationId),
+      );
+
+      return {
+        conversationId: response.data.ConversationID,
+        originatorConversationId:
+          response.data.OriginatorConversationID ?? originatorConversationId,
+        responseCode: response.data.ResponseCode,
+        responseDescription: response.data.ResponseDescription,
+      };
+    } catch (error) {
+      // A duplicate-id rejection means the original submission is in flight
+      // or settled — surface it as its own type so the payout flow waits for
+      // the settlement result instead of retrying or dead-lettering.
+      if (isAxiosError(error) && isDuplicateSubmissionResponse(error.response?.data)) {
+        throw new MpesaDuplicateSubmissionError();
+      }
+      throw error;
+    }
   }
 
   async queryB2CTransaction(
     payload: MpesaB2CQueryRequest,
   ): Promise<MpesaB2CQueryResponse> {
     try {
-      const accessToken = await this.getAccessToken();
-      const response = await this.httpClient.post(
+      const response = await this.post(
         '/mpesa/transactionstatus/v1/query',
-        {
-          Initiator: this.config.initiatorName,
-          SecurityCredential: this.config.securityCredential,
-          CommandID: 'TransactionStatusQuery',
-          OriginatorConversationID: payload.originatorConversationId,
-          PartyA: this.config.shortcode,
-          IdentifierType: '4',
-          Remarks: 'PataSpace payout status check',
-          QueueTimeOutURL: this.config.timeoutUrl,
-          ResultURL: this.config.resultUrl,
-          Occasion: 'PataSpace payout status check',
-        },
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        },
+        buildTransactionStatusBody(this.config, payload.originatorConversationId),
       );
 
       // The transaction-status API is itself async: this synchronous ack
@@ -163,21 +126,12 @@ export class LiveMpesaProvider implements MpesaProvider {
 
   async queryStkPush(payload: MpesaStkQueryRequest) {
     const timestamp = darajaTimestamp();
-    const accessToken = await this.getAccessToken();
-    const response = await this.httpClient.post(
-      '/mpesa/stkpushquery/v1/query',
-      {
-        BusinessShortCode: this.config.shortcode,
-        Password: stkPassword(this.config.shortcode, this.config.passkey, timestamp),
-        Timestamp: timestamp,
-        CheckoutRequestID: payload.checkoutRequestId,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      },
-    );
+    const response = await this.post('/mpesa/stkpushquery/v1/query', {
+      BusinessShortCode: this.config.shortcode,
+      Password: stkPassword(this.config.shortcode, this.config.passkey, timestamp),
+      Timestamp: timestamp,
+      CheckoutRequestID: payload.checkoutRequestId,
+    });
 
     return {
       checkoutRequestId: payload.checkoutRequestId,
@@ -205,6 +159,16 @@ export class LiveMpesaProvider implements MpesaProvider {
         message: error instanceof Error ? error.message : 'M-Pesa credential check failed',
       };
     }
+  }
+
+  private async post(path: string, body: Record<string, unknown>) {
+    const accessToken = await this.getAccessToken();
+
+    return this.httpClient.post(path, body, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
   }
 
   private async getAccessToken() {
