@@ -1,4 +1,4 @@
-# 13. Clerk Removal — Email + Password Auth Migration
+# 14. Clerk Removal — Email + Password Auth Migration
 
 Remove Clerk from all three apps and make the NestJS API the only identity
 provider: email + password credentials, phone-OTP verification and recovery,
@@ -183,7 +183,19 @@ suite; unlock→pay e2e against a natively-authed user; `pnpm --filter
   sandbox, so the DB-backed e2e auth suite and the unlock→pay e2e are
   unverified here — same gap Phase 0 hit. The data-check query
   (`SELECT count(*) FROM users WHERE "clerkId" IS NOT NULL`) also needs a
-  live DB; run both before Phase 2/3 start. **A second Claude Code session
+  live DB; run both before Phase 2/3 start.
+  **CORRECTION (2026-07-14, during the Phase 2/3 integration):** this
+  "no local Postgres" claim was wrong. A working Postgres IS present; the
+  DB-backed e2e/integration suites were failing because their auth
+  fixtures still sent the pre-migration phone-identifier payload, so
+  `/auth/register` rejected them at the validation layer (400, email
+  required) before any DB access — which read as a setup failure. Fixed in
+  commit `0006fe7` (email-identifier fixtures). The full api suite now runs
+  green end to end: **86 suites / 452 tests**, including the money-flow
+  e2e (listing → credits → unlocks, confirmations → disputes) — i.e. the
+  unlock→pay-against-a-natively-authed-user gate this note deferred is now
+  actually satisfied. Phase 0's identical "no Postgres" note is wrong for
+  the same reason. **A second Claude Code session
   was concurrently committing an unrelated Admin Console build
   (`Docs/13_Admin_Console_Build_Plan.md`) in this same working directory
   during this phase** — its in-flight `support.service.ts` edit was mid-
