@@ -13,6 +13,8 @@ import type {
   AdminPayoutLedgerResponse,
   AdminPendingListingsResponse,
   AdminRetryPayoutResponse,
+  AdminSupportTicketDetail,
+  AdminSupportTicketsResponse,
   AdminUpdateListingRequest,
   AdminUserActionResponse,
   AdminUserDetail,
@@ -20,6 +22,7 @@ import type {
   DisputeRecord,
   ModerateListingResponse,
   ResolveDisputeRequest,
+  SupportTicketMessageRecord,
 } from '@pataspace/contracts';
 import { clientFetch } from './client';
 
@@ -155,5 +158,43 @@ export function retryPayout(getToken: GetToken, commissionId: string) {
     `/admin/finance/commissions/${commissionId}/retry`,
     getToken,
     { method: 'POST' },
+  );
+}
+
+export function fetchSupportTickets(
+  getToken: GetToken,
+  params: { page?: number; status?: string; priority?: string; search?: string } = {},
+) {
+  return clientFetch<AdminSupportTicketsResponse>(
+    `/admin/support/tickets${toQuery(params)}`,
+    getToken,
+  );
+}
+
+export function fetchSupportTicket(getToken: GetToken, ticketId: string) {
+  return clientFetch<AdminSupportTicketDetail>(`/admin/support/tickets/${ticketId}`, getToken);
+}
+
+export function replySupportTicket(getToken: GetToken, ticketId: string, body: string) {
+  return clientFetch<SupportTicketMessageRecord>(
+    `/admin/support/tickets/${ticketId}/messages`,
+    getToken,
+    { method: 'POST', body: JSON.stringify({ body }) },
+  );
+}
+
+export function setSupportTicketStatus(getToken: GetToken, ticketId: string, status: string) {
+  return clientFetch<{ id: string; status: string }>(
+    `/admin/support/tickets/${ticketId}/status`,
+    getToken,
+    { method: 'POST', body: JSON.stringify({ status }) },
+  );
+}
+
+export function setSupportTicketPriority(getToken: GetToken, ticketId: string, priority: string) {
+  return clientFetch<{ id: string; priority: string }>(
+    `/admin/support/tickets/${ticketId}/priority`,
+    getToken,
+    { method: 'POST', body: JSON.stringify({ priority }) },
   );
 }

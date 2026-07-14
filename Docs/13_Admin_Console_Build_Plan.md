@@ -94,7 +94,38 @@ future ledger, noted here rather than forced into this one.
 - Outcome: failed B2C payouts become visible and retryable from the console;
   evidence = ledger page shows the same totals as the DB aggregates.
 
-### Phase 2 — Support query workspace
+### Phase 2 — Support query workspace — DONE (2026-07-14)
+
+Shipped:
+- Prisma: `priority` (LOW/MEDIUM/HIGH default MEDIUM) + `assignedToId` on
+  `SupportTicket`; new `SupportTicketMessage` table (ticketId, authorId,
+  authorRole, body, createdAt). Migration `20260713000000_add_support_ticket_threads`
+  backfills each existing ticket's body as the first thread message. New
+  tickets seed the same first message on create, so every ticket's thread is
+  self-consistent (no empty thread on a fresh ticket).
+- Admin API: `GET /admin/support/tickets` (status/priority/search),
+  `GET /admin/support/tickets/:id` (reporter profile with decrypted phone +
+  full thread), `POST .../messages` (admin reply, pulls OPEN → IN_REVIEW),
+  `POST .../status` (transition map refuses illegal jumps, keeps resolvedAt
+  honest, audit-logged), `POST .../priority` (audit-logged).
+- Tenant API: `GET/POST /support/tickets/:id/messages` — a user reads and
+  replies on their own thread; a reply reopens a RESOLVED ticket.
+- Web: `/admin/support` workspace (queue with filters/search + detail pane
+  with reporter card, thread bubbles, status/priority actions, reply
+  composer), Support nav entry.
+- Tests: 20 unit specs (queue mapping/filters, detail + decrypted phone,
+  transition map, ownership guards, reopen, thread seeding). A live-app e2e
+  is written but currently blocked: a concurrent auth refactor in the working
+  tree (email-identifier / Clerk removal, Docs/14 Phase 0) changed the shared
+  `/auth/register` contract the test fixture uses. The app boots and the
+  endpoints work; the e2e will pass once auth stabilizes.
+
+Deferred within Phase 2: ticket assignment UI (the `assignedToId` column
+exists and is returned, but no assign action shipped — single-admin ops does
+not need it yet). The wireframe's "Refund" button is left to the Phase 1
+finance surface.
+
+Original plan (for reference):
 
 - Prisma: add `priority` (LOW/MEDIUM/HIGH), `assignedToId` to `SupportTicket`;
   new `SupportTicketMessage` table (ticketId, authorId, body, createdAt) so

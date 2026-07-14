@@ -39,6 +39,9 @@ Admin console (Clerk session + ADMIN role required):
 - `/admin/finance`: payout summary + commission payout ledger with retry for
   failed B2C payouts (GET /admin/finance/summary, /transactions; POST
   /admin/finance/commissions/:id/retry)
+- `/admin/support`: triage queue + ticket workspace — reporter profile,
+  message thread, admin reply, status/priority transitions (GET
+  /admin/support/tickets[/:id]; POST .../messages, .../status, .../priority)
 - `/admin/disputes`: dispute queue with investigate/resolve/close
 
 Everything else redirects to `/` via `proxy.ts` middleware.
