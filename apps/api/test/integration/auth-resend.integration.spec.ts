@@ -19,6 +19,7 @@ describe('Auth resend-OTP integration', () => {
 
   it('resends a fresh OTP for a pending account and rotates the stored OTP record', async () => {
     const phoneNumber = context.createPhoneNumber();
+    const email = context.createEmail();
     const normalizedPhoneNumber = normalizePhoneNumber(phoneNumber);
     const phoneNumberHash = hashLookupValue(normalizedPhoneNumber);
     const forwardedFor = context.createForwardedFor();
@@ -27,10 +28,11 @@ describe('Auth resend-OTP integration', () => {
       .post('/api/v1/auth/register')
       .set('X-Forwarded-For', forwardedFor)
       .send({
-        phoneNumber,
+        email,
         password: 'SecurePassword123!',
         firstName: 'Pending',
         lastName: 'User',
+        phoneNumber,
       })
       .expect(201);
 
@@ -95,16 +97,18 @@ describe('Auth resend-OTP integration', () => {
 
   it('applies resend-specific throttling with the standard error envelope', async () => {
     const phoneNumber = context.createPhoneNumber();
+    const email = context.createEmail();
     const forwardedFor = context.createForwardedFor();
 
     await request(context.app.getHttpServer())
       .post('/api/v1/auth/register')
       .set('X-Forwarded-For', forwardedFor)
       .send({
-        phoneNumber,
+        email,
         password: 'SecurePassword123!',
         firstName: 'Rate',
         lastName: 'Limited',
+        phoneNumber,
       })
       .expect(201);
 
