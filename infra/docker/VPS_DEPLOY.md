@@ -23,7 +23,7 @@ standalone Caddy path described at the bottom of this guide instead.
 | --- | --- |
 | **API domain** (e.g. `api.pataspace.com`) | Register or use a subdomain you own |
 | **DNS A-record** pointing the domain → VPS IP | Hostinger/Cloudflare DNS panel |
-| **Clerk production keys** (`CLERK_SECRET_KEY`) | Clerk dashboard → Production instance |
+| **NextAuth secret** (`AUTH_SECRET`) | Generate locally: `openssl rand -base64 32` |
 | **VPS SSH access** (host, user, key) | Hostinger VPS panel |
 | **GHCR images pushed** | Merge the Docker workflow to `main` → Actions builds and pushes |
 
@@ -100,7 +100,8 @@ Critical values to set correctly:
 | --- | --- |
 | `API_DOMAIN` | Your API domain (e.g. `api.pataspace.com`) |
 | `APP_BASE_URL` | `https://<API_DOMAIN>` |
-| `CLERK_SECRET_KEY` | From Clerk dashboard (production instance) |
+| `AUTH_SECRET` | `openssl rand -base64 32` — NextAuth refuses to boot without it |
+| `AUTH_URL` | `https://<WEB_DOMAIN>` — the web app's own public URL |
 | `DATABASE_URL` | `postgresql://pataspace_app:<APP_PW>@postgres:5432/pataspace` |
 | `DATABASE_MIGRATION_URL` | `postgresql://pataspace_migrator:<MIG_PW>@postgres:5432/pataspace` |
 | `DATABASE_ADMIN_URL` | `postgresql://postgres:<PG_PW>@postgres:5432/pataspace` |
@@ -244,6 +245,7 @@ the new images.
 | `api-migrate` exits with error | Check `docker compose logs api-migrate` — usually a missing/wrong `DATABASE_MIGRATION_URL` |
 | Certbot / TLS issuance fails | DNS A-record not propagated, or ports 80/443 blocked by the VPS firewall |
 | Browser blocked by CORS | `ALLOWED_ORIGINS` is exact-match; add the exact web/admin origin (no wildcard) |
-| API returns 403 `ACCOUNT_INACTIVE` | Clerk user exists but the local DB record has `isActive=false` |
+| API returns 403 `ACCOUNT_INACTIVE` | The user's DB record has `isActive=false` (account deactivated/deleted) |
 | `POSTGRES_PASSWORD not set` on startup | The `.env` file is missing or not in the same directory as the compose file |
 | Redis connection refused | Check `REDIS_PASSWORD` matches between `.env` and the redis service command |
+| Web returns `MissingSecret` / admin sign-in 500s | `AUTH_SECRET` is unset or empty in the web service's environment |

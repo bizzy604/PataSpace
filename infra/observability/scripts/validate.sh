@@ -32,7 +32,8 @@ trap '[ "$created_env" = 1 ] && rm -f "$DOCKER_DIR/.env"' EXIT
 (
   cd "$DOCKER_DIR"
   export POSTGRES_PASSWORD=x PATA_DB_APP_PASSWORD=x PATA_DB_MIGRATOR_PASSWORD=x \
-    REDIS_PASSWORD=x GRAFANA_ADMIN_PASSWORD=x METRICS_TOKEN=x CLERK_SECRET_KEY=x
+    REDIS_PASSWORD=x GRAFANA_ADMIN_PASSWORD=x METRICS_TOKEN=x \
+    AUTH_SECRET=x AUTH_URL=https://example.invalid
   docker compose -f docker-compose.prod.yml -f docker-compose.observability.yml config -q
   docker compose -f docker-compose.vps.yml -f docker-compose.observability.yml config -q
 )

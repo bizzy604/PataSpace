@@ -7,7 +7,7 @@
 'use client';
 
 import Link from 'next/link';
-import { UserButton, useUser } from '@clerk/nextjs';
+import { useSession } from 'next-auth/react';
 import { LayoutDashboard, LogIn } from 'lucide-react';
 import { BrandLogo } from '@/components/shared/brand-logo';
 import { cn } from '@/lib/utils';
@@ -26,8 +26,8 @@ export function PublicSiteFrame({
   children: React.ReactNode;
   className?: string;
 }) {
-  const { isLoaded, isSignedIn } = useUser();
-  const showSignedIn = isLoaded && isSignedIn;
+  const { status } = useSession();
+  const showSignedIn = status === 'authenticated';
   return (
     <div className={cn('min-h-screen bg-background text-foreground', className)}>
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
@@ -46,15 +46,10 @@ export function PublicSiteFrame({
 
           <div className="flex items-center gap-2.5">
             {showSignedIn ? (
-              <>
-                <Link href="/admin" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
-                  <LayoutDashboard className="size-4" />
-                  Admin console
-                </Link>
-                <div className="rounded-lg border border-border bg-card p-1 shadow-sm">
-                  <UserButton />
-                </div>
-              </>
+              <Link href="/admin" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
+                <LayoutDashboard className="size-4" />
+                Admin console
+              </Link>
             ) : (
               <Link href="/admin" className={linkButtonClass({ variant: 'outline', size: 'sm' })}>
                 <LogIn className="size-4" />

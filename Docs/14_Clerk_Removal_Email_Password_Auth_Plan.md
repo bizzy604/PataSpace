@@ -368,7 +368,90 @@ unlock→pay smoke on the new binary.
 Gates: `pnpm --filter @pataspace/web build`; full Playwright suite locally;
 manual admin console pass against the Phase-1 API.
 
-- [ ] Phase 3 complete
+- [x] Phase 3 complete (2026-07-14). NextAuth v5 (`next-auth@5.0.0-beta.31`,
+  confirmed current via `npm view next-auth dist-tags` — `latest` is 4.24.14,
+  v5 ships only under the `beta` tag) replaces Clerk as the web app's only
+  identity layer; it delegates every real auth decision to the Phase-1 API.
+  New files: `apps/web/auth.ts` (NextAuth config — Credentials provider whose
+  `authorize()` calls `POST /auth/login`, `jwt` session strategy, `jwt`
+  callback that rotates the API's access+refresh pair via `POST /auth/refresh`
+  60s before the 15m access token expires, and rejects non-admin roles inside
+  `authorize()` itself so a correct password for a `USER` account still cannot
+  mint a session), `app/api/auth/[...nextauth]/route.ts` (mounts `handlers`),
+  `lib/api/auth.ts` (server-only `login`/`refresh`/`logout` fetchers — these
+  bypass `lib/api/client.ts`, which assumes an already-authed request, and
+  prefer `API_INTERNAL_BASE_URL` for server-to-server calls),
+  `components/admin/admin-sign-in-form.tsx` (email+password form calling
+  `signIn('credentials', { redirect:false })`, surfacing the API's actual
+  rejection reason by mapping the `CredentialsSignin` `code`), and
+  `types/next-auth.d.ts` (module augmentation). Session `maxAge` is pinned to
+  30 days to match `REFRESH_TOKEN_TTL_DAYS` so a live session cookie never
+  outlives its API refresh token. Rewired: `proxy.ts` (Clerk `clerkMiddleware`
+  → `auth()` wrapper gating `/admin/*` on session + `error`-flag + ADMIN
+  role), `app/admin/(console)/layout.tsx` (server-side ADMIN check now reads
+  the NextAuth session, not a Clerk `getToken()`→`/users/me` round trip),
+  `admin-shell.tsx` / `admin-forbidden.tsx` (Clerk `SignOutButton`/`UserButton`
+  → `signOut()`), `use-admin-data.ts` (`useAuth().getToken` → `useSession()`
+  access token), `public-site-frame.tsx` (`useUser` → `useSession`),
+  `app/layout.tsx` (`ClerkProvider` → `SessionProvider`), `globals.css` (Clerk
+  theme import removed), `lib/api/client.ts` (doc comments). Sign-in route
+  moved from Clerk's `sign-in/[[...sign-in]]` catch-all to a plain
+  `sign-in/page.tsx` (the form's `useSearchParams()` is wrapped in `Suspense`
+  so the page still prerenders static). `@clerk/nextjs` + `@clerk/ui` removed
+  from `package.json`; `next-auth`, `@auth/core` (pinned to next-auth's exact
+  0.41.2 so the `@auth/core/*` type augmentation resolves under pnpm's strict
+  layout — see the note in `types/next-auth.d.ts`), and `server-only` added.
+  **Infra env plumbing (broader than the original web-only file list — all
+  strictly Clerk-env-out / NextAuth-env-in, no behavioural change):**
+  `apps/web/Dockerfile` (dropped 6 `NEXT_PUBLIC_CLERK_*` build args/envs),
+  `infra/docker/docker-compose.vps.yml` + `docker-compose.prod.yml` (web
+  service: Clerk envs → `AUTH_SECRET`, `AUTH_URL`, server-only
+  `API_INTERNAL_BASE_URL=http://api:3001/api/v1`),
+  `infra/docker/.env.vps.example` + `.env.prod.example` (removed
+  `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, added `AUTH_SECRET`/`AUTH_URL`),
+  `infra/docker/VPS_DEPLOY.md` (prereq/troubleshooting rows), `Caddyfile` +
+  `infra/nginx/edge.conf` (comment wording), `infra/observability/scripts/
+  validate.sh` (compose-merge smoke env: `CLERK_SECRET_KEY` → `AUTH_SECRET`/
+  `AUTH_URL`). New `apps/web/.env.example` documents the web env for the first
+  time. Also set `turbopack.root` in `next.config.mjs` (workspace root, the
+  documented monorepo fix). Playwright: `protected-redirects.spec.ts` /
+  `landing.spec.ts` / `fixtures/page-errors.ts` de-Clerked; new
+  `sign-in.spec.ts` (valid admin → console, wrong password → generic
+  `INVALID_CREDENTIALS` message, non-admin `USER` → rejected) driven by a
+  dependency-free `fixtures/mock-auth-server.mjs` stub for `POST /auth/login`
+  (NextAuth's Credentials provider calls it from the *server* process, which
+  `page.route()` cannot intercept); `playwright.config.ts` boots that stub +
+  the dev server and supplies `AUTH_SECRET` so the suite is self-contained.
+  Gates run and actual results:
+  - `apps/web` `tsc --noEmit`: exit 0.
+  - `pnpm --filter @pataspace/web build` (Turbopack, the default script):
+    **fails in this git worktree only** — Turbopack refuses to traverse
+    symlinks to pnpm's virtual store, which for a worktree lives under the
+    *main* checkout (`virtual-store-dir` = the primary repo), physically
+    outside the worktree root. Proven to be purely that: pointing
+    `turbopack.root` at the store's real parent makes the same build pass exit
+    0. The equivalent `next build --webpack` (the bundler this app already
+    uses for `dev`) passes exit 0 with full static generation (13/13 pages,
+    correct route topology — `/admin/sign-in` static, `/api/auth/[...nextauth]`
+    present, `/admin/*` dynamic, Proxy middleware active). In a normal
+    (non-worktree) checkout or CI the Turbopack script resolves the store
+    inside the root and passes.
+  - Full Playwright suite, **cold** (Playwright boots its own mock-auth + dev
+    servers): 18/18 passed, including the 3 new sign-in cases. The
+    `[auth][error] CredentialsSignin` server log during the run is Auth.js's
+    expected logging of the thrown error on the negative-path tests, not a
+    failure.
+  Left for a human: (1) the plan's "manual admin console pass against the
+  Phase-1 API" gate needs a running full stack (API + Postgres + a seeded
+  ADMIN account) — not stood up here; the e2e proves the wiring against a
+  faithful `/auth/login` stub, but a real login against the live API is still
+  unverified. (2) `next-auth` is on the `beta` tag (v5 has no stable release);
+  pin-bump when v5 GAs. (3) `infra/docker/VPS_DEPLOY.md` still documents
+  `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` for **mobile** EAS builds — left
+  deliberately: that is mobile-scoped and owned by Phase 4's secrets sweep.
+  (4) On the VPS, set `AUTH_SECRET` (`openssl rand -base64 32`) and `AUTH_URL`
+  in `infra/docker/.env` before the next web deploy, or the web container
+  fails to boot (`MissingSecret`).
 
 ## Phase 4 — Sweep and decommission
 

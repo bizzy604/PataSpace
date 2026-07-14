@@ -1,6 +1,6 @@
 # Purpose: Caddy reverse-proxy config for the VPS API stack.
 # Why important: Auto-provisions TLS via Let's Encrypt so the mobile app reaches
-#   the API over HTTPS, which Clerk and production mode both require.
+#   the API over HTTPS, which production mode requires.
 # Used by: docker-compose.vps.yml (mounted into the caddy container).
 #
 # Replace {$API_DOMAIN} with the actual domain (e.g. api.pataspace.com).

@@ -26,4 +26,5 @@ Thumbs.db
 !.claude/rules/backend-modular-monolith.md
 .codex/*
 test-results/
+playwright-report/
 node-compile-cache/
