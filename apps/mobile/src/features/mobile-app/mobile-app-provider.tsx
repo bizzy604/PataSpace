@@ -1,7 +1,7 @@
-import { useAuth, useClerk, useUser } from '@clerk/expo';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { ReceivedUnlockRecord, UnlockContactInfo } from '@pataspace/contracts';
 import { useColorScheme as useNativeWindColorScheme } from 'nativewind';
+import { useAuthSession } from '@/features/auth/auth-provider';
 import {
   confirmationStages,
   defaultReferralCode,
@@ -195,31 +195,6 @@ function toInitials(name: string) {
   return initials || 'PS';
 }
 
-function readUnsafeMetadataString(value: unknown, key: string) {
-  if (!value || typeof value !== 'object') {
-    return null;
-  }
-
-  const metadataValue = (value as Record<string, unknown>)[key];
-
-  return typeof metadataValue === 'string' && metadataValue.trim() ? metadataValue.trim() : null;
-}
-
-function resolveDisplayName(
-  value: { fullName?: string | null; firstName?: string | null; lastName?: string | null },
-  metadataName?: string | null,
-) {
-  const fullName = value.fullName?.trim();
-
-  if (fullName) {
-    return fullName;
-  }
-
-  const fallback = [value.firstName, value.lastName].filter(Boolean).join(' ').trim();
-
-  return fallback || metadataName || initialUserProfile.name;
-}
-
 function houseTypeToBedrooms(houseType: ListingHouseType): number {
   if (houseType === ListingHouseType.STUDIO) return 0;
   if (houseType === ListingHouseType.BEDSITTER || houseType === ListingHouseType.ONE_BEDROOM) return 1;
@@ -242,9 +217,8 @@ function houseTypeToBathrooms(houseType: ListingHouseType): number {
 }
 
 export function MobileAppProvider({ children }: { children: ReactNode }) {
-  const { isLoaded: isAuthLoaded, isSignedIn, getToken } = useAuth();
-  const { signOut } = useClerk();
-  const { user: clerkUser } = useUser();
+  const { isLoaded: isAuthLoaded, isSignedIn, getToken, user: authUser, logout: authLogout } =
+    useAuthSession();
   const { colorScheme: nativeWindColorScheme, setColorScheme: setNativeWindColorScheme } =
     useNativeWindColorScheme();
   const [user, setUser] = useState(initialUserProfile);
@@ -291,32 +265,23 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
   }, [setNativeWindColorScheme, settings.colorScheme]);
 
   useEffect(() => {
-    if (!isAuthenticated || !clerkUser) {
+    if (!isAuthenticated || !authUser) {
       setUser(initialUserProfile);
       return;
     }
 
-    const metadataFirstName = readUnsafeMetadataString(clerkUser.unsafeMetadata, 'firstName');
-    const metadataLastName = readUnsafeMetadataString(clerkUser.unsafeMetadata, 'lastName');
-    const metadataName = [metadataFirstName, metadataLastName].filter(Boolean).join(' ').trim();
-    const displayName = resolveDisplayName(clerkUser, metadataName);
-    const metadataPhone = readUnsafeMetadataString(clerkUser.unsafeMetadata, 'phone');
-    const primaryPhoneNumber =
-      clerkUser.primaryPhoneNumber?.phoneNumber && clerkUser.primaryPhoneNumber.phoneNumber.trim()
-        ? normalizePhone(clerkUser.primaryPhoneNumber.phoneNumber)
-        : null;
+    // The API's AuthUser carries real firstName/lastName/phoneNumber fields
+    // directly — no unsafeMetadata parsing needed now that Clerk is gone.
+    const displayName = [authUser.firstName, authUser.lastName].filter(Boolean).join(' ').trim() ||
+      initialUserProfile.name;
 
     setUser((current) => ({
       ...current,
       name: displayName,
       initials: toInitials(displayName),
-      phone:
-        (metadataPhone ? normalizePhone(metadataPhone) : null) ??
-        primaryPhoneNumber ??
-        current.phone ??
-        initialUserProfile.phone,
+      phone: authUser.phoneNumber ?? current.phone ?? initialUserProfile.phone,
     }));
-  }, [clerkUser, isAuthenticated]);
+  }, [authUser, isAuthenticated]);
 
   function pushNotification(notification: NotificationRecord) {
     setNotifications((current) => [notification, ...current]);
@@ -333,7 +298,7 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
   }
 
   async function logout() {
-    await signOut();
+    await authLogout();
   }
 
   function updateProfile(profile: Partial<UserProfile>) {

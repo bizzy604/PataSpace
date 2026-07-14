@@ -1,30 +1,41 @@
 /**
- * Purpose: Email verification during sign-up. Restyle of the old verify screen
- *   to Authentication/otp_verification — teal check hero, 6-box code, resend
- *   countdown, Verify. Clerk verifyEmailCode + finalize logic is unchanged.
- * Why important: Completes registration; the Clerk verification must behave
- *   exactly as before.
+ * Purpose: Phone-OTP verification during sign-up. Reads the phone number
+ *   RegisterScreen passed as a route param and drives it against the
+ *   unchanged POST /auth/verify-otp and POST /auth/resend-otp endpoints —
+ *   Authentication/otp_verification chrome (teal check hero, 6-box code,
+ *   resend countdown, Verify) is unchanged.
+ * Why important: Completes registration; on success the auth provider has a
+ *   full session (verify-otp returns AuthSessionResponse), so this screen can
+ *   go straight home instead of a separate login step.
  * Used by: app/verify-otp.tsx.
+ *
+ * Design delta: this now verifies the *phone* (SMS OTP), not email — Clerk's
+ * email-code verification is gone along with Clerk itself; the product
+ * always intended phone verification here (decision 1 in
+ * Docs/14_Clerk_Removal_Email_Password_Auth_Plan.md), the pre-migration
+ * screen only used email because Clerk's auth was email-based.
  */
 import { useEffect, useState } from 'react';
-import { useAuth, useSignUp } from '@clerk/expo';
 import { Pressable, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Button } from '@/components/ui/button';
+import { useAuthSession } from '@/features/auth/auth-provider';
 import { appRoutes } from '@/lib/routes';
-import { AuthError, AuthHeader, AuthScreen, getClerkErrorMessage } from './auth-shared';
+import { AuthError, AuthHeader, AuthScreen, getApiErrorMessage } from './auth-shared';
 import { OtpInput } from './fields';
 
 const RESEND_SECONDS = 45;
 
 export function VerifyOtpScreen() {
-  const { isSignedIn } = useAuth();
-  const { signUp, fetchStatus } = useSignUp();
+  const { phoneNumber } = useLocalSearchParams<{ phoneNumber?: string }>();
+  const { verifyOtp, resendOtp } = useAuthSession();
   const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -33,33 +44,18 @@ export function VerifyOtpScreen() {
     return () => clearTimeout(timer);
   }, [secondsLeft]);
 
-  if (!signUp || isSignedIn || signUp.status === 'complete') {
-    return null;
-  }
-
-  const awaitingEmailVerification =
-    signUp.status === 'missing_requirements' &&
-    signUp.unverifiedFields.includes('email_address') &&
-    signUp.missingFields.length === 0;
-
-  if (!awaitingEmailVerification) {
+  if (!phoneNumber) {
     return (
       <AuthScreen
-        header={<AuthHeader title="Verify Email" onBack={() => router.replace(appRoutes.register)} />}
+        header={<AuthHeader title="Verify Phone" onBack={() => router.replace(appRoutes.register)} />}
         footer={
-          <Button
-            label="Back to sign up"
-            onPress={async () => {
-              await signUp.reset();
-              router.replace(appRoutes.register);
-            }}
-          />
+          <Button label="Back to sign up" onPress={() => router.replace(appRoutes.register)} />
         }
       >
         <View className="items-center gap-3 pt-10">
           <Text className="font-display text-headline-md text-foreground">Start sign-up again</Text>
           <Text className="text-center font-body text-body-md text-muted-foreground">
-            There is no pending email verification for this device. Create an account first and
+            There is no pending phone verification for this device. Create an account first and
             we’ll send you a code.
           </Text>
         </View>
@@ -68,61 +64,51 @@ export function VerifyOtpScreen() {
   }
 
   async function resend() {
-    if (!signUp || secondsLeft > 0) return;
-    const { error: resendError } = await signUp.verifications.sendEmailCode();
-    if (resendError) {
-      setError(getClerkErrorMessage(resendError, 'Could not resend the verification code.'));
+    if (secondsLeft > 0 || isResending || !phoneNumber) return;
+    setIsResending(true);
+    try {
+      await resendOtp({ phoneNumber });
+      setError('');
+      setNotice('Code sent again.');
+      setSecondsLeft(RESEND_SECONDS);
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Could not resend the verification code.'));
       setNotice('');
-      return;
+    } finally {
+      setIsResending(false);
     }
-    setError('');
-    setNotice('Code sent again.');
-    setSecondsLeft(RESEND_SECONDS);
   }
 
   async function verify() {
-    if (!signUp) return;
-    if (otp.trim().length < 6) {
-      setError('Enter the 6-digit code to continue.');
+    if (isVerifying || !phoneNumber) return;
+    if (otp.trim().length < 4) {
+      setError('Enter the code to continue.');
       setNotice('');
       return;
     }
-    const { error: verifyError } = await signUp.verifications.verifyEmailCode({ code: otp.trim() });
-    if (verifyError) {
-      setError(getClerkErrorMessage(verifyError, 'That verification code is not valid.'));
+    setIsVerifying(true);
+    try {
+      await verifyOtp({ phoneNumber, code: otp.trim() });
+      setError('');
       setNotice('');
-      return;
-    }
-    if (signUp.status !== 'complete') {
-      setError('Your sign-up is not complete yet. Check your Clerk sign-up settings.');
+      router.replace(appRoutes.home);
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'That verification code is not valid.'));
       setNotice('');
-      return;
+    } finally {
+      setIsVerifying(false);
     }
-    const { error: finalizeError } = await signUp.finalize();
-    if (finalizeError) {
-      setError(getClerkErrorMessage(finalizeError, 'Could not finish signing you in.'));
-      return;
-    }
-    setError('');
-    setNotice('');
-    router.replace(appRoutes.home);
   }
 
   return (
     <AuthScreen
       header={
-        <AuthHeader
-          title="Verify Email"
-          onBack={async () => {
-            await signUp.reset();
-            router.replace(appRoutes.register);
-          }}
-        />
+        <AuthHeader title="Verify Phone" onBack={() => router.replace(appRoutes.register)} />
       }
       footer={
         <Button
-          label={fetchStatus === 'fetching' ? 'Verifying…' : 'Verify'}
-          disabled={fetchStatus === 'fetching' || otp.trim().length < 6}
+          label={isVerifying ? 'Verifying…' : 'Verify'}
+          disabled={isVerifying || otp.trim().length < 4}
           onPress={verify}
         />
       }
@@ -135,7 +121,7 @@ export function VerifyOtpScreen() {
         <View className="items-center gap-2">
           <Text className="font-display text-headline-lg text-foreground">Enter Verification Code</Text>
           <Text className="max-w-[300px] text-center font-body text-body-md text-muted-foreground">
-            We’ve sent a 6-digit code to {signUp.emailAddress ?? 'your email address'}.
+            We’ve sent a code to {phoneNumber}.
           </Text>
         </View>
 
@@ -151,8 +137,10 @@ export function VerifyOtpScreen() {
             </Text>
           </Text>
         ) : (
-          <Pressable onPress={resend}>
-            <Text className="font-body-medium text-body-md text-primary">Resend code</Text>
+          <Pressable onPress={resend} disabled={isResending}>
+            <Text className="font-body-medium text-body-md text-primary">
+              {isResending ? 'Resending…' : 'Resend code'}
+            </Text>
           </Pressable>
         )}
 

@@ -1,12 +1,11 @@
 import '../../global.css';
-import { ClerkProvider, useAuth } from '@clerk/expo';
-import { tokenCache } from '@clerk/expo/token-cache';
 import { useEffect, useState } from 'react';
 import { useFonts } from 'expo-font';
 import { Poppins_600SemiBold, Poppins_700Bold } from '@expo-google-fonts/poppins';
 import { DMSans_400Regular, DMSans_500Medium, DMSans_700Bold } from '@expo-google-fonts/dm-sans';
 import { Stack, usePathname, useRouter } from 'expo-router';
 import { AppLaunchScreen } from '@/components/ui/app-launch-screen';
+import { AuthSessionProvider, useAuthSession } from '@/features/auth/auth-provider';
 import { MobileAppProvider, useMobileApp } from '@/features/mobile-app/mobile-app-provider';
 import { appRoutes } from '@/lib/routes';
 
@@ -16,19 +15,15 @@ const publicPaths = new Set<string>([
   appRoutes.register,
   appRoutes.verifyOtp,
   appRoutes.login,
-  appRoutes.ssoCallback,
+  appRoutes.forgotPassword,
+  appRoutes.resetPassword,
 ]);
-const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? '';
-
-if (!publishableKey) {
-  throw new Error('Add your Clerk Publishable Key to apps/mobile/.env as EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY');
-}
 
 function RootNavigator() {
   const [showLaunch, setShowLaunch] = useState(true);
   const pathname = usePathname();
   const router = useRouter();
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn } = useAuthSession();
   const { theme } = useMobileApp();
   // Brand fonts. Family names here are the exact strings NativeWind emits for
   // the font-display / font-body* utilities in tailwind.config.js.
@@ -84,10 +79,10 @@ function RootNavigator() {
 
 export default function RootLayout() {
   return (
-    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+    <AuthSessionProvider>
       <MobileAppProvider>
         <RootNavigator />
       </MobileAppProvider>
-    </ClerkProvider>
+    </AuthSessionProvider>
   );
 }

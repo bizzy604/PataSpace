@@ -1,54 +1,34 @@
 /**
- * Purpose: Shared plumbing for the redesigned auth flow — the Clerk helpers
- *   and social-auth hook carried over verbatim from the old AuthScreens, plus
- *   the new layout shells (AuthScreen, AuthHeader) and the restyled
- *   SocialAuthButton.
- * Why important: Every auth screen is a thin presentation layer over these; the
- *   Clerk logic is untouched from the pre-redesign version so behaviour is
- *   identical while the look changes.
- * Used by: screens/auth/{Welcome,Onboarding,Register,Login,VerifyOtp}Screen.
+ * Purpose: Shared plumbing for the auth flow — email/phone helpers, the
+ *   ApiRequestError-to-message mapper, and the layout shells (AuthScreen,
+ *   AuthHeader, AuthError) every auth screen renders inside.
+ * Why important: Every auth screen (register, login, verify-otp, forgot/
+ *   reset password) is a thin presentation layer over these; keeping the
+ *   error-mapping and layout logic here means the screens only differ in
+ *   fields and which API call they make.
+ * Used by: screens/auth/{Register,Login,VerifyOtp,ForgotPassword,
+ *   ResetPassword}Screen.
+ *
+ * Note: SSO (Google/Apple via @clerk/expo's useSSO) is deliberately removed,
+ * not adapted — the Clerk-removal plan drops SSO entirely (credential-only
+ * accounts; see Docs/14_Clerk_Removal_Email_Password_Auth_Plan.md decision
+ * 3). The sso-callback.tsx route is deleted alongside this.
  */
-import { useSSO } from '@clerk/expo';
-import type { ComponentProps, ReactNode } from 'react';
-import { useEffect, useState } from 'react';
-import * as AuthSession from 'expo-auth-session';
-import { useRouter, type Href } from 'expo-router';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import type { ReactNode } from 'react';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import * as WebBrowser from 'expo-web-browser';
+import { ApiRequestError } from '@/lib/api-client';
 import { AppIcon } from '@/components/ui/app-icon';
 import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
 import { cn } from '@/lib/cn';
-import { appRoutes } from '@/lib/routes';
-
-export type IconName = ComponentProps<typeof AppIcon>['name'];
-export type SocialStrategy = 'oauth_google' | 'oauth_apple';
-
-export const ssoRedirectUrl = AuthSession.makeRedirectUri({ path: 'sso-callback' });
-
-const socialProviderConfig: Record<
-  SocialStrategy,
-  { icon: IconName; label: string; inverse?: boolean }
-> = {
-  oauth_google: { icon: 'logo-google', label: 'Google' },
-  oauth_apple: { icon: 'logo-apple', label: 'Apple', inverse: true },
-};
-
-WebBrowser.maybeCompleteAuthSession();
 
 export function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
-export function normalizePhoneForMetadata(phone: string) {
+/** Kenyan local/international phone input -> the API's expected +254E.164 shape. */
+export function normalizePhoneForApi(phone: string) {
   const digits = phone.replace(/\D/g, '');
   if (digits.startsWith('254')) return `+${digits}`;
   if (digits.startsWith('0')) return `+254${digits.slice(1)}`;
@@ -56,124 +36,28 @@ export function normalizePhoneForMetadata(phone: string) {
   return phone.trim();
 }
 
-export function buildSocialMetadata({
-  firstName,
-  lastName,
-  phone,
-}: {
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-}) {
-  const metadata: Record<string, string> = {};
-  if (phone?.trim()) metadata.phone = normalizePhoneForMetadata(phone);
-  if (firstName?.trim()) metadata.firstName = firstName.trim();
-  if (lastName?.trim()) metadata.lastName = lastName.trim();
-  return metadata;
+/**
+ * Mirrors packages/contracts/src/schemas/auth.ts's passwordSchema (min 8,
+ * one uppercase, one number, one special character) so a weak password fails
+ * fast in the UI instead of round-tripping to the API for a 400.
+ */
+export function passwordPolicyError(password: string): string | null {
+  if (password.length < 8) return 'Use at least 8 characters.';
+  if (!/[A-Z]/.test(password)) return 'Include at least one uppercase letter.';
+  if (!/[0-9]/.test(password)) return 'Include at least one number.';
+  if (!/[^A-Za-z0-9]/.test(password)) return 'Include at least one special character.';
+  return null;
 }
 
-export function getSocialProviderLabel(strategy: SocialStrategy) {
-  return socialProviderConfig[strategy].label;
-}
-
-export function getClerkErrorMessage(error: unknown, fallback: string) {
-  if (!error || typeof error !== 'object') return fallback;
-  const apiErrors = (error as { errors?: Array<{ longMessage?: string; message?: string }> }).errors;
-  const firstError = Array.isArray(apiErrors) ? apiErrors[0] : null;
-  if (firstError?.longMessage) return firstError.longMessage;
-  if (firstError?.message) return firstError.message;
-  const message = (error as { message?: string }).message;
-  return typeof message === 'string' && message.trim() ? message : fallback;
-}
-
-export function useSocialAuthFlow() {
-  const { startSSOFlow } = useSSO();
-  const router = useRouter();
-  const [pendingStrategy, setPendingStrategy] = useState<SocialStrategy | null>(null);
-
-  useEffect(() => {
-    if (Platform.OS !== 'android') return;
-    void WebBrowser.warmUpAsync();
-    return () => {
-      void WebBrowser.coolDownAsync();
-    };
-  }, []);
-
-  async function authenticateWithSocial({
-    strategy,
-    fallbackRoute,
-    unsafeMetadata,
-  }: {
-    strategy: SocialStrategy;
-    fallbackRoute: Href;
-    unsafeMetadata?: Record<string, unknown>;
-  }) {
-    const providerLabel = getSocialProviderLabel(strategy);
-    try {
-      setPendingStrategy(strategy);
-      const { createdSessionId, setActive, authSessionResult } = await startSSOFlow({
-        strategy,
-        redirectUrl: ssoRedirectUrl,
-        unsafeMetadata,
-      });
-
-      if (createdSessionId && setActive) {
-        await setActive({ session: createdSessionId });
-        router.replace(appRoutes.home);
-        return { ok: true as const };
-      }
-
-      router.replace(fallbackRoute);
-      if (authSessionResult?.type === 'cancel' || authSessionResult?.type === 'dismiss') {
-        return { ok: false as const, cancelled: true as const };
-      }
-      return {
-        ok: false as const,
-        message: `Could not complete ${providerLabel} sign-in. Check the Clerk social connection settings.`,
-      };
-    } catch (error) {
-      router.replace(fallbackRoute);
-      return {
-        ok: false as const,
-        message: getClerkErrorMessage(error, `Could not continue with ${providerLabel}.`),
-      };
-    } finally {
-      setPendingStrategy(null);
-    }
+/** Maps an apiFetch failure to user-facing copy; falls back for non-API errors. */
+export function getApiErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof ApiRequestError && error.message.trim()) {
+    return error.message;
   }
-
-  return { pendingStrategy, authenticateWithSocial };
-}
-
-export function SocialAuthButton({
-  strategy,
-  pendingStrategy,
-  disabled,
-  onPress,
-}: {
-  strategy: SocialStrategy;
-  pendingStrategy: SocialStrategy | null;
-  disabled?: boolean;
-  onPress: () => void;
-}) {
-  const provider = socialProviderConfig[strategy];
-  const isPending = pendingStrategy === strategy;
-
-  return (
-    <Pressable
-      className={cn(
-        'min-h-12 flex-row items-center justify-center gap-3 rounded-full border border-border bg-surface-elevated px-4 active:opacity-90',
-        disabled && 'opacity-60',
-      )}
-      disabled={disabled}
-      onPress={onPress}
-    >
-      <AppIcon name={provider.icon} size={18} active />
-      <Text className="font-body-medium text-body-md text-foreground">
-        {isPending ? `Connecting to ${provider.label}…` : `Continue with ${provider.label}`}
-      </Text>
-    </Pressable>
-  );
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+  return fallback;
 }
 
 /** Tinted error banner with an alert glyph (Authentication/login_error_state). */
@@ -188,30 +72,17 @@ export function AuthError({ message }: { message: string }) {
   );
 }
 
-export function AuthDivider({ label }: { label: string }) {
-  return (
-    <View className="flex-row items-center gap-3">
-      <View className="h-px flex-1 bg-border" />
-      <Text className="font-body-medium text-label-md uppercase tracking-[1.5px] text-muted-foreground">
-        {label}
-      </Text>
-      <View className="h-px flex-1 bg-border" />
-    </View>
-  );
-}
-
-/** Nav bar with a back chevron and a centered title (register / verify). */
+/** Nav bar with a back chevron and a centered title (register / verify / forgot / reset). */
 export function AuthHeader({ title, onBack }: { title: string; onBack?: () => void }) {
-  const router = useRouter();
   return (
     <View className="flex-row items-center border-b border-border px-4 py-3">
       <Pressable
         className="h-10 w-10 items-center justify-center active:opacity-70"
         hitSlop={8}
-        onPress={onBack ?? (() => router.back())}
+        onPress={onBack}
         accessibilityLabel="Go back"
       >
-        <AppIcon name="chevron-back" size={22} active />
+        {onBack ? <AppIcon name="chevron-back" size={22} active /> : null}
       </Pressable>
       <Text className="flex-1 text-center font-display text-headline-sm text-foreground">
         {title}

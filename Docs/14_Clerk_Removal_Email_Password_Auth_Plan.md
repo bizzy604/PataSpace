@@ -234,7 +234,119 @@ Gates: `tsc --noEmit`; jest (auth provider reducer/refresh logic gets pure
 gate tests); on-device pass of register→OTP→login→forgot→reset, light+dark;
 unlock→pay smoke on the new binary.
 
-- [ ] Phase 2 complete
+- [x] Phase 2 complete (2026-07-14). New `src/lib/auth/` (pure, no React):
+  `session-state.ts` (the `loading | signed_out | signed_in` reducer —
+  `HYDRATE_SIGNED_OUT`/`SIGNED_IN`/`TOKEN_REFRESHED`/`SIGNED_OUT`, with
+  `TOKEN_REFRESHED` a deliberate no-op when not signed in so a late-resolving
+  refresh after logout can't resurrect a session) and `refresh-lock.ts`
+  (`createSingleFlight` — collapses concurrent callers into one underlying
+  promise, fresh run after settle, rejection propagates to all callers and
+  clears the lock). `src/features/auth/auth-provider.tsx` wraps these in a
+  `AuthSessionProvider`/`useAuthSession()` React context: refresh token in
+  expo-secure-store, access token + user in memory, cold-start hydration
+  (stored refresh token → `POST /auth/refresh` → `GET /users/me` to get the
+  user, since refresh returns tokens only) and a `getToken()` with the exact
+  shape Clerk's `useAuth().getToken` had, so every existing `lib/api/*.ts`
+  call site needed zero signature changes. New `src/lib/api/auth.ts` holds
+  every `/auth/*` + `/users/me` call (register/verifyOtp/resendOtp/login/
+  forgotPassword/resetPassword/refresh/logout/fetchMe), matching the Phase-1
+  contracts literally.
+  `src/lib/api-client.ts`: added a module-level `AuthTokenSource` registry
+  (`setAuthTokenSource`) the provider registers itself into on mount;
+  `apiFetch` now retries once on a 401 via the registered single-flight
+  `refreshAccessToken`, so *every* domain call (credits, listings, unlocks,
+  ...) gets silent-refresh-and-retry for free without threading a refresh
+  callback through each `lib/api/*.ts` function. `publicFetch` gained an
+  `init` param (register/login/etc. are unauthenticated POSTs, not GETs).
+  `_layout.tsx`: `ClerkProvider` → `AuthSessionProvider`, `useAuth()` →
+  `useAuthSession()`, the public-path redirect effect's logic is untouched —
+  `forgot-password`/`reset-password` added to `publicPaths`, `sso-callback`
+  removed. `mobile-app-provider.tsx`: Clerk's `useAuth/useClerk/useUser` →
+  `useAuthSession()`; the old `unsafeMetadata`-parsing effect (Clerk's
+  `AuthUser` had no first-class name/phone fields, so the redesign had
+  stashed them in `unsafeMetadata`) is replaced with a direct map from the
+  API's `AuthUser` (real `firstName`/`lastName`/`phoneNumber` fields) — net
+  deletion of `readUnsafeMetadataString`/`resolveDisplayName`, no
+  replacement needed. `use-delete-account.ts`: Clerk `signOut()` → the new
+  provider's `logout()` (best-effort, called after the API delete
+  succeeds).
+  Screens: `RegisterScreen` collects email+password+names+phone, calls
+  `register()`, routes to `VerifyOtpScreen` via a new `verifyOtpHref(phone)`
+  (the API's `verify-otp`/`resend-otp` need the phone passed explicitly —
+  Clerk's `signUp` object used to carry it implicitly). `VerifyOtpScreen`
+  now verifies the *phone* via `verifyOtp()`/`resendOtp()` instead of
+  Clerk's email code — this was always the product intent (decision 1); the
+  pre-migration screen used email only because Clerk's auth was email-based.
+  `LoginScreen` calls `login()`; the "Forgot Password?" link is restored,
+  routing to the new `forgot-password.tsx`. SSO (Google/Apple, `useSSO`,
+  `sso-callback.tsx`, `AuthDivider`, `buildSocialMetadata`,
+  `useSocialAuthFlow`) is deleted outright per decision 3, not adapted.
+  `auth-shared.tsx`: `getClerkErrorMessage` → `getApiErrorMessage` (reads
+  `ApiRequestError`); added `passwordPolicyError` mirroring the contract's
+  `passwordSchema` so a weak password fails in the UI, not a round-trip 400.
+  New `ForgotPasswordScreen`/`ResetPasswordScreen` built from the
+  `forgot_password_phone`/`reset_password_form` wireframes, using the dark
+  `ScreenHeader` shell the wireframes show (not the light `AuthHeader` the
+  restyled-not-rewired screens use) — closer wireframe fidelity for the two
+  screens explicitly "built from wireframes" rather than restyled.
+  Design deltas (intentional, both forced by the real API contract, not
+  taste): (1) `forgot-password.tsx`'s field is **email**, not the
+  wireframe's phone — `POST /auth/forgot-password` is keyed by email
+  (matching login's identifier, and the anti-enumeration lookup), and always
+  sends the OTP to the phone on file server-side; the user never picks a
+  channel. (2) `reset-password.tsx` adds a 6-box OTP code field the
+  wireframe doesn't have — the wireframe assumes a tapped email-link token,
+  but this migration ships no mailer (decision 5), so the SMS code must be
+  typed in; everything else (headline, password + confirm fields, the
+  live-checked requirements list, "Update Password") matches the wireframe.
+  On success, `reset-password` routes to Login, not Home, since the API
+  revokes every existing refresh token for the account.
+  Dependency removal: `@clerk/expo` gone from `package.json` and
+  `app.config.ts`'s `plugins` array; also removed `expo-auth-session` and
+  `expo-web-browser` (verified zero remaining imports anywhere in `src/` —
+  both existed only for the now-deleted SSO flow) and their `.env.example`/
+  `app.config.ts` plugin traces. `native-config.test.ts` repointed (kept the
+  file, per the plan): asserts `@clerk/expo` is gone from both
+  `package.json` and the plugins array, asserts `expo-auth-session`/
+  `expo-web-browser` are gone, asserts `expo-secure-store` stays (the new
+  session's dependency), asserts `expo-camera`/`expo-location` stay
+  registered as plugins.
+  **Found and fixed an unrelated infra bug while getting gates to run at
+  all in this worktree:** `jest.config.js` used `testMatch` (glob-based);
+  Jest's glob-to-regex normalization treats a literal `\.` in the resolved
+  `rootDir` as an escape sequence rather than a path separator + dot, so any
+  checkout under a dot-prefixed segment — exactly this repo's
+  `.claude/worktrees/<name>/` parallel-session pattern — silently matched
+  **zero** test files (`pnpm --filter @pataspace/mobile test` reported
+  "testMatch: 0 matches" with exit 1, no other diagnostic). Switched to
+  `testRegex` (a plain regex against the resolved path, not glob-compiled,
+  so it isn't subject to the escape bug); confirmed both ways side by side
+  before committing to the fix. This isn't cosmetic — without it, no gate in
+  this phase (or any future worktree-based session) could be validated at
+  all, silently.
+  Judgment calls beyond the plan doc's literal text: (1) `expo-router`'s
+  typed routes are hand-maintained in a committed `src/types/expo-router.d.ts`
+  (`.expo/types/router.d.ts` is generated+gitignored, absent in a fresh
+  worktree) — added `/forgot-password` and `/reset-password` entries
+  (`reset-password` requires an `email` param, matching the existing
+  required-param routes like `/listing`); found by `tsc` failing on the new
+  `router.push`/`router.replace` calls, not by inspection. (2) Removed
+  `expo-auth-session`/`expo-web-browser` beyond the plan's literal ask
+  (`@clerk/expo` only) since they were SSO-only and fully orphaned — flagging
+  here in case that's unwanted scope.
+  Gates: `pnpm --filter @pataspace/mobile exec tsc --noEmit` exit 0;
+  `pnpm --filter @pataspace/mobile test` 10 suites / 66 tests green
+  (new: `session-state.test.ts` 7 tests, `refresh-lock.test.ts` 4 tests,
+  `native-config.test.ts` repointed to 5 tests); `pnpm why @clerk/expo`
+  returns nothing.
+  **Cannot run in this sandbox (no device, no EAS credentials) — Amoni's
+  step:** the on-device pass (register→OTP→login→forgot→reset, light+dark)
+  and the unlock→pay smoke test. Removing `@clerk/expo` removes native
+  modules from the binary again (same class of change as the 2026-07-10
+  incident when it was *added*), so **a fresh dev-client and preview-APK
+  rebuild is required** before any device testing — this is a rebuild, not
+  optional: `eas build --profile development` and
+  `pnpm --filter @pataspace/mobile build:apk`.
 
 ## Phase 3 — Web: NextAuth Credentials over the API
 
