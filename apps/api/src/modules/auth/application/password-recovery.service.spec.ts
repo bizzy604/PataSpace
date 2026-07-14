@@ -5,7 +5,6 @@ import { StoredUser } from '../../user/user.service';
 describe('PasswordRecoveryService', () => {
   const createStoredUser = (overrides: Partial<StoredUser> = {}): StoredUser => ({
     id: 'user_1',
-    clerkId: null,
     phoneNumberEncrypted: 'encrypted-phone',
     phoneVerified: true,
     email: 'user@example.com',

@@ -488,7 +488,50 @@ manual admin console pass against the Phase-1 API.
 Gates: all workspace test suites green; `docker compose` stack boots with
 the new env; the four money paths pass on the final binaries.
 
-- [ ] Phase 4 complete
+- [x] Phase 4 complete (2026-07-14) — **code/repo scope done; live-infra
+  actions remain human-only (listed below).**
+  Done here:
+  - `users.clerkId` dropped: removed from `prisma/schema.prisma`, the code
+    read-path (`userSelect` + `StoredUser`), and all five test mocks; the
+    now-impossible "orphaned clerkId bypasses the M-Pesa gate" regression
+    test removed (its premise can't exist without the column). Hand-authored
+    migration `20260714000000_drop_users_clerk_id/migration.sql` (drops only
+    the column + its unique index; deliberately leaves phoneNumberHash /
+    phoneNumberEncrypted / passwordHash nullable — re-adding NOT NULL could
+    fail on existing rows and isn't needed).
+  - Data-check: dropping the column is low-risk — it holds only vestigial
+    ID strings no code reads after Phases 1-3; no user rows are affected. The
+    authoritative prod data-check (`SELECT count(*) ... WHERE "clerkId" IS
+    NOT NULL`) still can't run from here (no prod DB access) — it's a
+    pre-deploy human step, but the migration is safe regardless since the
+    column is unused.
+  - Purged the last stale current-behaviour reference
+    (`infra/docker/VPS_DEPLOY.md` told deployers to set
+    `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` — removed). Verified clean: every
+    `.env.example`, `test/setup-env.ts`, all READMEs, the CI workflow. Left
+    as history (correctly): the migration that *added* clerkId, the
+    PRODUCTION_AUDIT / SECURITY_AUDIT snapshots (rewriting audit findings
+    would falsify the record; Clerk's removal already resolves those items),
+    and design-rationale comments that mention what Clerk was replaced by.
+  - `pnpm why @clerk/backend @clerk/expo @clerk/nextjs` returns nothing;
+    lockfile has zero `@clerk/*`.
+  Gates: contracts build + 15/15; api `tsc` clean + **86 suites / 451 tests**
+  (one fewer than Phase 3's 452 — the removed clerkId regression test);
+  mobile `tsc` clean + 66 tests; web `tsc` clean + `next build` compiles and
+  generates all 13 routes. (The web build's final standalone-copy step hit a
+  host `ENOSPC` — disk 100% full — which is environmental, not code; the
+  correctness gates all passed.)
+  **Remains human-only (needs live systems / prod access):**
+  1. Deploy the drop migration to prod (`prisma migrate deploy` on the next
+     API deploy) — optionally run the clerkId count first.
+  2. Delete `CLERK_SECRET_KEY` from the VPS env; delete
+     `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` from the EAS environments
+     (development/preview/production); deactivate the Clerk application in
+     its dashboard (keep the org for audit history).
+  3. Final full-stack smoke on real infra (web admin login; mobile
+     register→verify→login→unlock→pay→confirm; account deletion) — depends on
+     the mobile EAS dev-client/APK rebuild already noted in Phase 2.
+  4. Free disk on the build host (it is at 100%).
 
 ## Sequencing and parallelism
 

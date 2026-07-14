@@ -3,7 +3,6 @@ import { AuthTokenService } from './auth-token.service';
 describe('AuthTokenService', () => {
   const storedUser = {
     id: 'user_1',
-    clerkId: null,
     phoneNumberEncrypted: 'encrypted-phone',
     phoneVerified: true,
     email: 'user@example.com',

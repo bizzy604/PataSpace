@@ -205,8 +205,6 @@ eas env:create --environment production \
   --visibility plaintext
 ```
 
-Also set `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` to the `pk_live_…` key.
-
 ## Step 8 — Monitoring (optional but recommended)
 
 Layer the observability overlay onto the running stack to get Prometheus,

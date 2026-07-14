@@ -13,7 +13,6 @@ import { PaymentService } from './payment.service';
 describe('PaymentService (orchestrator)', () => {
   const createStoredUser = (overrides = {}) => ({
     id: 'user_1',
-    clerkId: null,
     phoneVerified: true,
     isActive: true,
     isBanned: false,
@@ -99,21 +98,6 @@ describe('PaymentService (orchestrator)', () => {
       ).rejects.toBeInstanceOf(ForbiddenException);
     });
 
-    // Regression: a stale clerkId (orphaned column, Docs/14 Phase 1) used to
-    // exempt a never-verified account from this gate — an unverified user
-    // could start an M-Pesa STK push on a phone number they never proved
-    // they owned. The gate must now be a hard phoneVerified check.
-    it('rejects an unverified account even if it carries an orphaned clerkId', async () => {
-      const { service, userService } = createService();
-      userService.findStoredById.mockResolvedValue(
-        createStoredUser({ phoneVerified: false, clerkId: 'ck_orphaned' }),
-      );
-
-      await expect(
-        service.createPurchase('user_1', { package: '5_credits', paymentMethod: 'mpesa', phoneNumber: '+254712345678' }),
-      ).rejects.toBeInstanceOf(ForbiddenException);
-    });
-
     it('rejects when the account is inactive', async () => {
       const { service, userService } = createService();
       userService.findStoredById.mockResolvedValue(createStoredUser({ isActive: false }));
@@ -165,7 +149,7 @@ describe('PaymentService (orchestrator)', () => {
   describe('createPurchase — Stellar path', () => {
     it('does not require phoneVerified for stellar purchases', async () => {
       const { service, userService } = createService();
-      userService.findStoredById.mockResolvedValue(createStoredUser({ phoneVerified: false, clerkId: null }));
+      userService.findStoredById.mockResolvedValue(createStoredUser({ phoneVerified: false }));
 
       const result = await service.createPurchase('user_1', {
         package: '5_credits',

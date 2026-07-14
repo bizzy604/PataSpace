@@ -17,9 +17,6 @@ import {
 
 export const userSelect = {
   id: true,
-  // Orphaned: no code path writes or reads Clerk identities anymore
-  // (Docs/14 Phase 1). Column drops in Phase 4 after a clean-cutover check.
-  clerkId: true,
   phoneNumberEncrypted: true,
   phoneVerified: true,
   email: true,
@@ -37,7 +34,6 @@ export const userSelect = {
 
 export type StoredUser = {
   id: string;
-  clerkId: string | null;
   phoneNumberEncrypted: string | null;
   phoneVerified: boolean;
   email: string | null;
