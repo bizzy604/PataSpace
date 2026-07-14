@@ -8,7 +8,8 @@ export const appRoutes = {
   register: '/register',
   verifyOtp: '/verify-otp',
   login: '/login',
-  ssoCallback: '/sso-callback',
+  forgotPassword: '/forgot-password',
+  resetPassword: '/reset-password',
   browse: '/browse',
   search: '/search',
   filters: '/filters',
@@ -108,5 +109,25 @@ export function myListingHref(id: string): Href {
   return {
     pathname: '/my-listing',
     params: { id },
+  };
+}
+
+/**
+ * verify-otp carries the phone number it's verifying as a route param —
+ * unlike Clerk's signUp object, the API's verify-otp/resend-otp calls need
+ * the phone number passed explicitly by the caller.
+ */
+export function verifyOtpHref(phoneNumber: string): Href {
+  return {
+    pathname: '/verify-otp',
+    params: { phoneNumber },
+  };
+}
+
+/** reset-password carries the email + OTP forgot-password just sent a code for. */
+export function resetPasswordHref(email: string): Href {
+  return {
+    pathname: '/reset-password',
+    params: { email },
   };
 }
