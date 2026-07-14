@@ -44,7 +44,7 @@ async function handleResponse<T>(res: Response): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-/** Server-side fetch — passes a Clerk token obtained from auth() on the server. */
+/** Server-side fetch — passes the API access token from the NextAuth session (see auth.ts). */
 export async function serverFetch<T>(path: string, token: string | null): Promise<T> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) {
@@ -68,7 +68,7 @@ export async function publicServerFetch<T>(path: string, revalidate = 60): Promi
   return handleResponse<T>(res);
 }
 
-/** Client-side fetch — getToken is from Clerk's useAuth() hook. */
+/** Client-side fetch — getToken reads the API access token off the NextAuth session (see use-admin-data.ts). */
 export async function clientFetch<T>(
   path: string,
   getToken: () => Promise<string | null>,

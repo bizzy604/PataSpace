@@ -9,7 +9,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { SignOutButton, UserButton } from '@clerk/nextjs';
+import { signOut } from 'next-auth/react';
 import { LogOut } from 'lucide-react';
 import { BrandLogo } from '@/components/shared/brand-logo';
 import { cn } from '@/lib/utils';
@@ -68,18 +68,14 @@ export function AdminShell({
 
           <div className="flex items-center gap-3">
             <span className="hidden text-sm text-muted-foreground md:inline">{adminName}</span>
-            <div className="rounded-lg border border-border bg-card p-1 shadow-sm">
-              <UserButton />
-            </div>
-            <SignOutButton>
-              <button
-                type="button"
-                className={linkButtonClass({ variant: 'outline', size: 'sm' })}
-              >
-                <LogOut className="size-4" />
-                Sign out
-              </button>
-            </SignOutButton>
+            <button
+              type="button"
+              onClick={() => void signOut({ callbackUrl: '/' })}
+              className={linkButtonClass({ variant: 'outline', size: 'sm' })}
+            >
+              <LogOut className="size-4" />
+              Sign out
+            </button>
           </div>
         </div>
       </header>

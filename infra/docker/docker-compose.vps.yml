@@ -87,18 +87,19 @@ services:
       dockerfile: apps/web/Dockerfile
       args:
         NEXT_PUBLIC_API_BASE_URL: ${WEB_PUBLIC_API_URL:-https://api.dalakenya.com/api/v1}
-        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-}
     image: ${WEB_IMAGE:-pataspace-web:local}
     environment:
       PORT: 3000
-      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:?set CLERK_SECRET_KEY in .env}
+      # NextAuth refuses to boot without this (MissingSecret) — generate with
+      # `openssl rand -base64 32`.
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env}
+      AUTH_URL: ${AUTH_URL:?set AUTH_URL in .env}
       NEXT_PUBLIC_API_BASE_URL: ${WEB_PUBLIC_API_URL:-https://api.dalakenya.com/api/v1}
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-}
-      NEXT_PUBLIC_CLERK_SIGN_IN_URL: /auth/sign-in
-      NEXT_PUBLIC_CLERK_SIGN_UP_URL: /auth/register
-      NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL: /wallet
-      NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL: /wallet
-      NEXT_PUBLIC_CLERK_AFTER_SIGN_OUT_URL: /
+      # Server-only: NextAuth's Credentials provider and jwt-refresh callback
+      # call the API over the compose network directly (web + api share this
+      # network — see the `api` service above) instead of round-tripping
+      # through the public domain + host nginx.
+      API_INTERNAL_BASE_URL: http://api:3001/api/v1
     ports:
       - "127.0.0.1:3003:3000"
     depends_on:
