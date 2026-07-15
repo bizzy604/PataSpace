@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { ListingStatus, UploadMediaType } from '@prisma/client';
 import { ListingService } from './listing.service';
+import { DEFAULT_PRICING_CONFIG } from './domain/pricing.policy';
 import { ListingMediaResolver } from './persistence/listing-media.resolver';
 
 describe('ListingService', () => {
@@ -53,6 +54,9 @@ describe('ListingService', () => {
         key === 'security.encryptionKey' ? encryptionKey : undefined,
       ),
     };
+    const systemConfig = {
+      resolvePricingConfig: jest.fn().mockResolvedValue(DEFAULT_PRICING_CONFIG),
+    };
 
     return {
       listingCacheService,
@@ -63,6 +67,7 @@ describe('ListingService', () => {
         listingCacheService as never,
         smsService as never,
         new ListingMediaResolver(prismaService as never),
+        systemConfig as never,
         configService as never,
       ),
       smsService,

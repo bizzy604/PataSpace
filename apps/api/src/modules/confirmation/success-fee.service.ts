@@ -10,18 +10,14 @@
  * gating via hasUnsettledFee.
  */
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import {
   CommissionStatus,
   SuccessFeeStatus as PrismaSuccessFeeStatus,
 } from '@prisma/client';
 import { ConfirmationSuccessFee } from '@pataspace/contracts';
 import { PrismaService } from '../../common/database/prisma.service';
-import {
-  computeSuccessFeeKes,
-  DEFAULT_PRICING_CONFIG,
-  PricingConfig,
-} from '../listing/domain/pricing.policy';
+import { computeSuccessFeeKes } from '../listing/domain/pricing.policy';
+import { SystemConfigService } from '../system-config/system-config.service';
 import {
   commissionEligibleAt,
   posterShareOfCollected,
@@ -43,24 +39,20 @@ export type EligibleUnlock = {
 
 @Injectable()
 export class SuccessFeeService {
-  private readonly pricingConfig: PricingConfig;
-
   constructor(
     private readonly prismaService: PrismaService,
-    configService: ConfigService,
-  ) {
-    this.pricingConfig =
-      configService.get<PricingConfig>('pricing') ?? DEFAULT_PRICING_CONFIG;
-  }
+    private readonly systemConfig: SystemConfigService,
+  ) {}
 
   // Creates the fee row (idempotent) and the fee-backed commission for a
   // move-in that just became fully confirmed. The mover's already-spent
   // unlock credits are captured toward the fee; no wallet movement happens.
   async ensureForConfirmedUnlock(unlock: EligibleUnlock): Promise<ConfirmationSuccessFee> {
+    const pricingConfig = await this.systemConfig.resolvePricingConfig();
     const feeDueKes =
       unlock.listing.successFeeKes > 0
         ? unlock.listing.successFeeKes
-        : computeSuccessFeeKes(unlock.listing.monthlyRent, this.pricingConfig);
+        : computeSuccessFeeKes(unlock.listing.monthlyRent, pricingConfig);
     const creditsApplied = Math.min(unlock.creditsSpent, feeDueKes);
     const remainingKes = feeDueKes - creditsApplied;
     const status =
@@ -88,12 +80,12 @@ export class SuccessFeeService {
           unlockId: unlock.id,
         },
         update: {
-          amountKES: posterShareOfCollected(row, this.pricingConfig),
+          amountKES: posterShareOfCollected(row, pricingConfig),
         },
         create: {
           unlockId: unlock.id,
           outgoingTenantId: unlock.listing.userId,
-          amountKES: posterShareOfCollected(row, this.pricingConfig),
+          amountKES: posterShareOfCollected(row, pricingConfig),
           status: CommissionStatus.PENDING,
           eligibleAt: commissionEligibleAt(unlock.confirmations),
         },

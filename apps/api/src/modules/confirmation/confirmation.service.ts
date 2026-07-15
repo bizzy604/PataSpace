@@ -33,7 +33,9 @@ import { PrismaService } from '../../common/database/prisma.service';
 import {
   computeSuccessFeeKes,
   posterShareKes,
+  PricingConfig,
 } from '../listing/domain/pricing.policy';
+import { SystemConfigService } from '../system-config/system-config.service';
 import { ProxySessionService } from '../unlock/contact/proxy-session.service';
 import { ConfirmationNotifierService } from './confirmation-notifier.service';
 import { SuccessFeeService } from './success-fee.service';
@@ -95,6 +97,7 @@ export class ConfirmationService {
     private readonly notifier: ConfirmationNotifierService,
     private readonly successFeeService: SuccessFeeService,
     private readonly proxySessionService: ProxySessionService,
+    private readonly systemConfig: SystemConfigService,
   ) {}
 
   async createConfirmation(
@@ -116,6 +119,8 @@ export class ConfirmationService {
       commission ? { amountKES: commission.amountKES, eligibleAt: commission.eligibleAt } : null,
     );
 
+    const pricingConfig = await this.systemConfig.resolvePricingConfig();
+
     return {
       confirmationId: confirmation.id,
       unlockId: confirmation.unlockId,
@@ -132,7 +137,11 @@ export class ConfirmationService {
       successFee: settlement?.successFee,
       vacatedListingPrompt:
         input.side === ContractConfirmationSide.INCOMING_TENANT
-          ? this.buildVacatedListingPrompt(confirmation.id, unlock.listing.monthlyRent)
+          ? this.buildVacatedListingPrompt(
+              confirmation.id,
+              unlock.listing.monthlyRent,
+              pricingConfig,
+            )
           : undefined,
       message: this.buildResponseMessage(input.side, commission?.eligibleAt ?? null),
     };
@@ -311,8 +320,12 @@ export class ConfirmationService {
   private buildVacatedListingPrompt(
     confirmationId: string,
     estimateBasisRentKes: number,
+    pricingConfig: PricingConfig,
   ): VacatedListingPrompt {
-    const estimatedEarningsKes = posterShareKes(computeSuccessFeeKes(estimateBasisRentKes));
+    const estimatedEarningsKes = posterShareKes(
+      computeSuccessFeeKes(estimateBasisRentKes, pricingConfig),
+      pricingConfig,
+    );
 
     return {
       seededFromConfirmationId: confirmationId,

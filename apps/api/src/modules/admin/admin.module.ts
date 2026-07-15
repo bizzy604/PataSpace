@@ -8,9 +8,11 @@
 import { Module } from '@nestjs/common';
 import { JobsModule } from '../../jobs/jobs.module';
 import { ListingModule } from '../listing/listing.module';
+import { SystemConfigModule } from '../system-config/system-config.module';
 import { UserModule } from '../user/user.module';
 import { AdminController } from './admin.controller';
 import { AdminAuditController } from './admin-audit.controller';
+import { AdminConfigController } from './admin-config.controller';
 import { AdminDisputesController } from './admin-disputes.controller';
 import { AdminFinanceController } from './admin-finance.controller';
 import { AdminListingsController } from './admin-listings.controller';
@@ -29,10 +31,11 @@ import { AdminTrustMetricsService } from './application/admin-trust-metrics.serv
 import { AdminUserService } from './application/admin-user.service';
 
 @Module({
-  imports: [ListingModule, UserModule, JobsModule],
+  imports: [ListingModule, UserModule, JobsModule, SystemConfigModule],
   controllers: [
     AdminController,
     AdminAuditController,
+    AdminConfigController,
     AdminDisputesController,
     AdminFinanceController,
     AdminListingsController,

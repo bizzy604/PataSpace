@@ -12,6 +12,7 @@ import { ConfirmationSide } from '@prisma/client';
 import { PrismaService } from '../common/database/prisma.service';
 import { RequestContextService } from '../common/request-context/request-context.service';
 import { ListingSeedService } from '../modules/listing/listing-seed.service';
+import { SystemConfigService } from '../modules/system-config/system-config.service';
 import { UserService } from '../modules/user/user.service';
 import { SmsService } from '../infrastructure/sms/sms.service';
 
@@ -28,6 +29,7 @@ export class MoverPosterReminderJob {
     private readonly listingSeedService: ListingSeedService,
     private readonly smsService: SmsService,
     private readonly userService: UserService,
+    private readonly systemConfig: SystemConfigService,
     private readonly requestContext: RequestContextService,
   ) {}
 
@@ -69,6 +71,7 @@ export class MoverPosterReminderJob {
     });
 
     let sent = 0;
+    const pricingConfig = await this.systemConfig.resolvePricingConfig();
 
     for (const confirmation of candidates) {
       const alreadyPosted = await this.prismaService.listing.findFirst({
@@ -99,6 +102,7 @@ export class MoverPosterReminderJob {
 
       const estimate = this.listingSeedService.estimateEarnings(
         confirmation.unlock.listing.monthlyRent,
+        pricingConfig,
       );
 
       try {

@@ -52,13 +52,12 @@ import {
 } from './domain/listing-geo.util';
 import {
   computeSuccessFeeKes,
-  DEFAULT_PRICING_CONFIG,
   posterShareKes,
-  PricingConfig,
   resolveUnlockCredits,
 } from './domain/pricing.policy';
 import { ListingCacheService } from './listing-cache.service';
 import { ListingMediaResolver } from './persistence/listing-media.resolver';
+import { SystemConfigService } from '../system-config/system-config.service';
 
 const FIRST_LISTINGS_REVIEW_THRESHOLD = 3;
 const PUBLIC_MAP_COORDINATE_DECIMALS = 2;
@@ -76,7 +75,6 @@ type Viewer = {
 @Injectable()
 export class ListingService {
   private readonly encryptionKey: string;
-  private readonly pricingConfig: PricingConfig;
 
   constructor(
     private readonly prismaService: PrismaService,
@@ -84,11 +82,10 @@ export class ListingService {
     private readonly listingCacheService: ListingCacheService,
     private readonly smsService: SmsService,
     private readonly listingMediaResolver: ListingMediaResolver,
+    private readonly systemConfig: SystemConfigService,
     configService: ConfigService,
   ) {
     this.encryptionKey = configService.get<string>('security.encryptionKey') ?? '';
-    this.pricingConfig =
-      configService.get<PricingConfig>('pricing') ?? DEFAULT_PRICING_CONFIG;
   }
 
   async createListing(
@@ -116,12 +113,13 @@ export class ListingService {
       },
     });
     const requiresReview = existingListingCount < FIRST_LISTINGS_REVIEW_THRESHOLD;
+    const pricingConfig = await this.systemConfig.resolvePricingConfig();
     const unlockCostCredits = resolveUnlockCredits(
       input.houseType as unknown as PrismaListingHouseType,
-      this.pricingConfig,
+      pricingConfig,
     );
-    const successFeeKes = computeSuccessFeeKes(input.monthlyRent, this.pricingConfig);
-    const commission = posterShareKes(successFeeKes, this.pricingConfig);
+    const successFeeKes = computeSuccessFeeKes(input.monthlyRent, pricingConfig);
+    const commission = posterShareKes(successFeeKes, pricingConfig);
     const now = new Date();
 
     let listing;
@@ -615,20 +613,21 @@ export class ListingService {
     const videoMedia = input.video
       ? await this.listingMediaResolver.resolveVideoAsset(userId, input.video)
       : null;
+    const pricingConfig = await this.systemConfig.resolvePricingConfig();
     const unlockCostCredits =
       input.houseType !== undefined
         ? resolveUnlockCredits(
             input.houseType as unknown as PrismaListingHouseType,
-            this.pricingConfig,
+            pricingConfig,
           )
         : listing.unlockCostCredits;
     const successFeeKes =
       input.monthlyRent !== undefined
-        ? computeSuccessFeeKes(input.monthlyRent, this.pricingConfig)
+        ? computeSuccessFeeKes(input.monthlyRent, pricingConfig)
         : listing.successFeeKes;
     const commission =
       input.monthlyRent !== undefined
-        ? posterShareKes(successFeeKes, this.pricingConfig)
+        ? posterShareKes(successFeeKes, pricingConfig)
         : listing.commission;
 
     const updatedListing = await this.prismaService.listing.update({

@@ -6,6 +6,7 @@
  *   the same buyer/owner identities (buyer_1 unlocked owner_1's listing).
  * Used by: confirmation.service.spec.ts, confirmation.authorization.spec.ts.
  */
+import { DEFAULT_PRICING_CONFIG } from '../listing/domain/pricing.policy';
 import { ConfirmationService } from './confirmation.service';
 
 export const createConfirmationService = () => {
@@ -37,17 +38,22 @@ export const createConfirmationService = () => {
   const proxySessionService = {
     extendForConfirmedUnlock: jest.fn(),
   };
+  const systemConfig = {
+    resolvePricingConfig: jest.fn().mockResolvedValue(DEFAULT_PRICING_CONFIG),
+  };
 
   return {
     notifier,
     prismaService,
     proxySessionService,
     successFeeService,
+    systemConfig,
     service: new ConfirmationService(
       prismaService as never,
       notifier as never,
       successFeeService as never,
       proxySessionService as never,
+      systemConfig as never,
     ),
   };
 };

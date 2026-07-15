@@ -9,6 +9,7 @@ import { ConfirmationModule } from '../modules/confirmation/confirmation.module'
 import { CreditModule } from '../modules/credit/credit.module';
 import { ListingModule } from '../modules/listing/listing.module';
 import { PaymentModule } from '../modules/payment/payment.module';
+import { SystemConfigModule } from '../modules/system-config/system-config.module';
 import { UserModule } from '../modules/user/user.module';
 import { CommissionPayoutJob } from './commission-payout.job';
 import { CommissionPayoutProcessor } from './commission-payout.processor';
@@ -22,7 +23,14 @@ import { PaymentReconciliationJob } from './payment-reconciliation.job';
 import { ReferralRewardJob } from './referral-reward.job';
 
 @Module({
-  imports: [UserModule, PaymentModule, ConfirmationModule, CreditModule, ListingModule],
+  imports: [
+    UserModule,
+    PaymentModule,
+    ConfirmationModule,
+    CreditModule,
+    ListingModule,
+    SystemConfigModule,
+  ],
   providers: [
     CommissionPayoutJob,
     CommissionPayoutProcessor,

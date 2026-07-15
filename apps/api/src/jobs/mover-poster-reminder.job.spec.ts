@@ -35,6 +35,9 @@ describe('MoverPosterReminderJob', () => {
     const requestContext = {
       runInternal: jest.fn((callback: () => unknown) => callback()),
     };
+    const systemConfig = {
+      resolvePricingConfig: jest.fn().mockResolvedValue({}),
+    };
 
     return {
       listingSeedService,
@@ -45,6 +48,7 @@ describe('MoverPosterReminderJob', () => {
         listingSeedService as never,
         smsService as never,
         userService as never,
+        systemConfig as never,
         requestContext as never,
       ),
     };

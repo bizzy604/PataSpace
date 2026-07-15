@@ -7,6 +7,8 @@
  */
 import type {
   AdminAuditLogsResponse,
+  AdminConfigEntry,
+  AdminConfigResponse,
   AdminDisputesResponse,
   AdminFinanceSummaryResponse,
   AdminListingsResponse,
@@ -216,4 +218,15 @@ export function fetchAuditLogs(getToken: GetToken, params: AuditFilters = {}) {
 
 export function exportAuditLogsCsv(getToken: GetToken, params: Omit<AuditFilters, 'page'> = {}) {
   return clientFetchText(`/admin/audit-logs/export${toQuery(params)}`, getToken);
+}
+
+export function fetchAdminConfig(getToken: GetToken) {
+  return clientFetch<AdminConfigResponse>('/admin/config', getToken);
+}
+
+export function updateAdminConfig(getToken: GetToken, key: string, value: number) {
+  return clientFetch<AdminConfigEntry>(`/admin/config/${key}`, getToken, {
+    method: 'PUT',
+    body: JSON.stringify({ value }),
+  });
 }

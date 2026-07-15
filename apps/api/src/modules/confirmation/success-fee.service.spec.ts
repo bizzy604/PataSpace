@@ -5,6 +5,7 @@
  * here misprices poster payouts (spec section 4.3 worked examples).
  * Used by: jest unit lane (pnpm test:unit).
  */
+import { DEFAULT_PRICING_CONFIG } from '../listing/domain/pricing.policy';
 import { SuccessFeeService } from './success-fee.service';
 
 describe('SuccessFeeService', () => {
@@ -15,13 +16,13 @@ describe('SuccessFeeService', () => {
         findFirst: jest.fn(),
       },
     };
-    const configService = {
-      get: jest.fn().mockReturnValue(undefined),
+    const systemConfig = {
+      resolvePricingConfig: jest.fn().mockResolvedValue(DEFAULT_PRICING_CONFIG),
     };
 
     return {
       prismaService,
-      service: new SuccessFeeService(prismaService as never, configService as never),
+      service: new SuccessFeeService(prismaService as never, systemConfig as never),
     };
   };
 

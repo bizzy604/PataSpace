@@ -179,7 +179,44 @@ Original plan (for reference):
 - Outcome: every admin mutation shipped in Phases 1-2 (and existing
   ban/approve/resolve actions) is inspectable; export works for compliance.
 
-### Phase 4 — System configuration and pricing
+### Phase 4 — System configuration and pricing — DONE (2026-07-14)
+
+Shipped (design decisions confirmed with Amoni: layered DB-over-env config;
+real pricing-model knobs, not the wireframe's simplified single-cost fields):
+
+- `SystemConfigService` (`modules/system-config/`) resolves an effective
+  `PricingConfig` as the deploy-time env values overlaid with any
+  `SystemConfig` DB rows, cached in-process and invalidated on write. With no
+  rows the resolved config is byte-identical to today's env defaults, so the
+  screen is additive and reversible. A `config-registry.ts` declares every
+  editable key once (group, label, unit, kind, bounds) with pure parse/validate.
+- The four pricing consumers (ListingService create + update, SuccessFeeService,
+  SuccessFeeSettlementService, ListingSeedService) plus the confirmation
+  earnings estimate and the mover-poster reminder job now resolve pricing
+  per-call instead of capturing it at construction, so edits take effect with
+  no restart. Snapshots are unchanged: unlock cost and success fee are still
+  frozen onto the listing at create, so edits only affect NEW listings.
+- API: `GET /admin/config` (effective values + default/override source +
+  updatedAt), `PUT /admin/config/:key` (per-key range/kind validation, a
+  floor≤cap cross-check, audit-logged `config.updated` with old/new). Admin
+  key namespace: `pricing.*` (5 unlock bands, successFeePct, feeFloorKes,
+  feeCapKes, splitPoster) and `referral.rewardCredits`.
+- Web: `/admin/config` — Pricing & Revenue and Incentives & Logistics cards,
+  per-key inline edit + save, default/override badges. Config nav entry.
+- Tests: 15 unit (registry validation; resolver env-base/override/out-of-range;
+  list; setValue validation + audit + invalidation) + a live-app e2e (a
+  pricing edit changes the next 2BR listing's snapshot with no restart while
+  the earlier listing keeps its snapshot; bad values 400; non-admin 403).
+  All 422 API unit tests green — the rewire preserved every existing money
+  path exactly.
+
+Deliberately NOT done (kept as consts to avoid touching commission-eligibility
+timing this phase): `COMMISSION_WAIT_DAYS` (7) and `AUTO_CONFIRM_AFTER_DAYS`
+(14). The legacy seed rows (`commission_rate`, `unlock_cost_percentage`,
+`confirmation_period_days`) are unrelated to the new key namespace and were
+left untouched; they remain unread.
+
+Original plan (for reference):
 
 The real fix is making runtime behavior read `SystemConfig`, not just
 building a settings form over a dead table.
