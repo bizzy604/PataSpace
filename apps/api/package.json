@@ -13,6 +13,7 @@
     "prisma:migrate:status": "ts-node prisma/bootstrap/run-prisma-with-migration-url.ts migrate status",
     "prisma:migrate:resolve": "ts-node prisma/bootstrap/run-prisma-with-migration-url.ts migrate resolve",
     "prisma:seed": "prisma db seed",
+    "prisma:seed:admin": "ts-node -r dotenv/config prisma/seed-admin.ts",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "build": "nest build",
