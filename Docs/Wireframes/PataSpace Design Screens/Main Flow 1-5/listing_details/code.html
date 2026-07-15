@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>PataSpace - Listing Details</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&amp;family=Poppins:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-container": "#e4e2e1",
+                        "tertiary-fixed": "#e0e3e4",
+                        "primary": "#00667e",
+                        "on-tertiary-fixed-variant": "#434748",
+                        "on-surface": "#1a1c1c",
+                        "on-primary-fixed": "#001f28",
+                        "tertiary-container": "#737778",
+                        "outline": "#6f797d",
+                        "status-warning": "#FFCC00",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-container": "#ffffff",
+                        "on-primary-container": "#ffffff",
+                        "surface-variant": "#e2e2e2",
+                        "on-tertiary-fixed": "#181c1d",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#5a5e5f",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#28809a",
+                        "primary-fixed-dim": "#83d1ee",
+                        "surface-container-low": "#f3f3f4",
+                        "surface-dim": "#dadada",
+                        "inverse-primary": "#83d1ee",
+                        "status-success": "#34C759",
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed-variant": "#474746",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#e4e2e1",
+                        "on-primary-fixed-variant": "#004e60",
+                        "inverse-surface": "#2f3131",
+                        "surface": "#f9f9f9",
+                        "outline-variant": "#bec8cd",
+                        "on-secondary": "#ffffff",
+                        "status-error": "#FF3B30",
+                        "on-secondary-container": "#656464",
+                        "surface-container": "#eeeeee",
+                        "on-error": "#ffffff",
+                        "on-background": "#1a1c1c",
+                        "surface-container-high": "#e8e8e8",
+                        "on-surface-variant": "#3f484c",
+                        "tertiary-fixed-dim": "#c3c7c8",
+                        "surface-tint": "#00677f",
+                        "surface-bright": "#f9f9f9",
+                        "surface-subtle": "#EDEDED",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "primary-fixed": "#b7eaff",
+                        "inverse-on-surface": "#f0f1f1",
+                        "surface-container-highest": "#e2e2e2",
+                        "background": "#ffffff",
+                        "secondary": "#5f5e5e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-horizontal": "16px",
+                        "unit": "8px",
+                        "gutter-vertical": "24px",
+                        "component-gap": "16px",
+                        "touch-target": "44px",
+                        "safe-top": "env(safe-area-inset-top)",
+                        "safe-bottom": "env(safe-area-inset-bottom)"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Poppins", "sans-serif"],
+                        "body-md": ["DM Sans", "sans-serif"],
+                        "headline-sm": ["Poppins", "sans-serif"],
+                        "display-01": ["Poppins", "sans-serif"],
+                        "caption": ["DM Sans", "sans-serif"],
+                        "headline-md": ["Poppins", "sans-serif"],
+                        "display-02": ["Poppins", "sans-serif"],
+                        "body-lg": ["DM Sans", "sans-serif"],
+                        "label-md": ["DM Sans", "sans-serif"],
+                        "headline-lg-mobile": ["Poppins", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["28px", { "lineHeight": "34px", "fontWeight": "700" }],
+                        "body-md": ["15px", { "lineHeight": "21px", "fontWeight": "400" }],
+                        "headline-sm": ["20px", { "lineHeight": "25px", "fontWeight": "600" }],
+                        "display-01": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "caption": ["11px", { "lineHeight": "14px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "30px", "fontWeight": "600" }],
+                        "display-02": ["34px", { "lineHeight": "41px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "body-lg": ["17px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-md": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "30px", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Custom scrollbar for horizontal carousel */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Sticky header shadow transition */
+        .scrolled .sticky-header {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .sticky-header {
+            opacity: 0;
+            transform: translateY(-100%);
+            transition: all 0.3s ease;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest text-on-surface antialiased overflow-x-hidden min-h-screen pb-24">
+<!-- Top Navigation (Transparent -> Blurred on scroll) -->
+<nav class="fixed top-0 w-full z-50 transition-all duration-300 pt-[env(safe-area-inset-top)] pb-2 px-margin-horizontal flex justify-between items-center h-[calc(44px+env(safe-area-inset-top))]" id="topNav">
+<button class="flex items-center text-primary-container font-label-md bg-surface-container-lowest/80 backdrop-blur-md rounded-full px-3 py-2 shadow-sm touch-target">
+<span class="material-symbols-outlined mr-1" style="font-variation-settings: 'wght' 600;">chevron_left</span>
+            Listings
+        </button>
+<div class="flex gap-2">
+<button class="flex items-center justify-center bg-surface-container-lowest/80 backdrop-blur-md rounded-full w-10 h-10 shadow-sm touch-target text-on-surface">
+<span class="material-symbols-outlined">ios_share</span>
+</button>
+<button class="flex items-center justify-center bg-surface-container-lowest/80 backdrop-blur-md rounded-full w-10 h-10 shadow-sm touch-target text-on-surface">
+<span class="material-symbols-outlined">favorite_border</span>
+</button>
+</div>
+</nav>
+<!-- Sticky Price Header (Appears on scroll) -->
+<div class="sticky-header fixed top-0 w-full z-40 bg-surface-container-lowest/95 backdrop-blur-md shadow-sm pt-[calc(44px+env(safe-area-inset-top))] pb-3 px-margin-horizontal flex justify-between items-center" id="stickyHeader">
+<div>
+<p class="text-caption font-caption text-outline">Monthly Rent</p>
+<p class="text-headline-sm font-headline-sm text-primary-container">KES 20,000<span class="text-body-md font-body-md text-on-surface-variant">/mo</span></p>
+</div>
+<button class="bg-primary-container text-on-primary font-label-md text-label-md px-4 py-2 rounded-full shadow-sm hover:opacity-90 active:scale-95 transition-all">
+            Unlock Contact
+        </button>
+</div>
+<main class="w-full max-w-[393px] mx-auto relative">
+<!-- Hero Image Carousel -->
+<div class="relative w-full h-[375px] bg-surface-container group">
+<div class="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar h-full w-full">
+<!-- Image 1 -->
+<div class="snap-center shrink-0 w-full h-full relative">
+<div class="bg-cover bg-center w-full h-full" data-alt="A bright, modern Kenyan apartment living room with large windows, sunlight streaming in, minimalist contemporary furniture, a sleek teal accent chair, and light hardwood floors. High-key lighting, real estate photography style." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCCNmw8BidW8DLvi1035CntBH7MHGNSOqsyyDWhOf8rmc8NL7Dpxj_dNpvp-ZjIZPQFXgrhgH3B51Uon3fofJgjmPnbwz8_IZILW_Oc1RRWEXeCjLPbkKHq2jzBiLK3AiN7szfGWWBjvmJmXbXgMleA1GTQlk2geidIWZSDdJw_TQwmxGPXrL7DYYpSSfXerqCbJ6HTnWh1sUtqxD0jMRuH6A6YYp3TM4zmF-gAKXnuaMK0H8VyIu4-_dvDLZFtoeqyBIkFMz2HWLr4')"></div>
+</div>
+<!-- Image 2 -->
+<div class="snap-center shrink-0 w-full h-full relative">
+<div class="bg-cover bg-center w-full h-full" data-alt="A clean, modern kitchen in a Nairobi apartment with white cabinetry, granite countertops, stainless steel appliances, and soft natural light from a window. Contemporary real estate photography, clean and pristine." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB1Evkp6bDV-vvx0Co8ZVIzZGxHBzSmC7hL2hqWcfMvXNlZuwcyfbWpr_ORDdFi0Qr5Pb2vCp98uTDLXl0AWcV6eFdnABZPl7kCzN9GaxTlwrK-rpObWSuyEDlHyeUBfePyOx9b9nc8AXGXEfYoTgwhWfde-eRSrew7SgozGCZxcnAgvRuzo2amZLBu6_IOKWOAXdUTGjZ8ZkbVnxiVAuT9-bDs_0w5ngGjTno13fcND0_l3PXQY_xoEbKMTMp-KcyU3FWIbTAaurBb')"></div>
+</div>
+<!-- Image 3 -->
+<div class="snap-center shrink-0 w-full h-full relative">
+<div class="bg-cover bg-center w-full h-full" data-alt="A cozy, well-lit bedroom with a large bed, white linens, a small nightstand, and a window showing an urban view. Soft morning light, modern minimalist aesthetic, real estate style." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBgZiHl1mEPPg_GLmr4ImDPx4r4V1hWBbAxOs7aybwgcJ4ZDqHYkkbD3CMHBPlJ_QBKq6ayVo8hZni1FLC0nmzwoHvbkq-ms8qka3LtvgG65CiQ9weFRW3UmBVg4gfdBkGDAcJqxgwkcao-1TQfLIDXhtig2zGeaWMyC_LkJ7olrrun2WAIvCFMfvdbw9aok-y62YLeM4xyxIGidugujvSGE1VY4hEfcXT5Gco062phCc8cJAPDi25AXG6gfXsWG9BgOAfghxnKtFmW')"></div>
+</div>
+</div>
+<!-- Photo Count Badge -->
+<div class="absolute top-[calc(16px+env(safe-area-inset-top))] right-margin-horizontal bg-on-surface/70 backdrop-blur-sm text-on-primary font-caption text-caption px-3 py-1.5 rounded-full z-10 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">photo_camera</span>
+                1/10
+            </div>
+<!-- Page Control Dots -->
+<div class="absolute bottom-4 left-0 w-full flex justify-center gap-2 z-10">
+<div class="w-2 h-2 rounded-full bg-on-primary shadow-sm"></div>
+<div class="w-2 h-2 rounded-full bg-on-primary/50 shadow-sm"></div>
+<div class="w-2 h-2 rounded-full bg-on-primary/50 shadow-sm"></div>
+<div class="w-2 h-2 rounded-full bg-on-primary/50 shadow-sm"></div>
+<div class="w-2 h-2 rounded-full bg-on-primary/50 shadow-sm"></div>
+</div>
+<!-- Gradient Overlay for Bottom -->
+<div class="absolute bottom-0 w-full h-24 bg-gradient-to-t from-on-surface/40 to-transparent pointer-events-none"></div>
+</div>
+<!-- Property Info Section -->
+<div class="px-margin-horizontal pt-gutter-vertical pb-4">
+<div class="flex justify-between items-start mb-2">
+<div>
+<h1 class="text-headline-lg-mobile font-headline-lg-mobile text-primary-container leading-tight">KES 20,000<span class="text-headline-sm font-headline-sm text-on-surface-variant font-normal">/mo</span></h1>
+</div>
+<button class="bg-surface-container-high rounded-full w-10 h-10 flex items-center justify-center text-primary-container active:scale-95 transition-transform">
+<span class="material-symbols-outlined">ios_share</span>
+</button>
+</div>
+<p class="text-body-lg font-body-lg text-on-surface flex items-center gap-1 mb-4">
+<span class="material-symbols-outlined text-outline">location_on</span>
+                Kilimani, Nairobi
+            </p>
+<!-- Metadata Pills -->
+<div class="flex flex-wrap gap-2 mb-4">
+<div class="flex items-center gap-1.5 bg-surface-subtle px-3 py-1.5 rounded-full text-label-md font-label-md text-on-surface">
+<span class="material-symbols-outlined text-[18px]">bed</span>
+                    2 bed
+                </div>
+<div class="flex items-center gap-1.5 bg-surface-subtle px-3 py-1.5 rounded-full text-label-md font-label-md text-on-surface">
+<span class="material-symbols-outlined text-[18px]">shower</span>
+                    1 bath
+                </div>
+<div class="flex items-center gap-1.5 bg-surface-subtle px-3 py-1.5 rounded-full text-label-md font-label-md text-on-surface">
+<span class="material-symbols-outlined text-[18px]">apartment</span>
+                    Apartment
+                </div>
+</div>
+<p class="text-body-md font-body-md text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">calendar_month</span>
+                Available from Apr 1, 2026
+            </p>
+</div>
+<!-- Stats Row -->
+<div class="px-margin-horizontal mb-gutter-vertical">
+<div class="flex bg-surface-subtle rounded-xl p-3 divide-x divide-outline-variant/30">
+<div class="flex-1 flex flex-col items-center justify-center">
+<span class="font-headline-sm text-headline-sm text-on-surface">45</span>
+<span class="font-caption text-caption text-outline">Views</span>
+</div>
+<div class="flex-1 flex flex-col items-center justify-center">
+<span class="font-headline-sm text-headline-sm text-on-surface">3</span>
+<span class="font-caption text-caption text-outline">Unlocks</span>
+</div>
+<div class="flex-1 flex flex-col items-center justify-center">
+<span class="font-headline-sm text-headline-sm text-on-surface text-[16px]">2 days</span>
+<span class="font-caption text-caption text-outline">Listed ago</span>
+</div>
+</div>
+</div>
+<hr class="border-surface-variant mx-margin-horizontal mb-gutter-vertical"/>
+<!-- Description Section -->
+<section class="px-margin-horizontal mb-gutter-vertical">
+<h2 class="text-headline-sm font-headline-sm mb-3 text-on-surface">About This Property</h2>
+<div class="relative">
+<p class="text-body-md font-body-md text-on-surface-variant line-clamp-3">
+                    Spacious 2-bedroom apartment located in the heart of Kilimani. Features a modern open-plan kitchen, large windows for natural light, and a balcony with city views. The master bedroom is en-suite with modern fittings. The building offers excellent security and proximity to Yaya Centre and international schools.
+                </p>
+<div class="absolute bottom-0 right-0 bg-gradient-to-l from-surface-container-lowest via-surface-container-lowest to-transparent pl-8">
+<button class="text-primary-container font-label-md text-label-md hover:underline">Read more</button>
+</div>
+</div>
+</section>
+<!-- GPS Verified Badge -->
+<div class="px-margin-horizontal mb-gutter-vertical">
+<div class="bg-status-success/10 border border-status-success/20 rounded-xl p-4 flex items-start gap-3">
+<div class="bg-status-success/20 rounded-full p-2 flex-shrink-0">
+<span class="material-symbols-outlined text-status-success" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+</div>
+<div>
+<h3 class="font-label-md text-[14px] text-on-surface mb-1">GPS Verified Listing</h3>
+<p class="font-caption text-caption text-outline">Photos were taken at this exact location by the PataSpace team or a verified agent.</p>
+</div>
+</div>
+</div>
+<!-- Amenities Section -->
+<section class="px-margin-horizontal mb-gutter-vertical">
+<h2 class="text-headline-sm font-headline-sm mb-4 text-on-surface">Amenities</h2>
+<div class="grid grid-cols-2 gap-y-4 gap-x-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-success text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Water 24/7</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-success text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Generator Backup</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-success text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Secure Parking</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-success text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Elevator</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-success text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Balcony</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-success text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Built-in Wardrobes</span>
+</div>
+</div>
+<button class="mt-4 w-full py-3 border border-outline-variant rounded-full text-primary-container font-label-md text-label-md text-center active:bg-surface-subtle transition-colors">
+                Show all 12 amenities
+            </button>
+</section>
+<!-- From Current Tenant Section -->
+<section class="px-margin-horizontal mb-gutter-vertical">
+<h2 class="text-headline-sm font-headline-sm mb-4 text-on-surface">From Current Tenant</h2>
+<div class="bg-surface-subtle rounded-r-xl border-l-4 border-primary-container p-4">
+<p class="font-body-md text-body-md italic text-on-surface-variant mb-3">
+                    "The water pressure here is fantastic and the building management is very responsive. Moving out because I'm relocating for work, but I've loved living here for the past 2 years."
+                </p>
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-primary-container font-label-md">
+                        SO
+                    </div>
+<div>
+<p class="font-label-md text-[13px] text-on-surface">Sarah O.</p>
+<p class="font-caption text-caption text-outline">Moving out Mar 25, 2026</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Location Section -->
+<section class="px-margin-horizontal mb-8">
+<h2 class="text-headline-sm font-headline-sm mb-4 text-on-surface">Location</h2>
+<div class="rounded-xl overflow-hidden bg-surface-container relative h-[200px] mb-2 shadow-sm border border-surface-variant">
+<img class="w-full h-full object-cover" data-alt="A simplified digital map showing a neighborhood in Kilimani, Nairobi with clean lines, soft light mode colors, and a central teal location pin marker. High-end modern UI map aesthetic." data-location="Nairobi" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvLPpBPVnFZ9Wdv-Oi-I3NxQ7iX2h8kfyWQHY2qSsAhX0EuomZ14NZ4B6H3jqDjjXligSVh7j_TdH1nTb3lr_ZOtZ0qBw4msdGyUNTpHpWjSzqTPWLPhMjAFDxHo1twcZUj__fQXm-F3O74r1O70WVaU6PMOsnhtbmbIrOgUlHeSZfwJOv_mhwSkNkVpxM3jhXdOpy3yiJPqrOyc24NiE4jfi9SnbmxAshse6O_aVnPzYo5cEsIgxUmI8Wg4JjidHK4OSbKQIzFaQc"/>
+<!-- Approximate Location Overlay -->
+<div class="absolute inset-0 bg-surface-container-lowest/20 flex items-center justify-center pointer-events-none">
+<div class="w-32 h-32 rounded-full border-2 border-primary-container bg-primary-container/20 flex items-center justify-center">
+<div class="bg-surface-container-lowest rounded-full p-2 shadow-md">
+<span class="material-symbols-outlined text-primary-container">location_on</span>
+</div>
+</div>
+</div>
+</div>
+<p class="font-caption text-caption text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+                Exact address revealed after unlock
+            </p>
+</section>
+<!-- Spacing for fixed bottom bar -->
+<div class="h-24"></div>
+</main>
+<!-- Fixed Bottom Action Bar -->
+<div class="fixed bottom-0 w-full z-50 bg-surface-container-lowest shadow-[0_-4px_15px_-3px_rgba(0,0,0,0.05)] pb-[env(safe-area-inset-bottom)] pt-3 px-margin-horizontal border-t border-surface-variant">
+<div class="flex justify-between items-center max-w-[393px] mx-auto">
+<div>
+<p class="text-caption font-caption text-outline">Unlock Cost</p>
+<p class="text-headline-sm font-headline-sm text-on-surface">2,000 KES</p>
+</div>
+<button class="bg-primary-container text-on-primary font-headline-sm text-[16px] px-8 py-3.5 rounded-full shadow-md hover:bg-primary active:scale-95 transition-all flex items-center gap-2 touch-target">
+<span class="material-symbols-outlined text-[20px]">key</span>
+                Unlock Contact
+            </button>
+</div>
+</div>
+<script>
+        // Scroll listener for sticky header and nav transparency
+        window.addEventListener('scroll', () => {
+            const scrollY = window.scrollY;
+            const threshold = 300; // Point where header becomes fully opaque
+            
+            const topNav = document.getElementById('topNav');
+            const stickyHeader = document.getElementById('stickyHeader');
+            
+            if (scrollY > threshold) {
+                document.body.classList.add('scrolled');
+                topNav.style.opacity = '0';
+                topNav.style.pointerEvents = 'none';
+            } else {
+                document.body.classList.remove('scrolled');
+                topNav.style.opacity = '1';
+                topNav.style.pointerEvents = 'auto';
+            }
+        });
+    </script>
+</body></html>

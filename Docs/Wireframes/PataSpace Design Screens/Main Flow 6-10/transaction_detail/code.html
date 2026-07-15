@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>Transaction Details</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary-fixed-variant": "#434748",
+                      "on-primary-fixed-variant": "#004e60",
+                      "primary": "#00667e",
+                      "on-surface": "#1a1c1c",
+                      "on-background": "#1a1c1c",
+                      "tertiary-fixed": "#e0e3e4",
+                      "inverse-primary": "#83d1ee",
+                      "on-tertiary": "#ffffff",
+                      "error": "#ba1a1a",
+                      "on-primary-fixed": "#001f28",
+                      "error-container": "#ffdad6",
+                      "outline": "#6f797d",
+                      "on-secondary-container": "#656464",
+                      "surface-container-high": "#e8e8e8",
+                      "status-success": "#34C759",
+                      "status-error": "#FF3B30",
+                      "on-surface-variant": "#3f484c",
+                      "surface-tint": "#00677f",
+                      "primary-fixed-dim": "#83d1ee",
+                      "on-secondary-fixed": "#1b1c1c",
+                      "on-error": "#ffffff",
+                      "on-secondary": "#ffffff",
+                      "outline-variant": "#bec8cd",
+                      "surface-container": "#eeeeee",
+                      "on-secondary-fixed-variant": "#474746",
+                      "surface": "#f9f9f9",
+                      "tertiary": "#5a5e5f",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-container-highest": "#e2e2e2",
+                      "primary-container": "#28809a",
+                      "on-primary": "#ffffff",
+                      "tertiary-fixed-dim": "#c3c7c8",
+                      "inverse-on-surface": "#f0f1f1",
+                      "background": "#f9f9f9",
+                      "on-tertiary-container": "#ffffff",
+                      "status-warning": "#FFCC00",
+                      "primary-fixed": "#b7eaff",
+                      "inverse-surface": "#2f3131",
+                      "on-error-container": "#93000a",
+                      "on-tertiary-fixed": "#181c1d",
+                      "secondary-fixed": "#e4e2e1",
+                      "tertiary-container": "#737778",
+                      "surface-container-low": "#f3f3f4",
+                      "surface-bright": "#f9f9f9",
+                      "surface-subtle": "#EDEDED",
+                      "on-primary-container": "#ffffff",
+                      "surface-variant": "#e2e2e2",
+                      "secondary-container": "#e4e2e1",
+                      "surface-dim": "#dadada",
+                      "secondary-fixed-dim": "#c8c6c5",
+                      "secondary": "#5f5e5e"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "unit": "8px",
+                      "margin-horizontal": "16px",
+                      "component-gap": "16px",
+                      "touch-target": "44px",
+                      "gutter-vertical": "24px",
+                      "safe-top": "env(safe-area-inset-top)",
+                      "safe-bottom": "env(safe-area-inset-bottom)"
+              },
+              "fontFamily": {
+                      "headline-sm": ["Poppins"],
+                      "body-lg": ["DM Sans"],
+                      "display-01": ["Poppins"],
+                      "headline-lg-mobile": ["Poppins"],
+                      "caption": ["DM Sans"],
+                      "label-md": ["DM Sans"],
+                      "headline-lg": ["Poppins"],
+                      "headline-md": ["Poppins"],
+                      "display-02": ["Poppins"],
+                      "body-md": ["DM Sans"]
+              },
+              "fontSize": {
+                      "headline-sm": ["20px", {"lineHeight": "25px", "fontWeight": "600"}],
+                      "body-lg": ["17px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "display-01": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                      "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                      "label-md": ["13px", {"lineHeight": "18px", "fontWeight": "500"}],
+                      "headline-lg": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                      "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "600"}],
+                      "display-02": ["34px", {"lineHeight": "41px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                      "body-md": ["15px", {"lineHeight": "21px", "fontWeight": "400"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+        
+        /* Hide scrollbar for clean iOS look */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        * {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body-md antialiased min-h-screen flex flex-col pt-safe-top pb-safe-bottom">
+<!-- Top Navigation Bar -->
+<header class="flex justify-between items-center w-full px-margin-horizontal h-touch-target z-50 bg-inverse-surface sticky top-0 md:hidden">
+<button aria-label="Go back" class="h-touch-target w-touch-target flex items-center justify-start text-primary-container hover:opacity-80 transition-opacity active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[24px]">arrow_back_ios</span>
+</button>
+<h1 class="font-headline-md text-headline-md-mobile font-bold text-primary-container">Transaction Details</h1>
+<button aria-label="Share" class="h-touch-target w-touch-target flex items-center justify-end text-primary-container hover:opacity-80 transition-opacity active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[24px]">ios_share</span>
+</button>
+</header>
+<!-- Desktop Header Fallback -->
+<header class="hidden md:flex justify-between items-center w-full px-margin-horizontal h-touch-target z-50 bg-inverse-surface sticky top-0">
+<button aria-label="Go back" class="h-touch-target w-touch-target flex items-center justify-start text-primary-container hover:opacity-80 transition-opacity active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[24px]">arrow_back_ios</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary-container">Transaction Details</h1>
+<button aria-label="Share" class="h-touch-target w-touch-target flex items-center justify-end text-primary-container hover:opacity-80 transition-opacity active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[24px]">ios_share</span>
+</button>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 overflow-y-auto px-margin-horizontal pb-[100px] w-full max-w-[600px] mx-auto">
+<!-- Status Banner -->
+<div class="mt-gutter-vertical w-full bg-[#34C759]/10 rounded-full py-2 px-4 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined fill text-status-success text-[18px]">check_circle</span>
+<span class="font-label-md text-label-md text-status-success">Completed</span>
+</div>
+<!-- Amount Card -->
+<div class="mt-component-gap bg-surface-container-lowest rounded-xl p-6 flex flex-col items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.04)] relative">
+<div class="absolute top-4 left-4 h-10 w-10 bg-surface-subtle rounded-full flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">lock_open</span>
+</div>
+<h2 class="font-display-01 text-display-01 text-on-surface mt-8 tracking-tight">-2,000 KES</h2>
+<p class="font-body-md text-body-md text-secondary mt-1">Unlock Payment</p>
+</div>
+<!-- Details Table (iOS Grouped Style) -->
+<div class="mt-gutter-vertical bg-surface-container-lowest rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.04)] overflow-hidden">
+<!-- Row: Transaction ID -->
+<div class="flex justify-between items-center px-4 py-3 border-b border-surface-subtle last:border-b-0 min-h-[44px]">
+<span class="font-body-md text-body-md text-secondary">Transaction ID</span>
+<span class="font-label-md text-label-md text-on-surface font-mono">TXN-8B29C4D1</span>
+</div>
+<!-- Row: Date & Time -->
+<div class="flex justify-between items-center px-4 py-3 border-b border-surface-subtle last:border-b-0 min-h-[44px]">
+<span class="font-body-md text-body-md text-secondary">Date &amp; Time</span>
+<span class="font-body-md text-body-md text-on-surface text-right">Oct 24, 2026<br/><span class="text-secondary text-sm">14:32 EAT</span></span>
+</div>
+<!-- Row: Status -->
+<div class="flex justify-between items-center px-4 py-3 border-b border-surface-subtle last:border-b-0 min-h-[44px]">
+<span class="font-body-md text-body-md text-secondary">Status</span>
+<span class="font-label-md text-label-md text-on-surface">Successful</span>
+</div>
+<!-- Row: Payment Method -->
+<div class="flex justify-between items-center px-4 py-3 border-b border-surface-subtle last:border-b-0 min-h-[44px]">
+<span class="font-body-md text-body-md text-secondary">Payment Method</span>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-secondary">account_balance_wallet</span>
+<span class="font-body-md text-body-md text-on-surface">PataSpace Wallet</span>
+</div>
+</div>
+<!-- Row: Listing Info -->
+<div class="flex flex-col justify-center px-4 py-3 border-b border-surface-subtle last:border-b-0 min-h-[44px]">
+<span class="font-body-md text-body-md text-secondary mb-2">Unlocked Property</span>
+<div class="flex items-center gap-3 bg-surface-subtle p-3 rounded-lg">
+<div class="bg-cover bg-center w-12 h-12 rounded-md" data-alt="A modern, well-lit apartment interior in Nairobi, Kenya, showcasing contemporary furniture, a clean white aesthetic with subtle teal accents, large windows letting in bright natural daylight, and a polished wooden floor. Professional real estate photography style, wide angle, high resolution." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDeHR6eS9sADfLokm7a-XaEmlEpvNwV1kHEPbML9L1M7EG9aXQFTmLkRYsjs9Bq1wMhulYLfHR-PNJ-vplsL6WQENn6NwAEHLeXm3xJi8Pli5VAjcZFcXYHcA89VK5GyR1kYJymk2ayZ62yCvfS7VBi594uGEJAEIIew-WhCWQx2TlwCmybQAS2KVpoS-Rr5bzXuGuyLtShgmMIJXlieTwoCDWYehHUX-uBPT2_03EnnYkJbigRiYXZ6bA4R709CsB_odQnkui8lkNY')"></div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">2BR Kilimani Heights</span>
+<span class="font-caption text-caption text-secondary mt-0.5">Ref: KIL-294</span>
+</div>
+<span class="material-symbols-outlined ml-auto text-secondary">chevron_right</span>
+</div>
+</div>
+<!-- Row: Balance Before -->
+<div class="flex justify-between items-center px-4 py-3 border-b border-surface-subtle last:border-b-0 min-h-[44px]">
+<span class="font-body-md text-body-md text-secondary">Balance Before</span>
+<span class="font-body-md text-body-md text-on-surface">15,400 KES</span>
+</div>
+<!-- Row: Balance After -->
+<div class="flex justify-between items-center px-4 py-3 border-b border-surface-subtle last:border-b-0 min-h-[44px]">
+<span class="font-body-md text-body-md text-secondary">Balance After</span>
+<span class="font-label-md text-label-md text-on-surface">13,400 KES</span>
+</div>
+</div>
+</main>
+<!-- Bottom Actions Overlay (Sticky) -->
+<div class="fixed bottom-0 w-full bg-surface/80 backdrop-blur-md border-t border-surface-subtle p-margin-horizontal pb-[max(env(safe-area-inset-bottom),16px)] z-40 max-w-[600px] left-1/2 -translate-x-1/2 flex gap-4">
+<button class="flex-1 h-touch-target rounded-full border-2 border-primary-container text-primary-container font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-subtle transition-colors">
+            Get Help
+        </button>
+<button class="flex-1 h-touch-target rounded-full bg-surface-subtle text-secondary font-headline-sm text-headline-sm flex items-center justify-center active:bg-surface-dim transition-colors">
+            Request Refund
+        </button>
+</div>
+</body></html>

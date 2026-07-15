@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Contact Support - PataSpace</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;700&amp;family=Poppins:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#6f797d",
+                        "status-warning": "#FFCC00",
+                        "error-container": "#ffdad6",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-container": "#ffffff",
+                        "on-primary-fixed": "#001f28",
+                        "tertiary-container": "#737778",
+                        "tertiary-fixed": "#e0e3e4",
+                        "primary": "#00667e",
+                        "on-tertiary-fixed-variant": "#434748",
+                        "on-surface": "#1a1c1c",
+                        "secondary-container": "#e4e2e1",
+                        "on-secondary-fixed-variant": "#474746",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "surface-dim": "#dadada",
+                        "inverse-primary": "#83d1ee",
+                        "error": "#ba1a1a",
+                        "status-success": "#34C759",
+                        "tertiary": "#5a5e5f",
+                        "primary-container": "#28809a",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-low": "#f3f3f4",
+                        "primary-fixed-dim": "#83d1ee",
+                        "on-primary-container": "#ffffff",
+                        "surface-variant": "#e2e2e2",
+                        "on-tertiary-fixed": "#181c1d",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#1a1c1c",
+                        "surface-container-high": "#e8e8e8",
+                        "on-surface-variant": "#3f484c",
+                        "status-error": "#FF3B30",
+                        "on-secondary-container": "#656464",
+                        "surface-container": "#eeeeee",
+                        "on-error": "#ffffff",
+                        "outline-variant": "#bec8cd",
+                        "on-secondary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#e4e2e1",
+                        "on-primary-fixed-variant": "#004e60",
+                        "inverse-surface": "#2f3131",
+                        "surface": "#f9f9f9",
+                        "background": "#f9f9f9",
+                        "secondary": "#5f5e5e",
+                        "primary-fixed": "#b7eaff",
+                        "surface-container-highest": "#e2e2e2",
+                        "inverse-on-surface": "#f0f1f1",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "surface-subtle": "#EDEDED",
+                        "tertiary-fixed-dim": "#c3c7c8",
+                        "surface-tint": "#00677f",
+                        "surface-bright": "#f9f9f9"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-horizontal": "16px",
+                        "unit": "8px",
+                        "gutter-vertical": "24px",
+                        "component-gap": "16px",
+                        "touch-target": "44px",
+                        "safe": "env(safe-area-inset-bottom)"
+                    },
+                    "fontFamily": {
+                        "display-01": ["Poppins"],
+                        "label-md": ["DM Sans"],
+                        "headline-lg-mobile": ["Poppins"],
+                        "headline-md": ["Poppins"],
+                        "display-02": ["Poppins"],
+                        "body-lg": ["DM Sans"],
+                        "caption": ["DM Sans"],
+                        "headline-lg": ["Poppins"],
+                        "body-md": ["DM Sans"],
+                        "headline-sm": ["Poppins"]
+                    },
+                    "fontSize": {
+                        "display-01": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-md": ["13px", {"lineHeight": "18px", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "600"}],
+                        "display-02": ["34px", {"lineHeight": "41px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "body-lg": ["17px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                        "headline-lg": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                        "body-md": ["15px", {"lineHeight": "21px", "fontWeight": "400"}],
+                        "headline-sm": ["20px", {"lineHeight": "25px", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Fallback safe area utilities if env() is not supported */
+        .pt-safe-top { padding-top: max(env(safe-area-inset-top), 16px); }
+        .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 16px); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased font-body-md min-h-screen flex flex-col">
+<!-- TopAppBar from JSON -->
+<header class="bg-inverse-surface dark:bg-inverse-surface fixed top-0 w-full z-50 shadow-sm flex items-center justify-between px-margin-horizontal h-touch-target pt-safe-top">
+<div class="flex items-center gap-4 text-primary-container dark:text-primary-fixed-dim">
+<button aria-label="Menu" class="hover:opacity-80 transition-opacity active:scale-95 transition-transform p-2 -ml-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+<span class="font-headline-md text-headline-md font-bold text-white">PataSpace</span>
+</div>
+<div class="flex items-center">
+<button aria-label="User profile avatar" class="hover:opacity-80 transition-opacity active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-grow pt-[calc(env(safe-area-inset-top)+60px)] pb-safe px-margin-horizontal">
+<!-- Page Title -->
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mt-gutter-vertical mb-component-gap">Contact Support</h1>
+<!-- Primary Action -->
+<button class="w-full bg-primary text-on-primary rounded-lg h-[56px] flex items-center justify-center gap-3 font-headline-sm text-headline-sm shadow-md active:scale-95 transition-transform mb-gutter-vertical hover:bg-surface-tint">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span>
+            Chat with Support
+        </button>
+<!-- Secondary Support Options (iOS Grouped Style) -->
+<div class="bg-surface-container-lowest rounded-xl shadow-[0_0_8px_rgba(0,0,0,0.04)] overflow-hidden mb-gutter-vertical border border-surface-container-high">
+<!-- WhatsApp -->
+<a class="flex items-center justify-between p-4 border-b border-surface-variant active:bg-surface-subtle transition-colors" href="#">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-[#E0F2E9] text-[#25D366] flex items-center justify-center">
+<span class="material-symbols-outlined">forum</span>
+</div>
+<div>
+<p class="font-body-lg text-body-lg text-on-surface font-medium">WhatsApp</p>
+<p class="font-body-md text-body-md text-on-surface-variant">+254 700 123 456</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+</a>
+<!-- Email Support -->
+<a class="flex items-center justify-between p-4 border-b border-surface-variant active:bg-surface-subtle transition-colors" href="mailto:support@pataspace.co.ke">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container text-tertiary flex items-center justify-center">
+<span class="material-symbols-outlined">mail</span>
+</div>
+<div>
+<p class="font-body-lg text-body-lg text-on-surface font-medium">Email Support</p>
+<p class="font-body-md text-body-md text-on-surface-variant">support@pataspace.co.ke</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+</a>
+<!-- Call Support -->
+<a class="flex items-center justify-between p-4 active:bg-surface-subtle transition-colors" href="tel:+254700123456">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-surface-container text-tertiary flex items-center justify-center">
+<span class="material-symbols-outlined">call</span>
+</div>
+<div>
+<p class="font-body-lg text-body-lg text-on-surface font-medium">Call Support</p>
+<p class="font-body-md text-body-md text-on-surface-variant">Available 24/7</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+</a>
+</div>
+<!-- Open Tickets Section -->
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-component-gap">Your Open Tickets</h2>
+<div class="flex flex-col gap-component-gap">
+<!-- Ticket Card 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_0_8px_rgba(0,0,0,0.04)] border border-surface-container-high">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-md text-label-md text-primary bg-primary-fixed px-2 py-1 rounded-full uppercase tracking-wider">In Progress</span>
+<span class="font-caption text-caption text-on-surface-variant">Ticket #TKT-4921</span>
+</div>
+<h3 class="font-body-lg text-body-lg text-on-surface font-medium mb-1">Payment not reflecting on listing</h3>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">I paid via M-Pesa 2 hours ago but my property listing is still showing as inactive in the dashboard.</p>
+<div class="mt-3 pt-3 border-t border-surface-variant flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+<span class="font-caption text-caption">Updated 10 mins ago</span>
+</div>
+</div>
+<!-- Ticket Card 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_0_8px_rgba(0,0,0,0.04)] border border-surface-container-high">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-md text-label-md text-status-warning bg-[#FFF8D6] px-2 py-1 rounded-full uppercase tracking-wider text-on-surface">Awaiting Reply</span>
+<span class="font-caption text-caption text-on-surface-variant">Ticket #TKT-4810</span>
+</div>
+<h3 class="font-body-lg text-body-lg text-on-surface font-medium mb-1">Unable to upload floor plan</h3>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">The system gives an error 500 when I try to attach the PDF floor plan to my Kilimani listing.</p>
+<div class="mt-3 pt-3 border-t border-surface-variant flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+<span class="font-caption text-caption">Updated Yesterday</span>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar intentionally suppressed as this is a task-focused sub-page -->
+</body></html>

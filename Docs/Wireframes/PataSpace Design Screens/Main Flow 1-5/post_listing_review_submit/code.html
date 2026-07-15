@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>Review Listing - PataSpace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-high": "#e8e8e8",
+                    "status-error": "#FF3B30",
+                    "primary-fixed-dim": "#83d1ee",
+                    "on-surface": "#1a1c1c",
+                    "surface-variant": "#e2e2e2",
+                    "on-tertiary-fixed": "#181c1d",
+                    "background": "#f9f9f9",
+                    "outline": "#6f797d",
+                    "surface": "#f9f9f9",
+                    "error": "#ba1a1a",
+                    "on-error": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "secondary-container": "#e4e2e1",
+                    "inverse-primary": "#83d1ee",
+                    "on-primary-fixed-variant": "#004e60",
+                    "primary-fixed": "#b7eaff",
+                    "on-tertiary": "#ffffff",
+                    "status-warning": "#FFCC00",
+                    "on-primary-fixed": "#001f28",
+                    "tertiary-container": "#737778",
+                    "secondary": "#5f5e5e",
+                    "inverse-surface": "#252525", /* Eerie Black */
+                    "on-primary": "#ffffff",
+                    "surface-bright": "#f9f9f9",
+                    "on-secondary-container": "#656464",
+                    "outline-variant": "#bec8cd",
+                    "primary": "#00667e", /* Teal Base */
+                    "on-surface-variant": "#3f484c",
+                    "tertiary-fixed": "#e0e3e4",
+                    "tertiary-fixed-dim": "#c3c7c8",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-container": "#ffffff",
+                    "surface-tint": "#00677f",
+                    "surface-dim": "#dadada",
+                    "secondary-fixed": "#e4e2e1",
+                    "surface-container-highest": "#e2e2e2",
+                    "primary-container": "#28809a", /* Teal Accent */
+                    "secondary-fixed-dim": "#c8c6c5",
+                    "on-tertiary-fixed-variant": "#434748",
+                    "surface-container": "#eeeeee",
+                    "surface-subtle": "#EDEDED",
+                    "status-success": "#34C759",
+                    "on-secondary-fixed": "#1b1c1c",
+                    "on-secondary-fixed-variant": "#474746",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "inverse-on-surface": "#f0f1f1",
+                    "tertiary": "#5a5e5f",
+                    "on-background": "#1a1c1c",
+                    "surface-container-low": "#f3f3f4",
+                    "on-primary-container": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "2xl": "1rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "unit": "8px",
+                    "touch-target": "44px",
+                    "gutter-vertical": "24px",
+                    "margin-horizontal": "16px",
+                    "component-gap": "16px"
+            },
+            "fontFamily": {
+                    "body-md": ["DM Sans"],
+                    "display-02": ["Poppins"],
+                    "display-01": ["Poppins"],
+                    "label-md": ["DM Sans"],
+                    "body-lg": ["DM Sans"],
+                    "headline-lg-mobile": ["Poppins"],
+                    "headline-sm": ["Poppins"],
+                    "headline-md": ["Poppins"],
+                    "headline-lg": ["Poppins"],
+                    "caption": ["DM Sans"]
+            },
+            "fontSize": {
+                    "body-md": ["15px", {"lineHeight": "21px", "fontWeight": "400"}],
+                    "display-02": ["34px", {"lineHeight": "41px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "display-01": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["13px", {"lineHeight": "18px", "fontWeight": "500"}],
+                    "body-lg": ["17px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                    "headline-sm": ["20px", {"lineHeight": "25px", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "600"}],
+                    "headline-lg": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                    "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .safe-padding-top { padding-top: env(safe-area-inset-top, 44px); }
+        .safe-padding-bottom { padding-bottom: env(safe-area-inset-bottom, 34px); }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        /* Hide scrollbar for clean UI */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface antialiased font-body-md selection:bg-primary-container selection:text-white pb-[120px]">
+<!-- Top Navigation (Transactional/Task-focused, no full shell) -->
+<header class="bg-inverse-surface w-full top-0 sticky z-50 shadow-sm safe-padding-top transition-all duration-300">
+<div class="flex items-center justify-between px-margin-horizontal h-touch-target">
+<button aria-label="Go back" class="text-on-primary active:scale-95 duration-100 flex items-center justify-center h-full w-10 -ml-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">arrow_back_ios_new</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-on-primary">Review Listing</h1>
+<div class="w-10"></div> <!-- Spacer for centering -->
+</div>
+</header>
+<main class="max-w-md mx-auto px-margin-horizontal py-gutter-vertical space-y-gutter-vertical">
+<!-- Preview Section -->
+<section class="space-y-unit">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Listing Preview</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">This is how your property will appear to potential buyers.</p>
+<!-- Property Card Preview -->
+<div class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-[0_4px_12px_rgba(0,0,0,0.05)] mt-4">
+<!-- Image Carousel Placeholder -->
+<div class="relative h-48 w-full">
+<img alt="Property preview" class="object-cover w-full h-full" data-alt="A bright, modern Kenyan apartment interior featuring large floor-to-ceiling windows letting in natural sunlight. The room is decorated in a contemporary minimalist style with neutral white and beige tones, accented by subtle teal throw pillows on a plush sofa. High-quality real estate photography capturing the spaciousness and premium feel of the property." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0eO_n6EALfm-MVvAqtMBjhRr73L3ljEmDno-EPoXJxHXYbKvm090-BBoJLAIZ11BPY1NSybsobzVc9VdL6jkXXt-ly85FpJRmo5zJ3JuhEeP2XYj54fs6BKqrKu86OywTZeVSuR_EZzVW47Ywu7dh2aAGTa5vVtkZf4vgsFNnkAcWe5MwAl5_Y-_9qT4ik1rsBcley5FV4GTxFnEMHEgRd66kGi90Hu546GZgP90xmHmc5o5YmDvn2T_1Dc76oU472wKYckmVuKvd"/>
+<!-- Carousel Indicators -->
+<div class="absolute bottom-3 left-0 w-full flex justify-center gap-1.5">
+<div class="w-2 h-2 rounded-full bg-white opacity-100"></div>
+<div class="w-2 h-2 rounded-full bg-white opacity-50"></div>
+<div class="w-2 h-2 rounded-full bg-white opacity-50"></div>
+</div>
+<!-- Badge -->
+<div class="absolute top-3 left-3 bg-inverse-surface/80 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-white text-[14px]">new_releases</span>
+<span class="font-label-md text-label-md text-white">New</span>
+</div>
+</div>
+<!-- Card Content -->
+<div class="p-4 space-y-3">
+<div class="flex justify-between items-start">
+<h3 class="font-headline-sm text-headline-sm text-on-surface line-clamp-1">Luxury 2BR Westlands</h3>
+<div class="flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-md text-label-md">New</span>
+</div>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant font-body-md text-body-md">
+<span class="material-symbols-outlined text-[18px]">location_on</span>
+<span class="line-clamp-1">Westlands Area, Nairobi</span>
+</div>
+<div class="pt-2 border-t border-surface-variant flex justify-between items-end">
+<div>
+<p class="font-caption text-caption text-on-surface-variant uppercase tracking-wider">Asking Price</p>
+<p class="font-headline-md text-headline-md text-primary mt-1">KES 12.5M</p>
+</div>
+<div class="flex gap-2 text-on-surface-variant font-caption text-caption">
+<div class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">bed</span> 2</div>
+<div class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">shower</span> 2</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Earnings Summary Card -->
+<section class="bg-gradient-to-br from-primary-container to-primary text-on-primary rounded-2xl p-6 shadow-lg relative overflow-hidden">
+<!-- Decorative circle -->
+<div class="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/10 blur-xl"></div>
+<div class="relative z-10 flex items-start gap-4">
+<div class="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
+<span class="material-symbols-outlined text-[32px]" style="font-variation-settings: 'FILL' 1;">payments</span>
+</div>
+<div>
+<h3 class="font-body-lg text-body-lg text-white/90">Potential Earnings</h3>
+<p class="font-headline-lg-mobile text-headline-lg-mobile mt-1">KES 600</p>
+<p class="font-caption text-caption text-white/80 mt-2 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">info</span>
+                        Credited upon listing approval
+                    </p>
+</div>
+</div>
+</section>
+<!-- Important Notes -->
+<section class="bg-[#FFF8E1] border border-[#FFE082] rounded-xl p-4 shadow-sm flex items-start gap-3">
+<span class="material-symbols-outlined text-[#F57F17] mt-0.5" style="font-variation-settings: 'FILL' 1;">warning</span>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-[#F57F17] text-[16px]">Important Notes</h4>
+<ul class="mt-2 space-y-2 font-body-md text-body-md text-[#5D4037]">
+<li class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-[#F57F17]"></span>
+                        Manual review required before publishing
+                    </li>
+<li class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-[#F57F17]"></span>
+                        Earn 600 KES once approved
+                    </li>
+<li class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-[#F57F17]"></span>
+                        Usually takes 24-48 hours
+                    </li>
+</ul>
+</div>
+</section>
+<!-- Timeline -->
+<section class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-surface-variant/50">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-6">What happens next</h3>
+<div class="relative pl-6 space-y-6">
+<!-- Vertical Line -->
+<div class="absolute left-[11px] top-2 bottom-2 w-[2px] bg-surface-variant"></div>
+<!-- Step 1 -->
+<div class="relative">
+<div class="absolute -left-[30px] bg-primary w-6 h-6 rounded-full flex items-center justify-center border-4 border-surface-container-lowest">
+<span class="material-symbols-outlined text-[12px] text-white" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<h4 class="font-label-md text-label-md text-on-surface">Submit Listing</h4>
+<p class="font-body-md text-body-md text-on-surface-variant text-[14px] mt-1">Review details and submit for moderation.</p>
+</div>
+<!-- Step 2 -->
+<div class="relative">
+<div class="absolute -left-[30px] bg-surface-variant w-6 h-6 rounded-full flex items-center justify-center border-4 border-surface-container-lowest">
+<span class="material-symbols-outlined text-[12px] text-on-surface-variant">schedule</span>
+</div>
+<h4 class="font-label-md text-label-md text-on-surface">Manual Review</h4>
+<p class="font-body-md text-body-md text-on-surface-variant text-[14px] mt-1">Our team verifies the property details.</p>
+</div>
+<!-- Step 3 -->
+<div class="relative">
+<div class="absolute -left-[30px] bg-surface-variant w-6 h-6 rounded-full flex items-center justify-center border-4 border-surface-container-lowest">
+<span class="material-symbols-outlined text-[12px] text-on-surface-variant">publish</span>
+</div>
+<h4 class="font-label-md text-label-md text-on-surface">Go Live &amp; Earn</h4>
+<p class="font-body-md text-body-md text-on-surface-variant text-[14px] mt-1">Listing becomes public and you earn 600 KES.</p>
+</div>
+</div>
+</section>
+<!-- Terms Agreement -->
+<section class="flex items-start gap-3 py-2">
+<div class="relative flex items-center mt-1">
+<input class="peer h-5 w-5 cursor-pointer appearance-none rounded border-2 border-outline checked:border-primary checked:bg-primary transition-all" id="terms" type="checkbox"/>
+<span class="material-symbols-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[16px] text-white opacity-0 peer-checked:opacity-100 pointer-events-none" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<label class="font-body-md text-body-md text-on-surface-variant cursor-pointer select-none" for="terms">
+                I confirm that all provided information is accurate and I agree to the <a class="text-primary font-medium hover:underline" href="#">Terms of Service</a> and <a class="text-primary font-medium hover:underline" href="#">Listing Policy</a>.
+            </label>
+</section>
+</main>
+<!-- Sticky Bottom Action Bar -->
+<div class="fixed bottom-0 left-0 w-full glass-card safe-padding-bottom border-t border-surface-variant/20 z-40">
+<div class="max-w-md mx-auto px-margin-horizontal py-4">
+<button class="w-full bg-primary-container text-on-primary font-headline-sm text-headline-sm h-14 rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-transform shadow-[0_4px_14px_rgba(40,128,154,0.3)]">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                Submit Listing
+            </button>
+</div>
+</div>
+<script>
+        // Simple script to toggle button state based on checkbox
+        document.addEventListener('DOMContentLoaded', () => {
+            const checkbox = document.getElementById('terms');
+            const submitBtn = document.querySelector('.fixed.bottom-0 button');
+            
+            // Initial state
+            updateButtonState();
+            
+            checkbox.addEventListener('change', updateButtonState);
+            
+            function updateButtonState() {
+                if (checkbox.checked) {
+                    submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    submitBtn.classList.add('active:scale-[0.98]', 'shadow-[0_4px_14px_rgba(40,128,154,0.3)]');
+                } else {
+                    submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    submitBtn.classList.remove('active:scale-[0.98]', 'shadow-[0_4px_14px_rgba(40,128,154,0.3)]');
+                }
+            }
+        });
+    </script>
+</body></html>

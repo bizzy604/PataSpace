@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>PataSpace - Map View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&amp;family=DM+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#dadada",
+                        "on-secondary-container": "#656464",
+                        "error": "#ba1a1a",
+                        "primary": "#00667e",
+                        "on-error": "#ffffff",
+                        "tertiary": "#5a5e5f",
+                        "on-primary-fixed-variant": "#004e60",
+                        "error-container": "#ffdad6",
+                        "background": "#f9f9f9",
+                        "secondary-container": "#e4e2e1",
+                        "on-tertiary-fixed": "#181c1d",
+                        "surface-tint": "#00677f",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "surface-container": "#eeeeee",
+                        "secondary-fixed": "#e4e2e1",
+                        "primary-container": "#28809a",
+                        "on-surface": "#1a1c1c",
+                        "surface-container-high": "#e8e8e8",
+                        "status-warning": "#FFCC00",
+                        "inverse-primary": "#83d1ee",
+                        "tertiary-fixed": "#e0e3e4",
+                        "primary-fixed-dim": "#83d1ee",
+                        "on-background": "#1a1c1c",
+                        "on-secondary-fixed-variant": "#474746",
+                        "status-error": "#FF3B30",
+                        "surface-bright": "#f9f9f9",
+                        "surface-container-low": "#f3f3f4",
+                        "on-tertiary-fixed-variant": "#434748",
+                        "surface": "#f9f9f9",
+                        "inverse-surface": "#2f3131",
+                        "status-success": "#34C759",
+                        "outline-variant": "#bec8cd",
+                        "on-tertiary": "#ffffff",
+                        "surface-subtle": "#EDEDED",
+                        "primary-fixed": "#b7eaff",
+                        "on-surface-variant": "#3f484c",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "tertiary-fixed-dim": "#c3c7c8",
+                        "on-primary-container": "#ffffff",
+                        "tertiary-container": "#737778",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "on-primary-fixed": "#001f28",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-variant": "#e2e2e2",
+                        "outline": "#6f797d",
+                        "on-tertiary-container": "#ffffff",
+                        "surface-container-highest": "#e2e2e2",
+                        "secondary": "#5f5e5e",
+                        "inverse-on-surface": "#f0f1f1"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "touch-target": "44px",
+                        "component-gap": "16px",
+                        "gutter-vertical": "24px",
+                        "unit": "8px",
+                        "margin-horizontal": "16px",
+                        "safe-top": "env(safe-area-inset-top, 44px)",
+                        "safe-bottom": "env(safe-area-inset-bottom, 34px)"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Poppins"],
+                        "headline-sm": ["Poppins"],
+                        "label-md": ["DM Sans"],
+                        "display-02": ["Poppins"],
+                        "headline-lg": ["Poppins"],
+                        "body-md": ["DM Sans"],
+                        "body-lg": ["DM Sans"],
+                        "headline-md": ["Poppins"],
+                        "display-01": ["Poppins"],
+                        "caption": ["DM Sans"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["24px", { "lineHeight": "30px", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "25px", "fontWeight": "600" }],
+                        "label-md": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "display-02": ["34px", { "lineHeight": "41px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "headline-lg": ["28px", { "lineHeight": "34px", "fontWeight": "700" }],
+                        "body-md": ["15px", { "lineHeight": "21px", "fontWeight": "400" }],
+                        "body-lg": ["17px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "30px", "fontWeight": "600" }],
+                        "display-01": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "caption": ["11px", { "lineHeight": "14px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .bottom-sheet {
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transform: translateY(calc(100% - 100px - env(safe-area-inset-bottom, 34px) - 64px)); /* 64px for bottom nav */
+        }
+        .bottom-sheet.expanded {
+            transform: translateY(0);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .map-container {
+            /* Simulating a map background for demo purposes */
+            background-color: #e0e6ed;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.4) 1px, transparent 1px),
+                linear-gradient(rgba(255, 255, 255, 0.2) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+            background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
+            background-position: -2px -2px, -2px -2px, -1px -1px, -1px -1px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background overflow-hidden overscroll-none h-screen w-screen relative">
+<!-- Main Map Area -->
+<div class="absolute inset-0 map-container" data-location="Nairobi, Kenya" style="">
+<!-- Simulated Map Pins -->
+<div class="absolute top-[30%] left-[40%] transform -translate-x-1/2 -translate-y-1/2">
+<button class="bg-primary text-on-primary font-headline-sm text-headline-sm px-3 py-1 rounded-full shadow-lg border-2 border-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform">
+                20K
+            </button>
+</div>
+<div class="absolute top-[45%] left-[60%] transform -translate-x-1/2 -translate-y-1/2">
+<button class="bg-primary text-on-primary font-headline-sm text-headline-sm px-3 py-1 rounded-full shadow-lg border-2 border-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform">
+                35K
+            </button>
+</div>
+<div class="absolute top-[60%] left-[30%] transform -translate-x-1/2 -translate-y-1/2">
+<button class="bg-inverse-surface text-on-primary font-headline-sm text-headline-sm px-3 py-1 rounded-full shadow-lg border-2 border-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform z-10">
+                18K
+            </button>
+<div class="absolute w-4 h-4 bg-inverse-surface bottom-[-6px] left-1/2 transform -translate-x-1/2 rotate-45 z-0"></div>
+</div>
+<div class="absolute top-[25%] left-[75%] transform -translate-x-1/2 -translate-y-1/2">
+<button class="bg-primary text-on-primary font-headline-sm text-headline-sm px-3 py-1 rounded-full shadow-lg border-2 border-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform">
+                42K
+            </button>
+</div>
+</div>
+<!-- Floating Search & Actions Header -->
+<div class="absolute top-0 left-0 w-full pt-safe-top z-40 px-margin-horizontal mt-4 flex items-center gap-unit pointer-events-none">
+<!-- Search Bar -->
+<div class="flex-1 bg-surface/90 backdrop-blur-md rounded-full shadow-lg border border-outline-variant/30 flex items-center px-4 h-touch-target pointer-events-auto">
+<span class="material-symbols-outlined text-on-surface-variant mr-2" style="font-variation-settings: 'FILL' 0;">search</span>
+<input class="bg-transparent border-none text-on-surface font-body-md text-body-md w-full focus:ring-0 placeholder-on-surface-variant p-0 outline-none" placeholder="Nairobi, KE" type="text"/>
+<button class="ml-2 w-8 h-8 rounded-full bg-surface-container flex items-center justify-center active:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined text-on-surface text-[18px]" style="font-variation-settings: 'FILL' 0;">close</span>
+</button>
+</div>
+<!-- List View Button -->
+<button class="bg-surface/90 backdrop-blur-md rounded-full shadow-lg border border-outline-variant/30 w-touch-target h-touch-target flex items-center justify-center pointer-events-auto active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-on-surface" style="font-variation-settings: 'FILL' 0;">format_list_bulleted</span>
+</button>
+</div>
+<!-- Floating Filter Button -->
+<div class="absolute top-[120px] right-margin-horizontal z-30 pointer-events-auto">
+<button class="bg-surface rounded-full shadow-lg border border-outline-variant/30 w-touch-target h-touch-target flex items-center justify-center active:scale-95 transition-transform relative">
+<span class="material-symbols-outlined text-on-surface" style="font-variation-settings: 'FILL' 0;">tune</span>
+<span class="absolute top-0 right-0 w-3 h-3 bg-primary rounded-full border border-surface"></span>
+</button>
+</div>
+<!-- Draggable Bottom Sheet -->
+<div class="bottom-sheet absolute bottom-0 left-0 w-full bg-surface rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.12)] z-40 flex flex-col pointer-events-auto pb-[80px]" id="bottomSheet"> <!-- Extra padding for bottom nav -->
+<!-- Drag Handle Area -->
+<div class="w-full h-10 flex items-center justify-center cursor-pointer" id="dragHandle">
+<div class="w-12 h-1.5 bg-outline-variant rounded-full opacity-50"></div>
+</div>
+<!-- Sheet Header -->
+<div class="px-margin-horizontal pb-4 flex justify-between items-center">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">23 listings in this area</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Swipe up to see all</p>
+</div>
+<button class="bg-primary/10 text-primary font-label-md text-label-md px-3 py-1.5 rounded-full flex items-center gap-1 active:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 0;">sort</span>
+                Sort
+            </button>
+</div>
+<!-- Horizontal Scrollable Cards (Visible when collapsed) -->
+<div class="w-full overflow-x-auto hide-scrollbar px-margin-horizontal pb-6" id="horizontalCards">
+<div class="flex gap-4 w-max">
+<!-- Card 1 -->
+<div class="w-[280px] bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/20 overflow-hidden flex flex-col active:scale-[0.98] transition-transform">
+<div class="w-full h-[140px] relative">
+<img class="w-full h-full object-cover" data-alt="A modern, high-end studio apartment interior in Nairobi with large windows letting in bright natural light, featuring sleek contemporary furniture, a neat kitchenette with modern appliances, and a polished minimalist aesthetic in high resolution." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCM6HDfm6TMQN53Iv1hn179OShpeXe0hS1vvymXWgDuNtWhet2tgMfmU0Q4gvdRg0SiCqMdTwZrZxZE_3j2E7-Jet9FHp9upVqYOR7oUXjtuClhDJm2u3AJ4SBvmMGtWazj3_4DdslaWQjdq_pGrRual7iFXAK0EMFdM5_yC0fxmFctmJp6V90oj6TYwl_ijpJUP2Ijq73qjeQWI5Vf2uT2cNwlXii_-jTCe99LfDgzRc1ysd6KfSaROH9yk0tKgd0SXsZB7bGqjjwg"/>
+<button class="absolute top-2 right-2 w-8 h-8 rounded-full bg-surface/80 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-on-surface text-[18px]" style="font-variation-settings: 'FILL' 0;">favorite</span>
+</button>
+<div class="absolute bottom-2 left-2 bg-inverse-surface/80 backdrop-blur-sm text-on-primary font-label-md text-label-md px-2 py-0.5 rounded">
+                            Studio
+                        </div>
+</div>
+<div class="p-3">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Ksh 18,000<span class="font-body-md text-body-md text-on-surface-variant">/mo</span></h3>
+<div class="flex items-center gap-0.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-md text-label-md">4.8</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant truncate">Kilimani, Nairobi</p>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="w-[280px] bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/20 overflow-hidden flex flex-col active:scale-[0.98] transition-transform">
+<div class="w-full h-[140px] relative">
+<img class="w-full h-full object-cover" data-alt="A luxurious one-bedroom apartment living room in Nairobi with a balcony view, showcasing elegant dark wood flooring, premium modern decor, a comfortable grey sofa, and warm, inviting ambient lighting in a highly detailed professional real estate photograph." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3UT3OooGEPrM8wPM-9MCA5fAzgSYMDhY01W-dGdQ84X2N9GUC72nAQlhvZQvgzHm1JDvOf0Rw-K5VXZvS_TZhEPzRonAwBKMJ1AspfZMVQuIcBTxQ_yzrHgTlf06Oh3itG4IdJaeQ67Smq7ycM2jq9MTybEzqdRVYAp7iG8EzbgMkcAcYQWrzzvXEO-R8lwThP7J_5WpPtJKMsZ095b1f1VLJPWdDSmWGqlmuuc3TMVznqvdy_zW8h80kOCXdSX-cjEIa4TzLVfn2"/>
+<button class="absolute top-2 right-2 w-8 h-8 rounded-full bg-surface/80 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-on-surface text-[18px]" style="font-variation-settings: 'FILL' 0;">favorite</span>
+</button>
+<div class="absolute bottom-2 left-2 bg-inverse-surface/80 backdrop-blur-sm text-on-primary font-label-md text-label-md px-2 py-0.5 rounded">
+                            1 Bed
+                        </div>
+</div>
+<div class="p-3">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Ksh 35,000<span class="font-body-md text-body-md text-on-surface-variant">/mo</span></h3>
+<div class="flex items-center gap-0.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-label-md text-label-md">4.9</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant truncate">Westlands, Nairobi</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Vertical List (Visible when expanded) -->
+<div class="w-full h-full overflow-y-auto hide-scrollbar px-margin-horizontal hidden pb-24" id="verticalList">
+<div class="flex flex-col gap-4">
+<!-- Additional list items would populate here via JS in a real app -->
+<div class="w-full bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/20 overflow-hidden flex active:scale-[0.98] transition-transform h-[120px]">
+<div class="w-[120px] h-full relative flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="A detailed exterior shot of a modern apartment complex building in Nairobi featuring clean architectural lines, glass balconies, and manicured landscaping under a clear blue sky, capturing a premium real estate aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCHnd-dirzwJxe7zwTnaii4OiVxGec51YXU6mikFzJCk51a7T1x5T_DaUdYQZ1PV34A0hMbsOdBZ3HrXcAWhsk_RmSLXIvQsQlIiQS6oPsyE9f8e9y3zfWaeJjHBtJgqH7tZb7S1Yvb8JOmDA8O7KGg6Nkkg2n0e14-y6sJxpgPIEHvn7_RfPErHc-eIUQu22Que3YvrtFDpJnOkqSjmobPHe9QG_jqEmTudrPUedEu6VobuUlijbSaEDEaUolaxjkIiHaPXyXNFgYc"/>
+<div class="absolute bottom-1 left-1 bg-inverse-surface/80 backdrop-blur-sm text-on-primary font-caption text-caption px-1.5 py-0.5 rounded">
+                            2 Bed
+                        </div>
+</div>
+<div class="p-3 flex-1 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start">
+<h3 class="font-headline-sm text-headline-sm text-on-surface leading-tight">Ksh 42,000<span class="font-caption text-caption text-on-surface-variant">/mo</span></h3>
+<button class="text-on-surface-variant active:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">favorite</span>
+</button>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant truncate mt-1">Lavington, Nairobi</p>
+</div>
+<div class="flex items-center gap-2 font-caption text-caption text-on-surface-variant">
+<span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[12px]">bed</span> 2</span>
+<span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[12px]">bathtub</span> 2</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- BottomNavBar (Shared Component) -->
+<nav class="fixed bottom-0 w-full z-50 pb-safe bg-inverse-surface dark:bg-inverse-surface shadow-lg">
+<div class="flex justify-around items-center h-16 w-full max-w-screen-xl mx-auto md:hidden">
+<a class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-fixed active:scale-90 transition-transform w-16" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">home</span>
+<span class="font-label-md text-label-md mt-1">Home</span>
+</a>
+<!-- Active State -->
+<a class="flex flex-col items-center justify-center text-primary-fixed-dim bg-primary-container/20 rounded-xl px-3 py-1 hover:text-primary-fixed active:scale-90 transition-transform w-16" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">search</span>
+<span class="font-label-md text-label-md mt-1">Search</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-fixed active:scale-90 transition-transform w-16" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">add_circle</span>
+<span class="font-label-md text-label-md mt-1">List</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-fixed active:scale-90 transition-transform w-16" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">favorite</span>
+<span class="font-label-md text-label-md mt-1">Saved</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-fixed active:scale-90 transition-transform w-16" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">person</span>
+<span class="font-label-md text-label-md mt-1">Profile</span>
+</a>
+</div>
+</nav>
+<script>
+        // Simple logic to toggle bottom sheet expansion
+        const bottomSheet = document.getElementById('bottomSheet');
+        const dragHandle = document.getElementById('dragHandle');
+        const horizontalCards = document.getElementById('horizontalCards');
+        const verticalList = document.getElementById('verticalList');
+        let isExpanded = false;
+
+        dragHandle.addEventListener('click', () => {
+            isExpanded = !isExpanded;
+            if (isExpanded) {
+                bottomSheet.classList.add('expanded');
+                bottomSheet.style.height = 'calc(100% - env(safe-area-inset-top, 44px) - 60px)';
+                horizontalCards.classList.add('hidden');
+                verticalList.classList.remove('hidden');
+            } else {
+                bottomSheet.classList.remove('expanded');
+                bottomSheet.style.height = 'auto';
+                horizontalCards.classList.remove('hidden');
+                verticalList.classList.add('hidden');
+            }
+        });
+    </script>
+</body></html>

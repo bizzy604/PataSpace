@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>Account Locked - PataSpace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-low": "#f3f3f4",
+                        "on-surface-variant": "#3f484c",
+                        "on-secondary-container": "#656464",
+                        "error-container": "#ffdad6",
+                        "status-warning": "#FFCC00",
+                        "surface-subtle": "#EDEDED",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#eeeeee",
+                        "surface-variant": "#e2e2e2",
+                        "inverse-primary": "#83d1ee",
+                        "secondary": "#5f5e5e",
+                        "primary-fixed-dim": "#83d1ee",
+                        "on-background": "#1a1c1c",
+                        "status-error": "#FF3B30",
+                        "on-tertiary-container": "#ffffff",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "inverse-surface": "#2f3131",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "on-error-container": "#93000a",
+                        "on-surface": "#1a1c1c",
+                        "on-secondary-fixed-variant": "#474746",
+                        "primary": "#00667e",
+                        "tertiary": "#5a5e5f",
+                        "on-primary-fixed": "#001f28",
+                        "primary-fixed": "#b7eaff",
+                        "inverse-on-surface": "#f0f1f1",
+                        "background": "#f9f9f9",
+                        "surface": "#f9f9f9",
+                        "surface-container-highest": "#e2e2e2",
+                        "tertiary-fixed-dim": "#c3c7c8",
+                        "tertiary-fixed": "#e0e3e4",
+                        "surface-container-high": "#e8e8e8",
+                        "status-success": "#34C759",
+                        "on-primary": "#ffffff",
+                        "surface-bright": "#f9f9f9",
+                        "surface-dim": "#dadada",
+                        "on-error": "#ffffff",
+                        "surface-tint": "#00677f",
+                        "on-tertiary-fixed-variant": "#434748",
+                        "tertiary-container": "#737778",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed": "#181c1d",
+                        "primary-container": "#28809a",
+                        "outline-variant": "#bec8cd",
+                        "secondary-fixed": "#e4e2e1",
+                        "error": "#ba1a1a",
+                        "secondary-container": "#e4e2e1",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed-variant": "#004e60",
+                        "outline": "#6f797d",
+                        "on-primary-container": "#ffffff"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "unit": "8px",
+                        "margin-horizontal": "16px",
+                        "touch-target": "44px",
+                        "component-gap": "16px",
+                        "gutter-vertical": "24px"
+                    },
+                    fontFamily: {
+                        "display-02": ["Poppins"],
+                        "caption": ["DM Sans"],
+                        "body-md": ["DM Sans"],
+                        "headline-sm": ["Poppins"],
+                        "headline-md": ["Poppins"],
+                        "label-md": ["DM Sans"],
+                        "headline-lg": ["Poppins"],
+                        "body-lg": ["DM Sans"],
+                        "display-01": ["Poppins"],
+                        "headline-lg-mobile": ["Poppins"]
+                    },
+                    fontSize: {
+                        "display-02": ["34px", { lineHeight: "41px", letterSpacing: "-0.01em", fontWeight: "700" }],
+                        "caption": ["11px", { lineHeight: "14px", fontWeight: "400" }],
+                        "body-md": ["15px", { lineHeight: "21px", fontWeight: "400" }],
+                        "headline-sm": ["20px", { lineHeight: "25px", fontWeight: "600" }],
+                        "headline-md": ["24px", { lineHeight: "30px", fontWeight: "600" }],
+                        "label-md": ["13px", { lineHeight: "18px", fontWeight: "500" }],
+                        "headline-lg": ["28px", { lineHeight: "34px", fontWeight: "700" }],
+                        "body-lg": ["17px", { lineHeight: "24px", fontWeight: "400" }],
+                        "display-01": ["48px", { lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "headline-lg-mobile": ["24px", { lineHeight: "30px", fontWeight: "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            -webkit-tap-highlight-color: transparent;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        /* Custom scrollbar to hide it but keep functionality if needed */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface h-screen flex flex-col antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar from JSON -->
+<header class="fixed top-0 w-full z-50 bg-background dark:bg-on-background flat no shadows" style="padding-top: env(safe-area-inset-top);">
+<div class="flex items-center justify-between px-margin-horizontal h-touch-target w-full">
+<button aria-label="Back" class="w-touch-target h-touch-target flex items-center justify-center text-primary dark:text-primary-fixed-dim hover:opacity-80 transition-opacity active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm font-bold text-on-surface dark:text-on-primary-fixed absolute left-1/2 -translate-x-1/2">
+                Security
+            </h1>
+<!-- Empty div to balance flex spacing -->
+<div class="w-touch-target h-touch-target"></div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col items-center justify-center px-margin-horizontal mt-touch-target mb-[calc(env(safe-area-inset-bottom)+80px)]">
+<!-- Icon & Status Ring -->
+<div class="relative mb-gutter-vertical flex items-center justify-center w-32 h-32">
+<!-- Pulsing background ring -->
+<div class="absolute inset-0 rounded-full bg-error/10 animate-ping" style="animation-duration: 3s;"></div>
+<div class="absolute inset-4 rounded-full bg-error/20"></div>
+<!-- Main Lock Icon -->
+<div class="relative z-10 w-20 h-20 bg-surface-container-lowest rounded-full shadow-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-[40px] text-error icon-fill">lock</span>
+<!-- Warning Badge -->
+<div class="absolute -top-1 -right-1 w-8 h-8 bg-error rounded-full flex items-center justify-center border-2 border-surface-container-lowest shadow-sm">
+<span class="material-symbols-outlined text-[16px] text-on-error font-bold">priority_high</span>
+</div>
+</div>
+</div>
+<!-- Text Content -->
+<div class="text-center mb-gutter-vertical max-w-[320px]">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-on-surface mb-unit">
+                Account Temporarily Locked
+            </h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                For your security, your account has been locked due to too many failed login attempts. Please wait 30 minutes or contact support to unlock it immediately.
+            </p>
+</div>
+<!-- Countdown Timer Bento Card -->
+<div class="w-full max-w-[320px] bg-surface-container-lowest rounded-xl shadow-[0_0_8px_rgba(0,0,0,0.04)] p-4 mb-8 flex items-center justify-between border border-error-container/30">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-error-container flex items-center justify-center text-error">
+<span class="material-symbols-outlined icon-fill">timer</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Timeout Ends In</span>
+<span class="font-headline-md text-headline-md text-on-surface tabular-nums" id="countdown-timer">29:58</span>
+</div>
+</div>
+<!-- Minimal sparkline/progress indicator visual -->
+<div class="w-12 h-12 relative flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
+<circle class="stroke-surface-variant" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
+<circle class="stroke-error transition-all duration-1000 ease-linear" cx="18" cy="18" fill="none" r="16" stroke-dasharray="100 100" stroke-dashoffset="1" stroke-linecap="round" stroke-width="3"></circle>
+</svg>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="w-full max-w-[320px] flex flex-col gap-component-gap mt-auto md:mt-0">
+<button class="w-full h-touch-target rounded-xl bg-primary-container text-on-primary-container font-headline-sm text-headline-sm flex items-center justify-center hover:opacity-90 active:scale-95 transition-all shadow-sm">
+                Contact Support
+            </button>
+<button class="w-full h-touch-target rounded-xl border-[2px] border-outline text-on-surface font-headline-sm text-headline-sm flex items-center justify-center hover:bg-surface-container-low active:scale-95 transition-all">
+                Back to Login
+            </button>
+</div>
+</main>
+<!-- BottomNavBar intentionally suppressed as this is a transactional/dead-end screen -->
+<script>
+        // Simple countdown logic for visual feedback
+        document.addEventListener('DOMContentLoaded', () => {
+            const timerDisplay = document.getElementById('countdown-timer');
+            let timeLeft = 29 * 60 + 58; // 29:58 in seconds
+
+            setInterval(() => {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    const minutes = Math.floor(timeLeft / 60);
+                    const seconds = timeLeft % 60;
+                    timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+            }, 1000);
+        });
+    </script>
+</body></html>

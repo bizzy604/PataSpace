@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>PataSpace - Notifications</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;family=Poppins:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-dim": "#dadada",
+                        "on-secondary-container": "#656464",
+                        "error": "#ba1a1a",
+                        "primary": "#00667e",
+                        "on-error": "#ffffff",
+                        "tertiary": "#5a5e5f",
+                        "on-primary-fixed-variant": "#004e60",
+                        "error-container": "#ffdad6",
+                        "background": "#f9f9f9",
+                        "secondary-container": "#e4e2e1",
+                        "on-tertiary-fixed": "#181c1d",
+                        "surface-tint": "#00677f",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "surface-container": "#eeeeee",
+                        "secondary-fixed": "#e4e2e1",
+                        "primary-container": "#28809a",
+                        "on-surface": "#1a1c1c",
+                        "surface-container-high": "#e8e8e8",
+                        "status-warning": "#FFCC00",
+                        "inverse-primary": "#83d1ee",
+                        "tertiary-fixed": "#e0e3e4",
+                        "primary-fixed-dim": "#83d1ee",
+                        "on-background": "#1a1c1c",
+                        "on-secondary-fixed-variant": "#474746",
+                        "status-error": "#FF3B30",
+                        "surface-bright": "#f9f9f9",
+                        "surface-container-low": "#f3f3f4",
+                        "on-tertiary-fixed-variant": "#434748",
+                        "surface": "#f9f9f9",
+                        "inverse-surface": "#2f3131",
+                        "status-success": "#34C759",
+                        "outline-variant": "#bec8cd",
+                        "on-tertiary": "#ffffff",
+                        "surface-subtle": "#EDEDED",
+                        "primary-fixed": "#b7eaff",
+                        "on-surface-variant": "#3f484c",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "tertiary-fixed-dim": "#c3c7c8",
+                        "on-primary-container": "#ffffff",
+                        "tertiary-container": "#737778",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "on-primary-fixed": "#001f28",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-variant": "#e2e2e2",
+                        "outline": "#6f797d",
+                        "on-tertiary-container": "#ffffff",
+                        "surface-container-highest": "#e2e2e2",
+                        "secondary": "#5f5e5e",
+                        "inverse-on-surface": "#f0f1f1"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "touch-target": "44px",
+                        "component-gap": "16px",
+                        "gutter-vertical": "24px",
+                        "unit": "8px",
+                        "margin-horizontal": "16px"
+                    },
+                    fontFamily: {
+                        "headline-lg-mobile": ["Poppins"],
+                        "headline-sm": ["Poppins"],
+                        "label-md": ["DM Sans"],
+                        "display-02": ["Poppins"],
+                        "headline-lg": ["Poppins"],
+                        "body-md": ["DM Sans"],
+                        "body-lg": ["DM Sans"],
+                        "headline-md": ["Poppins"],
+                        "display-01": ["Poppins"],
+                        "caption": ["DM Sans"]
+                    },
+                    fontSize: {
+                        "headline-lg-mobile": ["24px", { "lineHeight": "30px", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "25px", "fontWeight": "600" }],
+                        "label-md": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "display-02": ["34px", { "lineHeight": "41px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "headline-lg": ["28px", { "lineHeight": "34px", "fontWeight": "700" }],
+                        "body-md": ["15px", { "lineHeight": "21px", "fontWeight": "400" }],
+                        "body-lg": ["17px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "30px", "fontWeight": "600" }],
+                        "display-01": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "caption": ["11px", { "lineHeight": "14px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased font-body-md min-h-screen flex flex-col pt-safe pb-safe">
+<!-- TopAppBar JSON Component -->
+<header class="w-full top-0 sticky bg-inverse-surface shadow-sm z-50">
+<div class="flex items-center justify-between px-margin-horizontal h-touch-target">
+<button aria-label="Menu" class="flex items-center justify-center w-touch-target h-touch-target text-primary hover:opacity-80 transition-opacity active:scale-95 duration-100">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-primary font-bold">PataSpace</h1>
+<div class="w-touch-target h-touch-target flex items-center justify-center rounded-full overflow-hidden hover:opacity-80 transition-opacity active:scale-95 duration-100 cursor-pointer">
+<img alt="User profile photo" class="w-full h-full object-cover" data-alt="A close up, high quality headshot portrait of a professional African man wearing a modern business casual outfit, shot outdoors with shallow depth of field in natural daylight to convey warmth and approachability. The image fits the polished, premium aesthetic of a corporate real estate app." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDc9aD7duAsZ2IC7s64k-DLv00nXLCY_oxg9z0gq2IG9US4LkhmWNRfYiyc0E605XF_1JrvAbBnzeGAOh5mTW-CXc2etm9snNzBR-lu8GuU1ZqLJts0NCb2icJip_HIlvx-8Ycw8ieTfNSHh9gg8KILJEKlgAk8szjr2Dm5P2akN1Ixu9yaR1UY91BlByQW8nDp59Atm8AhCSwkzSznXkC8IfwyKWkOofIffcYSyoTAjmCqyYkPqRdDliPR8mNY5lZTVW0KV5CsAeI6"/>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col w-full max-w-screen-md mx-auto md:px-margin-horizontal pb-24">
+<!-- Large Title -->
+<div class="px-margin-horizontal pt-6 pb-4">
+<h2 class="font-display-02 text-display-02 text-on-surface">Notifications</h2>
+</div>
+<!-- Segmented Control -->
+<div class="px-margin-horizontal pb-gutter-vertical">
+<div class="bg-surface-container flex rounded-lg p-1 w-full">
+<button class="flex-1 py-1.5 px-3 rounded-md bg-surface shadow-sm font-label-md text-label-md text-on-surface text-center font-bold transition-all">All</button>
+<button class="flex-1 py-1.5 px-3 rounded-md font-label-md text-label-md text-on-surface-variant hover:text-on-surface text-center transition-all">Unlocks</button>
+<button class="flex-1 py-1.5 px-3 rounded-md font-label-md text-label-md text-on-surface-variant hover:text-on-surface text-center transition-all">Payments</button>
+<button class="flex-1 py-1.5 px-3 rounded-md font-label-md text-label-md text-on-surface-variant hover:text-on-surface text-center transition-all">Listings</button>
+</div>
+</div>
+<!-- Notifications List -->
+<div class="flex-1">
+<!-- Group: Today -->
+<div class="mb-gutter-vertical">
+<h3 class="px-margin-horizontal font-headline-sm text-headline-sm text-on-surface-variant mb-unit">Today</h3>
+<!-- Notification Item: Unread Unlock -->
+<div class="flex items-start px-margin-horizontal py-3 bg-surface hover:bg-surface-container-low transition-colors active:bg-surface-variant border-b border-surface-variant/50 relative">
+<div class="absolute left-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-inverse-primary"></div>
+<div class="pl-4 flex-shrink-0 mr-3">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined filled">lock_open</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<p class="font-body-md text-body-md text-on-surface font-bold truncate">Property unlocked successfully</p>
+<p class="font-caption text-caption text-on-surface-variant mt-0.5 line-clamp-2">You now have full access to the details and contact information for 'The Riverside Heights' listing.</p>
+</div>
+<div class="flex-shrink-0 ml-3 mt-1">
+<span class="font-caption text-caption text-on-surface-variant">2m</span>
+</div>
+</div>
+<!-- Notification Item: Unread Payment -->
+<div class="flex items-start px-margin-horizontal py-3 bg-surface hover:bg-surface-container-low transition-colors active:bg-surface-variant border-b border-surface-variant/50 relative">
+<div class="absolute left-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-inverse-primary"></div>
+<div class="pl-4 flex-shrink-0 mr-3">
+<div class="w-10 h-10 rounded-full bg-status-success/10 flex items-center justify-center text-status-success">
+<span class="material-symbols-outlined filled">payments</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<p class="font-body-md text-body-md text-on-surface font-bold truncate">Payment Confirmed</p>
+<p class="font-caption text-caption text-on-surface-variant mt-0.5 line-clamp-2">Your payment of KES 5,000 for listing promotion has been processed successfully.</p>
+</div>
+<div class="flex-shrink-0 ml-3 mt-1">
+<span class="font-caption text-caption text-on-surface-variant">1h</span>
+</div>
+</div>
+<!-- Notification Item: Read Listing -->
+<div class="flex items-start px-margin-horizontal py-3 bg-surface hover:bg-surface-container-low transition-colors active:bg-surface-variant border-b border-surface-variant/50 relative">
+<div class="pl-4 flex-shrink-0 mr-3">
+<div class="w-10 h-10 rounded-full bg-primary-container/20 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined filled">real_estate_agent</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<p class="font-body-md text-body-md text-on-surface truncate">New Listing Match</p>
+<p class="font-caption text-caption text-on-surface-variant mt-0.5 line-clamp-2">A new 2-bedroom apartment in Kilimani matching your saved search criteria was just posted.</p>
+</div>
+<div class="flex-shrink-0 ml-3 mt-1">
+<span class="font-caption text-caption text-on-surface-variant">4h</span>
+</div>
+</div>
+</div>
+<!-- Group: Yesterday -->
+<div>
+<h3 class="px-margin-horizontal font-headline-sm text-headline-sm text-on-surface-variant mb-unit mt-gutter-vertical">Yesterday</h3>
+<!-- Notification Item: Read Listing Update -->
+<div class="flex items-start px-margin-horizontal py-3 bg-surface hover:bg-surface-container-low transition-colors active:bg-surface-variant border-b border-surface-variant/50 relative">
+<div class="pl-4 flex-shrink-0 mr-3">
+<div class="w-10 h-10 rounded-full bg-primary-container/20 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined filled">edit_document</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<p class="font-body-md text-body-md text-on-surface truncate">Listing Status Updated</p>
+<p class="font-caption text-caption text-on-surface-variant mt-0.5 line-clamp-2">Your listing 'Westlands Office Space' has been approved and is now live on the marketplace.</p>
+</div>
+<div class="flex-shrink-0 ml-3 mt-1">
+<span class="font-caption text-caption text-on-surface-variant">1d</span>
+</div>
+</div>
+<!-- Notification Item: Read Unlock -->
+<div class="flex items-start px-margin-horizontal py-3 bg-surface hover:bg-surface-container-low transition-colors active:bg-surface-variant border-b border-surface-variant/50 relative">
+<div class="pl-4 flex-shrink-0 mr-3">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined filled">lock_open</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<p class="font-body-md text-body-md text-on-surface truncate">Property unlocked successfully</p>
+<p class="font-caption text-caption text-on-surface-variant mt-0.5 line-clamp-2">You gained access to 'Lavington Townhouse' contact details.</p>
+</div>
+<div class="flex-shrink-0 ml-3 mt-1">
+<span class="font-caption text-caption text-on-surface-variant">1d</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar JSON Component - Suppressed because Notifications is a temporary/task-focused sub-page -->
+<!-- Navigation Drawer JSON Component - Suppressed as per instructions -->
+</body></html>

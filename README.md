@@ -52,3 +52,8 @@ pnpm standards:check
 - `apps/api/README.md`
 - `apps/web/README.md`
 - `apps/mobile/README.md`
+
+cd /opt/pataspace && git pull origin main
+cd infra/docker
+docker compose -f docker-compose.vps.yml build api web
+docker compose -f docker-compose.vps.yml up -d

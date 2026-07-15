@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PataSpace - Splash Screen</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-primary": "#83d1ee",
+                        "surface": "#f9f9f9",
+                        "on-error": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "status-error": "#FF3B30",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#434748",
+                        "secondary": "#5f5e5e",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#e0e3e4",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed": "#001f28",
+                        "inverse-on-surface": "#f0f1f1",
+                        "background": "#f9f9f9",
+                        "tertiary": "#5a5e5f",
+                        "status-success": "#34C759",
+                        "surface-container": "#eeeeee",
+                        "on-secondary-fixed-variant": "#474746",
+                        "surface-container-low": "#f3f3f4",
+                        "primary-fixed": "#b7eaff",
+                        "surface-tint": "#00677f",
+                        "secondary-container": "#e4e2e1",
+                        "on-surface": "#1a1c1c",
+                        "inverse-surface": "#2f3131",
+                        "surface-container-high": "#e8e8e8",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "on-primary-container": "#ffffff",
+                        "on-tertiary-fixed": "#181c1d",
+                        "surface-bright": "#f9f9f9",
+                        "tertiary-fixed-dim": "#c3c7c8",
+                        "secondary-fixed": "#e4e2e1",
+                        "on-tertiary-container": "#ffffff",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "on-primary-fixed-variant": "#004e60",
+                        "surface-subtle": "#EDEDED",
+                        "error-container": "#ffdad6",
+                        "on-surface-variant": "#3f484c",
+                        "primary-fixed-dim": "#83d1ee",
+                        "on-background": "#1a1c1c",
+                        "tertiary-container": "#737778",
+                        "on-secondary-container": "#656464",
+                        "on-secondary": "#ffffff",
+                        "status-warning": "#FFCC00",
+                        "primary-container": "#28809a",
+                        "outline": "#6f797d",
+                        "surface-dim": "#dadada",
+                        "surface-container-highest": "#e2e2e2",
+                        "on-primary": "#ffffff",
+                        "primary": "#00667e",
+                        "outline-variant": "#bec8cd",
+                        "surface-variant": "#e2e2e2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "component-gap": "16px",
+                        "unit": "8px",
+                        "margin-horizontal": "16px",
+                        "gutter-vertical": "24px",
+                        "touch-target": "44px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["DM Sans"],
+                        "body-md": ["DM Sans"],
+                        "headline-md": ["Poppins"],
+                        "caption": ["DM Sans"],
+                        "headline-lg": ["Poppins"],
+                        "headline-lg-mobile": ["Poppins"],
+                        "display-02": ["Poppins"],
+                        "display-01": ["Poppins"],
+                        "label-md": ["DM Sans"],
+                        "headline-sm": ["Poppins"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["17px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["15px", { "lineHeight": "21px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "30px", "fontWeight": "600" }],
+                        "caption": ["11px", { "lineHeight": "14px", "fontWeight": "400" }],
+                        "headline-lg": ["28px", { "lineHeight": "34px", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "30px", "fontWeight": "700" }],
+                        "display-02": ["34px", { "lineHeight": "41px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "display-01": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-md": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "headline-sm": ["20px", { "lineHeight": "25px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Eerie Black (#252525) is mapped to inverse-surface in this theme, but for strict splash screen we use the exact hex if needed, or surface color in dark mode */
+        body {
+            background-color: #252525;
+            color: #ffffff;
+        }
+        .safe-area-inset {
+            padding-top: env(safe-area-inset-top, 47px);
+            padding-bottom: env(safe-area-inset-bottom, 34px);
+        }
+    </style>
+</head>
+<body class="w-[393px] h-[852px] mx-auto overflow-hidden relative font-body-lg flex flex-col justify-between items-center safe-area-inset px-margin-horizontal pt-[120px] pb-[60px]">
+<!-- Decorative background elements -->
+<div class="absolute top-[-100px] right-[-100px] w-64 h-64 bg-primary-container opacity-20 rounded-full blur-[80px]"></div>
+<div class="absolute bottom-[-150px] left-[-100px] w-80 h-80 bg-inverse-primary opacity-10 rounded-full blur-[100px]"></div>
+<!-- Center Logo Content -->
+<div class="flex flex-col items-center justify-center flex-grow z-10 w-full animate-fade-in-up">
+<!-- Logo Image -->
+<div class="w-[120px] h-[120px] mb-6 rounded-2xl overflow-hidden shadow-2xl bg-white/5 backdrop-blur-sm border border-white/10 p-2 flex items-center justify-center">
+<img class="w-full h-full object-contain drop-shadow-[0_8px_16px_rgba(40,128,154,0.3)]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCeBYeSwaWYsMs-mmzhIJz7Ja7nsbtMn3re8UKdFN0qrBGwleBZRBwfj0fXn9UtdbiG66DAA5AF5HKVMEk6d2NVrfVEM_nLfLehXzCkerZnum92Dc4XKx2P5j8N5S5TVy1J-HRm4YkDyBG6GDiYjOXMYL_Uq8NjRgy44SWVZxDMbnsLLLBP-sIi_TKzlfw5t0UBsvRnllhgLwgVg9KEr3TEh3UYkmaasuf27Yrpoa2PWa3eB7ilT7t4HsIHSlEJCw1Ff9GTwKGMPAnD"/>
+</div>
+<!-- Brand Name -->
+<h1 class="font-display-02 text-white mb-3 text-center drop-shadow-md">
+            PataSpace
+        </h1>
+<!-- Tagline -->
+<p class="font-body-lg text-white/80 text-center max-w-[280px]">
+            Find Housing 3X Faster
+        </p>
+</div>
+<!-- Bottom Actions -->
+<div class="w-full flex flex-col gap-4 z-10 mt-auto">
+<!-- Get Started Button -->
+<button class="w-full h-touch-target bg-primary-container text-white font-headline-sm rounded-[16px] shadow-[0_4px_12px_rgba(40,128,154,0.3)] active:scale-[0.98] transition-transform duration-200 flex items-center justify-center">
+            Get Started
+        </button>
+<!-- Log In Button -->
+<button class="w-full h-touch-target bg-transparent border-2 border-outline-variant text-white font-headline-sm rounded-[16px] active:scale-[0.98] hover:bg-white/5 transition-all duration-200 flex items-center justify-center">
+            I Have an Account
+        </button>
+</div>
+<style>
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</body></html>

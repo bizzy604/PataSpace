@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>PataSpace Photo Gallery</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-container": "#e4e2e1",
+                    "tertiary-fixed": "#e0e3e4",
+                    "primary": "#00667e",
+                    "on-tertiary-fixed-variant": "#434748",
+                    "on-surface": "#1a1c1c",
+                    "on-primary-fixed": "#001f28",
+                    "tertiary-container": "#737778",
+                    "outline": "#6f797d",
+                    "status-warning": "#FFCC00",
+                    "on-primary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-container": "#ffffff",
+                    "on-primary-container": "#ffffff",
+                    "surface-variant": "#e2e2e2",
+                    "on-tertiary-fixed": "#181c1d",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary": "#5a5e5f",
+                    "on-tertiary": "#ffffff",
+                    "primary-container": "#28809a",
+                    "primary-fixed-dim": "#83d1ee",
+                    "surface-container-low": "#f3f3f4",
+                    "surface-dim": "#dadada",
+                    "inverse-primary": "#83d1ee",
+                    "status-success": "#34C759",
+                    "error": "#ba1a1a",
+                    "on-secondary-fixed-variant": "#474746",
+                    "secondary-fixed-dim": "#c8c6c5",
+                    "on-error-container": "#93000a",
+                    "secondary-fixed": "#e4e2e1",
+                    "on-primary-fixed-variant": "#004e60",
+                    "inverse-surface": "#2f3131",
+                    "surface": "#f9f9f9",
+                    "outline-variant": "#bec8cd",
+                    "on-secondary": "#ffffff",
+                    "status-error": "#FF3B30",
+                    "on-secondary-container": "#656464",
+                    "surface-container": "#eeeeee",
+                    "on-error": "#ffffff",
+                    "on-background": "#1a1c1c",
+                    "surface-container-high": "#e8e8e8",
+                    "on-surface-variant": "#3f484c",
+                    "tertiary-fixed-dim": "#c3c7c8",
+                    "surface-tint": "#00677f",
+                    "surface-bright": "#f9f9f9",
+                    "surface-subtle": "#EDEDED",
+                    "on-secondary-fixed": "#1b1c1c",
+                    "primary-fixed": "#b7eaff",
+                    "inverse-on-surface": "#f0f1f1",
+                    "surface-container-highest": "#e2e2e2",
+                    "background": "#f9f9f9",
+                    "secondary": "#5f5e5e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-horizontal": "16px",
+                    "unit": "8px",
+                    "gutter-vertical": "24px",
+                    "component-gap": "16px",
+                    "touch-target": "44px"
+            },
+            "fontFamily": {
+                    "headline-lg": [
+                            "Poppins"
+                    ],
+                    "body-md": [
+                            "DM Sans"
+                    ],
+                    "headline-sm": [
+                            "Poppins"
+                    ],
+                    "display-01": [
+                            "Poppins"
+                    ],
+                    "caption": [
+                            "DM Sans"
+                    ],
+                    "headline-md": [
+                            "Poppins"
+                    ],
+                    "display-02": [
+                            "Poppins"
+                    ],
+                    "body-lg": [
+                            "DM Sans"
+                    ],
+                    "label-md": [
+                            "DM Sans"
+                    ],
+                    "headline-lg-mobile": [
+                            "Poppins"
+                    ]
+            },
+            "fontSize": {
+                    "headline-lg": [
+                            "28px",
+                            {
+                                    "lineHeight": "34px",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "body-md": [
+                            "15px",
+                            {
+                                    "lineHeight": "21px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-sm": [
+                            "20px",
+                            {
+                                    "lineHeight": "25px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "display-01": [
+                            "48px",
+                            {
+                                    "lineHeight": "56px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "caption": [
+                            "11px",
+                            {
+                                    "lineHeight": "14px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "30px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "display-02": [
+                            "34px",
+                            {
+                                    "lineHeight": "41px",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "body-lg": [
+                            "17px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "label-md": [
+                            "13px",
+                            {
+                                    "lineHeight": "18px",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "headline-lg-mobile": [
+                            "24px",
+                            {
+                                    "lineHeight": "30px",
+                                    "fontWeight": "700"
+                            }
+                    ]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        /* iOS hide scrollbar */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-black text-white h-screen w-full overflow-hidden font-body-md select-none touch-none">
+<!-- Main Image Container -->
+<div class="absolute inset-0 w-full h-full flex items-center justify-center transition-transform duration-300 ease-out" id="image-container">
+<img alt="Main property view" class="w-full h-full object-contain pointer-events-none" data-alt="A high-resolution, wide-angle interior photograph of a modern luxury living room in a Kenyan real estate listing. The room features floor-to-ceiling windows letting in bright natural light, contemporary minimalist furniture, and a sleek Eerie Black and Teal accent wall. The mood is sophisticated and inviting, typical of a premium property showcase." id="main-image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDssvRf1X4qwtDqONeNg1iwWEAhB2uwbqZSq6TB5g2PZDiUx6z9v9gcXK9fIWzp_PbOGHj2XdW4RnvHfD02KatowlTj3Wqv3YGq9Qxsgtn1gW2MOULbuCUc5P6y3LPInH6RVXxZ84y2Tl2tZufavrceOj9EbfB-6sEhHClKRzW_tSAjJWVxEdlkBnwP_hiscC-M_z3bm1uxBshQEQDJRevfl0BFITqHsqW2xXh8g7AAZMIsh1QL0k31Tta5JIUZ75wa5WZObxzpJIL-"/>
+</div>
+<!-- Top Overlay Navigation -->
+<div class="absolute top-0 w-full z-50 pt-safe-top bg-[#252525]/80 backdrop-blur-md transition-opacity duration-300" id="top-overlay">
+<div class="flex items-center justify-between px-margin-horizontal h-[44px]">
+<!-- Close Button -->
+<button class="w-[44px] h-[44px] flex items-center justify-start text-white active:opacity-50 transition-opacity">
+<span class="material-symbols-outlined text-[24px]">close</span>
+</button>
+<!-- Counter -->
+<div class="font-body-lg text-white font-medium">
+                3 of 10
+            </div>
+<!-- Share Button -->
+<button class="w-[44px] h-[44px] flex items-center justify-end text-white active:opacity-50 transition-opacity">
+<span class="material-symbols-outlined text-[24px]">ios_share</span>
+</button>
+</div>
+</div>
+<!-- Bottom Overlay -->
+<div class="absolute bottom-0 w-full z-50 pb-safe bg-[#252525]/80 backdrop-blur-md transition-opacity duration-300" id="bottom-overlay">
+<!-- GPS Badge -->
+<div class="px-margin-horizontal py-unit flex items-center justify-center border-b border-white/10">
+<div class="flex items-center gap-1 bg-white/10 px-3 py-1 rounded-full backdrop-blur-sm">
+<span class="material-symbols-outlined text-[14px] text-status-success">verified</span>
+<span class="font-caption text-white">📍 GPS Verified (1.2921° S, 36.8219° E)</span>
+</div>
+</div>
+<!-- Thumbnail Strip -->
+<div class="w-full overflow-x-auto hide-scrollbar flex gap-unit px-margin-horizontal py-[12px] snap-x snap-mandatory">
+<!-- Thumb 1 -->
+<div class="snap-center shrink-0 w-[60px] h-[60px] rounded-lg overflow-hidden border-2 border-transparent opacity-50 transition-all duration-200">
+<img class="w-full h-full object-cover" data-alt="A small thumbnail showing the exterior facade of a modern luxury house with dark trim and large windows, taken during daytime." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAW3mYMkFrJymo4RZpe4jc8vLMlpLDcyhBgW-yPSiEdj1yT5uLIeXBoreTeFTm00XfN2eMXARIHfrTtLeL0hBuelgihf44O-0UO_zpmaQAXynyPJasiBL9iisYmRJ9WiTqXJm32W19KCuEm9NqlFvbA6bivXRp9sO6tqO4FEsJTrhkWLBIwz2aFcXcfC5P6zHEHZI7CC2E86TSZpzE3FYzjJUUPkvnwAEwyRHO0dPTlunNtVApEhpgBkI-rRGR35TZKrG4oJOtUXHSF"/>
+</div>
+<!-- Thumb 2 -->
+<div class="snap-center shrink-0 w-[60px] h-[60px] rounded-lg overflow-hidden border-2 border-transparent opacity-50 transition-all duration-200">
+<img class="w-full h-full object-cover" data-alt="A small thumbnail showing a modern kitchen with white countertops and teal cabinetry, brightly lit." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDX3FbiQnPnKhJcjEZihldRGeeXzLHRaRfzrOg7Slz86Iz_EDMURg7LKOk_IzF5y_eVJQbC_xseeE3gSwJz2d1FLKiSULCX8l_2qvVXpHy0RCXj2FQnDPyfCUcjvYr6sxqOp9R7Ia6IuwncJ4Gt7LZOX-nt_1NLPqs32J8l-VP-Vq8Huch73iKIzA3ceN5sHme2P30ImhLdSFWWvYNO9BxbzWvfzgT3VkNpgQS35ndGObn_Sm-WxsZR9LlVq5tzeLqo9FTCZ3DwYKzI"/>
+</div>
+<!-- Thumb 3 (Active) -->
+<div class="snap-center shrink-0 w-[60px] h-[60px] rounded-lg overflow-hidden border-2 border-primary-container opacity-100 transition-all duration-200">
+<img class="w-full h-full object-cover" data-alt="A small thumbnail showing the living room matching the main image, featuring minimalist furniture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDO9HCgTmj8FCWsrdvl67lNxko5OJzjFzKHhusYvK_lJyZLS7x72m7xP2klJyyGvYZN3QDl_reTm-Y6AyZlQ-ozBO0oxvalsoUoUMkMgqm6XSYY4WqBNU_A3ifYjOG3dXGmvYCgKtE0mVm5ZVqHS1UKziqiaXfzP_BoPR2QOmsvVXP83SlwKmuFUb4zjX6n8iHa5c-6BEV-spgkFLkri34ouyGEmJC7B2dI3wyDd6nJjpjSWsVDSJoO478gIIEOaUG1kzZ8iC9GKccF"/>
+</div>
+<!-- Thumb 4 -->
+<div class="snap-center shrink-0 w-[60px] h-[60px] rounded-lg overflow-hidden border-2 border-transparent opacity-50 transition-all duration-200">
+<img class="w-full h-full object-cover" data-alt="A small thumbnail showing a spacious master bedroom with a large bed and city view through the window." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDNAiOeRwqtHLbYXimU4PJ_OQHjp_DFsQpLoYuTvaBGn_AY3p7vNpXaq90m08KEeKUJPvZqVU7qHOIqtZRxxDXFV62nb75h1ZxzrtL18-4DQd85CvOMYGKXrVOd-F650eC2DSG2f2EiZ5DTPJkEy1eRS8d_TazDOEfwWcbXUbUNFjuST-PIynYc2sF75M_YeRVzgZrG-gJMCct60XDQQxpHtp0aqqzg1hfDc2aa2aihiMbq5MKo0SlRInx-MinD3PQCYTLYd6KFrzsN"/>
+</div>
+<!-- Thumb 5 -->
+<div class="snap-center shrink-0 w-[60px] h-[60px] rounded-lg overflow-hidden border-2 border-transparent opacity-50 transition-all duration-200">
+<img class="w-full h-full object-cover" data-alt="A small thumbnail showing a luxury bathroom with a freestanding tub and dark modern tiles." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBQcc1ZOs6RQHKzvaEc4s2EsZ2FJ3pgobIbpi4OiTriR5VzFIQj_URorYMJvwPUQZDcrTjYM8IxKm39vr5r9zxZBinKxniRkct2VyP73h_yBXT2N_PDzHkQ1_nLcHnY3Yd_QU6tXpw3ebPLGxT85P3-caJsxBuWeAkFfqpWtuxIEG4XC7aJ10mDxAlIiO2XLm0ijAub-mQ9i1Gpv7-OE0zdLg4M1p7CWZfFaaT8c5P65IvRjOVYRPyoEwOgPved-3JRuAXOeT59xHz8"/>
+</div>
+<!-- Thumb 6 -->
+<div class="snap-center shrink-0 w-[60px] h-[60px] rounded-lg overflow-hidden border-2 border-transparent opacity-50 transition-all duration-200">
+<img class="w-full h-full object-cover" data-alt="A small thumbnail showing an outdoor patio area with seating and a small garden." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVe0iFvjaaIoVA1BGdAWDknRn3BdGl2mQtwnDomacyP4Zx3EWqFAdbvwV6_E2Bj9VLzliPUW5-sQznJO7cbHh_IYb3cqV6dw_uCmkemClFsAUS27setym1AmVIglljxMIk-S3hA3cxzpMEodESFLp4BCTUV68_zy-Y-4sC5WxRRfQ2aQov2aWAPnhuzpovNEu7FJg87SJATc5uhvDr9ze3ylaaislRCCJkZccKI7E0x2f2TKm3k8Wd0Gl4E7-Shi2PtGIot9T4-QjU"/>
+</div>
+</div>
+</div>
+<script>
+        // Minimal script to handle overlay toggling on single tap (simulating iOS gallery behavior)
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('image-container');
+            const topOverlay = document.getElementById('top-overlay');
+            const bottomOverlay = document.getElementById('bottom-overlay');
+            let overlaysVisible = true;
+
+            // Simple tap to toggle overlays
+            container.addEventListener('click', () => {
+                overlaysVisible = !overlaysVisible;
+                if(overlaysVisible) {
+                    topOverlay.classList.remove('opacity-0');
+                    bottomOverlay.classList.remove('opacity-0');
+                } else {
+                    topOverlay.classList.add('opacity-0');
+                    bottomOverlay.classList.add('opacity-0');
+                }
+            });
+
+            // Note: Full pinch-to-zoom, swipe, and double-tap gestures require a robust gesture library 
+            // (like Hammer.js or native iOS implementation) and are omitted here for brevity,
+            // focusing on the UI layout as requested.
+        });
+    </script>
+</body></html>

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>PataSpace - Rate Your Experience</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&amp;family=Poppins:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Config from Guidance -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#6f797d",
+                        "status-warning": "#FFCC00",
+                        "error-container": "#ffdad6",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-container": "#ffffff",
+                        "on-primary-fixed": "#001f28",
+                        "tertiary-container": "#737778",
+                        "tertiary-fixed": "#e0e3e4",
+                        "primary": "#00667e",
+                        "on-tertiary-fixed-variant": "#434748",
+                        "on-surface": "#1a1c1c",
+                        "secondary-container": "#e4e2e1",
+                        "on-secondary-fixed-variant": "#474746",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "surface-dim": "#dadada",
+                        "inverse-primary": "#83d1ee",
+                        "error": "#ba1a1a",
+                        "status-success": "#34C759",
+                        "tertiary": "#5a5e5f",
+                        "primary-container": "#28809a",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-low": "#f3f3f4",
+                        "primary-fixed-dim": "#83d1ee",
+                        "on-primary-container": "#ffffff",
+                        "surface-variant": "#e2e2e2",
+                        "on-tertiary-fixed": "#181c1d",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#1a1c1c",
+                        "surface-container-high": "#e8e8e8",
+                        "on-surface-variant": "#3f484c",
+                        "status-error": "#FF3B30",
+                        "on-secondary-container": "#656464",
+                        "surface-container": "#eeeeee",
+                        "on-error": "#ffffff",
+                        "outline-variant": "#bec8cd",
+                        "on-secondary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#e4e2e1",
+                        "on-primary-fixed-variant": "#004e60",
+                        "inverse-surface": "#2f3131",
+                        "surface": "#f9f9f9",
+                        "background": "#f9f9f9",
+                        "secondary": "#5f5e5e",
+                        "primary-fixed": "#b7eaff",
+                        "surface-container-highest": "#e2e2e2",
+                        "inverse-on-surface": "#f0f1f1",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "surface-subtle": "#EDEDED",
+                        "tertiary-fixed-dim": "#c3c7c8",
+                        "surface-tint": "#00677f",
+                        "surface-bright": "#f9f9f9"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-horizontal": "16px",
+                        "unit": "8px",
+                        "gutter-vertical": "24px",
+                        "component-gap": "16px",
+                        "touch-target": "44px",
+                        "safe-top": "env(safe-area-inset-top)",
+                        "safe-bottom": "env(safe-area-inset-bottom)"
+                    },
+                    "fontFamily": {
+                        "display-01": ["Poppins"],
+                        "label-md": ["DM Sans"],
+                        "headline-lg-mobile": ["Poppins"],
+                        "headline-md": ["Poppins"],
+                        "display-02": ["Poppins"],
+                        "body-lg": ["DM Sans"],
+                        "caption": ["DM Sans"],
+                        "headline-lg": ["Poppins"],
+                        "body-md": ["DM Sans"],
+                        "headline-sm": ["Poppins"]
+                    },
+                    "fontSize": {
+                        "display-01": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-md": ["13px", {"lineHeight": "18px", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "600"}],
+                        "display-02": ["34px", {"lineHeight": "41px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "body-lg": ["17px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                        "headline-lg": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                        "body-md": ["15px", {"lineHeight": "21px", "fontWeight": "400"}],
+                        "headline-sm": ["20px", {"lineHeight": "25px", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Custom Toggle Switch Styles */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: theme('colors.primary-container');
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: theme('colors.primary-container');
+        }
+        .toggle-checkbox {
+            right: 4px;
+            z-index: 1;
+            border-color: #e2e8f0;
+            transition: all 0.3s;
+        }
+        .toggle-label {
+            background-color: #e2e8f0;
+            transition: all 0.3s;
+        }
+        
+        /* Star Animation */
+        .star-icon {
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.2s ease;
+        }
+        .star-icon:active {
+            transform: scale(0.8);
+        }
+        .star-filled {
+            font-variation-settings: 'FILL' 1;
+            color: theme('colors.status-warning');
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface antialiased min-h-screen flex flex-col pt-safe-top pb-safe-bottom">
+<!-- Top Navigation (Transactional/Task-Focused so standard nav shell is suppressed, using custom header) -->
+<header class="flex items-center justify-between px-margin-horizontal h-touch-target bg-transparent shrink-0">
+<div class="w-10"></div> <!-- Spacer for centering -->
+<h1 class="font-headline-sm text-headline-sm text-on-surface text-center flex-1">Rate Your Experience</h1>
+<button aria-label="Close" class="w-10 h-10 flex items-center justify-end text-on-surface-variant hover:opacity-80 active:scale-95 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">close</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col px-margin-horizontal overflow-y-auto pb-gutter-vertical">
+<!-- Property Summary Card (Layer 1) -->
+<section class="mt-gutter-vertical bg-white rounded-xl shadow-sm p-4 flex items-center gap-4">
+<div class="w-16 h-16 rounded-lg overflow-hidden shrink-0 bg-surface-container-low">
+<img alt="Property Image" class="w-full h-full object-cover" data-alt="A brightly lit modern apartment interior featuring a minimalist living room with white walls, a plush grey sofa, and large floor-to-ceiling windows letting in natural sunlight. The aesthetic is clean, premium, and airy, suitable for a high-end real estate listing." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKz9bDcOt3t3ydZgdVokTbutsYQSm6-EAw5GWAYg2UzYdVgy1TpMFV7eH-1lO35hdzaNUAfFI0uSCPnlhqbc_D3APKm84-xH-r8trcrXao9XHwqEpyrC93ULbX65A_79v2GBlIl57qz4UaeaxlKgOlFKmvFcSDzhmPgjnl-eUKdqygMVxn7fKHdaXl3HLXdgFR4FHNK_EPIYtI47_K8o5RcYo3Aya3lynhcUdAKd3yYM6oAt5r166eUj1ukv3R6uvGU65M15d9BWcp"/>
+</div>
+<div class="flex flex-col justify-center">
+<h2 class="font-body-lg text-body-lg text-on-surface font-semibold line-clamp-1">The Azure Residences</h2>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-1">Westlands, Nairobi</p>
+<div class="flex items-center gap-1 mt-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">calendar_today</span>
+<span class="font-caption text-caption">Oct 12 - Oct 15</span>
+</div>
+</div>
+</section>
+<!-- Interactive Rating Section -->
+<section class="mt-8 flex flex-col items-center">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-6 text-center">How was your stay?</h3>
+<div class="flex items-center justify-center gap-2 mb-4" id="star-container">
+<!-- Stars will be handled by JS -->
+<button class="w-12 h-12 flex items-center justify-center focus:outline-none star-btn" data-value="1">
+<span class="material-symbols-outlined text-[40px] text-surface-variant star-icon">star</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center focus:outline-none star-btn" data-value="2">
+<span class="material-symbols-outlined text-[40px] text-surface-variant star-icon">star</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center focus:outline-none star-btn" data-value="3">
+<span class="material-symbols-outlined text-[40px] text-surface-variant star-icon">star</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center focus:outline-none star-btn" data-value="4">
+<span class="material-symbols-outlined text-[40px] text-surface-variant star-icon">star</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center focus:outline-none star-btn" data-value="5">
+<span class="material-symbols-outlined text-[40px] text-surface-variant star-icon">star</span>
+</button>
+</div>
+<!-- Dynamic Rating Label -->
+<div class="font-body-lg text-body-lg text-primary-container h-6 font-semibold transition-opacity duration-200 opacity-0" id="rating-label">
+                Select a rating
+            </div>
+</section>
+<!-- Text Review Area -->
+<section class="mt-8">
+<label class="block font-label-md text-label-md text-on-surface mb-2 font-semibold" for="review-text">Share details of your experience (Optional)</label>
+<div class="relative bg-surface-subtle rounded-xl border border-transparent focus-within:border-primary-container transition-colors">
+<textarea class="w-full bg-transparent border-none rounded-xl px-4 py-3 font-body-md text-body-md text-on-surface placeholder-on-surface-variant/60 focus:ring-0 resize-none" id="review-text" placeholder="What did you love? What could be improved?" rows="4"></textarea>
+</div>
+</section>
+<!-- Privacy Toggle -->
+<section class="mt-6 flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-semibold text-on-surface">Post Anonymously</span>
+<span class="font-caption text-caption text-on-surface-variant">Hide your name from public view</span>
+</div>
+<!-- Custom Toggle -->
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+<input class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer top-0 bottom-0 m-auto" id="anonymous-toggle" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-surface-variant cursor-pointer" for="anonymous-toggle"></label>
+</div>
+</section>
+<div class="flex-1 min-h-[40px]"></div> <!-- Spacer to push button to bottom -->
+</main>
+<!-- Bottom Sticky Action Bar (Layer 3) -->
+<footer class="px-margin-horizontal pb-safe-bottom pt-4 bg-surface/80 backdrop-blur-md shrink-0 z-10 border-t border-surface-variant/30">
+<button class="w-full h-touch-target bg-primary-container text-white font-display-01 text-[17px] font-bold rounded-xl flex items-center justify-center mb-6 active:scale-[0.98] transition-transform opacity-50 cursor-not-allowed" disabled="" id="submit-btn">
+            Submit Review
+        </button>
+</footer>
+<!-- Interactive Script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const starBtns = document.querySelectorAll('.star-btn');
+            const ratingLabel = document.getElementById('rating-label');
+            const submitBtn = document.getElementById('submit-btn');
+            let currentRating = 0;
+
+            const ratingTexts = {
+                1: "Terrible",
+                2: "Poor",
+                3: "Okay",
+                4: "Good",
+                5: "Amazing!"
+            };
+
+            function updateStars(rating) {
+                starBtns.forEach((btn, index) => {
+                    const icon = btn.querySelector('.star-icon');
+                    if (index < rating) {
+                        icon.classList.add('star-filled');
+                        icon.classList.remove('text-surface-variant');
+                    } else {
+                        icon.classList.remove('star-filled');
+                        icon.classList.add('text-surface-variant');
+                    }
+                });
+            }
+
+            starBtns.forEach(btn => {
+                // Hover effects (mostly for web testing, as mobile won't hover well)
+                btn.addEventListener('mouseenter', () => {
+                    if(currentRating === 0) {
+                        updateStars(parseInt(btn.dataset.value));
+                    }
+                });
+
+                btn.parentElement.addEventListener('mouseleave', () => {
+                    if(currentRating === 0) {
+                        updateStars(0);
+                    } else {
+                        updateStars(currentRating);
+                    }
+                });
+
+                // Click event
+                btn.addEventListener('click', () => {
+                    currentRating = parseInt(btn.dataset.value);
+                    updateStars(currentRating);
+                    
+                    // Update Label
+                    ratingLabel.textContent = ratingTexts[currentRating];
+                    ratingLabel.classList.remove('opacity-0');
+                    
+                    // Enable Submit
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                });
+            });
+        });
+    </script>
+</body></html>

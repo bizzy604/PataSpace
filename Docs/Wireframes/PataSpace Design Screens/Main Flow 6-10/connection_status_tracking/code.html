@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>PataSpace - Connection Status</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&amp;family=DM+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#bec8cd",
+                        "secondary-fixed": "#e4e2e1",
+                        "background": "#f9f9f9",
+                        "on-surface-variant": "#3f484c",
+                        "inverse-primary": "#83d1ee",
+                        "tertiary": "#5a5e5f",
+                        "on-surface": "#1a1c1c",
+                        "primary": "#00667e",
+                        "outline": "#6f797d",
+                        "tertiary-fixed-dim": "#c3c7c8",
+                        "on-tertiary-fixed-variant": "#434748",
+                        "on-primary-fixed-variant": "#004e60",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#e0e3e4",
+                        "status-success": "#34C759",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#001f28",
+                        "on-secondary-container": "#656464",
+                        "on-secondary-fixed-variant": "#474746",
+                        "surface-tint": "#00677f",
+                        "surface-container-high": "#e8e8e8",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-subtle": "#EDEDED",
+                        "primary-fixed": "#b7eaff",
+                        "surface": "#f9f9f9",
+                        "on-background": "#1a1c1c",
+                        "primary-fixed-dim": "#83d1ee",
+                        "on-tertiary-fixed": "#181c1d",
+                        "surface-container-highest": "#e2e2e2",
+                        "on-primary": "#ffffff",
+                        "secondary": "#5f5e5e",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "on-tertiary": "#ffffff",
+                        "surface-variant": "#e2e2e2",
+                        "secondary-container": "#e4e2e1",
+                        "tertiary-container": "#737778",
+                        "surface-bright": "#f9f9f9",
+                        "inverse-on-surface": "#f0f1f1",
+                        "status-error": "#FF3B30",
+                        "status-warning": "#FFCC00",
+                        "inverse-surface": "#2f3131",
+                        "on-error-container": "#93000a",
+                        "primary-container": "#28809a",
+                        "surface-container-low": "#f3f3f4",
+                        "on-tertiary-container": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "surface-dim": "#dadada",
+                        "on-primary-container": "#ffffff",
+                        "error": "#ba1a1a",
+                        "surface-container": "#eeeeee"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "8px",
+                        "touch-target": "44px",
+                        "margin-horizontal": "16px",
+                        "gutter-vertical": "24px",
+                        "component-gap": "16px"
+                    },
+                    "fontFamily": {
+                        "caption": ["DM Sans"],
+                        "body-lg": ["DM Sans"],
+                        "body-md": ["DM Sans"],
+                        "headline-sm": ["Poppins"],
+                        "headline-lg-mobile": ["Poppins"],
+                        "headline-lg": ["Poppins"],
+                        "display-02": ["Poppins"],
+                        "display-01": ["Poppins"],
+                        "label-md": ["DM Sans"],
+                        "headline-md": ["Poppins"]
+                    },
+                    "fontSize": {
+                        "caption": ["11px", { "lineHeight": "14px", "fontWeight": "400" }],
+                        "body-lg": ["17px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["15px", { "lineHeight": "21px", "fontWeight": "400" }],
+                        "headline-sm": ["20px", { "lineHeight": "25px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "30px", "fontWeight": "700" }],
+                        "headline-lg": ["28px", { "lineHeight": "34px", "fontWeight": "700" }],
+                        "display-02": ["34px", { "lineHeight": "41px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "display-01": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-md": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "30px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .pulse-ring {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.8); opacity: 0.8; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body-md antialiased pb-safe min-h-screen">
+<!-- Top Navigation (Transactional/Focused) -->
+<header class="fixed top-0 w-full z-50 bg-inverse-surface shadow-sm h-touch-target flex justify-between items-center px-margin-horizontal pt-safe">
+<button aria-label="Go back to Unlocks" class="flex items-center text-primary-fixed active:scale-95 transition-transform">
+<span class="material-symbols-outlined mr-1">chevron_left</span>
+<span class="font-label-md text-label-md">Unlocks</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm text-surface-container-lowest font-bold absolute left-1/2 -translate-x-1/2">Connection Status</h1>
+<div class="w-16"></div> <!-- Spacer for center alignment -->
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-[calc(44px+env(safe-area-inset-top)+16px)] px-margin-horizontal pb-[calc(44px+env(safe-area-inset-bottom)+24px)] space-y-gutter-vertical max-w-md mx-auto">
+<!-- Property Context Card -->
+<section class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_4px_12px_rgba(0,0,0,0.04)]">
+<div class="flex gap-4">
+<!-- Small Carousel Proxy -->
+<div class="w-20 h-20 rounded-lg overflow-hidden relative shrink-0">
+<img class="w-full h-full object-cover" data-alt="A close-up architectural shot of a modern apartment exterior in Nairobi, featuring clean lines, large glass windows reflecting a bright blue sky, and a subtle light-mode aesthetic. High-quality real estate photography with crisp details and a serene, professional mood." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBv2rWSpYHc83CwLzjPNSYKDeBn4THqp0BmYfwHoV7uZWa_3lMaJ_uphMJxm4jkmGIePK1Zvw1y8d1w-frvIZ4m1KOU8IXH7EOS2iW0nqc2VxxI962U227X5zbxOfUx8F7LvssfsuAJT6eYYKdw-41-o046EJHdCoEqcdBH7Yhn5YswkM_rKJ8NwdT501m-K0l85wqg_4gRzlOz47qDyYRkh9RspstfL3lAhLYsWr0hW4xWWfKO4T0bD3fXwc43EFBXXqrq_Y-tGyx"/>
+<div class="absolute bottom-1 right-1 bg-inverse-surface/80 text-surface-container-lowest font-caption text-caption px-1.5 py-0.5 rounded-sm flex items-center">
+<span class="material-symbols-outlined text-[10px] mr-0.5">photo_library</span> 1/4
+                    </div>
+</div>
+<div class="flex flex-col justify-center">
+<div class="flex items-center gap-1 mb-1">
+<span class="material-symbols-outlined text-status-success text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-caption text-caption text-outline">Unlocked 5 days ago</span>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Ksh 45,000 <span class="font-body-md text-body-md font-normal text-on-surface-variant">/mo</span></h2>
+<p class="font-body-md text-body-md text-on-surface-variant flex items-center mt-0.5">
+<span class="material-symbols-outlined text-sm mr-1">location_on</span> Kilimani, Nairobi
+                    </p>
+</div>
+</div>
+</section>
+<!-- Vertical Timeline -->
+<section class="bg-surface-container-lowest rounded-xl p-6 shadow-[0_4px_12px_rgba(0,0,0,0.04)]">
+<div class="relative">
+<!-- Vertical Line -->
+<div class="absolute left-[15px] top-4 bottom-4 w-0.5 bg-surface-variant"></div>
+<!-- Step 1: Completed -->
+<div class="flex gap-4 mb-6 relative z-10">
+<div class="w-8 h-8 rounded-full bg-status-success flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-surface-container-lowest text-sm" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface">Contact Unlocked</h3>
+<p class="font-caption text-caption text-outline mt-0.5">Mar 15, 2026</p>
+</div>
+</div>
+<!-- Step 2: Completed -->
+<div class="flex gap-4 mb-6 relative z-10">
+<div class="w-8 h-8 rounded-full bg-status-success flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-surface-container-lowest text-sm" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface">Property Viewed</h3>
+<p class="font-caption text-caption text-outline mt-0.5">Automated confirmation</p>
+</div>
+</div>
+<!-- Step 3: Completed -->
+<div class="flex gap-4 mb-6 relative z-10">
+<div class="w-8 h-8 rounded-full bg-status-success flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-surface-container-lowest text-sm" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface">Your Confirmation</h3>
+<p class="font-caption text-caption text-outline mt-0.5">You confirmed Mar 18</p>
+</div>
+</div>
+<!-- Step 4: Current Active -->
+<div class="flex gap-4 mb-6 relative z-10">
+<div class="w-8 h-8 rounded-full bg-surface-container-lowest border-2 border-primary-container flex items-center justify-center shrink-0 shadow-sm relative">
+<div class="w-3 h-3 bg-primary-container rounded-full relative z-10"></div>
+<div class="absolute inset-0 bg-primary-container rounded-full pulse-ring"></div>
+</div>
+<div class="flex-1">
+<h3 class="font-label-md text-label-md text-primary-container font-bold">Tenant Confirmation</h3>
+<div class="bg-surface-subtle rounded-lg p-3 mt-2 border border-surface-variant">
+<p class="font-body-md text-body-md text-on-surface mb-1 flex items-center">
+<span class="material-symbols-outlined text-sm mr-1 text-primary-container">hourglass_empty</span>
+                                Waiting for outgoing tenant
+                            </p>
+<p class="font-caption text-caption text-outline mb-3">Usually confirms within 3 days</p>
+<button class="bg-surface-container-lowest border border-outline-variant text-on-surface font-label-md text-label-md px-4 py-2 rounded-lg w-full active:scale-95 transition-transform flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">notifications_active</span> Send Reminder
+                            </button>
+</div>
+</div>
+</div>
+<!-- Step 5: Future -->
+<div class="flex gap-4 relative z-10">
+<div class="w-8 h-8 rounded-full bg-surface-container-lowest border-2 border-surface-variant flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-outline-variant text-sm">payments</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-outline">Commission Payment</h3>
+<p class="font-caption text-caption text-outline mt-0.5">7 days after both confirmations</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Contact Card -->
+<section class="bg-primary-fixed rounded-xl p-5 shadow-sm border border-primary-fixed-dim/30">
+<h3 class="font-label-md text-label-md text-on-primary-fixed-variant mb-3">Need to follow up?</h3>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-lowest flex items-center justify-center text-primary-container font-bold shadow-sm">
+                        JO
+                    </div>
+<div>
+<p class="font-label-md text-label-md text-on-primary-fixed">James Omondi</p>
+<p class="font-caption text-caption text-on-primary-fixed-variant">+254 712 *** ***</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button aria-label="Call Tenant" class="w-10 h-10 rounded-full bg-surface-container-lowest flex items-center justify-center text-primary-container shadow-sm active:scale-95 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">call</span>
+</button>
+<button aria-label="WhatsApp Tenant" class="w-10 h-10 rounded-full bg-status-success flex items-center justify-center text-surface-container-lowest shadow-sm active:scale-95 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">chat</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Help/Issue Section -->
+<section class="bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-error-container/50">
+<div class="flex justify-between items-start mb-3">
+<div>
+<h3 class="font-label-md text-label-md text-on-surface">Tenant not confirming?</h3>
+<p class="font-caption text-caption text-outline mt-0.5 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">info</span> Auto-confirmation in 11 days
+                    </p>
+</div>
+<span class="material-symbols-outlined text-outline-variant">help</span>
+</div>
+<button class="text-error font-label-md text-label-md active:scale-95 transition-transform flex items-center gap-1">
+                Report Issue <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</section>
+</main>
+</body></html>

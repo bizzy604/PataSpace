@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>Processing Payment - PataSpace</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;700&amp;family=Poppins:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed-variant": "#434748",
+                    "on-primary-fixed-variant": "#004e60",
+                    "primary": "#00667e",
+                    "on-surface": "#1a1c1c",
+                    "on-background": "#1a1c1c",
+                    "tertiary-fixed": "#e0e3e4",
+                    "inverse-primary": "#83d1ee",
+                    "on-tertiary": "#ffffff",
+                    "error": "#ba1a1a",
+                    "on-primary-fixed": "#001f28",
+                    "error-container": "#ffdad6",
+                    "outline": "#6f797d",
+                    "on-secondary-container": "#656464",
+                    "surface-container-high": "#e8e8e8",
+                    "status-success": "#34C759",
+                    "status-error": "#FF3B30",
+                    "on-surface-variant": "#3f484c",
+                    "surface-tint": "#00677f",
+                    "primary-fixed-dim": "#83d1ee",
+                    "on-secondary-fixed": "#1b1c1c",
+                    "on-error": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "outline-variant": "#bec8cd",
+                    "surface-container": "#eeeeee",
+                    "on-secondary-fixed-variant": "#474746",
+                    "surface": "#f9f9f9",
+                    "tertiary": "#5a5e5f",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-highest": "#e2e2e2",
+                    "primary-container": "#28809a",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed-dim": "#c3c7c8",
+                    "inverse-on-surface": "#f0f1f1",
+                    "background": "#f9f9f9",
+                    "on-tertiary-container": "#ffffff",
+                    "status-warning": "#FFCC00",
+                    "primary-fixed": "#b7eaff",
+                    "inverse-surface": "#2f3131",
+                    "on-error-container": "#93000a",
+                    "on-tertiary-fixed": "#181c1d",
+                    "secondary-fixed": "#e4e2e1",
+                    "tertiary-container": "#737778",
+                    "surface-container-low": "#f3f3f4",
+                    "surface-bright": "#f9f9f9",
+                    "surface-subtle": "#EDEDED",
+                    "on-primary-container": "#ffffff",
+                    "surface-variant": "#e2e2e2",
+                    "secondary-container": "#e4e2e1",
+                    "surface-dim": "#dadada",
+                    "secondary-fixed-dim": "#c8c6c5",
+                    "secondary": "#5f5e5e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "unit": "8px",
+                    "margin-horizontal": "16px",
+                    "component-gap": "16px",
+                    "touch-target": "44px",
+                    "gutter-vertical": "24px",
+                    "safe-top": "env(safe-area-inset-top)",
+                    "safe-bottom": "env(safe-area-inset-bottom)"
+            },
+            "fontFamily": {
+                    "headline-sm": ["Poppins"],
+                    "body-lg": ["DM Sans"],
+                    "display-01": ["Poppins"],
+                    "headline-lg-mobile": ["Poppins"],
+                    "caption": ["DM Sans"],
+                    "label-md": ["DM Sans"],
+                    "headline-lg": ["Poppins"],
+                    "headline-md": ["Poppins"],
+                    "display-02": ["Poppins"],
+                    "body-md": ["DM Sans"]
+            },
+            "fontSize": {
+                    "headline-sm": ["20px", {"lineHeight": "25px", "fontWeight": "600"}],
+                    "body-lg": ["17px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "display-01": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                    "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                    "label-md": ["13px", {"lineHeight": "18px", "fontWeight": "500"}],
+                    "headline-lg": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "600"}],
+                    "display-02": ["34px", {"lineHeight": "41px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "body-md": ["15px", {"lineHeight": "21px", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .loading-ring {
+            width: 120px;
+            height: 120px;
+        }
+        
+        .loading-ring svg {
+            animation: rotate 2s linear infinite;
+            transform-origin: center center;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .loading-ring circle {
+            stroke-dasharray: 1, 200;
+            stroke-dashoffset: 0;
+            animation: dash 1.5s ease-in-out infinite;
+            stroke-linecap: round;
+        }
+        
+        @keyframes rotate {
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes dash {
+            0% {
+                stroke-dasharray: 1, 200;
+                stroke-dashoffset: 0;
+            }
+            50% {
+                stroke-dasharray: 89, 200;
+                stroke-dashoffset: -35px;
+            }
+            100% {
+                stroke-dasharray: 89, 200;
+                stroke-dashoffset: -124px;
+            }
+        }
+
+        .fade-text {
+            animation: fadeInOut 4s infinite;
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; }
+            10%, 90% { opacity: 1; }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md antialiased min-h-screen flex flex-col pt-safe-top pb-safe-bottom md:hidden overflow-hidden">
+<!-- Top Navigation Shell (Transaction Context) -->
+<header class="bg-inverse-surface w-full z-50 flex justify-center items-center px-margin-horizontal h-touch-target rounded-b-xl shadow-lg relative shrink-0">
+<!-- Title centered -->
+<h1 class="font-headline-sm text-headline-sm text-primary-container">Processing Payment</h1>
+</header>
+<!-- Main Canvas Area -->
+<main class="flex-1 flex flex-col items-center justify-center px-margin-horizontal w-full">
+<!-- Loading Animation Area -->
+<div class="relative w-full flex flex-col items-center justify-center mb-gutter-vertical">
+<!-- Central Loading Ring -->
+<div class="loading-ring relative flex items-center justify-center mb-8">
+<!-- SVG Spinner -->
+<svg class="absolute inset-0" viewbox="25 25 50 50">
+<circle class="text-primary-container" cx="50" cy="50" fill="none" r="20" stroke="currentColor" stroke-width="4"></circle>
+</svg>
+<!-- Central Icon -->
+<span class="material-symbols-outlined text-primary-container" style="font-size: 40px; font-variation-settings: 'FILL' 0;">
+                    smartphone
+                </span>
+<!-- Overlay Pulse Effect -->
+<div class="absolute inset-0 rounded-full bg-primary-container opacity-10 animate-ping"></div>
+</div>
+<!-- Dynamic Status Messages container -->
+<div class="h-[60px] flex items-center justify-center text-center px-4 w-full">
+<p class="font-headline-sm text-headline-sm text-on-surface transition-opacity duration-300" id="status-message">
+                    STK prompt sent to your phone
+                </p>
+</div>
+<!-- Contextual Help -->
+<div class="text-center mt-unit">
+<p class="font-body-md text-body-md text-secondary mb-1">Check your phone for the M-Pesa prompt</p>
+<p class="font-caption text-caption text-outline">This usually takes <span class="font-bold" id="countdown">30</span> seconds</p>
+</div>
+</div>
+</main>
+<!-- Bottom Actions Area (Sticky to bottom) -->
+<footer class="w-full px-margin-horizontal pb-[calc(16px+env(safe-area-inset-bottom))] shrink-0 flex flex-col items-center gap-component-gap">
+<!-- Action Link -->
+<button class="font-label-md text-label-md text-primary-container hover:opacity-80 transition-opacity active:scale-95 px-4 py-2 h-touch-target">
+            Having trouble?
+        </button>
+<!-- Secondary Button -->
+<button class="w-full h-[52px] rounded-full border-2 border-outline-variant text-secondary font-headline-sm text-headline-sm bg-surface-lowest hover:bg-surface-subtle transition-colors active:scale-95 flex items-center justify-center">
+            Cancel Payment
+        </button>
+</footer>
+<!-- Interactive Logic -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Status Message Rotation
+            const messages = [
+                "STK prompt sent to your phone",
+                "Waiting for PIN entry...",
+                "Processing payment..."
+            ];
+            const statusEl = document.getElementById('status-message');
+            let messageIndex = 0;
+            
+            setInterval(() => {
+                // Fade out
+                statusEl.style.opacity = '0';
+                
+                setTimeout(() => {
+                    // Change text and fade in
+                    messageIndex = (messageIndex + 1) % messages.length;
+                    statusEl.textContent = messages[messageIndex];
+                    statusEl.style.opacity = '1';
+                }, 300); // Wait for fade out to complete
+                
+            }, 4000); // Change message every 4 seconds
+
+            // Simple Countdown Timer
+            const countdownEl = document.getElementById('countdown');
+            let timeLeft = 30;
+            
+            const timer = setInterval(() => {
+                timeLeft--;
+                countdownEl.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    countdownEl.textContent = "a moment";
+                }
+            }, 1000);
+        });
+    </script>
+</body></html>

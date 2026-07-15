@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>PataSpace - Login Error</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-low": "#f3f3f4",
+                    "on-surface-variant": "#3f484c",
+                    "on-secondary-container": "#656464",
+                    "error-container": "#ffdad6",
+                    "status-warning": "#FFCC00",
+                    "surface-subtle": "#EDEDED",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container": "#eeeeee",
+                    "surface-variant": "#e2e2e2",
+                    "inverse-primary": "#83d1ee",
+                    "secondary": "#5f5e5e",
+                    "primary-fixed-dim": "#83d1ee",
+                    "on-background": "#1a1c1c",
+                    "status-error": "#FF3B30",
+                    "on-tertiary-container": "#ffffff",
+                    "on-secondary-fixed": "#1b1c1c",
+                    "inverse-surface": "#2f3131",
+                    "secondary-fixed-dim": "#c8c6c5",
+                    "on-error-container": "#93000a",
+                    "on-surface": "#1a1c1c",
+                    "on-secondary-fixed-variant": "#474746",
+                    "primary": "#00667e",
+                    "tertiary": "#5a5e5f",
+                    "on-primary-fixed": "#001f28",
+                    "primary-fixed": "#b7eaff",
+                    "inverse-on-surface": "#f0f1f1",
+                    "background": "#f9f9f9",
+                    "surface": "#f9f9f9",
+                    "surface-container-highest": "#e2e2e2",
+                    "tertiary-fixed-dim": "#c3c7c8",
+                    "tertiary-fixed": "#e0e3e4",
+                    "surface-container-high": "#e8e8e8",
+                    "status-success": "#34C759",
+                    "on-primary": "#ffffff",
+                    "surface-bright": "#f9f9f9",
+                    "surface-dim": "#dadada",
+                    "on-error": "#ffffff",
+                    "surface-tint": "#00677f",
+                    "on-tertiary-fixed-variant": "#434748",
+                    "tertiary-container": "#737778",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-fixed": "#181c1d",
+                    "primary-container": "#28809a",
+                    "outline-variant": "#bec8cd",
+                    "secondary-fixed": "#e4e2e1",
+                    "error": "#ba1a1a",
+                    "secondary-container": "#e4e2e1",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed-variant": "#004e60",
+                    "outline": "#6f797d",
+                    "on-primary-container": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "unit": "8px",
+                    "margin-horizontal": "16px",
+                    "touch-target": "44px",
+                    "component-gap": "16px",
+                    "gutter-vertical": "24px"
+            },
+            "fontFamily": {
+                    "display-02": ["Poppins"],
+                    "caption": ["DM Sans"],
+                    "body-md": ["DM Sans"],
+                    "headline-sm": ["Poppins"],
+                    "headline-md": ["Poppins"],
+                    "label-md": ["DM Sans"],
+                    "headline-lg": ["Poppins"],
+                    "body-lg": ["DM Sans"],
+                    "display-01": ["Poppins"],
+                    "headline-lg-mobile": ["Poppins"]
+            },
+            "fontSize": {
+                    "display-02": ["34px", {"lineHeight": "41px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                    "body-md": ["15px", {"lineHeight": "21px", "fontWeight": "400"}],
+                    "headline-sm": ["20px", {"lineHeight": "25px", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "600"}],
+                    "label-md": ["13px", {"lineHeight": "18px", "fontWeight": "500"}],
+                    "headline-lg": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                    "body-lg": ["17px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "display-01": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "30px", "fontWeight": "700"}]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Respecting iOS Safe Areas */
+        .pt-safe { padding-top: env(safe-area-inset-top, 44px); }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 34px); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest text-on-surface antialiased w-full h-screen overflow-hidden flex flex-col pt-safe pb-safe">
+<!-- Top Navigation (Shell structure from design system guidance, explicitly not using BottomNav/SideNav for transactional page) -->
+<header class="w-full flex items-center justify-between px-margin-horizontal h-touch-target bg-inverse-surface z-50">
+<button aria-label="Go Back" class="w-touch-target h-touch-target flex items-center justify-start text-on-primary active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-headline-md">arrow_back</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm font-bold text-on-primary">Sign In</h1>
+<div class="w-touch-target h-touch-target"></div> <!-- Spacer for centering -->
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 overflow-y-auto px-margin-horizontal pt-gutter-vertical pb-gutter-vertical bg-surface-container-lowest flex flex-col justify-start">
+<!-- Logo / Brand Anchor Area -->
+<div class="w-full flex justify-center mb-10 mt-6">
+<div class="w-20 h-20 bg-primary-container rounded-2xl shadow-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-display-01 text-on-primary-container" style="font-variation-settings: 'FILL' 1;">real_estate_agent</span>
+</div>
+</div>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-2 text-center">Welcome Back</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mb-8 text-center px-4">Enter your details to access your PataSpace account.</p>
+<!-- Login Form -->
+<form class="flex flex-col gap-component-gap w-full max-w-md mx-auto">
+<!-- Phone Input -->
+<div class="flex flex-col gap-2 relative">
+<label class="font-caption text-caption font-bold text-on-surface uppercase tracking-wider ml-1" for="phone">Phone Number</label>
+<div class="relative flex items-center">
+<span class="absolute left-4 text-on-surface-variant material-symbols-outlined">call</span>
+<!-- Error State styling applied: status-error border and bg-error-container/10 -->
+<input class="w-full h-14 pl-12 pr-4 rounded-xl bg-error-container/10 border-2 border-status-error text-on-surface font-body-lg text-body-lg focus:outline-none focus:ring-0 focus:border-status-error transition-colors" id="phone" placeholder="Enter your phone number" type="tel" value="+254 712 345 678"/>
+</div>
+</div>
+<!-- Password Input -->
+<div class="flex flex-col gap-2 relative">
+<label class="font-caption text-caption font-bold text-on-surface uppercase tracking-wider ml-1" for="password">Password</label>
+<div class="relative flex items-center">
+<span class="absolute left-4 text-on-surface-variant material-symbols-outlined">lock</span>
+<!-- Error State styling applied -->
+<input class="w-full h-14 pl-12 pr-12 rounded-xl bg-error-container/10 border-2 border-status-error text-on-surface font-body-lg text-body-lg focus:outline-none focus:ring-0 focus:border-status-error transition-colors" id="password" placeholder="Enter your password" type="password" value="********"/>
+<button class="absolute right-4 text-on-surface-variant h-full flex items-center justify-center w-touch-target" type="button">
+<span class="material-symbols-outlined">visibility_off</span>
+</button>
+</div>
+</div>
+<!-- Error Message Component -->
+<div class="flex items-center gap-2 mt-1 px-1 bg-error-container/50 p-2 rounded-lg animate-[shake_0.5s_ease-in-out]">
+<span class="material-symbols-outlined text-status-error text-body-md" style="font-variation-settings: 'FILL' 1;">error</span>
+<p class="font-label-md text-label-md text-on-error-container">Incorrect phone number or password. Please try again.</p>
+</div>
+<!-- Forgot Password Link -->
+<div class="flex justify-end mt-1 mb-4">
+<a class="font-label-md text-label-md text-primary font-bold hover:text-primary-container active:opacity-70 transition-opacity" href="#">
+                    Forgot Password?
+                </a>
+</div>
+<!-- Primary Action Button (Teal #28809A - mapping to primary-container per config) -->
+<button class="w-full h-14 bg-primary-container text-on-primary-container font-headline-sm text-headline-sm rounded-xl shadow-md active:scale-[0.98] transition-transform duration-200 mt-2 flex items-center justify-center gap-2" type="button">
+                Sign In
+                <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+<!-- Secondary Action -->
+<div class="mt-8 flex justify-center items-center gap-2">
+<p class="font-body-md text-body-md text-on-surface-variant">Don't have an account?</p>
+<a class="font-headline-sm text-headline-sm text-primary font-bold" href="#">Sign Up</a>
+</div>
+</form>
+</main>
+<style>
+        /* Simple shake animation for error state emphasis */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+        }
+    </style>
+</body></html>

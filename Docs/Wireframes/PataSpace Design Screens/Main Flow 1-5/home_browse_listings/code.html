@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>PataSpace - Home</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&amp;family=DM+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-container": "#e4e2e1",
+                        "tertiary-fixed": "#e0e3e4",
+                        "primary": "#00667e",
+                        "on-tertiary-fixed-variant": "#434748",
+                        "on-surface": "#1a1c1c",
+                        "on-primary-fixed": "#001f28",
+                        "tertiary-container": "#737778",
+                        "outline": "#6f797d",
+                        "status-warning": "#FFCC00",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-container": "#ffffff",
+                        "on-primary-container": "#ffffff",
+                        "surface-variant": "#e2e2e2",
+                        "on-tertiary-fixed": "#181c1d",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#5a5e5f",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#28809a",
+                        "primary-fixed-dim": "#83d1ee",
+                        "surface-container-low": "#f3f3f4",
+                        "surface-dim": "#dadada",
+                        "inverse-primary": "#83d1ee",
+                        "status-success": "#34C759",
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed-variant": "#474746",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#e4e2e1",
+                        "on-primary-fixed-variant": "#004e60",
+                        "inverse-surface": "#2f3131",
+                        "surface": "#f9f9f9",
+                        "outline-variant": "#bec8cd",
+                        "on-secondary": "#ffffff",
+                        "status-error": "#FF3B30",
+                        "on-secondary-container": "#656464",
+                        "surface-container": "#eeeeee",
+                        "on-error": "#ffffff",
+                        "on-background": "#1a1c1c",
+                        "surface-container-high": "#e8e8e8",
+                        "on-surface-variant": "#3f484c",
+                        "tertiary-fixed-dim": "#c3c7c8",
+                        "surface-tint": "#00677f",
+                        "surface-bright": "#f9f9f9",
+                        "surface-subtle": "#EDEDED",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "primary-fixed": "#b7eaff",
+                        "inverse-on-surface": "#f0f1f1",
+                        "surface-container-highest": "#e2e2e2",
+                        "background": "#f9f9f9",
+                        "secondary": "#5f5e5e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-horizontal": "16px",
+                        "unit": "8px",
+                        "gutter-vertical": "24px",
+                        "component-gap": "16px",
+                        "touch-target": "44px",
+                        "safe": "env(safe-area-inset-bottom)"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Poppins"],
+                        "body-md": ["DM Sans"],
+                        "headline-sm": ["Poppins"],
+                        "display-01": ["Poppins"],
+                        "caption": ["DM Sans"],
+                        "headline-md": ["Poppins"],
+                        "display-02": ["Poppins"],
+                        "body-lg": ["DM Sans"],
+                        "label-md": ["DM Sans"],
+                        "headline-lg-mobile": ["Poppins"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["28px", { "lineHeight": "34px", "fontWeight": "700" }],
+                        "body-md": ["15px", { "lineHeight": "21px", "fontWeight": "400" }],
+                        "headline-sm": ["20px", { "lineHeight": "25px", "fontWeight": "600" }],
+                        "display-01": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "caption": ["11px", { "lineHeight": "14px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "30px", "fontWeight": "600" }],
+                        "display-02": ["34px", { "lineHeight": "41px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "body-lg": ["17px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-md": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "30px", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest text-on-surface antialiased min-h-screen pb-[100px] font-body-md md:hidden mx-auto max-w-[393px] relative shadow-2xl">
+<!-- Top Navigation Container -->
+<div class="sticky top-0 w-full z-40 bg-surface-container-lowest/90 backdrop-blur-md pt-12 pb-4 px-margin-horizontal space-y-4 shadow-sm">
+<!-- Title & Filter -->
+<div class="flex justify-between items-center">
+<h1 class="text-display-02 font-display-02 text-on-surface">Find Your Home</h1>
+<button aria-label="Filter" class="w-touch-target h-touch-target flex items-center justify-end text-primary">
+<span aria-hidden="true" class="material-symbols-outlined text-[28px]">tune</span>
+</button>
+</div>
+<!-- Search Bar -->
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant pointer-events-none">search</span>
+<input class="w-full h-11 pl-10 pr-4 bg-surface-subtle border-none rounded-xl text-body-md font-body-md text-on-surface placeholder:text-outline-variant focus:ring-2 focus:ring-primary focus:outline-none transition-shadow" placeholder="Search by neighborhood..." type="text"/>
+</div>
+</div>
+<!-- Main Content -->
+<main class="px-margin-horizontal space-y-gutter-vertical pt-2">
+<!-- Credit Balance Card -->
+<div class="h-[70px] bg-gradient-to-r from-primary to-primary-container rounded-[16px] px-4 flex justify-between items-center shadow-md">
+<div class="flex flex-col">
+<span class="text-caption font-caption text-on-primary/80 uppercase tracking-wider">Balance</span>
+<span class="text-[20px] font-bold text-on-primary">5,000 KES</span>
+</div>
+<button aria-label="Add Credits" class="w-8 h-8 bg-on-primary rounded-full flex items-center justify-center shadow-sm active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-primary text-[20px]">add</span>
+</button>
+</div>
+<!-- Filter Chips -->
+<div class="flex gap-2 overflow-x-auto no-scrollbar pb-2 -mx-margin-horizontal px-margin-horizontal">
+<button class="h-8 px-4 rounded-full bg-primary text-on-primary text-label-md font-label-md whitespace-nowrap shadow-sm">Kilimani</button>
+<button class="h-8 px-4 rounded-full bg-surface-subtle text-on-surface-variant text-label-md font-label-md whitespace-nowrap active:bg-surface-variant transition-colors">Westlands</button>
+<button class="h-8 px-4 rounded-full bg-surface-subtle text-on-surface-variant text-label-md font-label-md whitespace-nowrap active:bg-surface-variant transition-colors">15-25K</button>
+<button class="h-8 px-4 rounded-full bg-surface-subtle text-on-surface-variant text-label-md font-label-md whitespace-nowrap active:bg-surface-variant transition-colors">2 BR</button>
+</div>
+<!-- Listings List -->
+<div class="space-y-component-gap pb-4">
+<!-- Property Card 1 -->
+<div class="bg-surface-container-lowest rounded-[16px] shadow-[0_4px_16px_rgba(0,0,0,0.04)] overflow-hidden border border-surface-variant/50">
+<div class="relative w-full h-[200px]">
+<img class="w-full h-full object-cover" data-alt="A bright, modern Kenyan apartment interior in light mode. High-key white lighting, sleek minimalist furniture with teal accents. Large windows showing a cityscape. Eerie black details contrast with the airy white walls. Professional real estate photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXvHBHItJ_o-mMDlxGbJRmxY0WpM2U0J_2csAABCk-VOrik6F5_DobNWJ0cxKT2Ad4mo_1nzt3UYN-T3WiGQMg2BR3nmIjp6KksZzkzlEP_4bQDlIO8-LJs-erTT2U1n38e9wELXQdq4NkUEz6uoaiCBxzhaXXezjddFlV--CH0cgE76Jf0DM6ecN0ATRKooN8pfcPSoCRILdjvvq8WmjGuhRuQehzuGcX11COJ3c6oy0yIUVmnO5bD4trLNvJH9klZjLTZIFIak1H"/>
+<div class="absolute top-3 right-3 bg-status-success/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center">
+<span class="text-caption font-caption text-on-primary font-bold">Available</span>
+</div>
+</div>
+<div class="p-4 space-y-2">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="text-headline-sm font-headline-sm text-primary">KES 20,000<span class="text-label-md font-label-md text-outline">/mo</span></h3>
+<p class="text-body-md font-body-md text-on-surface flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[16px] text-primary">location_on</span>
+                                Kilimani, Nairobi
+                            </p>
+</div>
+</div>
+<div class="flex items-center gap-3 text-caption font-caption text-outline">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">bed</span> 2 bed</span>
+<span>•</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">shower</span> 1 bath</span>
+<span>•</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">lock_open</span> 3 unlocks</span>
+</div>
+<p class="text-body-md font-body-md text-outline-variant line-clamp-1">Spacious 2-bedroom apartment with modern finishes, natural light, and secure parking.</p>
+<div class="pt-2 flex justify-end border-t border-surface-variant/50 mt-2">
+<button class="text-label-md font-label-md text-primary font-semibold py-1 px-2 hover:bg-surface-subtle rounded-lg transition-colors">View Details</button>
+</div>
+</div>
+</div>
+<!-- Property Card 2 -->
+<div class="bg-surface-container-lowest rounded-[16px] shadow-[0_4px_16px_rgba(0,0,0,0.04)] overflow-hidden border border-surface-variant/50">
+<div class="relative w-full h-[200px]">
+<img class="w-full h-full object-cover" data-alt="Exterior view of a contemporary apartment building in Nairobi during daytime. Bright sunlight, modern light mode aesthetic. Clean white facade with glass balconies and subtle teal trim. Eerie black window frames. Professional architectural photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsXfFvpWkPtaqUD6bClmiYlXFATRfSlNJDnd9fYDNaP0Exnb0CtkaDyVidth865EdDUArmdK8s-UI_7kC97qY3EPWKzWf3ygAscPEWGNBo_gciOhdpvZc8gjAkyXaeY1cILrNQyfD_pNjCNYdLIxS1xUvzBqAUQwZ6572CfMWlC520Sl7TrwUsK6y25C_KwdXhe2rqAObWWEe3pWZaAG8s30nLwAMzjDV2QKMHjFUacYlAOWuVkUICGx9RxhWAAJ97a_EtPML4c4Mw"/>
+<div class="absolute top-3 right-3 bg-status-success/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center">
+<span class="text-caption font-caption text-on-primary font-bold">Available</span>
+</div>
+</div>
+<div class="p-4 space-y-2">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="text-headline-sm font-headline-sm text-primary">KES 25,000<span class="text-label-md font-label-md text-outline">/mo</span></h3>
+<p class="text-body-md font-body-md text-on-surface flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[16px] text-primary">location_on</span>
+                                Westlands, Nairobi
+                            </p>
+</div>
+</div>
+<div class="flex items-center gap-3 text-caption font-caption text-outline">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">bed</span> 2 bed</span>
+<span>•</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">shower</span> 2 bath</span>
+<span>•</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">lock_open</span> 2 unlocks</span>
+</div>
+<p class="text-body-md font-body-md text-outline-variant line-clamp-1">Luxury living with rooftop amenities, gym access, and breathtaking city views.</p>
+<div class="pt-2 flex justify-end border-t border-surface-variant/50 mt-2">
+<button class="text-label-md font-label-md text-primary font-semibold py-1 px-2 hover:bg-surface-subtle rounded-lg transition-colors">View Details</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar (Generated from JSON) -->
+<nav class="fixed bottom-0 w-full z-50 rounded-t-xl bg-inverse-surface dark:bg-inverse-surface shadow-lg flex justify-around items-center pt-2 pb-safe px-2 h-[83px] border-t-0">
+<button aria-label="Home" class="flex flex-col items-center justify-center text-primary-container dark:text-primary-fixed-dim hover:bg-on-primary-fixed-variant/10 p-2 rounded-lg scale-110 transition-transform duration-200">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="text-caption font-caption mt-1">Home</span>
+</button>
+<button aria-label="Search" class="flex flex-col items-center justify-center text-outline-variant dark:text-outline-variant hover:bg-on-primary-fixed-variant/10 p-2 rounded-lg">
+<span class="material-symbols-outlined text-[24px]">search</span>
+<span class="text-caption font-caption mt-1">Search</span>
+</button>
+<button aria-label="Post" class="flex flex-col items-center justify-center text-outline-variant dark:text-outline-variant hover:bg-on-primary-fixed-variant/10 p-2 rounded-lg">
+<span class="material-symbols-outlined text-[24px]">add_circle</span>
+<span class="text-caption font-caption mt-1">Post</span>
+</button>
+<button aria-label="Credits" class="flex flex-col items-center justify-center text-outline-variant dark:text-outline-variant hover:bg-on-primary-fixed-variant/10 p-2 rounded-lg">
+<span class="material-symbols-outlined text-[24px]">payments</span>
+<span class="text-caption font-caption mt-1">Credits</span>
+</button>
+<button aria-label="Profile" class="flex flex-col items-center justify-center text-outline-variant dark:text-outline-variant hover:bg-on-primary-fixed-variant/10 p-2 rounded-lg">
+<span class="material-symbols-outlined text-[24px]">person</span>
+<span class="text-caption font-caption mt-1">Profile</span>
+</button>
+</nav>
+</body></html>

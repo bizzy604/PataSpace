@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PataSpace - Verify Phone</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-primary": "#83d1ee",
+                        "surface": "#f9f9f9",
+                        "on-error": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "status-error": "#FF3B30",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#434748",
+                        "secondary": "#5f5e5e",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#e0e3e4",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed": "#001f28",
+                        "inverse-on-surface": "#f0f1f1",
+                        "background": "#f9f9f9",
+                        "tertiary": "#5a5e5f",
+                        "status-success": "#34C759",
+                        "surface-container": "#eeeeee",
+                        "on-secondary-fixed-variant": "#474746",
+                        "surface-container-low": "#f3f3f4",
+                        "primary-fixed": "#b7eaff",
+                        "surface-tint": "#00677f",
+                        "secondary-container": "#e4e2e1",
+                        "on-surface": "#1a1c1c",
+                        "inverse-surface": "#2f3131",
+                        "surface-container-high": "#e8e8e8",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "on-primary-container": "#ffffff",
+                        "on-tertiary-fixed": "#181c1d",
+                        "surface-bright": "#f9f9f9",
+                        "tertiary-fixed-dim": "#c3c7c8",
+                        "secondary-fixed": "#e4e2e1",
+                        "on-tertiary-container": "#ffffff",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "on-primary-fixed-variant": "#004e60",
+                        "surface-subtle": "#EDEDED",
+                        "error-container": "#ffdad6",
+                        "on-surface-variant": "#3f484c",
+                        "primary-fixed-dim": "#83d1ee",
+                        "on-background": "#1a1c1c",
+                        "tertiary-container": "#737778",
+                        "on-secondary-container": "#656464",
+                        "on-secondary": "#ffffff",
+                        "status-warning": "#FFCC00",
+                        "primary-container": "#28809a",
+                        "outline": "#6f797d",
+                        "surface-dim": "#dadada",
+                        "surface-container-highest": "#e2e2e2",
+                        "on-primary": "#ffffff",
+                        "primary": "#00667e",
+                        "outline-variant": "#bec8cd",
+                        "surface-variant": "#e2e2e2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "component-gap": "16px",
+                        "unit": "8px",
+                        "margin-horizontal": "16px",
+                        "gutter-vertical": "24px",
+                        "touch-target": "44px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["DM Sans"],
+                        "body-md": ["DM Sans"],
+                        "headline-md": ["Poppins"],
+                        "caption": ["DM Sans"],
+                        "headline-lg": ["Poppins"],
+                        "headline-lg-mobile": ["Poppins"],
+                        "display-02": ["Poppins"],
+                        "display-01": ["Poppins"],
+                        "label-md": ["DM Sans"],
+                        "headline-sm": ["Poppins"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["17px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["15px", { "lineHeight": "21px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "30px", "fontWeight": "600" }],
+                        "caption": ["11px", { "lineHeight": "14px", "fontWeight": "400" }],
+                        "headline-lg": ["28px", { "lineHeight": "34px", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "30px", "fontWeight": "700" }],
+                        "display-02": ["34px", { "lineHeight": "41px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "display-01": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-md": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "headline-sm": ["20px", { "lineHeight": "25px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* iOS style safe areas for demonstration */
+        .iphone-frame {
+            width: 393px;
+            height: 852px;
+            border: 8px solid #2f3131;
+            border-radius: 40px;
+            overflow: hidden;
+            position: relative;
+            background-color: #ffffff;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            margin: 40px auto;
+        }
+        
+        .dynamic-island {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 35px;
+            background-color: #000;
+            border-radius: 20px;
+            z-index: 100;
+        }
+
+        .home-indicator {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 134px;
+            height: 5px;
+            background-color: #1a1c1c;
+            border-radius: 100px;
+            z-index: 100;
+        }
+
+        /* Hide number input spinners */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container flex items-center justify-center min-h-screen font-body-md text-on-surface">
+<div class="iphone-frame flex flex-col bg-surface-container-lowest">
+<div class="dynamic-island"></div>
+<!-- Simulated Status Bar Space -->
+<div class="h-14 w-full bg-surface-container-lowest"></div>
+<!-- Top Navigation -->
+<nav class="flex items-center justify-between px-margin-horizontal h-touch-target bg-surface-container-lowest shadow-sm z-50">
+<button aria-label="Go back" class="h-touch-target w-touch-target flex items-center justify-center text-primary active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[24px]">arrow_back_ios_new</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm text-on-surface">Verify Phone</h1>
+<div class="h-touch-target w-touch-target"></div> <!-- Spacer for centering -->
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col px-margin-horizontal pt-8 pb-safe items-center bg-surface-container-lowest">
+<!-- Hero Icon -->
+<div class="w-24 h-24 rounded-full bg-primary-container flex items-center justify-center mb-8 shadow-sm">
+<span class="material-symbols-outlined text-[48px] text-on-primary-container" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<!-- Headings -->
+<h2 class="font-headline-md text-headline-md text-on-surface mb-2 text-center">Enter Verification Code</h2>
+<p class="font-body-md text-body-md text-on-surface-variant text-center mb-10 max-w-[280px]">
+                We've sent a 6-digit code to your phone number +254 712 *** ***
+            </p>
+<!-- OTP Inputs -->
+<div class="flex gap-2 justify-center mb-10 w-full" id="otp-container">
+<input aria-label="Digit 1" class="w-12 h-14 bg-surface-subtle border border-surface-subtle rounded-xl text-center font-headline-md text-headline-md text-on-surface focus:outline-none focus:border-[2px] focus:border-primary focus:bg-surface-container-lowest transition-colors" maxlength="1" placeholder="-" type="number"/>
+<input aria-label="Digit 2" class="w-12 h-14 bg-surface-subtle border border-surface-subtle rounded-xl text-center font-headline-md text-headline-md text-on-surface focus:outline-none focus:border-[2px] focus:border-primary focus:bg-surface-container-lowest transition-colors" maxlength="1" placeholder="-" type="number"/>
+<input aria-label="Digit 3" class="w-12 h-14 bg-surface-subtle border border-surface-subtle rounded-xl text-center font-headline-md text-headline-md text-on-surface focus:outline-none focus:border-[2px] focus:border-primary focus:bg-surface-container-lowest transition-colors" maxlength="1" placeholder="-" type="number"/>
+<input aria-label="Digit 4" class="w-12 h-14 bg-surface-subtle border border-surface-subtle rounded-xl text-center font-headline-md text-headline-md text-on-surface focus:outline-none focus:border-[2px] focus:border-primary focus:bg-surface-container-lowest transition-colors" maxlength="1" placeholder="-" type="number"/>
+<input aria-label="Digit 5" class="w-12 h-14 bg-surface-subtle border border-surface-subtle rounded-xl text-center font-headline-md text-headline-md text-on-surface focus:outline-none focus:border-[2px] focus:border-primary focus:bg-surface-container-lowest transition-colors" maxlength="1" placeholder="-" type="number"/>
+<input aria-label="Digit 6" class="w-12 h-14 bg-surface-subtle border border-surface-subtle rounded-xl text-center font-headline-md text-headline-md text-on-surface focus:outline-none focus:border-[2px] focus:border-primary focus:bg-surface-container-lowest transition-colors" maxlength="1" placeholder="-" type="number"/>
+</div>
+<!-- Timer / Resend -->
+<div class="text-center mb-auto">
+<p class="font-body-md text-body-md text-on-surface-variant">
+                    Resend code in <span class="font-bold text-primary">0:45</span>
+</p>
+</div>
+<!-- Bottom Action -->
+<div class="w-full pb-10 pt-4">
+<button class="w-full h-touch-target bg-outline-variant text-on-surface-variant rounded-full font-headline-sm text-headline-sm flex items-center justify-center transition-all cursor-not-allowed" disabled="" id="verify-btn">
+                    Verify
+                </button>
+</div>
+</main>
+<div class="home-indicator"></div>
+</div>
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputs = document.querySelectorAll('#otp-container input');
+            const verifyBtn = document.getElementById('verify-btn');
+
+            // Auto-focus first input
+            inputs[0].focus();
+
+            inputs.forEach((input, index) => {
+                input.addEventListener('input', (e) => {
+                    // Limit to 1 char
+                    if (e.target.value.length > 1) {
+                        e.target.value = e.target.value.slice(0, 1);
+                    }
+                    
+                    // Move to next input
+                    if (e.target.value !== '' && index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+
+                    checkCompletion();
+                });
+
+                input.addEventListener('keydown', (e) => {
+                    // Move to previous input on backspace
+                    if (e.key === 'Backspace' && e.target.value === '' && index > 0) {
+                        inputs[index - 1].focus();
+                        inputs[index - 1].value = '';
+                    }
+                });
+            });
+
+            function checkCompletion() {
+                let isComplete = true;
+                inputs.forEach(input => {
+                    if (input.value === '') {
+                        isComplete = false;
+                    }
+                });
+
+                if (isComplete) {
+                    verifyBtn.disabled = false;
+                    verifyBtn.classList.remove('bg-outline-variant', 'text-on-surface-variant', 'cursor-not-allowed');
+                    verifyBtn.classList.add('bg-primary', 'text-on-primary', 'active:scale-[0.98]', 'cursor-pointer');
+                } else {
+                    verifyBtn.disabled = true;
+                    verifyBtn.classList.add('bg-outline-variant', 'text-on-surface-variant', 'cursor-not-allowed');
+                    verifyBtn.classList.remove('bg-primary', 'text-on-primary', 'active:scale-[0.98]', 'cursor-pointer');
+                }
+            }
+        });
+    </script>
+</body></html>

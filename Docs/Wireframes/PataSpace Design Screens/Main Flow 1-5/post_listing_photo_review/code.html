@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>PataSpace - Review Photos</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#e8e8e8",
+                        "status-error": "#FF3B30",
+                        "primary-fixed-dim": "#83d1ee",
+                        "on-surface": "#1a1c1c",
+                        "surface-variant": "#e2e2e2",
+                        "on-tertiary-fixed": "#181c1d",
+                        "background": "#f9f9f9",
+                        "outline": "#6f797d",
+                        "surface": "#f9f9f9",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "secondary-container": "#e4e2e1",
+                        "inverse-primary": "#83d1ee",
+                        "on-primary-fixed-variant": "#004e60",
+                        "primary-fixed": "#b7eaff",
+                        "on-tertiary": "#ffffff",
+                        "status-warning": "#FFCC00",
+                        "on-primary-fixed": "#001f28",
+                        "tertiary-container": "#737778",
+                        "secondary": "#5f5e5e",
+                        "inverse-surface": "#252525", // Adjusted to Eerie Black from guidelines
+                        "on-primary": "#ffffff",
+                        "surface-bright": "#f9f9f9",
+                        "on-secondary-container": "#656464",
+                        "outline-variant": "#bec8cd",
+                        "primary": "#00667e",
+                        "on-surface-variant": "#3f484c",
+                        "tertiary-fixed": "#e0e3e4",
+                        "tertiary-fixed-dim": "#c3c7c8",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-container": "#ffffff",
+                        "surface-tint": "#00677f",
+                        "surface-dim": "#dadada",
+                        "secondary-fixed": "#e4e2e1",
+                        "surface-container-highest": "#e2e2e2",
+                        "primary-container": "#28809a", // Teal from prompt
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "on-tertiary-fixed-variant": "#434748",
+                        "surface-container": "#eeeeee",
+                        "surface-subtle": "#EDEDED",
+                        "status-success": "#34C759",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "on-secondary-fixed-variant": "#474746",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#f0f1f1",
+                        "tertiary": "#5a5e5f",
+                        "on-background": "#1a1c1c",
+                        "surface-container-low": "#f3f3f4",
+                        "on-primary-container": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "8px",
+                        "touch-target": "44px",
+                        "gutter-vertical": "24px",
+                        "margin-horizontal": "16px",
+                        "component-gap": "16px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["DM Sans"],
+                        "display-02": ["Poppins"],
+                        "display-01": ["Poppins"],
+                        "label-md": ["DM Sans"],
+                        "body-lg": ["DM Sans"],
+                        "headline-lg-mobile": ["Poppins"],
+                        "headline-sm": ["Poppins"],
+                        "headline-md": ["Poppins"],
+                        "headline-lg": ["Poppins"],
+                        "caption": ["DM Sans"]
+                    },
+                    "fontSize": {
+                        "body-md": ["15px", { "lineHeight": "21px", "fontWeight": "400" }],
+                        "display-02": ["34px", { "lineHeight": "41px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "display-01": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-md": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "body-lg": ["17px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "30px", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "25px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "30px", "fontWeight": "600" }],
+                        "headline-lg": ["28px", { "lineHeight": "34px", "fontWeight": "700" }],
+                        "caption": ["11px", { "lineHeight": "14px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background font-body-md text-on-surface antialiased min-h-screen flex flex-col pt-safe pb-safe">
+<!-- Top Navigation Area - Eerie Black Shell -->
+<header class="bg-inverse-surface w-full top-0 sticky shadow-sm z-50 pt-safe-top">
+<div class="flex items-center justify-between px-margin-horizontal h-touch-target text-surface-container-lowest">
+<button class="flex items-center justify-center w-10 h-10 -ml-2 active:scale-95 duration-100 transition-transform">
+<span class="material-symbols-outlined text-[24px]">chevron_left</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm text-surface-container-lowest tracking-tight">Review Photos</h1>
+<button class="font-label-md text-label-md text-primary-container active:opacity-70 transition-opacity">
+                Next
+            </button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 px-margin-horizontal py-gutter-vertical pb-32">
+<!-- Photo Grid Section -->
+<section class="mb-gutter-vertical">
+<div class="flex justify-between items-end mb-component-gap">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-1">Listing Photos</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Drag to reorder. The first photo is your cover.</p>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant bg-surface-container-high px-2 py-1 rounded-full">8/20</span>
+</div>
+<!-- 3-Column Grid -->
+<div class="grid grid-cols-3 gap-1 w-full">
+<!-- Photo 1 (Cover) -->
+<div class="relative aspect-square rounded-lg overflow-hidden group">
+<div class="absolute inset-0 bg-cover bg-center w-full h-full" data-alt="A bright, high-quality photograph of a modern living room in a Kenyan apartment. Sunlight streams through large windows, highlighting clean architectural lines, light wooden floors, and contemporary furniture. The mood is welcoming and premium, suitable for a real estate listing. Shot with a wide-angle lens, emphasizing space and natural light." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB3Bo2EIEC1awSghLr2mjeCL05z8yWjN1_ddO4lKSuuW9swmVXw0Tse8FuwbZ1BsIGcF09Eexg0bQz5zHPW1Geo129fLWjqflEvxFE9A3W2cRYrnJKRU2l5Wjgen6uS5M7z7DuzfwaaK8uOOkWwkjs0w_Gik1ePB_Q3KWS7fKeWTuTQG8Q2p1hUv3Bv366wOi_EgmtwsUwFDw0t4MfDaXX6yjsK6x93Srl5ASwvgzTz8skeaBoqop9OhX6Coy_HyCNSErX74uUmEvv1')"></div>
+<div class="absolute inset-0 bg-gradient-to-b from-black/40 to-transparent"></div>
+<!-- Cover Badge -->
+<div class="absolute top-2 left-2 bg-primary-container text-on-primary-container font-caption text-caption px-2 py-0.5 rounded-full shadow-sm z-10">
+                        COVER
+                    </div>
+<!-- Delete Button -->
+<button class="absolute top-2 right-2 w-6 h-6 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white active:scale-90 transition-transform z-10">
+<span class="material-symbols-outlined text-[14px]">close</span>
+</button>
+<!-- GPS Badge -->
+<div class="absolute bottom-2 left-2 flex items-center gap-1 bg-black/50 backdrop-blur-sm text-white font-caption text-caption px-1.5 py-0.5 rounded z-10">
+<span class="material-symbols-outlined text-[12px]">location_on</span>
+<span>Geo</span>
+</div>
+</div>
+<!-- Photo 2 -->
+<div class="relative aspect-square rounded-lg overflow-hidden">
+<div class="absolute inset-0 bg-cover bg-center w-full h-full" data-alt="A clean, modern kitchen interior featuring sleek white cabinetry, stainless steel appliances, and a marble countertop. The lighting is bright and even, creating a professional and inviting atmosphere suitable for a high-end real estate listing. A small bowl of fresh fruit sits on the counter." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAiq_AV4PHJJNjKhTT0YL-m90dK9j6qlj06wC6oxi22ZpVFPD_l2l3rXghCLVa9QPBP3jS-IGrGs65oky96yl9LeoqoqgyxLrckLIzQB4SB0sR-0uapc95G5jaUfQacUrICRnoGKSrYlheTC79pxTohFxIab_yVVQzW3O8blFNv7uNN9I834_er8bndaSD6t_t1M305Q4fqpJP8PntdQ33NS0W0o0MoCsfKyh-OfYMEmFBoDkJNUsF6mIfgADZ4_-otYaYUgva9YVwJ')"></div>
+<button class="absolute top-2 right-2 w-6 h-6 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white active:scale-90 transition-transform z-10">
+<span class="material-symbols-outlined text-[14px]">close</span>
+</button>
+<div class="absolute bottom-2 left-2 flex items-center gap-1 bg-black/50 backdrop-blur-sm text-white font-caption text-caption px-1.5 py-0.5 rounded z-10">
+<span class="material-symbols-outlined text-[12px]">location_on</span>
+</div>
+</div>
+<!-- Photo 3 -->
+<div class="relative aspect-square rounded-lg overflow-hidden">
+<div class="absolute inset-0 bg-cover bg-center w-full h-full" data-alt="A spacious, well-lit master bedroom with a large comfortable bed, neutral toned linens, and two bedside tables with contemporary lamps. Large windows let in soft daylight. The room feels serene and luxurious, capturing the essence of a modern urban apartment." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB4uzxaKhQNWC1gNHdVaI8JterX1lxl04LswTtKC_GT3a_cTSYqL5dQo-E_I4ZfdA9eWlFDZ0xmNtyC5JgGZ0lv8pUnd6AWJOwjnhVvUhcDZrLAWwxZ6kADhQ_rHmIzQOdCm_TAkWIQC3mNm6lIgXwHl01fIaNdh6-2tNf0PKpMpmvoLt9_TGkRjoR0ruZ2V_g7D33hHs29Qd1QwBnPwMa_XepHpZ1J2Q0X6k9_soROJruVvEuzcuTZQ_gQOn3HQ_ixWfJm-NuQ6w6v')"></div>
+<button class="absolute top-2 right-2 w-6 h-6 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white active:scale-90 transition-transform z-10">
+<span class="material-symbols-outlined text-[14px]">close</span>
+</button>
+<div class="absolute bottom-2 left-2 flex items-center gap-1 bg-black/50 backdrop-blur-sm text-white font-caption text-caption px-1.5 py-0.5 rounded z-10">
+<span class="material-symbols-outlined text-[12px]">location_on</span>
+</div>
+</div>
+<!-- Photo 4 -->
+<div class="relative aspect-square rounded-lg overflow-hidden">
+<div class="absolute inset-0 bg-cover bg-center w-full h-full" data-alt="A modern bathroom featuring a glass walk-in shower, a sleek vanity with a large mirror, and high-quality chrome fixtures. The tiles are a light, neutral gray, giving the space a clean, spa-like feel suitable for a premium property listing." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBoYJmi5LP2VqlZD7IfQeOoJXKpV2xDq-9bvvessguryPOqLyIb0sdjgTGvRjVKFRKrDI-zRM3vJE40H4BOIhGpIeBeUqeIfExrnArhG6d6LSaywGQrgFhPSkTATeX7pqGnWmoEPb15WAbCNwTQ6OWPxeBwVf-H_23ALuGJfJTNYNf3wJaVgOLuON-fD1Caz56lldP-zfeQOMUdDLV6ZpqrR5k3WQlAc7o8cYBDnjo9DwOYYh6cevKpXWcGyo2IYlxwhltTWo2VRm3R')"></div>
+<button class="absolute top-2 right-2 w-6 h-6 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white active:scale-90 transition-transform z-10">
+<span class="material-symbols-outlined text-[14px]">close</span>
+</button>
+</div>
+<!-- Photo 5 -->
+<div class="relative aspect-square rounded-lg overflow-hidden">
+<div class="absolute inset-0 bg-cover bg-center w-full h-full" data-alt="An exterior view of a modern apartment building balcony overlooking a vibrant cityscape. The balcony has a small glass table and two chairs. The lighting suggests early evening, creating a warm, inviting atmosphere that highlights the property's prime location." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAf2rWIWOBHaU0scRYPEoRqXYf8YHx4Ey6M3E9e0g09O4IHYh3MvIrkPB5_2d4kg4KvTk6hw22w2q2RWZTsLTQzcwgHbKFMXGncoRt84iMg3ICVKFTtX3r5jqZL3Lk-PAaqBhAa9lr5gnZSY1ZWCy84M6qjjehrYaIlAgNXpja9pKxHwj-_tTQWF88OLDiE13BY7rB9HwU8Mxl0JUvj46XeGny1kWBnfI-tMa7iLZXTR0fhX3hJ8Cq1y5C2ODmwC2LLAHwHXjkQLmaJ')"></div>
+<button class="absolute top-2 right-2 w-6 h-6 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white active:scale-90 transition-transform z-10">
+<span class="material-symbols-outlined text-[14px]">close</span>
+</button>
+<div class="absolute bottom-2 left-2 flex items-center gap-1 bg-black/50 backdrop-blur-sm text-white font-caption text-caption px-1.5 py-0.5 rounded z-10">
+<span class="material-symbols-outlined text-[12px]">location_on</span>
+</div>
+</div>
+<!-- Add More Button -->
+<button class="relative aspect-square rounded-lg border-2 border-dashed border-outline-variant bg-surface-container-lowest flex flex-col items-center justify-center text-primary-container active:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[28px] mb-1">add_a_photo</span>
+<span class="font-label-md text-label-md">Add More</span>
+</button>
+</div>
+</section>
+<!-- Video Section -->
+<section class="bg-surface-container-lowest p-4 rounded-xl shadow-sm border border-surface-container-high">
+<div class="flex items-start gap-4">
+<div class="w-12 h-12 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-container shrink-0">
+<span class="material-symbols-outlined text-[24px]">videocam</span>
+</div>
+<div class="flex-1">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-1">Property Video <span class="text-on-surface-variant font-normal">(Optional)</span></h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-3">Add a short walk-through video to attract more buyers. 30 second max.</p>
+<button class="inline-flex items-center gap-2 font-label-md text-label-md text-primary-container border-2 border-primary-container rounded-lg px-4 py-2 h-touch-target active:bg-primary-container/5 transition-colors">
+<span class="material-symbols-outlined text-[20px]">upload</span>
+                        Upload Video
+                    </button>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Action Bar (Layer 3) -->
+<div class="fixed bottom-0 left-0 w-full bg-surface-container-lowest/90 backdrop-blur-md border-t border-surface-container-high p-4 pb-safe z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+<button class="w-full bg-primary-container text-on-primary-container font-headline-sm text-headline-sm h-[52px] rounded-xl flex items-center justify-center active:scale-[0.98] transition-transform shadow-md">
+            Continue to Details
+        </button>
+</div>
+</body></html>

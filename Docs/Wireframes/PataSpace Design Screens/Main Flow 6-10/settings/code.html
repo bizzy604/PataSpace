@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>PataSpace Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "outline-variant": "#bec8cd",
+                        "secondary-fixed": "#e4e2e1",
+                        "background": "#f9f9f9",
+                        "on-surface-variant": "#3f484c",
+                        "inverse-primary": "#83d1ee",
+                        "tertiary": "#5a5e5f",
+                        "on-surface": "#1a1c1c",
+                        "primary": "#00667e",
+                        "outline": "#6f797d",
+                        "tertiary-fixed-dim": "#c3c7c8",
+                        "on-tertiary-fixed-variant": "#434748",
+                        "on-primary-fixed-variant": "#004e60",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#e0e3e4",
+                        "status-success": "#34C759",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#001f28",
+                        "on-secondary-container": "#656464",
+                        "on-secondary-fixed-variant": "#474746",
+                        "surface-tint": "#00677f",
+                        "surface-container-high": "#e8e8e8",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-subtle": "#EDEDED",
+                        "primary-fixed": "#b7eaff",
+                        "surface": "#f9f9f9",
+                        "on-background": "#1a1c1c",
+                        "primary-fixed-dim": "#83d1ee",
+                        "on-tertiary-fixed": "#181c1d",
+                        "surface-container-highest": "#e2e2e2",
+                        "on-primary": "#ffffff",
+                        "secondary": "#5f5e5e",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "on-tertiary": "#ffffff",
+                        "surface-variant": "#e2e2e2",
+                        "secondary-container": "#e4e2e1",
+                        "tertiary-container": "#737778",
+                        "surface-bright": "#f9f9f9",
+                        "inverse-on-surface": "#f0f1f1",
+                        "status-error": "#FF3B30",
+                        "status-warning": "#FFCC00",
+                        "inverse-surface": "#2f3131",
+                        "on-error-container": "#93000a",
+                        "primary-container": "#28809a",
+                        "surface-container-low": "#f3f3f4",
+                        "on-tertiary-container": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "surface-dim": "#dadada",
+                        "on-primary-container": "#ffffff",
+                        "error": "#ba1a1a",
+                        "surface-container": "#eeeeee"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "unit": "8px",
+                        "touch-target": "44px",
+                        "margin-horizontal": "16px",
+                        "gutter-vertical": "24px",
+                        "component-gap": "16px"
+                    },
+                    fontFamily: {
+                        "caption": ["DM Sans"],
+                        "body-lg": ["DM Sans"],
+                        "body-md": ["DM Sans"],
+                        "headline-sm": ["Poppins"],
+                        "headline-lg-mobile": ["Poppins"],
+                        "headline-lg": ["Poppins"],
+                        "display-02": ["Poppins"],
+                        "display-01": ["Poppins"],
+                        "label-md": ["DM Sans"],
+                        "headline-md": ["Poppins"]
+                    },
+                    fontSize: {
+                        "caption": ["11px", { lineHeight: "14px", fontWeight: "400" }],
+                        "body-lg": ["17px", { lineHeight: "24px", fontWeight: "400" }],
+                        "body-md": ["15px", { lineHeight: "21px", fontWeight: "400" }],
+                        "headline-sm": ["20px", { lineHeight: "25px", fontWeight: "600" }],
+                        "headline-lg-mobile": ["24px", { lineHeight: "30px", fontWeight: "700" }],
+                        "headline-lg": ["28px", { lineHeight: "34px", fontWeight: "700" }],
+                        "display-02": ["34px", { lineHeight: "41px", letterSpacing: "-0.01em", fontWeight: "700" }],
+                        "display-01": ["48px", { lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "label-md": ["13px", { lineHeight: "18px", fontWeight: "500" }],
+                        "headline-md": ["24px", { lineHeight: "30px", fontWeight: "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #28809a;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #28809a;
+        }
+        .toggle-checkbox {
+            right: 0;
+            z-index: 1;
+            border-color: #e2e2e2;
+            transition: all 0.3s;
+        }
+        .toggle-label {
+            width: 50px;
+            height: 30px;
+            background-color: #e2e2e2;
+            border-radius: 9999px;
+            transition: all 0.3s;
+        }
+        .toggle-dot {
+            width: 26px;
+            height: 26px;
+            background-color: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .toggle-checkbox:checked ~ .toggle-dot {
+            transform: translateX(20px);
+        }
+        
+        /* Segmented Control Styling */
+        .segmented-control input[type="radio"] {
+            display: none;
+        }
+        .segmented-control label {
+            flex: 1;
+            text-align: center;
+            padding: 6px 12px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            color: #1a1c1c;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .segmented-control input[type="radio"]:checked + label {
+            background-color: #ffffff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body-md text-on-surface antialiased pt-safe pb-safe">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full z-50 bg-inverse-surface shadow-sm h-touch-target flex justify-between items-center px-margin-horizontal pt-safe">
+<button class="flex items-center text-primary-fixed hover:opacity-80 transition-opacity active:scale-95 h-full">
+<span class="material-symbols-outlined mr-1" style="font-variation-settings: 'FILL' 0;">chevron_left</span>
+<span class="font-label-md text-label-md">Profile</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm text-primary-fixed absolute left-1/2 transform -translate-x-1/2">Settings</h1>
+<div class="w-16"></div> <!-- Spacer for centering -->
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-[calc(44px+env(safe-area-inset-top)+24px)] px-margin-horizontal pb-[calc(44px+env(safe-area-inset-bottom)+24px)] max-w-2xl mx-auto">
+<!-- Section: Notifications -->
+<section class="mb-gutter-vertical">
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-2 px-4">Notifications</h2>
+<div class="bg-surface-container-lowest rounded-xl shadow-[0px_0px_8px_rgba(0,0,0,0.04)] overflow-hidden">
+<!-- Push Notifications -->
+<div class="flex items-center justify-between p-4 border-b border-surface-variant">
+<span class="font-body-lg text-body-lg">Push Notifications</span>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" id="push-toggle" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-surface-variant cursor-pointer" for="push-toggle"></label>
+<div class="toggle-dot"></div>
+</div>
+</div>
+<!-- Sub Toggles -->
+<div class="pl-8 bg-surface-bright border-b border-surface-variant">
+<div class="flex items-center justify-between py-3 pr-4 border-b border-surface-variant last:border-b-0">
+<span class="font-body-md text-body-md text-on-surface-variant">New Unlocks</span>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in scale-90 origin-right">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" id="unlocks-toggle" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-surface-variant cursor-pointer" for="unlocks-toggle"></label>
+<div class="toggle-dot"></div>
+</div>
+</div>
+<div class="flex items-center justify-between py-3 pr-4 border-b border-surface-variant last:border-b-0">
+<span class="font-body-md text-body-md text-on-surface-variant">Confirmations</span>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in scale-90 origin-right">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" id="confirms-toggle" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-surface-variant cursor-pointer" for="confirms-toggle"></label>
+<div class="toggle-dot"></div>
+</div>
+</div>
+<div class="flex items-center justify-between py-3 pr-4 border-b border-surface-variant last:border-b-0">
+<span class="font-body-md text-body-md text-on-surface-variant">Payments</span>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in scale-90 origin-right">
+<input class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" id="payments-toggle" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-surface-variant cursor-pointer" for="payments-toggle"></label>
+<div class="toggle-dot"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: Privacy -->
+<section class="mb-gutter-vertical">
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-2 px-4">Privacy</h2>
+<div class="bg-surface-container-lowest rounded-xl shadow-[0px_0px_8px_rgba(0,0,0,0.04)] overflow-hidden">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 border-b border-surface-variant gap-3">
+<span class="font-body-lg text-body-lg">Phone Visibility</span>
+<div class="segmented-control flex bg-surface-subtle p-1 rounded-lg w-full sm:w-48">
+<input checked="" id="phone-public" name="phone-vis" type="radio"/>
+<label for="phone-public">Public</label>
+<input id="phone-private" name="phone-vis" type="radio"/>
+<label for="phone-private">Private</label>
+</div>
+</div>
+<div class="flex items-center justify-between p-4 border-b border-surface-variant">
+<span class="font-body-lg text-body-lg">Profile Visibility</span>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" id="profile-vis-toggle" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-surface-variant cursor-pointer" for="profile-vis-toggle"></label>
+<div class="toggle-dot"></div>
+</div>
+</div>
+<button class="w-full flex items-center justify-between p-4 border-b border-surface-variant text-left hover:bg-surface-bright active:bg-surface-dim transition-colors">
+<span class="font-body-lg text-body-lg">Location Services</span>
+<div class="flex items-center text-on-surface-variant">
+<span class="font-body-md text-body-md mr-2">While Using</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">chevron_right</span>
+</div>
+</button>
+</div>
+</section>
+<!-- Section: Preferences -->
+<section class="mb-gutter-vertical">
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-2 px-4">Preferences</h2>
+<div class="bg-surface-container-lowest rounded-xl shadow-[0px_0px_8px_rgba(0,0,0,0.04)] overflow-hidden">
+<button class="w-full flex items-center justify-between p-4 border-b border-surface-variant text-left hover:bg-surface-bright active:bg-surface-dim transition-colors">
+<span class="font-body-lg text-body-lg">Language</span>
+<div class="flex items-center text-on-surface-variant">
+<span class="font-body-md text-body-md mr-2">English</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">chevron_right</span>
+</div>
+</button>
+<button class="w-full flex items-center justify-between p-4 border-b border-surface-variant text-left hover:bg-surface-bright active:bg-surface-dim transition-colors">
+<span class="font-body-lg text-body-lg">Currency</span>
+<div class="flex items-center text-on-surface-variant">
+<span class="font-body-md text-body-md mr-2">KES</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">chevron_right</span>
+</div>
+</button>
+<div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 border-b border-surface-variant gap-3">
+<span class="font-body-lg text-body-lg">Appearance</span>
+<div class="segmented-control flex bg-surface-subtle p-1 rounded-lg w-full sm:w-auto">
+<input checked="" id="theme-auto" name="theme" type="radio"/>
+<label for="theme-auto">Auto</label>
+<input id="theme-light" name="theme" type="radio"/>
+<label for="theme-light">Light</label>
+<input id="theme-dark" name="theme" type="radio"/>
+<label for="theme-dark">Dark</label>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: Security -->
+<section class="mb-gutter-vertical">
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-2 px-4">Security</h2>
+<div class="bg-surface-container-lowest rounded-xl shadow-[0px_0px_8px_rgba(0,0,0,0.04)] overflow-hidden">
+<button class="w-full flex items-center justify-between p-4 border-b border-surface-variant text-left hover:bg-surface-bright active:bg-surface-dim transition-colors">
+<span class="font-body-lg text-body-lg">Change Password</span>
+<span class="material-symbols-outlined text-on-surface-variant" style="font-variation-settings: 'FILL' 0;">chevron_right</span>
+</button>
+<div class="flex items-center justify-between p-4 border-b border-surface-variant">
+<div class="flex flex-col">
+<span class="font-body-lg text-body-lg">Biometric Login</span>
+<span class="font-caption text-caption text-on-surface-variant mt-1">Use Face ID to log in</span>
+</div>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" id="faceid-toggle" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-surface-variant cursor-pointer" for="faceid-toggle"></label>
+<div class="toggle-dot"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Log Out Button -->
+<div class="mt-8 mb-12">
+<button class="w-full h-touch-target bg-surface-container-lowest text-error font-headline-sm text-headline-sm rounded-xl shadow-[0px_0px_8px_rgba(0,0,0,0.04)] active:scale-95 transition-transform flex justify-center items-center">
+                Log Out
+            </button>
+</div>
+</main>
+<!-- Suppressed Bottom Navigation & FAB for Settings View per Semantic Shell Mandate -->
+</body></html>

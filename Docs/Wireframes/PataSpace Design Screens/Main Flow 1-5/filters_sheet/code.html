@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>PataSpace - Filters</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary-container": "#e4e2e1",
+                        "tertiary-fixed": "#e0e3e4",
+                        "primary": "#00667e",
+                        "on-tertiary-fixed-variant": "#434748",
+                        "on-surface": "#1a1c1c",
+                        "on-primary-fixed": "#001f28",
+                        "tertiary-container": "#737778",
+                        "outline": "#6f797d",
+                        "status-warning": "#FFCC00",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-container": "#ffffff",
+                        "on-primary-container": "#ffffff",
+                        "surface-variant": "#e2e2e2",
+                        "on-tertiary-fixed": "#181c1d",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#5a5e5f",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#28809a",
+                        "primary-fixed-dim": "#83d1ee",
+                        "surface-container-low": "#f3f3f4",
+                        "surface-dim": "#dadada",
+                        "inverse-primary": "#83d1ee",
+                        "status-success": "#34C759",
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed-variant": "#474746",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#e4e2e1",
+                        "on-primary-fixed-variant": "#004e60",
+                        "inverse-surface": "#2f3131",
+                        "surface": "#f9f9f9",
+                        "outline-variant": "#bec8cd",
+                        "on-secondary": "#ffffff",
+                        "status-error": "#FF3B30",
+                        "on-secondary-container": "#656464",
+                        "surface-container": "#eeeeee",
+                        "on-error": "#ffffff",
+                        "on-background": "#1a1c1c",
+                        "surface-container-high": "#e8e8e8",
+                        "on-surface-variant": "#3f484c",
+                        "tertiary-fixed-dim": "#c3c7c8",
+                        "surface-tint": "#00677f",
+                        "surface-bright": "#f9f9f9",
+                        "surface-subtle": "#EDEDED",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "primary-fixed": "#b7eaff",
+                        "inverse-on-surface": "#f0f1f1",
+                        "surface-container-highest": "#e2e2e2",
+                        "background": "#f9f9f9",
+                        "secondary": "#5f5e5e"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        full: "9999px"
+                    },
+                    spacing: {
+                        "margin-horizontal": "16px",
+                        "unit": "8px",
+                        "gutter-vertical": "24px",
+                        "component-gap": "16px",
+                        "touch-target": "44px"
+                    },
+                    fontFamily: {
+                        "headline-lg": ["Poppins"],
+                        "body-md": ["DM Sans"],
+                        "headline-sm": ["Poppins"],
+                        "display-01": ["Poppins"],
+                        "caption": ["DM Sans"],
+                        "headline-md": ["Poppins"],
+                        "display-02": ["Poppins"],
+                        "body-lg": ["DM Sans"],
+                        "label-md": ["DM Sans"],
+                        "headline-lg-mobile": ["Poppins"]
+                    },
+                    fontSize: {
+                        "headline-lg": ["28px", { lineHeight: "34px", fontWeight: "700" }],
+                        "body-md": ["15px", { lineHeight: "21px", fontWeight: "400" }],
+                        "headline-sm": ["20px", { lineHeight: "25px", fontWeight: "600" }],
+                        "display-01": ["48px", { lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "caption": ["11px", { lineHeight: "14px", fontWeight: "400" }],
+                        "headline-md": ["24px", { lineHeight: "30px", fontWeight: "600" }],
+                        "display-02": ["34px", { lineHeight: "41px", letterSpacing: "-0.01em", fontWeight: "700" }],
+                        "body-lg": ["17px", { lineHeight: "24px", fontWeight: "400" }],
+                        "label-md": ["13px", { lineHeight: "18px", fontWeight: "500" }],
+                        "headline-lg-mobile": ["24px", { lineHeight: "30px", fontWeight: "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #000; /* Simulated backdrop */
+            font-family: 'DM Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Range Slider Styling */
+        input[type=range]::-webkit-slider-thumb {
+            pointer-events: all;
+            width: 24px;
+            height: 24px;
+            -webkit-appearance: none;
+            @apply w-6 h-6 appearance-none pointer-events-auto rounded-full bg-surface shadow-md border border-outline-variant;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="antialiased h-screen w-full flex items-end justify-center overflow-hidden">
+<!-- Background overlay (simulating the page behind) -->
+<div class="fixed inset-0 bg-black/40 z-0"></div>
+<!-- Bottom Sheet Modal -->
+<div class="relative z-10 w-full max-w-[393px] h-[751px] bg-surface rounded-t-[32px] flex flex-col shadow-2xl transition-transform duration-300 transform translate-y-0" id="filter-sheet">
+<!-- Drag Handle -->
+<div class="w-full flex justify-center pt-2 pb-4">
+<div class="w-9 h-1.5 bg-outline-variant rounded-full"></div>
+</div>
+<!-- Header -->
+<div class="px-margin-horizontal flex justify-between items-center pb-gutter-vertical">
+<h1 class="text-headline-lg font-headline-lg text-on-surface">Filters</h1>
+<button class="text-primary-container font-label-md text-label-md bg-transparent border-none">Clear All</button>
+</div>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto px-margin-horizontal pb-[100px] space-y-gutter-vertical hide-scrollbar">
+<!-- County Selection -->
+<div class="space-y-unit">
+<h2 class="text-body-md font-bold text-on-surface">County</h2>
+<div class="bg-surface-subtle p-1 rounded-lg flex w-full">
+<button class="flex-1 py-1.5 bg-surface text-on-surface text-label-md font-label-md rounded shadow-sm text-center">Nairobi</button>
+<button class="flex-1 py-1.5 text-on-surface-variant text-label-md font-label-md rounded text-center">Kiambu</button>
+<button class="flex-1 py-1.5 text-on-surface-variant text-label-md font-label-md rounded text-center">Mombasa</button>
+</div>
+</div>
+<!-- Neighborhoods -->
+<div class="space-y-unit">
+<h2 class="text-body-md font-bold text-on-surface">Neighborhoods</h2>
+<div class="flex flex-wrap gap-2">
+<button class="px-4 py-2 bg-primary-container text-on-primary-container rounded-full text-label-md font-label-md">Kilimani</button>
+<button class="px-4 py-2 bg-surface text-on-surface border border-outline-variant rounded-full text-label-md font-label-md">Westlands</button>
+<button class="px-4 py-2 bg-primary-container text-on-primary-container rounded-full text-label-md font-label-md">Lavington</button>
+<button class="px-4 py-2 bg-surface text-on-surface border border-outline-variant rounded-full text-label-md font-label-md">Parklands</button>
+<button class="px-4 py-2 bg-surface text-on-surface border border-outline-variant rounded-full text-label-md font-label-md">Kileleshwa</button>
+</div>
+</div>
+<!-- Rent Range -->
+<div class="space-y-unit">
+<h2 class="text-body-md font-bold text-on-surface">Rent Range</h2>
+<div class="pt-4 pb-2 px-2">
+<div class="relative w-full h-1 bg-surface-variant rounded-full">
+<div class="absolute h-full bg-primary-container rounded-full" style="left: 20%; right: 40%;"></div>
+<div class="absolute w-6 h-6 bg-surface shadow-md border border-outline-variant rounded-full top-1/2 -translate-y-1/2" style="left: 20%;"></div>
+<div class="absolute w-6 h-6 bg-surface shadow-md border border-outline-variant rounded-full top-1/2 -translate-y-1/2" style="left: 60%;"></div>
+</div>
+</div>
+<div class="flex justify-between text-body-md text-on-surface-variant pt-2">
+<span>10,000 KES</span>
+<span>50,000 KES</span>
+</div>
+</div>
+<!-- Bedrooms -->
+<div class="space-y-unit">
+<h2 class="text-body-md font-bold text-on-surface">Bedrooms</h2>
+<div class="flex gap-2">
+<button class="flex-1 py-2 bg-surface text-on-surface border border-outline-variant rounded-full text-label-md font-label-md">Any</button>
+<button class="flex-1 py-2 bg-primary-container text-on-primary-container rounded-full text-label-md font-label-md">1+</button>
+<button class="flex-1 py-2 bg-surface text-on-surface border border-outline-variant rounded-full text-label-md font-label-md">2+</button>
+<button class="flex-1 py-2 bg-surface text-on-surface border border-outline-variant rounded-full text-label-md font-label-md">3+</button>
+</div>
+</div>
+<!-- Property Type -->
+<div class="space-y-unit">
+<h2 class="text-body-md font-bold text-on-surface">Property Type</h2>
+<div class="space-y-3">
+<label class="flex items-center space-x-3">
+<input checked="" class="w-5 h-5 rounded border-outline-variant text-primary-container focus:ring-primary-container" type="checkbox"/>
+<span class="text-body-md text-on-surface">Apartment</span>
+</label>
+<label class="flex items-center space-x-3">
+<input class="w-5 h-5 rounded border-outline-variant text-primary-container focus:ring-primary-container" type="checkbox"/>
+<span class="text-body-md text-on-surface">Bedsitter</span>
+</label>
+<label class="flex items-center space-x-3">
+<input class="w-5 h-5 rounded border-outline-variant text-primary-container focus:ring-primary-container" type="checkbox"/>
+<span class="text-body-md text-on-surface">Studio</span>
+</label>
+<label class="flex items-center space-x-3">
+<input class="w-5 h-5 rounded border-outline-variant text-primary-container focus:ring-primary-container" type="checkbox"/>
+<span class="text-body-md text-on-surface">House</span>
+</label>
+</div>
+</div>
+<!-- Safe area bottom padding for scrolling -->
+<div class="h-8"></div>
+</div>
+<!-- Fixed Bottom Action Bar -->
+<div class="absolute bottom-0 left-0 right-0 bg-surface border-t border-surface-variant px-margin-horizontal py-4 pb-safe flex justify-between items-center bg-opacity-95 backdrop-blur-md">
+<span class="text-body-md text-on-surface-variant">156 listings</span>
+<button class="bg-primary-container text-on-primary-container px-6 py-3 rounded-full font-headline-sm text-headline-sm shadow-md active:scale-95 transition-transform">
+                Show Results
+            </button>
+</div>
+</div>
+<script>
+        // Simple drag interaction stub for the handle
+        const handle = document.querySelector('.w-9');
+        const sheet = document.getElementById('filter-sheet');
+        
+        let startY = 0;
+        let currentY = 0;
+        
+        handle.addEventListener('touchstart', (e) => {
+            startY = e.touches[0].clientY;
+        });
+        
+        handle.addEventListener('touchmove', (e) => {
+            const deltaY = e.touches[0].clientY - startY;
+            if (deltaY > 0) {
+                sheet.style.transform = `translateY(${deltaY}px)`;
+            }
+        });
+        
+        handle.addEventListener('touchend', (e) => {
+            const deltaY = e.changedTouches[0].clientY - startY;
+            if (deltaY > 100) {
+                sheet.style.transform = `translateY(100%)`; // Dismiss
+            } else {
+                sheet.style.transform = `translateY(0)`; // Snap back
+            }
+        });
+    </script>
+</body></html>

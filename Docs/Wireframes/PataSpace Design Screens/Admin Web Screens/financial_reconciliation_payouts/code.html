@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Financial Reconciliation - PataSpace Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-container": "#ffffff",
+                    "background": "#f9f9f9",
+                    "inverse-on-surface": "#f0f1f1",
+                    "tertiary-fixed-dim": "#c3c7c8",
+                    "on-primary": "#ffffff",
+                    "tertiary": "#5a5e5f",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-highest": "#e2e2e2",
+                    "primary-container": "#28809a",
+                    "surface": "#f9f9f9",
+                    "surface-container": "#eeeeee",
+                    "on-secondary-fixed-variant": "#474746",
+                    "outline-variant": "#bec8cd",
+                    "on-secondary": "#ffffff",
+                    "on-error": "#ffffff",
+                    "surface-dim": "#dadada",
+                    "secondary-fixed-dim": "#c8c6c5",
+                    "secondary": "#5f5e5e",
+                    "secondary-container": "#e4e2e1",
+                    "surface-variant": "#e2e2e2",
+                    "on-primary-container": "#ffffff",
+                    "surface-bright": "#f9f9f9",
+                    "surface-subtle": "#EDEDED",
+                    "tertiary-container": "#737778",
+                    "surface-container-low": "#f3f3f4",
+                    "secondary-fixed": "#e4e2e1",
+                    "on-error-container": "#93000a",
+                    "on-tertiary-fixed": "#181c1d",
+                    "status-warning": "#FFCC00",
+                    "primary-fixed": "#b7eaff",
+                    "inverse-surface": "#2f3131",
+                    "on-tertiary": "#ffffff",
+                    "inverse-primary": "#83d1ee",
+                    "tertiary-fixed": "#e0e3e4",
+                    "on-primary-fixed-variant": "#004e60",
+                    "primary": "#00667e",
+                    "on-surface": "#1a1c1c",
+                    "on-background": "#1a1c1c",
+                    "on-tertiary-fixed-variant": "#434748",
+                    "primary-fixed-dim": "#83d1ee",
+                    "on-secondary-fixed": "#1b1c1c",
+                    "on-surface-variant": "#3f484c",
+                    "surface-tint": "#00677f",
+                    "surface-container-high": "#e8e8e8",
+                    "status-success": "#34C759",
+                    "status-error": "#FF3B30",
+                    "on-secondary-container": "#656464",
+                    "outline": "#6f797d",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed": "#001f28",
+                    "error": "#ba1a1a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "touch-target": "44px",
+                    "gutter-vertical": "24px",
+                    "component-gap": "16px",
+                    "margin-horizontal": "16px",
+                    "unit": "8px"
+            },
+            "fontFamily": {
+                    "body-lg": [
+                            "DM Sans"
+                    ],
+                    "headline-sm": [
+                            "Poppins"
+                    ],
+                    "headline-lg-mobile": [
+                            "Poppins"
+                    ],
+                    "caption": [
+                            "DM Sans"
+                    ],
+                    "display-01": [
+                            "Poppins"
+                    ],
+                    "label-md": [
+                            "DM Sans"
+                    ],
+                    "headline-lg": [
+                            "Poppins"
+                    ],
+                    "headline-md": [
+                            "Poppins"
+                    ],
+                    "body-md": [
+                            "DM Sans"
+                    ],
+                    "display-02": [
+                            "Poppins"
+                    ]
+            },
+            "fontSize": {
+                    "body-lg": [
+                            "17px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-sm": [
+                            "20px",
+                            {
+                                    "lineHeight": "25px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "headline-lg-mobile": [
+                            "24px",
+                            {
+                                    "lineHeight": "30px",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "caption": [
+                            "11px",
+                            {
+                                    "lineHeight": "14px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "display-01": [
+                            "48px",
+                            {
+                                    "lineHeight": "56px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "label-md": [
+                            "13px",
+                            {
+                                    "lineHeight": "18px",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "headline-lg": [
+                            "28px",
+                            {
+                                    "lineHeight": "34px",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "30px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "body-md": [
+                            "15px",
+                            {
+                                    "lineHeight": "21px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "display-02": [
+                            "34px",
+                            {
+                                    "lineHeight": "41px",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "700"
+                            }
+                    ]
+            }
+          },
+        },
+      }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-lg min-h-screen flex">
+<!-- Top Navigation (Mobile) -->
+<header class="md:hidden bg-inverse-surface shadow-sm fixed top-0 w-full z-50 flex items-center justify-between px-margin-horizontal h-touch-target">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: 'FILL' 1;">menu</span>
+<span class="font-headline-md text-headline-md font-bold text-white">PataSpace</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional corporate headshot of a person looking confident, well-lit with a bright modern background, wearing business casual attire. The image is clean and suitable for a dashboard avatar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCk_kyli_9Nm4W6XkBy74LxF7djKL8UUcFHooMKnqptHjSfgHix0mJfn_T8xV06rmI_NHOLb55ZVcGmaMRvFkcwMehZmxG1HERV-p4oywYRn5mSyK1QnVVeTXoLYFHbz-CIHMKWHC6GPLpjZZvZxijrcneDz9r0nJ8ksEy6ncKqTyGlmBqxXKL2maJmaS6ZN8eJhBQd8IeORaRoWoSMX4sAZGYhAZ8NCU8VKqMDGKgFPmmbhYC1QMuFPBZ9lJQu3D2X9-4tYmOeu7y0"/>
+</div>
+</header>
+<!-- Side Navigation (Desktop) -->
+<aside class="hidden md:flex flex-col w-64 bg-inverse-surface h-screen fixed top-0 left-0 z-40 shadow-lg text-secondary-fixed-dim">
+<div class="h-20 flex items-center px-6">
+<span class="font-headline-lg text-headline-lg font-bold text-white">PataSpace</span>
+</div>
+<nav class="flex-1 py-4 flex flex-col gap-2 px-4">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:text-primary-container transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:text-primary-container transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">real_estate_agent</span>
+                Properties
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-surface-variant/10 text-primary-container font-bold font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">payments</span>
+                Credits
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:text-primary-container transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">group</span>
+                Partners
+            </a>
+</nav>
+<div class="p-6 border-t border-secondary/20">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A small circular avatar image showing a professional headshot, brightly lit, suitable for a dark-themed sidebar profile section in a modern dashboard application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJ6fbh_3T9BTdRq-eargovMBeDbQobK8mS1rsThvSbpx_p3w29Gd1PuRGXNcu6wy5_bthFp53iJxw5osVnIy5gIBzVOnESoWkawy6xcssyT5o7fuQUXY7W6rHOrZOxjf2o5uuwxnGsXfe4YyKWMf42JRAh8KyRxujf50W6fxcv1yIHR4D4-JUCN-JFYuHRcTwCcCsxMZ0iu_FB3vxK3wo4H6LZZyVdoWPIbgH0uTOwqqolKjPs173Iu6oU4HGoKqdewcwoydyD2gfx"/>
+</div>
+<div>
+<p class="font-label-md text-label-md text-white">Admin User</p>
+<p class="font-caption text-caption text-secondary-fixed-dim">admin@pataspace.com</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 md:ml-64 pt-[60px] md:pt-0 pb-[80px] md:pb-0 min-h-screen px-margin-horizontal md:px-8 py-gutter-vertical">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-gutter-vertical pt-6">
+<div>
+<h1 class="font-display-02 text-display-02 text-on-surface">Financial Reconciliation</h1>
+<p class="text-on-surface-variant mt-1">Manage partner commissions and M-Pesa payouts.</p>
+</div>
+<button class="bg-primary hover:bg-surface-tint text-on-primary font-headline-sm text-headline-sm py-3 px-6 rounded-[16px] flex items-center justify-center gap-2 transition-colors h-touch-target shadow-sm w-full md:w-auto">
+<span class="material-symbols-outlined">send_money</span>
+                Execute Batch Payout
+            </button>
+</div>
+<!-- Summary Cards Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-component-gap mb-gutter-vertical">
+<div class="bg-surface-container-lowest rounded-[16px] p-6 shadow-sm flex flex-col justify-between min-h-[140px] border border-surface-variant">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-body-md text-body-md text-on-surface-variant">Total Pending Payouts</h3>
+<div class="w-10 h-10 rounded-full bg-status-warning/10 flex items-center justify-center text-status-warning">
+<span class="material-symbols-outlined">schedule</span>
+</div>
+</div>
+<div>
+<p class="font-display-02 text-display-02 text-on-surface">KES 452,000</p>
+<p class="font-caption text-caption text-on-surface-variant mt-1">Across 124 partners</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-[16px] p-6 shadow-sm flex flex-col justify-between min-h-[140px] border border-surface-variant">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-body-md text-body-md text-on-surface-variant">Completed (This Month)</h3>
+<div class="w-10 h-10 rounded-full bg-status-success/10 flex items-center justify-center text-status-success">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+</div>
+<div>
+<p class="font-display-02 text-display-02 text-on-surface">KES 1.2M</p>
+<p class="font-caption text-caption text-status-success mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">trending_up</span> +14% vs last month
+                    </p>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-[16px] p-6 shadow-sm flex flex-col justify-between min-h-[140px] border border-surface-variant">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-body-md text-body-md text-on-surface-variant">PataSpace Commission</h3>
+<div class="w-10 h-10 rounded-full bg-primary-container/10 flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+</div>
+<div>
+<p class="font-display-02 text-display-02 text-on-surface">KES 84,500</p>
+<p class="font-caption text-caption text-on-surface-variant mt-1">YTD: KES 850,200</p>
+</div>
+</div>
+</div>
+<!-- Ledger Section -->
+<div class="bg-surface-container-lowest rounded-[16px] shadow-sm border border-surface-variant overflow-hidden">
+<!-- Toolbar -->
+<div class="p-4 border-b border-surface-variant flex flex-col md:flex-row justify-between items-center gap-4 bg-surface-bright">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Transaction Ledger</h2>
+<div class="flex w-full md:w-auto gap-3">
+<div class="relative flex-1 md:w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-subtle border-none rounded-[12px] font-body-md text-body-md text-on-surface focus:ring-2 focus:ring-primary-container h-touch-target" placeholder="Search partner, ID, or M-Pesa ref..." type="text"/>
+</div>
+<button class="w-touch-target h-touch-target flex items-center justify-center rounded-[12px] border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+</div>
+</div>
+<!-- Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse min-w-[800px]">
+<thead class="bg-surface-container-low border-b border-surface-variant font-label-md text-label-md text-on-surface-variant">
+<tr>
+<th class="px-6 py-4 font-medium">Transaction ID</th>
+<th class="px-6 py-4 font-medium">Partner / Property</th>
+<th class="px-6 py-4 font-medium">Date &amp; Time</th>
+<th class="px-6 py-4 font-medium text-right">Amount (KES)</th>
+<th class="px-6 py-4 font-medium">Status</th>
+<th class="px-6 py-4 font-medium">M-Pesa Ref</th>
+<th class="px-6 py-4 font-medium text-center">Action</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md divide-y divide-surface-variant">
+<!-- Row 1: Pending -->
+<tr class="hover:bg-surface-bright transition-colors group">
+<td class="px-6 py-4 text-on-surface font-medium">#TXN-8842</td>
+<td class="px-6 py-4">
+<div class="font-medium text-on-surface">John Doe</div>
+<div class="text-on-surface-variant font-caption text-caption">Riverside Apartments</div>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">Oct 24, 2023<br/><span class="font-caption text-caption">14:32 EAT</span></td>
+<td class="px-6 py-4 text-right font-medium text-on-surface">12,500</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-status-warning/10 text-status-warning font-label-md text-label-md font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-status-warning"></span> Pending
+                                </span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">-</td>
+<td class="px-6 py-4 text-center">
+<button class="text-primary-container hover:text-surface-tint">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2: Paid -->
+<tr class="hover:bg-surface-bright transition-colors group">
+<td class="px-6 py-4 text-on-surface font-medium">#TXN-8841</td>
+<td class="px-6 py-4">
+<div class="font-medium text-on-surface">Jane Smith Estates</div>
+<div class="text-on-surface-variant font-caption text-caption">Kilimani Lofts</div>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">Oct 23, 2023<br/><span class="font-caption text-caption">09:15 EAT</span></td>
+<td class="px-6 py-4 text-right font-medium text-on-surface">45,000</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-status-success/10 text-status-success font-label-md text-label-md font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-status-success"></span> Paid
+                                </span>
+</td>
+<td class="px-6 py-4 font-mono text-sm text-on-surface-variant">QWE892NSD</td>
+<td class="px-6 py-4 text-center">
+<button class="text-primary-container hover:text-surface-tint">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3: Failed -->
+<tr class="hover:bg-surface-bright transition-colors group bg-error-container/20">
+<td class="px-6 py-4 text-on-surface font-medium">#TXN-8840</td>
+<td class="px-6 py-4">
+<div class="font-medium text-on-surface">Lavington Homes Ltd</div>
+<div class="text-on-surface-variant font-caption text-caption">Greenwood Villas</div>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">Oct 23, 2023<br/><span class="font-caption text-caption">08:45 EAT</span></td>
+<td class="px-6 py-4 text-right font-medium text-on-surface">8,500</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-status-error/10 text-status-error font-label-md text-label-md font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-status-error"></span> Failed
+                                </span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">Invalid MSISDN</td>
+<td class="px-6 py-4 text-center">
+<button class="text-primary-container hover:text-surface-tint">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 4: Paid -->
+<tr class="hover:bg-surface-bright transition-colors group">
+<td class="px-6 py-4 text-on-surface font-medium">#TXN-8839</td>
+<td class="px-6 py-4">
+<div class="font-medium text-on-surface">Apex Properties</div>
+<div class="text-on-surface-variant font-caption text-caption">Westlands Office Park</div>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">Oct 22, 2023<br/><span class="font-caption text-caption">16:20 EAT</span></td>
+<td class="px-6 py-4 text-right font-medium text-on-surface">120,000</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-status-success/10 text-status-success font-label-md text-label-md font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-status-success"></span> Paid
+                                </span>
+</td>
+<td class="px-6 py-4 font-mono text-sm text-on-surface-variant">POIUYTREWQ</td>
+<td class="px-6 py-4 text-center">
+<button class="text-primary-container hover:text-surface-tint">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="p-4 border-t border-surface-variant flex items-center justify-between bg-surface-bright">
+<span class="font-label-md text-label-md text-on-surface-variant">Showing 1-4 of 1,245 transactions</span>
+<div class="flex gap-2">
+<button class="w-8 h-8 rounded flex items-center justify-center border border-outline-variant text-on-surface-variant disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded flex items-center justify-center bg-primary-container text-on-primary font-label-md text-label-md">1</button>
+<button class="w-8 h-8 rounded flex items-center justify-center hover:bg-surface-container text-on-surface font-label-md text-label-md">2</button>
+<button class="w-8 h-8 rounded flex items-center justify-center hover:bg-surface-container text-on-surface font-label-md text-label-md">3</button>
+<button class="w-8 h-8 rounded flex items-center justify-center border border-outline-variant text-on-surface-variant hover:bg-surface-container">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation (Mobile) -->
+<nav class="md:hidden bg-inverse-surface shadow-lg fixed bottom-0 w-full z-50 pb-safe flex justify-around items-center h-16 px-2">
+<a class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-container transition-colors font-label-md text-label-md active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">home</span>
+<span>Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-container transition-colors font-label-md text-label-md active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">search</span>
+<span>Search</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-container transition-colors font-label-md text-label-md active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">add_circle</span>
+<span>Post</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary-container bg-transparent font-label-md text-label-md active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">payments</span>
+<span>Credits</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-container transition-colors font-label-md text-label-md active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">person</span>
+<span>Profile</span>
+</a>
+</nav>
+</body></html>

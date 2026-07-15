@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>Connection Confirmed - PataSpace</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config injected via guidelines -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "outline-variant": "#bec8cd",
+                "secondary-fixed": "#e4e2e1",
+                "background": "#f9f9f9",
+                "on-surface-variant": "#3f484c",
+                "inverse-primary": "#83d1ee",
+                "tertiary": "#5a5e5f",
+                "on-surface": "#1a1c1c",
+                "primary": "#00667e",
+                "outline": "#6f797d",
+                "tertiary-fixed-dim": "#c3c7c8",
+                "on-tertiary-fixed-variant": "#434748",
+                "on-primary-fixed-variant": "#004e60",
+                "on-error": "#ffffff",
+                "tertiary-fixed": "#e0e3e4",
+                "status-success": "#34C759",
+                "secondary-fixed-dim": "#c8c6c5",
+                "error-container": "#ffdad6",
+                "on-primary-fixed": "#001f28",
+                "on-secondary-container": "#656464",
+                "on-secondary-fixed-variant": "#474746",
+                "surface-tint": "#00677f",
+                "surface-container-high": "#e8e8e8",
+                "surface-container-lowest": "#ffffff",
+                "surface-subtle": "#EDEDED",
+                "primary-fixed": "#b7eaff",
+                "surface": "#f9f9f9",
+                "on-background": "#1a1c1c",
+                "primary-fixed-dim": "#83d1ee",
+                "on-tertiary-fixed": "#181c1d",
+                "surface-container-highest": "#e2e2e2",
+                "on-primary": "#ffffff",
+                "secondary": "#5f5e5e",
+                "on-secondary-fixed": "#1b1c1c",
+                "on-tertiary": "#ffffff",
+                "surface-variant": "#e2e2e2",
+                "secondary-container": "#e4e2e1",
+                "tertiary-container": "#737778",
+                "surface-bright": "#f9f9f9",
+                "inverse-on-surface": "#f0f1f1",
+                "status-error": "#FF3B30",
+                "status-warning": "#FFCC00",
+                "inverse-surface": "#252525", // Eerie Black overriding from Brand Guidelines
+                "on-error-container": "#93000a",
+                "primary-container": "#28809a",
+                "surface-container-low": "#f3f3f4",
+                "on-tertiary-container": "#ffffff",
+                "on-secondary": "#ffffff",
+                "surface-dim": "#dadada",
+                "on-primary-container": "#ffffff",
+                "error": "#ba1a1a",
+                "surface-container": "#eeeeee"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+            },
+            "spacing": {
+                "unit": "8px",
+                "touch-target": "44px",
+                "margin-horizontal": "16px",
+                "gutter-vertical": "24px",
+                "component-gap": "16px",
+                "safe": "env(safe-area-inset-bottom)"
+            },
+            "fontFamily": {
+                "caption": ["DM Sans"],
+                "body-lg": ["DM Sans"],
+                "body-md": ["DM Sans"],
+                "headline-sm": ["Poppins"],
+                "headline-lg-mobile": ["Poppins"],
+                "headline-lg": ["Poppins"],
+                "display-02": ["Poppins"],
+                "display-01": ["Poppins"],
+                "label-md": ["DM Sans"],
+                "headline-md": ["Poppins"]
+            },
+            "fontSize": {
+                "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                "body-lg": ["17px", {"lineHeight": "24px", "fontWeight": "400"}],
+                "body-md": ["15px", {"lineHeight": "21px", "fontWeight": "400"}],
+                "headline-sm": ["20px", {"lineHeight": "25px", "fontWeight": "600"}],
+                "headline-lg-mobile": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                "headline-lg": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                "display-02": ["34px", {"lineHeight": "41px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                "display-01": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                "label-md": ["13px", {"lineHeight": "18px", "fontWeight": "500"}],
+                "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "600"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Modal Animation Styles */
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes scaleIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        @keyframes checkmarkPop {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .animate-slide-up {
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .animate-scale-in {
+            animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .animate-check {
+            animation: checkmarkPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        
+        /* Progress Bar Animation */
+        @keyframes fillProgress {
+            from { width: 0%; }
+            to { width: 75%; }
+        }
+        .animate-progress {
+            animation: fillProgress 1s ease-out forwards;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-inverse-surface min-h-screen flex items-center justify-center font-sans antialiased">
+<!-- Modal Container mimicking iOS modal presentation -->
+<main class="w-full h-full md:w-[414px] md:h-[896px] bg-background md:rounded-[40px] md:overflow-hidden relative flex flex-col shadow-2xl animate-slide-up">
+<!-- Top App Bar (Modified for Modal) -->
+<header class="flex items-center justify-end px-margin-horizontal pt-4 h-touch-target sticky top-0 bg-background/90 backdrop-blur-md z-10">
+<!-- Close Button -->
+<button aria-label="Close" class="w-8 h-8 flex items-center justify-center bg-surface-container-high rounded-full text-on-surface-variant hover:bg-surface-dim transition-colors active:scale-95 duration-100">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</header>
+<!-- Scrollable Content Canvas -->
+<div class="flex-1 overflow-y-auto px-margin-horizontal pb-32">
+<!-- Success Animation Hero -->
+<div class="flex flex-col items-center justify-center pt-8 pb-gutter-vertical animate-scale-in" style="animation-delay: 0.1s;">
+<div class="w-24 h-24 bg-primary-fixed rounded-full flex items-center justify-center mb-6 relative shadow-[0_0_40px_rgba(40,128,154,0.3)]">
+<!-- Twin Checkmarks (PataSpace Success Icon) -->
+<span class="material-symbols-outlined text-[48px] text-primary-container absolute -ml-4 mt-2 animate-check" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="material-symbols-outlined text-[48px] text-primary absolute ml-4 -mt-2 animate-check" style="font-variation-settings: 'FILL' 1; animation-delay: 0.2s;">check_circle</span>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary-container text-center mb-2">Connection Confirmed!</h1>
+<p class="font-body-md text-body-md text-on-surface-variant text-center max-w-[280px]">Both parties have confirmed. Enjoy your new home!</p>
+</div>
+<div class="flex flex-col gap-gutter-vertical animate-slide-up" style="animation-delay: 0.2s; opacity: 0;">
+<!-- Property Summary Card -->
+<section class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_4px_16px_rgba(0,0,0,0.04)] flex gap-4 items-center">
+<div class="w-20 h-20 rounded-lg overflow-hidden shrink-0 shadow-sm relative">
+<img class="w-full h-full object-cover" data-alt="A bright, modern apartment interior in Nairobi, featuring large windows letting in natural sunlight, sleek contemporary furniture, polished wooden floors, and a minimal aesthetic. The lighting is soft and airy, highlighting the spaciousness and premium feel of the real estate listing." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTidHcbC-3XW8IzT4yOJXBLs2WsbQHgVfNbQm6eFHLU0ZDYxHSCMgMvh1RXhkRFyjwD_XMdUrzpFQD3axIoJ5mSW9LdXQwFG_dOxCHmdzGzOYq9JJJEeWAXJDQNu0Rh0q5O7f_Y3DZ-Oh9CJ-vtb2Q08mRE7EXIyFJN-XYrw5Hi57n5brF--FRz6MlOTbepCc_LJWgR5LU2FotmL6akaYuNzWmJqzFzk1rMNyHQhi81jG-43Po26HCeORhJfwA_Tlhcd9mVrmlNJJ5"/>
+</div>
+<div class="flex flex-col justify-center">
+<span class="font-label-md text-label-md text-tertiary uppercase tracking-wider mb-1">Revealed Address</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface leading-tight mb-1">Unit 4B, The Marquis</h3>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">calendar_today</span>
+<span class="font-caption text-caption">Move-in: 15 Apr 2026</span>
+</div>
+</div>
+</section>
+<!-- Commission Timeline Card -->
+<section class="bg-surface-container-lowest rounded-xl p-4 shadow-[0_4px_16px_rgba(0,0,0,0.04)] border border-surface-subtle relative overflow-hidden">
+<!-- Decorative accent line -->
+<div class="absolute top-0 left-0 w-1 h-full bg-primary-container"></div>
+<div class="pl-2">
+<div class="flex items-center justify-between mb-3">
+<h3 class="font-body-lg text-body-lg font-semibold text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container">payments</span>
+                                Commission Payment
+                            </h3>
+<span class="bg-primary-fixed text-on-primary-fixed-variant font-label-md text-caption px-2 py-1 rounded-full">Pending</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4">
+<strong class="text-on-surface font-semibold">600 KES</strong> will be paid on Mar 25, 2026
+                        </p>
+<!-- Progress Bar Container -->
+<div>
+<div class="flex justify-between font-caption text-caption text-tertiary mb-1.5">
+<span>Processing</span>
+<span class="text-primary-container font-medium">7 days remaining</span>
+</div>
+<div class="w-full h-2 bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full animate-progress" style="width: 0%;"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Rating Prompt Card -->
+<section class="bg-primary-fixed/20 rounded-xl p-5 text-center flex flex-col items-center gap-3">
+<h3 class="font-headline-sm text-body-lg font-semibold text-on-primary-fixed-variant">How was your experience?</h3>
+<!-- 5 Star Component -->
+<div class="flex gap-1 justify-center my-1">
+<button class="text-surface-variant hover:text-status-warning transition-colors active:scale-90"><span class="material-symbols-outlined text-[32px]">star</span></button>
+<button class="text-surface-variant hover:text-status-warning transition-colors active:scale-90"><span class="material-symbols-outlined text-[32px]">star</span></button>
+<button class="text-surface-variant hover:text-status-warning transition-colors active:scale-90"><span class="material-symbols-outlined text-[32px]">star</span></button>
+<button class="text-surface-variant hover:text-status-warning transition-colors active:scale-90"><span class="material-symbols-outlined text-[32px]">star</span></button>
+<button class="text-surface-variant hover:text-status-warning transition-colors active:scale-90"><span class="material-symbols-outlined text-[32px]">star</span></button>
+</div>
+<button class="font-label-md text-label-md text-primary-container border border-primary-container rounded-full px-6 py-2 mt-1 hover:bg-primary-fixed transition-colors active:scale-95">Leave Review</button>
+</section>
+</div>
+</div>
+<!-- Sticky Bottom Action Area -->
+<div class="absolute bottom-0 w-full bg-background/95 backdrop-blur-md pt-4 pb-[max(24px,env(safe-area-inset-bottom))] px-margin-horizontal border-t border-surface-variant z-20 flex flex-col gap-3 shadow-[0_-8px_20px_rgba(0,0,0,0.03)] animate-slide-up" style="animation-delay: 0.3s; opacity: 0;">
+<button class="w-full h-touch-target rounded-[16px] border-2 border-primary-container text-primary-container font-headline-sm text-body-lg flex items-center justify-center hover:bg-primary-fixed transition-colors active:scale-95 duration-100">
+                View Property Details
+            </button>
+<button class="w-full h-touch-target rounded-[16px] bg-primary-container text-on-primary font-headline-sm text-body-lg flex items-center justify-center hover:opacity-90 transition-opacity active:scale-95 duration-100 shadow-md shadow-primary-container/20">
+                Done
+            </button>
+</div>
+</main>
+</body></html>

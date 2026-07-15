@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>User Management - PataSpace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary": "#00667e",
+                      "on-error": "#ffffff",
+                      "error": "#ba1a1a",
+                      "on-secondary-container": "#656464",
+                      "surface-dim": "#dadada",
+                      "surface-tint": "#00677f",
+                      "on-tertiary-fixed": "#181c1d",
+                      "secondary-container": "#e4e2e1",
+                      "error-container": "#ffdad6",
+                      "background": "#f9f9f9",
+                      "on-primary-fixed-variant": "#004e60",
+                      "tertiary": "#5a5e5f",
+                      "surface-container-high": "#e8e8e8",
+                      "on-surface": "#1a1c1c",
+                      "primary-container": "#28809a",
+                      "surface-container": "#eeeeee",
+                      "secondary-fixed": "#e4e2e1",
+                      "on-secondary": "#ffffff",
+                      "on-primary": "#ffffff",
+                      "on-secondary-fixed-variant": "#474746",
+                      "on-background": "#1a1c1c",
+                      "primary-fixed-dim": "#83d1ee",
+                      "tertiary-fixed": "#e0e3e4",
+                      "inverse-primary": "#83d1ee",
+                      "status-warning": "#FFCC00",
+                      "surface": "#f9f9f9",
+                      "on-tertiary-fixed-variant": "#434748",
+                      "surface-container-low": "#f3f3f4",
+                      "surface-bright": "#f9f9f9",
+                      "status-error": "#FF3B30",
+                      "surface-subtle": "#EDEDED",
+                      "on-tertiary": "#ffffff",
+                      "outline-variant": "#bec8cd",
+                      "status-success": "#34C759",
+                      "inverse-surface": "#2f3131",
+                      "surface-container-lowest": "#ffffff",
+                      "secondary-fixed-dim": "#c8c6c5",
+                      "on-primary-fixed": "#001f28",
+                      "tertiary-container": "#737778",
+                      "on-error-container": "#93000a",
+                      "tertiary-fixed-dim": "#c3c7c8",
+                      "on-primary-container": "#ffffff",
+                      "on-surface-variant": "#3f484c",
+                      "on-secondary-fixed": "#1b1c1c",
+                      "primary-fixed": "#b7eaff",
+                      "inverse-on-surface": "#f0f1f1",
+                      "surface-container-highest": "#e2e2e2",
+                      "secondary": "#5f5e5e",
+                      "outline": "#6f797d",
+                      "on-tertiary-container": "#ffffff",
+                      "surface-variant": "#e2e2e2"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "touch-target": "44px",
+                      "component-gap": "16px",
+                      "unit": "8px",
+                      "gutter-vertical": "24px",
+                      "margin-horizontal": "16px"
+              },
+              "fontFamily": {
+                      "body-lg": [
+                              "DM Sans"
+                      ],
+                      "headline-lg": [
+                              "Poppins"
+                      ],
+                      "body-md": [
+                              "DM Sans"
+                      ],
+                      "headline-md": [
+                              "Poppins"
+                      ],
+                      "display-01": [
+                              "Poppins"
+                      ],
+                      "caption": [
+                              "DM Sans"
+                      ],
+                      "headline-lg-mobile": [
+                              "Poppins"
+                      ],
+                      "headline-sm": [
+                              "Poppins"
+                      ],
+                      "label-md": [
+                              "DM Sans"
+                      ],
+                      "display-02": [
+                              "Poppins"
+                      ]
+              },
+              "fontSize": {
+                      "body-lg": [
+                              "17px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg": [
+                              "28px",
+                              {
+                                      "lineHeight": "34px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "15px",
+                              {
+                                      "lineHeight": "21px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "30px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-01": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "caption": [
+                              "11px",
+                              {
+                                      "lineHeight": "14px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "30px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-sm": [
+                              "20px",
+                              {
+                                      "lineHeight": "25px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-md": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-02": [
+                              "34px",
+                              {
+                                      "lineHeight": "41px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+        }
+        
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="antialiased font-body-md text-body-md pb-safe md:pb-0 pt-[80px]">
+<!-- TopAppBar (Web & Mobile) -->
+<header class="bg-inverse-surface dark:bg-inverse-surface fixed top-0 w-full z-50 shadow-sm">
+<div class="flex items-center justify-between px-margin-horizontal h-touch-target">
+<div class="flex items-center gap-component-gap">
+<button class="text-white hover:opacity-80 transition-opacity active:scale-95 transition-transform w-touch-target h-touch-target flex items-center justify-center">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-white">PataSpace</h1>
+</div>
+<!-- Web Navigation Cluster -->
+<nav class="hidden md:flex items-center gap-gutter-vertical">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary-container transition-colors" href="#">Home</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary-container transition-colors" href="#">Search</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary-container transition-colors" href="#">Post</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary-container transition-colors" href="#">Credits</a>
+<a class="font-label-md text-label-md text-primary-container font-bold hover:opacity-80 transition-opacity" href="#">Profile</a>
+</nav>
+<button class="w-[32px] h-[32px] rounded-full overflow-hidden border-2 border-primary-container hover:opacity-80 transition-opacity active:scale-95 transition-transform flex-shrink-0">
+<img alt="User profile avatar" class="w-full h-full object-cover" data-alt="A close up portrait of an elegant African professional woman in high key lighting, neutral corporate background. Modern clean corporate aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBQMNrEZk4Pyp7leijVV50_TGlpBehrrVdZfVnfYXpkYAU-2dwTm0UFXfqeeytU--CNS0GhDfgOdHXyWeqiWH1XGpGNoMGImcxgd2EDKjV0i9nmc2R08MhxOGB-dse58bE1pGwgLfo2yC8lSqdWAP_dO12n6D_dYOM75UmMKDg9BcYMnjm5P-WbkE-LiYKSdJILooAxMdr59QkZ85y-6lNKZIZ0dy2r_RqPnXHBgw_z_K4lHH9bZ1-oZbmX19JfN_Swm6dSqn3eSWSs"/>
+</button>
+</div>
+</header>
+<main class="w-full max-w-7xl mx-auto px-margin-horizontal py-gutter-vertical">
+<!-- Page Header -->
+<div class="mb-gutter-vertical">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-on-surface mb-unit">User Management</h2>
+<p class="text-on-surface-variant">Manage tenants and partners across the PataSpace platform.</p>
+</div>
+<!-- Search & Filters Container (Bento/Glassmorphism inspired) -->
+<div class="bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.04)] p-component-gap mb-gutter-vertical border border-surface-container-highest">
+<div class="flex flex-col md:flex-row gap-component-gap items-end">
+<!-- Search Input -->
+<div class="w-full md:flex-1 relative">
+<label class="block font-caption text-caption font-bold text-on-surface-variant mb-unit">Search Users</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-tertiary">search</span>
+<input class="w-full pl-10 pr-4 h-touch-target bg-surface-subtle border-none rounded-lg focus:ring-2 focus:ring-primary text-body-md placeholder:text-tertiary transition-shadow" placeholder="Name, email, or phone..." type="text"/>
+</div>
+</div>
+<!-- Filters -->
+<div class="flex w-full md:w-auto gap-component-gap">
+<div class="w-1/2 md:w-48 relative">
+<label class="block font-caption text-caption font-bold text-on-surface-variant mb-unit">User Type</label>
+<select class="w-full h-touch-target bg-surface-subtle border-none rounded-lg focus:ring-2 focus:ring-primary text-body-md appearance-none pl-4 pr-10">
+<option value="all">All Types</option>
+<option value="tenant">Tenant</option>
+<option value="partner">Partner</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 bottom-[10px] text-tertiary pointer-events-none">expand_more</span>
+</div>
+<div class="w-1/2 md:w-48 relative">
+<label class="block font-caption text-caption font-bold text-on-surface-variant mb-unit">Verification</label>
+<select class="w-full h-touch-target bg-surface-subtle border-none rounded-lg focus:ring-2 focus:ring-primary text-body-md appearance-none pl-4 pr-10">
+<option value="all">All Status</option>
+<option value="verified">Verified</option>
+<option value="pending">Pending</option>
+<option value="flagged">Flagged</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 bottom-[10px] text-tertiary pointer-events-none">expand_more</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Data Table (Cards on Mobile, Table on Desktop) -->
+<div class="bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.04)] border border-surface-container-highest overflow-hidden">
+<!-- Desktop Table View -->
+<div class="hidden lg:block w-full overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-surface-container-highest">
+<th class="p-component-gap font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">User</th>
+<th class="p-component-gap font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Contact</th>
+<th class="p-component-gap font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Status &amp; Type</th>
+<th class="p-component-gap font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Join Date</th>
+<th class="p-component-gap font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Credits</th>
+<th class="p-component-gap font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-highest">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-bright transition-colors group">
+<td class="p-component-gap">
+<div class="flex items-center gap-3">
+<img alt="Avatar" class="w-10 h-10 rounded-full object-cover" data-alt="Professional headshot of a smiling young African man in a light blue shirt, bright modern corporate lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEr0uPxJrDoGmSVURlvJFn-H7gcRK--YEGvYvEL_o4AtFD-iGg9sP8i5xlqgJjpDfrc2PrCfPBaSSU-4BkrevwdiopvYeMbxTA2UV0o7sOcCsJ7dzWwLqyrKzTAAhV8eAuwSg4C5GXyJkOHDHwJG6hZi_0EQeALA9x5P0tPuBw8-tzn2gs5JcXn7RenDak0tabz_JP32Ag-hrZcjipS9m3gYuxXxf-5wE0prKZgbF8FHf-OowmhRiTt7e0HwJhmrxty7gFsWqrNFMk"/>
+<div>
+<div class="font-headline-sm text-headline-sm text-on-surface" style="font-size: 15px; line-height: 20px;">David Mutua</div>
+<div class="font-caption text-caption text-tertiary">ID: #USR-8921</div>
+</div>
+</div>
+</td>
+<td class="p-component-gap">
+<div class="text-on-surface">david.m@example.com</div>
+<div class="font-caption text-caption text-tertiary">+254 712 345 678</div>
+</td>
+<td class="p-component-gap">
+<div class="flex gap-2 mb-1">
+<span class="inline-flex items-center px-2 py-1 rounded-full bg-[#34C759]/10 text-[#34C759] font-caption text-caption font-bold">
+<span class="material-symbols-outlined text-[14px] mr-1" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                        Verified
+                                    </span>
+</div>
+<div class="font-caption text-caption text-on-surface-variant">Tenant</div>
+</td>
+<td class="p-component-gap text-on-surface">Oct 12, 2023</td>
+<td class="p-component-gap text-right">
+<div class="font-headline-sm text-headline-sm text-on-surface" style="font-size: 15px;">2,450</div>
+<div class="font-caption text-caption text-tertiary">PTS</div>
+</td>
+<td class="p-component-gap text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="h-8 px-3 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container hover:text-primary transition-colors font-label-md text-label-md flex items-center gap-1">
+                                        Update
+                                    </button>
+<button class="h-8 px-3 rounded-lg bg-primary text-white hover:bg-primary-container transition-colors font-label-md text-label-md flex items-center gap-1">
+                                        Profile
+                                    </button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-bright transition-colors group">
+<td class="p-component-gap">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-headline-sm text-headline-sm">SA</div>
+<div>
+<div class="font-headline-sm text-headline-sm text-on-surface" style="font-size: 15px; line-height: 20px;">Sarah Achieng</div>
+<div class="font-caption text-caption text-tertiary">ID: #USR-9044</div>
+</div>
+</div>
+</td>
+<td class="p-component-gap">
+<div class="text-on-surface">sarah.properties@gmail.com</div>
+<div class="font-caption text-caption text-tertiary">+254 722 987 654</div>
+</td>
+<td class="p-component-gap">
+<div class="flex gap-2 mb-1">
+<span class="inline-flex items-center px-2 py-1 rounded-full bg-status-warning/10 text-status-warning font-caption text-caption font-bold">
+<span class="material-symbols-outlined text-[14px] mr-1">pending</span>
+                                        Pending
+                                    </span>
+</div>
+<div class="font-caption text-caption text-on-surface-variant">Partner (Agent)</div>
+</td>
+<td class="p-component-gap text-on-surface">Nov 05, 2023</td>
+<td class="p-component-gap text-right">
+<div class="font-headline-sm text-headline-sm text-on-surface" style="font-size: 15px;">500</div>
+<div class="font-caption text-caption text-tertiary">PTS</div>
+</td>
+<td class="p-component-gap text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="h-8 px-3 rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container hover:text-primary transition-colors font-label-md text-label-md flex items-center gap-1">
+                                        Update
+                                    </button>
+<button class="h-8 px-3 rounded-lg bg-primary text-white hover:bg-primary-container transition-colors font-label-md text-label-md flex items-center gap-1">
+                                        Profile
+                                    </button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Mobile Card View -->
+<div class="lg:hidden divide-y divide-surface-container-highest">
+<!-- Mobile Card 1 -->
+<div class="p-component-gap flex flex-col gap-unit">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<img alt="Avatar" class="w-12 h-12 rounded-full object-cover" data-alt="Professional headshot of a smiling young African man in a light blue shirt, bright modern corporate lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCP1qxpJXymPlOb6p2I6KAjcWuT-liehutbNUwtQEb-Yrrw9UNu_2Dwex9olBZbeMShT_64HF2UDdCt82nnA_PRSGyPjDctyYBFBhZ93BwLtn59FfONv8-yrFYs1-Cysib3f5R5Itz3TKqMhvsUQ_YW7Cu53nXpn3EtqxY7wLHDp6myku0ZTRnhkluV8fr4sELQ4t9uNAZzCTsyzL9lEfobXeQdwclshGA4e-tDy-Pr6Sq4seLy55MzLGCTfLajkI_1VYi9PQx7vksx"/>
+<div>
+<div class="font-headline-sm text-headline-sm text-on-surface" style="font-size: 16px;">David Mutua</div>
+<div class="font-caption text-caption text-tertiary">Tenant • Oct 12, 2023</div>
+</div>
+</div>
+<span class="inline-flex items-center px-2 py-1 rounded-full bg-[#34C759]/10 text-[#34C759] font-caption text-caption font-bold">
+                            Verified
+                        </span>
+</div>
+<div class="flex justify-between items-end mt-2">
+<div>
+<div class="font-caption text-caption text-tertiary mb-1">Contact</div>
+<div class="text-on-surface text-sm">david.m@example.com</div>
+<div class="text-on-surface text-sm">+254 712 345 678</div>
+</div>
+<div class="text-right">
+<div class="font-caption text-caption text-tertiary mb-1">Balance</div>
+<div class="font-headline-sm text-headline-sm text-primary">2,450 PTS</div>
+</div>
+</div>
+<div class="flex gap-2 mt-4">
+<button class="flex-1 h-touch-target rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors font-label-md text-label-md flex items-center justify-center">
+                            Update Balance
+                        </button>
+<button class="flex-1 h-touch-target rounded-lg bg-primary text-white hover:bg-primary-container transition-colors font-label-md text-label-md flex items-center justify-center">
+                            View Profile
+                        </button>
+</div>
+</div>
+</div>
+<!-- Pagination -->
+<div class="p-component-gap border-t border-surface-container-highest flex items-center justify-between bg-surface-bright">
+<span class="font-caption text-caption text-tertiary">Showing 1-10 of 245 users</span>
+<div class="flex gap-2">
+<button class="w-8 h-8 rounded border border-outline-variant flex items-center justify-center text-on-surface-variant hover:bg-surface-container disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded border border-outline-variant flex items-center justify-center text-on-surface-variant hover:bg-surface-container">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden bg-inverse-surface dark:bg-inverse-surface fixed bottom-0 w-full z-50 pb-safe shadow-lg">
+<div class="flex justify-around items-center w-full h-16 px-2">
+<a class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-container transition-colors active:scale-90 transition-transform w-[20%] h-full" href="#">
+<span class="material-symbols-outlined mb-1">home</span>
+<span class="font-label-md text-label-md" style="font-size: 10px; line-height: 1;">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-container transition-colors active:scale-90 transition-transform w-[20%] h-full" href="#">
+<span class="material-symbols-outlined mb-1">search</span>
+<span class="font-label-md text-label-md" style="font-size: 10px; line-height: 1;">Search</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-container transition-colors active:scale-90 transition-transform w-[20%] h-full" href="#">
+<span class="material-symbols-outlined mb-1">add_circle</span>
+<span class="font-label-md text-label-md" style="font-size: 10px; line-height: 1;">Post</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-container transition-colors active:scale-90 transition-transform w-[20%] h-full" href="#">
+<span class="material-symbols-outlined mb-1">payments</span>
+<span class="font-label-md text-label-md" style="font-size: 10px; line-height: 1;">Credits</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary-container bg-transparent hover:text-primary-container transition-colors active:scale-90 transition-transform w-[20%] h-full" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label-md text-label-md font-bold" style="font-size: 10px; line-height: 1;">Profile</span>
+</a>
+</div>
+</nav>
+</body></html>

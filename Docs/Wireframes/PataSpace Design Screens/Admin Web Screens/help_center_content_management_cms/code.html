@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PataSpace Admin - FAQ Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-container": "#ffffff",
+                    "background": "#f9f9f9",
+                    "inverse-on-surface": "#f0f1f1",
+                    "tertiary-fixed-dim": "#c3c7c8",
+                    "on-primary": "#ffffff",
+                    "tertiary": "#5a5e5f",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-highest": "#e2e2e2",
+                    "primary-container": "#28809a",
+                    "surface": "#f9f9f9",
+                    "surface-container": "#eeeeee",
+                    "on-secondary-fixed-variant": "#474746",
+                    "outline-variant": "#bec8cd",
+                    "on-secondary": "#ffffff",
+                    "on-error": "#ffffff",
+                    "surface-dim": "#dadada",
+                    "secondary-fixed-dim": "#c8c6c5",
+                    "secondary": "#5f5e5e",
+                    "secondary-container": "#e4e2e1",
+                    "surface-variant": "#e2e2e2",
+                    "on-primary-container": "#ffffff",
+                    "surface-bright": "#f9f9f9",
+                    "surface-subtle": "#EDEDED",
+                    "tertiary-container": "#737778",
+                    "surface-container-low": "#f3f3f4",
+                    "secondary-fixed": "#e4e2e1",
+                    "on-error-container": "#93000a",
+                    "on-tertiary-fixed": "#181c1d",
+                    "status-warning": "#FFCC00",
+                    "primary-fixed": "#b7eaff",
+                    "inverse-surface": "#2f3131",
+                    "on-tertiary": "#ffffff",
+                    "inverse-primary": "#83d1ee",
+                    "tertiary-fixed": "#e0e3e4",
+                    "on-primary-fixed-variant": "#004e60",
+                    "primary": "#00667e",
+                    "on-surface": "#1a1c1c",
+                    "on-background": "#1a1c1c",
+                    "on-tertiary-fixed-variant": "#434748",
+                    "primary-fixed-dim": "#83d1ee",
+                    "on-secondary-fixed": "#1b1c1c",
+                    "on-surface-variant": "#3f484c",
+                    "surface-tint": "#00677f",
+                    "surface-container-high": "#e8e8e8",
+                    "status-success": "#34C759",
+                    "status-error": "#FF3B30",
+                    "on-secondary-container": "#656464",
+                    "outline": "#6f797d",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed": "#001f28",
+                    "error": "#ba1a1a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "touch-target": "44px",
+                    "gutter-vertical": "24px",
+                    "component-gap": "16px",
+                    "margin-horizontal": "16px",
+                    "unit": "8px"
+            },
+            "fontFamily": {
+                    "body-lg": [
+                            "DM Sans"
+                    ],
+                    "headline-sm": [
+                            "Poppins"
+                    ],
+                    "headline-lg-mobile": [
+                            "Poppins"
+                    ],
+                    "caption": [
+                            "DM Sans"
+                    ],
+                    "display-01": [
+                            "Poppins"
+                    ],
+                    "label-md": [
+                            "DM Sans"
+                    ],
+                    "headline-lg": [
+                            "Poppins"
+                    ],
+                    "headline-md": [
+                            "Poppins"
+                    ],
+                    "body-md": [
+                            "DM Sans"
+                    ],
+                    "display-02": [
+                            "Poppins"
+                    ]
+            },
+            "fontSize": {
+                    "body-lg": [
+                            "17px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-sm": [
+                            "20px",
+                            {
+                                    "lineHeight": "25px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "headline-lg-mobile": [
+                            "24px",
+                            {
+                                    "lineHeight": "30px",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "caption": [
+                            "11px",
+                            {
+                                    "lineHeight": "14px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "display-01": [
+                            "48px",
+                            {
+                                    "lineHeight": "56px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "label-md": [
+                            "13px",
+                            {
+                                    "lineHeight": "18px",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "headline-lg": [
+                            "28px",
+                            {
+                                    "lineHeight": "34px",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "30px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "body-md": [
+                            "15px",
+                            {
+                                    "lineHeight": "21px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "display-02": [
+                            "34px",
+                            {
+                                    "lineHeight": "41px",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "700"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+        }
+        
+        .nav-shell {
+            background-color: theme('colors.inverse-surface');
+        }
+
+        .rich-text-content:empty:before {
+            content: attr(placeholder);
+            color: theme('colors.tertiary-container');
+            cursor: text;
+        }
+
+        /* Tonal layering utilities */
+        .layer-base { background-color: theme('colors.surface-container-lowest'); }
+        .layer-1 { 
+            background-color: theme('colors.surface-container-lowest'); 
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.04); 
+        }
+        
+        /* Modern Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background-color: theme('colors.surface-variant'); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background-color: theme('colors.outline-variant'); }
+    </style>
+</head>
+<body class="font-body-md text-body-md bg-background antialiased h-screen flex flex-col overflow-hidden">
+<!-- Top Navigation (Admin Variant based on TopAppBar constraints but desktop focus) -->
+<header class="flex-none bg-inverse-surface dark:bg-inverse-surface shadow-sm z-50 flex items-center justify-between px-margin-horizontal h-touch-target">
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity active:scale-95 text-white">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu</span>
+</button>
+<span class="font-headline-md text-headline-md font-bold text-white tracking-tight">PataSpace Admin</span>
+<div class="hidden md:flex ml-8 space-x-6">
+<!-- Highlight 'Help Center' as active semantic intent -->
+<a class="text-on-surface-variant hover:opacity-80 transition-opacity" href="#">Dashboard</a>
+<a class="text-on-surface-variant hover:opacity-80 transition-opacity" href="#">Listings</a>
+<a class="text-primary-container font-bold hover:opacity-80 transition-opacity" href="#">Help Center</a>
+<a class="text-on-surface-variant hover:opacity-80 transition-opacity" href="#">Users</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden md:flex items-center gap-2 mr-4">
+<span class="w-2 h-2 rounded-full bg-status-success"></span>
+<span class="font-label-md text-label-md text-white opacity-80">System Operational</span>
+</div>
+<div class="w-8 h-8 rounded-full overflow-hidden border-2 border-surface-variant">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a corporate admin user in a modern office setting, bright lighting, modern corporate style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPZm5aDjhojJuhdePVqUKbr0WGbbPZ3UcsXo3vvGzKyBVdoky-Zc2cb4OkMTAGvJxJCq9oqA4lNzaIG1JfKY-0TW3R4DCgqs1DRUHYjcng1TnkFFlXJOVrVvuz8R-dixCLbY4x6q3Rpt1qfQ3ZG3F7I-8UTMMUaWgw4QUDkZFhQ8Vv_S4GuF3jGvM0L9BdCoSh_hmt90zmvxvhCP3tJDYPkV-NF7FuwOHGzOecoqbdrrivpPr0zSpf2yI4hz0Z9a0lISXMM8e09zQx"/>
+</div>
+</div>
+</header>
+<!-- Main Application Layout -->
+<main class="flex-1 flex overflow-hidden">
+<!-- Sidebar: Content Hierarchy -->
+<aside class="w-72 flex-none border-r border-surface-variant bg-surface-container-lowest flex flex-col z-10">
+<div class="p-4 border-b border-surface-variant">
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-2">FAQ Hierarchy</h2>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant text-[20px]">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-subtle border-none rounded-[12px] font-body-md text-body-md focus:ring-2 focus:ring-primary-container focus:bg-surface-container-lowest transition-all" placeholder="Search categories..." type="text"/>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto p-4 space-y-1">
+<!-- Category 1 -->
+<div>
+<button class="w-full flex items-center justify-between p-2 rounded-lg hover:bg-surface-container-low transition-colors group">
+<div class="flex items-center gap-2 text-on-surface">
+<span class="material-symbols-outlined text-[20px] text-primary">folder</span>
+<span class="font-label-md text-label-md">Getting Started</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-outline-variant group-hover:text-primary transition-colors">keyboard_arrow_down</span>
+</button>
+<!-- Nested Articles -->
+<div class="ml-6 mt-1 space-y-1 border-l-2 border-surface-container pl-2">
+<button class="w-full text-left p-2 rounded-lg bg-primary-fixed text-on-primary-fixed-variant font-label-md text-label-md">
+                            How to register an account
+                        </button>
+<button class="w-full text-left p-2 rounded-lg hover:bg-surface-container-low text-on-surface-variant font-label-md text-label-md transition-colors">
+                            Searching for properties
+                        </button>
+<button class="w-full text-left p-2 rounded-lg hover:bg-surface-container-low text-on-surface-variant font-label-md text-label-md transition-colors">
+                            Understanding pricing
+                        </button>
+</div>
+</div>
+<!-- Category 2 -->
+<div class="pt-2">
+<button class="w-full flex items-center justify-between p-2 rounded-lg hover:bg-surface-container-low transition-colors group">
+<div class="flex items-center gap-2 text-on-surface">
+<span class="material-symbols-outlined text-[20px] text-outline">folder</span>
+<span class="font-label-md text-label-md">Payments &amp; Credits</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-outline-variant group-hover:text-primary transition-colors">keyboard_arrow_right</span>
+</button>
+</div>
+<!-- Category 3 -->
+<div class="pt-2">
+<button class="w-full flex items-center justify-between p-2 rounded-lg hover:bg-surface-container-low transition-colors group">
+<div class="flex items-center gap-2 text-on-surface">
+<span class="material-symbols-outlined text-[20px] text-outline">folder</span>
+<span class="font-label-md text-label-md">Trust &amp; Safety</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-outline-variant group-hover:text-primary transition-colors">keyboard_arrow_right</span>
+</button>
+</div>
+</div>
+<div class="p-4 border-t border-surface-variant">
+<button class="w-full flex items-center justify-center gap-2 px-4 py-2 border-2 border-outline-variant text-on-surface rounded-lg hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span class="font-label-md text-label-md">New Category</span>
+</button>
+</div>
+</aside>
+<!-- Main Editor Canvas -->
+<section class="flex-1 flex flex-col bg-background relative overflow-hidden">
+<!-- Editor Toolbar (Sticky Top) -->
+<div class="flex-none bg-surface-container-lowest border-b border-surface-variant p-4 flex items-center justify-between shadow-sm z-10">
+<div class="flex items-center gap-4">
+<div class="flex items-center bg-surface-container-low rounded-lg p-1">
+<button class="p-2 rounded hover:bg-surface-container-high text-on-surface-variant transition-colors" title="Bold">
+<span class="material-symbols-outlined text-[20px]">format_bold</span>
+</button>
+<button class="p-2 rounded hover:bg-surface-container-high text-on-surface-variant transition-colors" title="Italic">
+<span class="material-symbols-outlined text-[20px]">format_italic</span>
+</button>
+<button class="p-2 rounded hover:bg-surface-container-high text-on-surface-variant transition-colors" title="Underline">
+<span class="material-symbols-outlined text-[20px]">format_underlined</span>
+</button>
+<div class="w-[1px] h-6 bg-outline-variant mx-1"></div>
+<button class="p-2 rounded hover:bg-surface-container-high text-on-surface-variant transition-colors" title="Link">
+<span class="material-symbols-outlined text-[20px]">link</span>
+</button>
+<button class="p-2 rounded hover:bg-surface-container-high text-on-surface-variant transition-colors" title="Image">
+<span class="material-symbols-outlined text-[20px]">image</span>
+</button>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-caption text-caption text-on-surface-variant">Status:</span>
+<span class="px-2 py-1 rounded-full bg-status-success/10 text-status-success font-label-md text-label-md flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-status-success"></span> Published
+                        </span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-4 py-2 text-on-surface border-2 border-outline-variant rounded-lg font-headline-sm text-label-md hover:bg-surface-container-low transition-colors">
+                        Save Draft
+                    </button>
+<!-- Teal Publishing Button per instructions -->
+<button class="px-4 py-2 bg-primary text-white rounded-[16px] font-headline-sm text-label-md hover:opacity-90 transition-opacity shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">publish</span>
+                        Publish Changes
+                    </button>
+</div>
+</div>
+<!-- Editor Content Area -->
+<div class="flex-1 overflow-y-auto p-8 flex justify-center">
+<div class="w-full max-w-3xl space-y-6">
+<!-- Article Metadata -->
+<div class="layer-1 rounded-xl p-6 space-y-4">
+<div>
+<label class="block font-caption text-caption text-on-surface-variant mb-1 ml-1 uppercase tracking-wider">Article Title</label>
+<input class="w-full px-4 py-3 bg-surface-subtle border-none rounded-[12px] font-headline-md text-headline-md text-on-surface focus:ring-2 focus:ring-primary-container focus:bg-surface-container-lowest transition-all" type="text" value="How to register an account"/>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block font-caption text-caption text-on-surface-variant mb-1 ml-1 uppercase tracking-wider">Category</label>
+<select class="w-full px-4 py-3 bg-surface-subtle border-none rounded-[12px] font-body-md text-body-md text-on-surface focus:ring-2 focus:ring-primary-container focus:bg-surface-container-lowest transition-all appearance-none">
+<option>Getting Started</option>
+<option>Payments &amp; Credits</option>
+</select>
+</div>
+<div>
+<label class="block font-caption text-caption text-on-surface-variant mb-1 ml-1 uppercase tracking-wider">Target Audience</label>
+<select class="w-full px-4 py-3 bg-surface-subtle border-none rounded-[12px] font-body-md text-body-md text-on-surface focus:ring-2 focus:ring-primary-container focus:bg-surface-container-lowest transition-all appearance-none">
+<option>All Users</option>
+<option>Property Seekers</option>
+<option>Agents/Landlords</option>
+</select>
+</div>
+</div>
+</div>
+<!-- WYSIWYG Canvas -->
+<div class="layer-1 rounded-xl min-h-[500px] p-8 text-on-surface font-body-lg text-body-lg leading-relaxed focus:outline-none" contenteditable="true">
+<h2 class="font-headline-lg text-headline-lg mb-4">Welcome to PataSpace!</h2>
+<p class="mb-4">Creating an account is the first step to finding your perfect home. Follow these simple steps to get started:</p>
+<ol class="list-decimal list-inside space-y-2 mb-6 ml-4">
+<li>Open the PataSpace app on your mobile device.</li>
+<li>Tap the <strong>Profile</strong> tab in the bottom navigation.</li>
+<li>Select "Sign Up / Register".</li>
+<li>Enter your mobile number to receive a secure OTP.</li>
+</ol>
+<div class="p-4 bg-primary-fixed/20 rounded-lg border border-primary-fixed my-6">
+<strong class="font-headline-sm text-body-md text-on-primary-fixed-variant block mb-1">Note for Agents:</strong>
+<p class="text-on-surface-variant text-body-md">If you intend to list properties, you will need to complete the identity verification process after initial registration.</p>
+</div>
+<p>Need more help? Contact our support team via the chat icon.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- App Preview Sidebar (Contextual) -->
+<aside class="w-96 flex-none bg-surface-container-lowest border-l border-surface-variant hidden lg:flex flex-col z-20 shadow-[-4px_0_12px_rgba(0,0,0,0.03)]">
+<div class="p-4 border-b border-surface-variant flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px] text-primary">smartphone</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">App Preview</h2>
+</div>
+<div class="flex bg-surface-container-low rounded-lg p-1">
+<button class="px-3 py-1 rounded bg-surface-container-lowest shadow-sm text-on-surface font-label-md text-label-md">iOS</button>
+<button class="px-3 py-1 rounded text-on-surface-variant font-label-md text-label-md hover:text-on-surface">Android</button>
+</div>
+</div>
+<div class="flex-1 bg-surface-variant p-6 flex justify-center items-start overflow-y-auto">
+<!-- Faux Mobile Device Frame -->
+<div class="w-[320px] h-[650px] bg-background rounded-[40px] shadow-xl border-8 border-inverse-surface relative overflow-hidden flex flex-col">
+<!-- Notch -->
+<div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-inverse-surface rounded-b-xl z-50"></div>
+<!-- Mobile Header -->
+<div class="pt-10 pb-4 px-4 bg-surface-container-lowest border-b border-surface-variant flex items-center justify-between">
+<span class="material-symbols-outlined text-[24px] text-on-surface">arrow_back_ios_new</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Help Article</span>
+<div class="w-6"></div> <!-- Spacer for balance -->
+</div>
+<!-- Mobile Content Area -->
+<div class="flex-1 overflow-y-auto p-4 bg-background">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-2">How to register an account</h1>
+<div class="flex items-center gap-2 mb-6 text-on-surface-variant">
+<span class="font-caption text-caption bg-surface-container-high px-2 py-1 rounded">Getting Started</span>
+<span class="font-caption text-caption">2 min read</span>
+</div>
+<div class="prose prose-sm max-w-none text-on-surface font-body-md text-body-md space-y-4">
+<h2 class="font-headline-sm text-headline-sm mt-4">Welcome to PataSpace!</h2>
+<p>Creating an account is the first step to finding your perfect home. Follow these simple steps to get started:</p>
+<ol class="list-decimal list-outside ml-4 space-y-2">
+<li>Open the PataSpace app on your mobile device.</li>
+<li>Tap the <strong>Profile</strong> tab in the bottom navigation.</li>
+<li>Select "Sign Up / Register".</li>
+<li>Enter your mobile number to receive a secure OTP.</li>
+</ol>
+</div>
+</div>
+<!-- Home Indicator -->
+<div class="h-1 w-1/3 bg-inverse-surface absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full"></div>
+</div>
+</div>
+</aside>
+</main>
+</body></html>

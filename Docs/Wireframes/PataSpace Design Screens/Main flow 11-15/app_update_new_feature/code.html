@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>PataSpace - Feature Update</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&amp;family=Poppins:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline": "#6f797d",
+                    "status-warning": "#FFCC00",
+                    "error-container": "#ffdad6",
+                    "on-primary": "#ffffff",
+                    "on-tertiary-container": "#ffffff",
+                    "on-primary-fixed": "#001f28",
+                    "tertiary-container": "#737778",
+                    "tertiary-fixed": "#e0e3e4",
+                    "primary": "#00667e",
+                    "on-tertiary-fixed-variant": "#434748",
+                    "on-surface": "#1a1c1c",
+                    "secondary-container": "#e4e2e1",
+                    "on-secondary-fixed-variant": "#474746",
+                    "secondary-fixed-dim": "#c8c6c5",
+                    "surface-dim": "#dadada",
+                    "inverse-primary": "#83d1ee",
+                    "error": "#ba1a1a",
+                    "status-success": "#34C759",
+                    "tertiary": "#5a5e5f",
+                    "primary-container": "#28809a",
+                    "on-tertiary": "#ffffff",
+                    "surface-container-low": "#f3f3f4",
+                    "primary-fixed-dim": "#83d1ee",
+                    "on-primary-container": "#ffffff",
+                    "surface-variant": "#e2e2e2",
+                    "on-tertiary-fixed": "#181c1d",
+                    "surface-container-lowest": "#ffffff",
+                    "on-background": "#1a1c1c",
+                    "surface-container-high": "#e8e8e8",
+                    "on-surface-variant": "#3f484c",
+                    "status-error": "#FF3B30",
+                    "on-secondary-container": "#656464",
+                    "surface-container": "#eeeeee",
+                    "on-error": "#ffffff",
+                    "outline-variant": "#bec8cd",
+                    "on-secondary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "secondary-fixed": "#e4e2e1",
+                    "on-primary-fixed-variant": "#004e60",
+                    "inverse-surface": "#2f3131",
+                    "surface": "#f9f9f9",
+                    "background": "#f9f9f9",
+                    "secondary": "#5f5e5e",
+                    "primary-fixed": "#b7eaff",
+                    "surface-container-highest": "#e2e2e2",
+                    "inverse-on-surface": "#f0f1f1",
+                    "on-secondary-fixed": "#1b1c1c",
+                    "surface-subtle": "#EDEDED",
+                    "tertiary-fixed-dim": "#c3c7c8",
+                    "surface-tint": "#00677f",
+                    "surface-bright": "#f9f9f9"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-horizontal": "16px",
+                    "unit": "8px",
+                    "gutter-vertical": "24px",
+                    "component-gap": "16px",
+                    "touch-target": "44px"
+            },
+            "fontFamily": {
+                    "display-01": [
+                            "Poppins"
+                    ],
+                    "label-md": [
+                            "DM Sans"
+                    ],
+                    "headline-lg-mobile": [
+                            "Poppins"
+                    ],
+                    "headline-md": [
+                            "Poppins"
+                    ],
+                    "display-02": [
+                            "Poppins"
+                    ],
+                    "body-lg": [
+                            "DM Sans"
+                    ],
+                    "caption": [
+                            "DM Sans"
+                    ],
+                    "headline-lg": [
+                            "Poppins"
+                    ],
+                    "body-md": [
+                            "DM Sans"
+                    ],
+                    "headline-sm": [
+                            "Poppins"
+                    ]
+            },
+            "fontSize": {
+                    "display-01": [
+                            "48px",
+                            {
+                                    "lineHeight": "56px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "label-md": [
+                            "13px",
+                            {
+                                    "lineHeight": "18px",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "headline-lg-mobile": [
+                            "24px",
+                            {
+                                    "lineHeight": "30px",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "30px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "display-02": [
+                            "34px",
+                            {
+                                    "lineHeight": "41px",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "body-lg": [
+                            "17px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "caption": [
+                            "11px",
+                            {
+                                    "lineHeight": "14px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-lg": [
+                            "28px",
+                            {
+                                    "lineHeight": "34px",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "body-md": [
+                            "15px",
+                            {
+                                    "lineHeight": "21px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-sm": [
+                            "20px",
+                            {
+                                    "lineHeight": "25px",
+                                    "fontWeight": "600"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        /* Safe area adjustments for iOS */
+        @supports (padding-bottom: env(safe-area-inset-bottom)) {
+            .pb-safe {
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+            .pt-safe {
+                padding-top: env(safe-area-inset-top);
+            }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest text-on-background font-body-md antialiased overflow-hidden">
+<!-- Modal Container -->
+<div class="fixed inset-0 z-50 flex flex-col bg-surface-container-lowest">
+<!-- Header Spacer for Notch -->
+<div class="w-full pt-safe h-12 flex justify-end px-margin-horizontal items-center">
+</div>
+<!-- Scrollable Content Area -->
+<div class="flex-1 overflow-y-auto pb-[140px] hide-scrollbar flex flex-col items-center">
+<!-- Feature Graphic -->
+<div class="w-full px-margin-horizontal mb-gutter-vertical">
+<div class="w-full aspect-[4/3] rounded-xl overflow-hidden shadow-sm border border-surface-variant relative bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A high-quality, modern 3D illustration representing a verified real estate listing. A pristine, stylized modern house model sitting on a glowing pedestal, surrounded by floating checkmarks and digital trust shields. The scene uses a bright, airy light-mode aesthetic with a pristine white background. Accents of vibrant teal and success green highlight the verification concept. The overall mood is trustworthy, premium, and technologically advanced, fitting a modern corporate real estate app." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB94lbb3Y_EaXJ0phBjiENsVKwwih9mc-wTRfq-0fxCJwW3bNJj3-zqFAwKHoF91QTMAoSWYqHNT0f2JLzHUl4lBYxR5iQ6xC6B6LNDxNLXS4gt3YCRw_kT96TIiRop8ElIziKXRhUc5fCi1bruWI-InM1ID--bUietgcR4wWsNOWhcDQ1qbKwOuEuhy1XfQt3Itp1YmKvH3OqIykZWtxyoPmIXczaRT7MslzUpb0N1u8sx01ZhSdo9wuiF6FFmOyAOPQ2MKSr85r5Y"/>
+<!-- Decorative overlay gradient -->
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-transparent opacity-60"></div>
+</div>
+</div>
+<!-- Content Container -->
+<div class="px-margin-horizontal w-full flex flex-col items-center text-center max-w-md mx-auto">
+<!-- Badge -->
+<div class="inline-flex items-center justify-center px-4 py-1.5 bg-status-success/10 rounded-full mb-6">
+<span class="font-label-md text-label-md text-status-success uppercase tracking-widest font-bold">New Feature</span>
+</div>
+<!-- Heading -->
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-4">
+                    Introducing Verified Listings
+                </h1>
+<!-- Description -->
+<p class="font-body-md text-body-md text-on-surface-variant mb-8 px-4">
+                    Experience unmatched peace of mind. Properties with the verified badge have undergone rigorous physical and legal checks by our real estate experts.
+                </p>
+<!-- Benefits Bento Grid -->
+<div class="w-full grid grid-cols-2 gap-component-gap">
+<!-- Benefit 1 -->
+<div class="flex flex-col items-center text-center p-5 bg-surface rounded-xl border border-surface-subtle shadow-sm relative overflow-hidden group">
+<div class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+<span class="material-symbols-outlined text-primary text-[28px]" style="font-variation-settings: 'FILL' 1;">shield_locked</span>
+</div>
+<h3 class="font-body-lg text-body-lg text-on-surface font-semibold mb-1">Authentic</h3>
+<p class="font-caption text-caption text-on-surface-variant">100% physically vetted</p>
+</div>
+<!-- Benefit 2 -->
+<div class="flex flex-col items-center text-center p-5 bg-surface rounded-xl border border-surface-subtle shadow-sm relative overflow-hidden group">
+<div class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+<span class="material-symbols-outlined text-primary text-[28px]" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<h3 class="font-body-lg text-body-lg text-on-surface font-semibold mb-1">Fast Track</h3>
+<p class="font-caption text-caption text-on-surface-variant">Priority in search</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Fixed Action Bar at Bottom -->
+<div class="absolute bottom-0 left-0 w-full px-margin-horizontal pb-safe pt-6 bg-gradient-to-t from-surface-container-lowest via-surface-container-lowest to-transparent flex flex-col gap-unit">
+<div class="bg-surface-container-lowest pb-4">
+<button class="w-full h-[56px] bg-primary text-on-primary rounded-xl font-headline-sm text-headline-sm flex items-center justify-center shadow-lg active:scale-[0.98] transition-transform">
+                    Try It Now
+                </button>
+<button class="w-full h-touch-target mt-2 text-secondary font-label-md text-label-md flex items-center justify-center active:opacity-70 transition-opacity">
+                    Maybe Later
+                </button>
+</div>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>PataSpace - Saved</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&amp;family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Config from Guidelines -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#dadada",
+                        "on-secondary-container": "#656464",
+                        "error": "#ba1a1a",
+                        "primary": "#00667e",
+                        "on-error": "#ffffff",
+                        "tertiary": "#5a5e5f",
+                        "on-primary-fixed-variant": "#004e60",
+                        "error-container": "#ffdad6",
+                        "background": "#f9f9f9",
+                        "secondary-container": "#e4e2e1",
+                        "on-tertiary-fixed": "#181c1d",
+                        "surface-tint": "#00677f",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "surface-container": "#eeeeee",
+                        "secondary-fixed": "#e4e2e1",
+                        "primary-container": "#28809a",
+                        "on-surface": "#1a1c1c",
+                        "surface-container-high": "#e8e8e8",
+                        "status-warning": "#FFCC00",
+                        "inverse-primary": "#83d1ee",
+                        "tertiary-fixed": "#e0e3e4",
+                        "primary-fixed-dim": "#83d1ee",
+                        "on-background": "#1a1c1c",
+                        "on-secondary-fixed-variant": "#474746",
+                        "status-error": "#FF3B30",
+                        "surface-bright": "#f9f9f9",
+                        "surface-container-low": "#f3f3f4",
+                        "on-tertiary-fixed-variant": "#434748",
+                        "surface": "#f9f9f9",
+                        "inverse-surface": "#2f3131",
+                        "status-success": "#34C759",
+                        "outline-variant": "#bec8cd",
+                        "on-tertiary": "#ffffff",
+                        "surface-subtle": "#EDEDED",
+                        "primary-fixed": "#b7eaff",
+                        "on-surface-variant": "#3f484c",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "tertiary-fixed-dim": "#c3c7c8",
+                        "on-primary-container": "#ffffff",
+                        "tertiary-container": "#737778",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "on-primary-fixed": "#001f28",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-variant": "#e2e2e2",
+                        "outline": "#6f797d",
+                        "on-tertiary-container": "#ffffff",
+                        "surface-container-highest": "#e2e2e2",
+                        "secondary": "#5f5e5e",
+                        "inverse-on-surface": "#f0f1f1"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "touch-target": "44px",
+                        "component-gap": "16px",
+                        "gutter-vertical": "24px",
+                        "unit": "8px",
+                        "margin-horizontal": "16px",
+                        "safe": "env(safe-area-inset-bottom, 24px)"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Poppins"],
+                        "headline-sm": ["Poppins"],
+                        "label-md": ["DM Sans"],
+                        "display-02": ["Poppins"],
+                        "headline-lg": ["Poppins"],
+                        "body-md": ["DM Sans"],
+                        "body-lg": ["DM Sans"],
+                        "headline-md": ["Poppins"],
+                        "display-01": ["Poppins"],
+                        "caption": ["DM Sans"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["24px", { "lineHeight": "30px", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "25px", "fontWeight": "600" }],
+                        "label-md": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "display-02": ["34px", { "lineHeight": "41px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "headline-lg": ["28px", { "lineHeight": "34px", "fontWeight": "700" }],
+                        "body-md": ["15px", { "lineHeight": "21px", "fontWeight": "400" }],
+                        "body-lg": ["17px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "30px", "fontWeight": "600" }],
+                        "display-01": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "caption": ["11px", { "lineHeight": "14px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Custom Checkbox Style */
+        .checkbox-custom:checked {
+            background-color: #00667e;
+            border-color: #00667e;
+        }
+        
+        /* Hide scrollbar for clean UI */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        * {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest text-on-surface antialiased min-h-screen flex flex-col pt-12 pb-safe md:hidden">
+<!-- Top Navigation -->
+<header class="w-full top-0 sticky z-40 bg-surface-container-lowest/90 backdrop-blur-md px-margin-horizontal pt-4 pb-2 flex items-center justify-between transition-shadow" id="mainHeader">
+<div class="flex items-center gap-2">
+<h1 class="font-display-02 text-display-02 text-primary">Saved</h1>
+</div>
+<button class="font-label-md text-label-md text-primary h-touch-target px-2 flex items-center justify-center hover:opacity-80 transition-opacity active:scale-95 duration-100" id="editBtn">
+            Edit
+        </button>
+</header>
+<!-- Main Content: Saved Grid -->
+<main class="flex-1 px-margin-horizontal mt-gutter-vertical">
+<div class="grid grid-cols-2 gap-component-gap" id="gridContainer">
+<!-- Card 1 -->
+<div class="property-card relative group flex flex-col bg-surface-container-lowest rounded-xl shadow-[0_0_8px_rgba(0,0,0,0.04)] overflow-hidden">
+<div class="relative aspect-square w-full">
+<img class="object-cover w-full h-full" data-alt="A modern luxury apartment building exterior in Nairobi during golden hour. The building features sleek glass balconies and warm lighting spilling from the windows. The overall aesthetic is high-end corporate real estate, crisp, clean, with a modern light-mode color palette." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCedMJsPCfYKK4qaZuK02vDqPuW1TM4K0Bmrhp7JWYGbXRQ8rNHxUJ6NXpw_UOSSRAwzwdncrzOZT0PmvAPuSpNmM-dnjkMDLaPBkw6n14LbHjH9xLQ8be8Fy2JXIsr8QyC3eIEKKumRjRgbnlGS8BXCaEHp9k7XI4GEFCPmhGKc4sw-EWfyKK0fBHXXJ8mJ6JrHGI-ZOm8qqaq-6VS5-tSo1yryfkMHRI37MWKm_rPEo9LvRL7O4og8bStWI-4jzZB-V0ub8MBkgOE"/>
+<!-- Favorite Toggle -->
+<button class="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-surface-container-lowest/80 backdrop-blur shadow-sm active:scale-90 transition-transform">
+<span class="material-symbols-outlined fill text-primary text-lg" data-icon="favorite" data-weight="fill">favorite</span>
+</button>
+<!-- Selection Checkbox (Hidden initially) -->
+<div class="select-overlay absolute inset-0 bg-inverse-surface/10 hidden items-start justify-end p-2 transition-opacity duration-200">
+<input class="checkbox-custom w-6 h-6 rounded-full border-2 border-surface-container-lowest focus:ring-0 cursor-pointer shadow-sm" type="checkbox"/>
+</div>
+</div>
+<div class="p-3 flex flex-col gap-1">
+<div class="flex items-center gap-1 text-on-surface-variant font-caption text-caption">
+<span class="material-symbols-outlined text-[14px]" data-icon="location_on">location_on</span>
+<span class="truncate">Kilimani, Nairobi</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">KSh 15.5M</span>
+<span class="font-label-md text-label-md text-on-surface-variant truncate">The Azure Heights</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="property-card relative group flex flex-col bg-surface-container-lowest rounded-xl shadow-[0_0_8px_rgba(0,0,0,0.04)] overflow-hidden">
+<div class="relative aspect-square w-full">
+<img class="object-cover w-full h-full" data-alt="A spacious, well-lit living room of a contemporary Kenyan home. The room features minimalist furniture, large windows letting in natural light, and a subtle teal accent wall. The overall aesthetic is clean, professional, and inviting, suitable for a premium real estate app." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtAqO8YOZE5ZEv4WGsD95ZxasUdOvhEGOGspM7ZscKhLbIS74GuxOBaUOOL5717sVhKvsFoUGOcKS_d8CJ74JVKrO1Hn2E00vXh6atco1ItzMlzThS_KAeMqsXSnvHr93aG6fsO44DoY8a5j6rN0ztGdUSI_R4KmBr8NaMd3WPR0Xie64o55HMN-EYb0Jz0j-r8riS__DCQJaBUjxN90wYQ-9anTYOv3dYQDfgb4uv0308AFLEmv1_b-OgTYYjhMAB9mxqs2-ZQ0ct"/>
+<button class="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-surface-container-lowest/80 backdrop-blur shadow-sm active:scale-90 transition-transform">
+<span class="material-symbols-outlined fill text-primary text-lg" data-icon="favorite" data-weight="fill">favorite</span>
+</button>
+<div class="select-overlay absolute inset-0 bg-inverse-surface/10 hidden items-start justify-end p-2 transition-opacity duration-200">
+<input class="checkbox-custom w-6 h-6 rounded-full border-2 border-surface-container-lowest focus:ring-0 cursor-pointer shadow-sm" type="checkbox"/>
+</div>
+</div>
+<div class="p-3 flex flex-col gap-1">
+<div class="flex items-center gap-1 text-on-surface-variant font-caption text-caption">
+<span class="material-symbols-outlined text-[14px]" data-icon="location_on">location_on</span>
+<span class="truncate">Westlands, Nairobi</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">KSh 120k/mo</span>
+<span class="font-label-md text-label-md text-on-surface-variant truncate">Eden Suites</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="property-card relative group flex flex-col bg-surface-container-lowest rounded-xl shadow-[0_0_8px_rgba(0,0,0,0.04)] overflow-hidden">
+<div class="relative aspect-square w-full">
+<img class="object-cover w-full h-full" data-alt="A pristine modern kitchen interior with white marble countertops, stainless steel appliances, and dark wood cabinetry. Sunlight streams through a window over the sink. The mood is upscale and functional, perfectly aligning with a modern real estate marketplace aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgqwwrkzwdUGKR7Bydx5jV1q0XoxTIDq-T9DhVpLuXuBrJAgYaj1bXPzYQeq63fAFUO4cgfoqT8v12X5YdGwu087_YWzdzr_VVqBvBR69-l52RimHo_rwhGaW3qVJIJdCQpPZnU2LLusfAlp4o67u7mb8AdTQR_BKoRTlgcdSyrASTsCZfQ707BbifHtq4kh0hrjWfg_IiuEwT_4jnYlaBQY5lUMm7847Mvc5YfqpEyAVZuyhRKAYxn_a90HwHn0Vk5cDl0xy93Cor"/>
+<button class="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-surface-container-lowest/80 backdrop-blur shadow-sm active:scale-90 transition-transform">
+<span class="material-symbols-outlined fill text-primary text-lg" data-icon="favorite" data-weight="fill">favorite</span>
+</button>
+<div class="select-overlay absolute inset-0 bg-inverse-surface/10 hidden items-start justify-end p-2 transition-opacity duration-200">
+<input class="checkbox-custom w-6 h-6 rounded-full border-2 border-surface-container-lowest focus:ring-0 cursor-pointer shadow-sm" type="checkbox"/>
+</div>
+</div>
+<div class="p-3 flex flex-col gap-1">
+<div class="flex items-center gap-1 text-on-surface-variant font-caption text-caption">
+<span class="material-symbols-outlined text-[14px]" data-icon="location_on">location_on</span>
+<span class="truncate">Kileleshwa, Nairobi</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">KSh 18.2M</span>
+<span class="font-label-md text-label-md text-on-surface-variant truncate">Riverside Villas</span>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="property-card relative group flex flex-col bg-surface-container-lowest rounded-xl shadow-[0_0_8px_rgba(0,0,0,0.04)] overflow-hidden">
+<div class="relative aspect-square w-full">
+<img class="object-cover w-full h-full" data-alt="A beautifully landscaped private garden in a suburban home, featuring a manicured lawn, small patio area, and mature trees in the background. The scene is bathed in bright daylight. The style is aspirational yet grounded, fitting a premium property listing." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJDr8nhkjvcJW5aYyzzRLfcOa1_rIj6An941oZYK2w_WkGSe7tbWnRSN0ZT8EpkU-aua5FiB9j0Eaf5fyfYhQh968dOn0UCX25eWMrSw-t--2M0rfNpg1CKGTedlEoK77ZjOdBedpS7Hvbylk4iK56uBf_DXySi4_AmT1ACfosiJsd9c5B4T9rjWdfWJfwVAkI4y_1Iks7iaE0r-b2DAXK7PpIej0QJlvfFXDSDkPWzr2zHQrVhrFW6fJkJzb7jUjXIFOvsfZf2MYS"/>
+<button class="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-surface-container-lowest/80 backdrop-blur shadow-sm active:scale-90 transition-transform">
+<span class="material-symbols-outlined fill text-primary text-lg" data-icon="favorite" data-weight="fill">favorite</span>
+</button>
+<div class="select-overlay absolute inset-0 bg-inverse-surface/10 hidden items-start justify-end p-2 transition-opacity duration-200">
+<input class="checkbox-custom w-6 h-6 rounded-full border-2 border-surface-container-lowest focus:ring-0 cursor-pointer shadow-sm" type="checkbox"/>
+</div>
+</div>
+<div class="p-3 flex flex-col gap-1">
+<div class="flex items-center gap-1 text-on-surface-variant font-caption text-caption">
+<span class="material-symbols-outlined text-[14px]" data-icon="location_on">location_on</span>
+<span class="truncate">Karen, Nairobi</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">KSh 45.0M</span>
+<span class="font-label-md text-label-md text-on-surface-variant truncate">Green Leaf Estate</span>
+</div>
+</div>
+</div>
+<!-- Empty State (Hidden initially, shown if all items removed) -->
+<div class="hidden flex-col items-center justify-center h-[530px] text-center px-4" id="emptyState">
+<span class="material-symbols-outlined text-outline-variant text-[64px] mb-4" data-icon="favorite">favorite</span>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-2">No Saved Properties</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6 max-w-[250px]">Properties you save will appear here for easy access later.</p>
+<button class="bg-primary text-on-primary font-headline-sm text-headline-sm px-6 py-3 rounded-full min-h-touch-target min-w-[160px] active:scale-95 transition-transform">
+                Start Browsing
+            </button>
+</div>
+</main>
+<!-- Bottom Action Bar (Hidden initially, shown in Edit Mode) -->
+<div class="fixed bottom-[80px] left-0 right-0 px-margin-horizontal hidden z-40 transform translate-y-full transition-transform duration-300" id="bulkActionBar">
+<div class="bg-inverse-surface rounded-xl shadow-lg p-4 flex items-center justify-between w-full">
+<span class="font-label-md text-label-md text-surface-container-lowest"><span id="selectedCount">0</span> Selected</span>
+<button class="text-error font-headline-sm text-headline-sm flex items-center gap-2 active:opacity-70 disabled:opacity-50" disabled="" id="deleteBtn">
+<span class="material-symbols-outlined text-[20px]" data-icon="delete">delete</span> Delete
+            </button>
+</div>
+</div>
+<!-- Bottom NavBar -->
+<nav class="bg-inverse-surface dark:bg-inverse-surface fixed bottom-0 w-full z-50 pb-safe border-t border-outline-variant/10 shadow-lg">
+<div class="flex justify-around items-center h-16 w-full max-w-screen-xl mx-auto px-margin-horizontal">
+<button class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-fixed active:scale-90 transition-transform flex-1 h-touch-target">
+<span class="material-symbols-outlined mb-1" data-icon="home">home</span>
+<span class="font-label-md text-label-md">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-fixed active:scale-90 transition-transform flex-1 h-touch-target">
+<span class="material-symbols-outlined mb-1" data-icon="search">search</span>
+<span class="font-label-md text-label-md">Search</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-fixed active:scale-90 transition-transform flex-1 h-touch-target">
+<span class="material-symbols-outlined mb-1" data-icon="add_circle">add_circle</span>
+<span class="font-label-md text-label-md">List</span>
+</button>
+<button class="flex flex-col items-center justify-center text-primary-fixed-dim bg-primary-container/20 rounded-xl px-3 py-1 hover:text-primary-fixed active:scale-90 transition-transform flex-1 h-touch-target">
+<span class="material-symbols-outlined mb-1" data-icon="favorite" data-weight="fill" style="font-variation-settings: 'FILL' 1;">favorite</span>
+<span class="font-label-md text-label-md">Saved</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-fixed active:scale-90 transition-transform flex-1 h-touch-target">
+<span class="material-symbols-outlined mb-1" data-icon="person">person</span>
+<span class="font-label-md text-label-md">Profile</span>
+</button>
+</div>
+</nav>
+<!-- Spacer for bottom nav -->
+<div class="h-24 w-full"></div>
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const editBtn = document.getElementById('editBtn');
+            const overlays = document.querySelectorAll('.select-overlay');
+            const checkboxes = document.querySelectorAll('.checkbox-custom');
+            const bulkActionBar = document.getElementById('bulkActionBar');
+            const selectedCountSpan = document.getElementById('selectedCount');
+            const deleteBtn = document.getElementById('deleteBtn');
+            const favoriteButtons = document.querySelectorAll('.property-card button');
+            
+            let isEditMode = false;
+
+            // Edit Mode Toggle
+            editBtn.addEventListener('click', () => {
+                isEditMode = !isEditMode;
+                
+                editBtn.textContent = isEditMode ? 'Cancel' : 'Edit';
+                
+                overlays.forEach(overlay => {
+                    if (isEditMode) {
+                        overlay.classList.remove('hidden');
+                        overlay.classList.add('flex');
+                    } else {
+                        overlay.classList.add('hidden');
+                        overlay.classList.remove('flex');
+                    }
+                });
+                
+                // Toggle favorite buttons visibility
+                favoriteButtons.forEach(btn => {
+                    btn.style.display = isEditMode ? 'none' : 'flex';
+                });
+
+                if (isEditMode) {
+                    bulkActionBar.classList.remove('hidden');
+                    // Small delay to allow display:block to apply before transform
+                    setTimeout(() => {
+                        bulkActionBar.classList.remove('translate-y-full');
+                    }, 10);
+                } else {
+                    bulkActionBar.classList.add('translate-y-full');
+                    setTimeout(() => {
+                        bulkActionBar.classList.add('hidden');
+                    }, 300);
+                    
+                    // Reset checkboxes
+                    checkboxes.forEach(cb => cb.checked = false);
+                    updateSelectionCount();
+                }
+            });
+
+            // Handle Selection
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', updateSelectionCount);
+            });
+
+            function updateSelectionCount() {
+                const count = Array.from(checkboxes).filter(cb => cb.checked).length;
+                selectedCountSpan.textContent = count;
+                deleteBtn.disabled = count === 0;
+            }
+
+            // Scroll Shadow Logic
+            const header = document.getElementById('mainHeader');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 10) {
+                    header.classList.add('shadow-sm');
+                } else {
+                    header.classList.remove('shadow-sm');
+                }
+            });
+            
+            // Allow clicking the whole card image area to toggle checkbox in edit mode
+            document.querySelectorAll('.property-card .relative.aspect-square').forEach(area => {
+                area.addEventListener('click', (e) => {
+                    if(isEditMode && e.target.type !== 'checkbox') {
+                        const cb = area.querySelector('.checkbox-custom');
+                        cb.checked = !cb.checked;
+                        updateSelectionCount();
+                    }
+                });
+            });
+        });
+    </script>
+</body></html>

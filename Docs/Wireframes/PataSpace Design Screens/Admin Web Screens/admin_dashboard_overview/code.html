@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>PataSpace - Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;family=Poppins:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#00667e",
+                        "on-error": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-secondary-container": "#656464",
+                        "surface-dim": "#dadada",
+                        "surface-tint": "#00677f",
+                        "on-tertiary-fixed": "#181c1d",
+                        "secondary-container": "#e4e2e1",
+                        "error-container": "#ffdad6",
+                        "background": "#f9f9f9",
+                        "on-primary-fixed-variant": "#004e60",
+                        "tertiary": "#5a5e5f",
+                        "surface-container-high": "#e8e8e8",
+                        "on-surface": "#1a1c1c",
+                        "primary-container": "#28809a",
+                        "surface-container": "#eeeeee",
+                        "secondary-fixed": "#e4e2e1",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed-variant": "#474746",
+                        "on-background": "#1a1c1c",
+                        "primary-fixed-dim": "#83d1ee",
+                        "tertiary-fixed": "#e0e3e4",
+                        "inverse-primary": "#83d1ee",
+                        "status-warning": "#FFCC00",
+                        "surface": "#f9f9f9",
+                        "on-tertiary-fixed-variant": "#434748",
+                        "surface-container-low": "#f3f3f4",
+                        "surface-bright": "#f9f9f9",
+                        "status-error": "#FF3B30",
+                        "surface-subtle": "#EDEDED",
+                        "on-tertiary": "#ffffff",
+                        "outline-variant": "#bec8cd",
+                        "status-success": "#34C759",
+                        "inverse-surface": "#2f3131",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "on-primary-fixed": "#001f28",
+                        "tertiary-container": "#737778",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed-dim": "#c3c7c8",
+                        "on-primary-container": "#ffffff",
+                        "on-surface-variant": "#3f484c",
+                        "on-secondary-fixed": "#1b1c1c",
+                        "primary-fixed": "#b7eaff",
+                        "inverse-on-surface": "#f0f1f1",
+                        "surface-container-highest": "#e2e2e2",
+                        "secondary": "#5f5e5e",
+                        "outline": "#6f797d",
+                        "on-tertiary-container": "#ffffff",
+                        "surface-variant": "#e2e2e2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "touch-target": "44px",
+                        "component-gap": "16px",
+                        "unit": "8px",
+                        "gutter-vertical": "24px",
+                        "margin-horizontal": "16px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["DM Sans"],
+                        "headline-lg": ["Poppins"],
+                        "body-md": ["DM Sans"],
+                        "headline-md": ["Poppins"],
+                        "display-01": ["Poppins"],
+                        "caption": ["DM Sans"],
+                        "headline-lg-mobile": ["Poppins"],
+                        "headline-sm": ["Poppins"],
+                        "label-md": ["DM Sans"],
+                        "display-02": ["Poppins"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["17px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-lg": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                        "body-md": ["15px", {"lineHeight": "21px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "600"}],
+                        "display-01": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "caption": ["11px", {"lineHeight": "14px", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "30px", "fontWeight": "700"}],
+                        "headline-sm": ["20px", {"lineHeight": "25px", "fontWeight": "600"}],
+                        "label-md": ["13px", {"lineHeight": "18px", "fontWeight": "500"}],
+                        "display-02": ["34px", {"lineHeight": "41px", "letterSpacing": "-0.01em", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background antialiased min-h-screen flex flex-col md:flex-row pb-safe">
+<!-- TopAppBar (Mobile) -->
+<header class="md:hidden bg-inverse-surface shadow-sm fixed top-0 w-full z-50 flex items-center justify-between px-margin-horizontal h-touch-target">
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity active:scale-95 transition-transform flex items-center justify-center w-touch-target h-touch-target">
+<span class="material-symbols-outlined text-primary-container">menu</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm text-white font-bold tracking-tight">PataSpace</h1>
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-variant border border-outline-variant flex items-center justify-center hover:opacity-80 transition-opacity active:scale-95 transition-transform">
+<img alt="User profile avatar" class="w-full h-full object-cover" data-alt="A professional headshot of an African corporate administrator looking directly at the camera. The lighting is soft and flattering, highlighting confidence. The background is a clean, bright, modern office space with subtle teal accents, conveying a sense of authority and approachability." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkFZVwrEPTp8UgB9Yhsh_1QbLUo-_UyzrVrZqpKcfCK7vRGw5F8b7q4HDbfEstioRnpmEIQXTPUnvo2umI30DRqmXDvVY0p4_89lHIfrXYKIx8E5yrERXmpHLRVevN2CxrA6U_bR2H1nNv9Ndyam1m9-CP3H1c-8zWxdxnmp9ij4uR8hMXG0keqoWrwvjHgL-L4bgd4DdUj8t8o1u7H3nBJh20waufEQkIZ4XYuIttBrCu5UOIAVcQdAFm5ejX65BX6f3KDyORsxzV"/>
+</div>
+</header>
+<!-- Side Navigation (Desktop) -->
+<nav class="hidden md:flex flex-col w-64 bg-inverse-surface h-screen fixed left-0 top-0 shadow-lg z-40 py-6">
+<div class="px-6 mb-8">
+<h1 class="font-headline-md text-headline-md font-extrabold text-white tracking-tight">PataSpace</h1>
+</div>
+<ul class="flex-1 px-4 space-y-2">
+<li>
+<a class="flex items-center space-x-3 px-4 py-3 rounded-lg bg-primary-container/20 text-primary-fixed-dim font-label-md text-label-md font-bold transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span>Dashboard</span>
+</a>
+</li>
+<li>
+<a class="flex items-center space-x-3 px-4 py-3 rounded-lg text-secondary-fixed-dim hover:text-white hover:bg-surface-variant/10 transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">assignment_turned_in</span>
+<span>Approvals</span>
+</a>
+</li>
+<li>
+<a class="flex items-center space-x-3 px-4 py-3 rounded-lg text-secondary-fixed-dim hover:text-white hover:bg-surface-variant/10 transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">group</span>
+<span>Users</span>
+</a>
+</li>
+<li>
+<a class="flex items-center space-x-3 px-4 py-3 rounded-lg text-secondary-fixed-dim hover:text-white hover:bg-surface-variant/10 transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">support_agent</span>
+<span>Support</span>
+</a>
+</li>
+<li>
+<a class="flex items-center space-x-3 px-4 py-3 rounded-lg text-secondary-fixed-dim hover:text-white hover:bg-surface-variant/10 transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span>Analytics</span>
+</a>
+</li>
+</ul>
+<div class="px-6 mt-auto">
+<div class="flex items-center space-x-3 pt-4 border-t border-surface-variant/20">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-surface-variant">
+<img alt="Admin Avatar" class="w-full h-full object-cover" data-alt="A professional headshot of an African corporate administrator looking directly at the camera. The lighting is soft and flattering, highlighting confidence. The background is a clean, bright, modern office space with subtle teal accents, conveying a sense of authority and approachability." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCM8eHi8mWTvWc4gHJrdNg22iVKxhmkwPrzA0umYApWvh1oanDCK_ghYLdhwXnhzpXrzwhFb3HMg8i-wROolz86H6wk_75WehXdTeIVkA5IsxkWx79msLFmsMaLNaPyeZVeoCaWj6AF9_exskQ8ZbRth-gnhymH2Ap2t1IXGGTWeobiW4r94qZTpEyN-V4TYcfOHK8Fl6D6X143GofEFIH_nDmTWcQ8faMmoQ_ZRmpF3YFKnqFCNr8_llUzxujk4dWRT9KY7GWoNrNG"/>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-white font-bold">Admin User</span>
+<span class="font-caption text-caption text-secondary-fixed-dim">System Administrator</span>
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 w-full md:pl-64 pt-touch-target md:pt-0 mt-4 md:mt-0 min-h-screen">
+<div class="p-margin-horizontal md:p-8 max-w-7xl mx-auto space-y-gutter-vertical">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">Overview</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Welcome back. Here's what's happening today.</p>
+</div>
+<div class="flex items-center space-x-2">
+<span class="font-label-md text-label-md text-on-surface-variant px-3 py-1.5 bg-surface-container rounded-full border border-surface-variant">Last updated: Just now</span>
+<button class="w-touch-target h-touch-target rounded-full bg-surface-container flex items-center justify-center hover:bg-surface-container-high transition-colors active:scale-95 text-on-surface">
+<span class="material-symbols-outlined">refresh</span>
+</button>
+</div>
+</div>
+<!-- Metrics Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-component-gap">
+<!-- Metric Card 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-surface-variant/50 relative overflow-hidden group hover:shadow-md transition-shadow">
+<div class="absolute -right-4 -top-4 w-20 h-20 bg-primary/5 rounded-full blur-xl group-hover:bg-primary/10 transition-colors"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">real_estate_agent</span>
+</div>
+<span class="inline-flex items-center space-x-1 px-2 py-1 rounded-full bg-status-success/10 text-status-success font-caption text-caption font-bold">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+<span>+12%</span>
+</span>
+</div>
+<h3 class="font-label-md text-label-md text-on-surface-variant mb-1">Active Listings</h3>
+<div class="font-display-02 text-display-02 text-on-surface">2,450</div>
+</div>
+<!-- Metric Card 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-surface-variant/50 relative overflow-hidden group hover:shadow-md transition-shadow">
+<div class="absolute -right-4 -top-4 w-20 h-20 bg-status-warning/5 rounded-full blur-xl group-hover:bg-status-warning/10 transition-colors"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="w-10 h-10 rounded-lg bg-status-warning/10 flex items-center justify-center text-status-warning">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">pending_actions</span>
+</div>
+<span class="inline-flex items-center space-x-1 px-2 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-caption text-caption font-bold">
+<span>Requires Action</span>
+</span>
+</div>
+<h3 class="font-label-md text-label-md text-on-surface-variant mb-1">Pending Approvals</h3>
+<div class="font-display-02 text-display-02 text-on-surface">48</div>
+</div>
+<!-- Metric Card 3 -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-surface-variant/50 relative overflow-hidden group hover:shadow-md transition-shadow">
+<div class="absolute -right-4 -top-4 w-20 h-20 bg-primary/5 rounded-full blur-xl group-hover:bg-primary/10 transition-colors"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">payments</span>
+</div>
+<span class="inline-flex items-center space-x-1 px-2 py-1 rounded-full bg-status-success/10 text-status-success font-caption text-caption font-bold">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+<span>+8.4%</span>
+</span>
+</div>
+<h3 class="font-label-md text-label-md text-on-surface-variant mb-1">Monthly Revenue</h3>
+<div class="font-display-02 text-display-02 text-on-surface">KES 4.2M</div>
+</div>
+<!-- Metric Card 4 -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-surface-variant/50 relative overflow-hidden group hover:shadow-md transition-shadow">
+<div class="absolute -right-4 -top-4 w-20 h-20 bg-status-error/5 rounded-full blur-xl group-hover:bg-status-error/10 transition-colors"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="w-10 h-10 rounded-lg bg-status-error/10 flex items-center justify-center text-status-error">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">confirmation_number</span>
+</div>
+<span class="inline-flex items-center space-x-1 px-2 py-1 rounded-full bg-status-error/10 text-status-error font-caption text-caption font-bold">
+<span class="material-symbols-outlined text-[14px]">priority_high</span>
+<span>5 Urgent</span>
+</span>
+</div>
+<h3 class="font-label-md text-label-md text-on-surface-variant mb-1">Active Tickets</h3>
+<div class="font-display-02 text-display-02 text-on-surface">12</div>
+</div>
+</div>
+<!-- Content Grid: Chart & Activity -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-component-gap">
+<!-- Chart Area (Spans 2 columns on large screens) -->
+<div class="lg:col-span-2 bg-surface-container-lowest rounded-xl shadow-sm border border-surface-variant/50 p-6 flex flex-col">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Marketplace Growth</h3>
+<div class="flex space-x-2">
+<button class="px-3 py-1 rounded-full bg-surface-container font-caption text-caption text-on-surface-variant hover:bg-surface-variant transition-colors">Weekly</button>
+<button class="px-3 py-1 rounded-full bg-primary/10 font-caption text-caption text-primary font-bold">Monthly</button>
+</div>
+</div>
+<!-- Faux Chart Representation -->
+<div class="flex-1 relative w-full min-h-[250px] bg-surface-subtle/30 rounded-lg border border-surface-variant/30 flex items-end justify-between p-4 px-6 gap-2">
+<!-- Chart Bars/Lines mock -->
+<div class="w-full bg-primary/20 rounded-t-sm h-[40%] relative hover:bg-primary/40 transition-colors cursor-pointer group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-white font-caption text-caption px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Jan</div>
+</div>
+<div class="w-full bg-primary/30 rounded-t-sm h-[55%] relative hover:bg-primary/50 transition-colors cursor-pointer group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-white font-caption text-caption px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Feb</div>
+</div>
+<div class="w-full bg-primary/40 rounded-t-sm h-[45%] relative hover:bg-primary/60 transition-colors cursor-pointer group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-white font-caption text-caption px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Mar</div>
+</div>
+<div class="w-full bg-primary/50 rounded-t-sm h-[70%] relative hover:bg-primary/70 transition-colors cursor-pointer group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-white font-caption text-caption px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Apr</div>
+</div>
+<div class="w-full bg-primary/70 rounded-t-sm h-[85%] relative hover:bg-primary/80 transition-colors cursor-pointer group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-white font-caption text-caption px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">May</div>
+</div>
+<div class="w-full bg-primary rounded-t-sm h-[100%] relative hover:opacity-80 transition-opacity cursor-pointer group">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-white font-caption text-caption px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">Jun</div>
+</div>
+<!-- Connecting Line mock SVG -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none" preserveaspectratio="none" viewbox="0 0 100 100">
+<path class="opacity-50" d="M 5 60 Q 20 40 35 55 T 65 30 T 95 0" fill="none" stroke="#28809a" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+<!-- Recent Activity List -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm border border-surface-variant/50 flex flex-col overflow-hidden">
+<div class="p-5 border-b border-surface-variant/50 flex justify-between items-center bg-surface-bright">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Recent Activity</h3>
+<button class="text-primary font-label-md text-label-md hover:underline">View All</button>
+</div>
+<div class="flex-1 overflow-y-auto">
+<ul class="divide-y divide-surface-variant/30">
+<!-- Activity Item 1 -->
+<li class="p-4 hover:bg-surface-subtle/50 transition-colors flex gap-4 items-start">
+<div class="mt-1 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-primary">
+<span class="material-symbols-outlined text-[18px]">add_home</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="font-body-md text-body-md text-on-surface truncate"><span class="font-bold">New Listing:</span> 3BR Kileleshwa</p>
+<p class="font-caption text-caption text-on-surface-variant mt-0.5">Submitted by John Doe</p>
+</div>
+<span class="font-caption text-caption text-tertiary-container shrink-0">2m ago</span>
+</li>
+<!-- Activity Item 2 -->
+<li class="p-4 hover:bg-surface-subtle/50 transition-colors flex gap-4 items-start">
+<div class="mt-1 w-8 h-8 rounded-full bg-status-error/10 flex items-center justify-center shrink-0 text-status-error">
+<span class="material-symbols-outlined text-[18px]">report</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="font-body-md text-body-md text-on-surface truncate"><span class="font-bold">Dispute:</span> Fraudulent Activity</p>
+<p class="font-caption text-caption text-on-surface-variant mt-0.5">Reported on Listing #4521</p>
+</div>
+<span class="font-caption text-caption text-tertiary-container shrink-0">15m ago</span>
+</li>
+<!-- Activity Item 3 -->
+<li class="p-4 hover:bg-surface-subtle/50 transition-colors flex gap-4 items-start">
+<div class="mt-1 w-8 h-8 rounded-full bg-status-warning/10 flex items-center justify-center shrink-0 text-status-warning">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="font-body-md text-body-md text-on-surface truncate"><span class="font-bold">Verification:</span> Agent Account</p>
+<p class="font-caption text-caption text-on-surface-variant mt-0.5">Awaiting ID review</p>
+</div>
+<span class="font-caption text-caption text-tertiary-container shrink-0">1h ago</span>
+</li>
+<!-- Activity Item 4 -->
+<li class="p-4 hover:bg-surface-subtle/50 transition-colors flex gap-4 items-start">
+<div class="mt-1 w-8 h-8 rounded-full bg-status-success/10 flex items-center justify-center shrink-0 text-status-success">
+<span class="material-symbols-outlined text-[18px]">payments</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="font-body-md text-body-md text-on-surface truncate"><span class="font-bold">Payment:</span> Subscription Renewed</p>
+<p class="font-caption text-caption text-on-surface-variant mt-0.5">Agency 'Prime Homes'</p>
+</div>
+<span class="font-caption text-caption text-tertiary-container shrink-0">3h ago</span>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden bg-inverse-surface shadow-lg fixed bottom-0 w-full z-50 pb-safe flex justify-around items-center h-16 px-2">
+<a class="flex flex-col items-center justify-center text-primary-container bg-transparent hover:text-primary-container transition-colors active:scale-90 w-full h-full" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-md text-label-md mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-container transition-colors active:scale-90 w-full h-full" href="#">
+<span class="material-symbols-outlined">search</span>
+<span class="font-label-md text-label-md mt-1">Search</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-container transition-colors active:scale-90 w-full h-full relative" href="#">
+<div class="absolute -top-3 bg-primary text-white rounded-full w-12 h-12 flex items-center justify-center shadow-md">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+</div>
+<span class="font-label-md text-label-md mt-8">Post</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-container transition-colors active:scale-90 w-full h-full" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-label-md text-label-md mt-1">Credits</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary-fixed-dim hover:text-primary-container transition-colors active:scale-90 w-full h-full" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-md text-label-md mt-1">Profile</span>
+</a>
+</nav>
+</body></html>
