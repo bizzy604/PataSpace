@@ -6,6 +6,7 @@
  * Used by: app/admin pages and components/admin panels.
  */
 import type {
+  AdminAuditLogsResponse,
   AdminDisputesResponse,
   AdminFinanceSummaryResponse,
   AdminListingsResponse,
@@ -24,7 +25,17 @@ import type {
   ResolveDisputeRequest,
   SupportTicketMessageRecord,
 } from '@pataspace/contracts';
-import { clientFetch } from './client';
+import { clientFetch, clientFetchText } from './client';
+
+type AuditFilters = {
+  page?: number;
+  action?: string;
+  entityType?: string;
+  entityId?: string;
+  adminUserId?: string;
+  from?: string;
+  to?: string;
+};
 
 type GetToken = () => Promise<string | null>;
 
@@ -197,4 +208,12 @@ export function setSupportTicketPriority(getToken: GetToken, ticketId: string, p
     getToken,
     { method: 'POST', body: JSON.stringify({ priority }) },
   );
+}
+
+export function fetchAuditLogs(getToken: GetToken, params: AuditFilters = {}) {
+  return clientFetch<AdminAuditLogsResponse>(`/admin/audit-logs${toQuery(params)}`, getToken);
+}
+
+export function exportAuditLogsCsv(getToken: GetToken, params: Omit<AuditFilters, 'page'> = {}) {
+  return clientFetchText(`/admin/audit-logs/export${toQuery(params)}`, getToken);
 }

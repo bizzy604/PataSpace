@@ -10,12 +10,14 @@ import { JobsModule } from '../../jobs/jobs.module';
 import { ListingModule } from '../listing/listing.module';
 import { UserModule } from '../user/user.module';
 import { AdminController } from './admin.controller';
+import { AdminAuditController } from './admin-audit.controller';
 import { AdminDisputesController } from './admin-disputes.controller';
 import { AdminFinanceController } from './admin-finance.controller';
 import { AdminListingsController } from './admin-listings.controller';
 import { AdminMetricsController } from './admin-metrics.controller';
 import { AdminSupportController } from './admin-support.controller';
 import { AdminUsersController } from './admin-users.controller';
+import { AdminAuditService } from './application/admin-audit.service';
 import { AdminDisputeService } from './application/admin-dispute.service';
 import { AdminFinanceService } from './application/admin-finance.service';
 import { AdminListingService } from './application/admin-listing.service';
@@ -30,6 +32,7 @@ import { AdminUserService } from './application/admin-user.service';
   imports: [ListingModule, UserModule, JobsModule],
   controllers: [
     AdminController,
+    AdminAuditController,
     AdminDisputesController,
     AdminFinanceController,
     AdminListingsController,
@@ -38,6 +41,7 @@ import { AdminUserService } from './application/admin-user.service';
     AdminUsersController,
   ],
   providers: [
+    AdminAuditService,
     AdminDisputeService,
     AdminFinanceService,
     AdminListingService,

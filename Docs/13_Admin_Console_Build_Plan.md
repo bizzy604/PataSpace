@@ -148,7 +148,28 @@ Original plan (for reference):
 - Outcome: open-ticket count on the dashboard becomes actionable; a ticket
   can go OPEN → RESOLVED entirely in the console.
 
-### Phase 3 — Audit logs and security
+### Phase 3 — Audit logs and security — DONE (2026-07-14)
+
+Shipped:
+- API: `GET /admin/audit-logs` — filters by action, entityType, entityId,
+  adminUserId, and a from/to date range; paginated; returns
+  oldValue/newValue/metadata for diff rendering plus the admin actor (null for
+  system rows). `GET /admin/audit-logs/export` — same filters, streams
+  `text/csv` with an attachment disposition, capped at 10k rows so one click
+  can't pull the whole table into memory.
+- CSV assembly is a pure `toAuditCsv` helper (deterministic space): header +
+  CRLF rows, JSON payloads stringified, commas/quotes/newlines escaped.
+- Contracts + web `/admin/audit-logs`: filter bar (action, entity type/ID,
+  date range), a before → after payload-diff table, CSV export button (fetched
+  with the bearer token, downloaded via Blob), Audit logs nav entry.
+- Tests: 7 unit (filter composition, admin-join mapping, export cap, CSV
+  escaping) + a live-app e2e (admin ban writes a row → filtered list surfaces
+  it with the actor → CSV export returns text/csv with the row; non-admin gets
+  403). All green.
+- Outcome: every admin mutation from Phases 1-2 and the existing
+  ban/approve/resolve/commission actions is inspectable and exportable.
+
+Original plan (for reference):
 
 - API: `GET /admin/audit-logs` — filters: action, entityType/entityId, admin
   user, date range; paginated; returns oldValue/newValue for diff rendering.
