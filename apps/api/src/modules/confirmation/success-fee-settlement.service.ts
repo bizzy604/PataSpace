@@ -12,16 +12,12 @@ import {
   HttpStatus,
   Injectable,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import {
   CommissionStatus,
   SuccessFeeStatus as PrismaSuccessFeeStatus,
 } from '@prisma/client';
 import { PrismaService } from '../../common/database/prisma.service';
-import {
-  DEFAULT_PRICING_CONFIG,
-  PricingConfig,
-} from '../listing/domain/pricing.policy';
+import { SystemConfigService } from '../system-config/system-config.service';
 import { CreditService } from '../credit/credit.service';
 import {
   posterShareOfCollected,
@@ -31,16 +27,11 @@ import {
 
 @Injectable()
 export class SuccessFeeSettlementService {
-  private readonly pricingConfig: PricingConfig;
-
   constructor(
     private readonly prismaService: PrismaService,
     private readonly creditService: CreditService,
-    configService: ConfigService,
-  ) {
-    this.pricingConfig =
-      configService.get<PricingConfig>('pricing') ?? DEFAULT_PRICING_CONFIG;
-  }
+    private readonly systemConfig: SystemConfigService,
+  ) {}
 
   async settleFromCredits(userId: string, unlockId: string) {
     const fee = await this.prismaService.successFee.findUnique({
@@ -79,6 +70,7 @@ export class SuccessFeeSettlementService {
       );
     }
 
+    const pricingConfig = await this.systemConfig.resolvePricingConfig();
     const settled = await this.prismaService.$transaction(async (db) => {
       // The claim guards on the exact figures `remainingKes` was computed
       // from — a concurrent settle (double-tap, mobile retry) changes them,
@@ -129,7 +121,7 @@ export class SuccessFeeSettlementService {
           },
         },
         data: {
-          amountKES: posterShareOfCollected(updatedFee, this.pricingConfig),
+          amountKES: posterShareOfCollected(updatedFee, pricingConfig),
         },
       });
 

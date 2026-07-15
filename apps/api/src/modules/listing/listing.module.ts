@@ -7,6 +7,7 @@
  */
 import { Module } from '@nestjs/common';
 import { UserModule } from '../user/user.module';
+import { SystemConfigModule } from '../system-config/system-config.module';
 import { ListingCacheService } from './listing-cache.service';
 import { ListingController } from './listing.controller';
 import { ListingSeedService } from './listing-seed.service';
@@ -14,7 +15,7 @@ import { ListingService } from './listing.service';
 import { ListingMediaResolver } from './persistence/listing-media.resolver';
 
 @Module({
-  imports: [UserModule],
+  imports: [UserModule, SystemConfigModule],
   controllers: [ListingController],
   providers: [ListingService, ListingCacheService, ListingMediaResolver, ListingSeedService],
   exports: [ListingService, ListingCacheService, ListingSeedService],

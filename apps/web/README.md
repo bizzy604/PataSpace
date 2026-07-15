@@ -46,6 +46,12 @@ Admin console (NextAuth session + ADMIN role required):
   message thread, admin reply, status/priority transitions (GET
   /admin/support/tickets[/:id]; POST .../messages, .../status, .../priority)
 - `/admin/disputes`: dispute queue with investigate/resolve/close
+- `/admin/audit-logs`: security review — filterable audit trail with a
+  before → after payload diff and CSV export (GET /admin/audit-logs,
+  /admin/audit-logs/export)
+- `/admin/config`: live pricing/incentive knobs — per-key edit with
+  default/override markers; edits affect new listings only (GET /admin/config,
+  PUT /admin/config/:key)
 
 Everything else redirects to `/` via `proxy.ts` middleware.
 

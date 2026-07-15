@@ -10,6 +10,7 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
+import { DEFAULT_PRICING_CONFIG } from './domain/pricing.policy';
 import { ListingSeedService } from './listing-seed.service';
 
 describe('ListingSeedService', () => {
@@ -22,13 +23,13 @@ describe('ListingSeedService', () => {
         findUnique: jest.fn().mockResolvedValue(null),
       },
     };
-    const configService = {
-      get: jest.fn().mockReturnValue(undefined),
+    const systemConfig = {
+      resolvePricingConfig: jest.fn().mockResolvedValue(DEFAULT_PRICING_CONFIG),
     };
 
     return {
       prismaService,
-      service: new ListingSeedService(prismaService as never, configService as never),
+      service: new ListingSeedService(prismaService as never, systemConfig as never),
     };
   };
 

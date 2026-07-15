@@ -7,6 +7,7 @@
  * Used by: jest unit lane (pnpm test:unit).
  */
 import { HttpException } from '@nestjs/common';
+import { DEFAULT_PRICING_CONFIG } from '../listing/domain/pricing.policy';
 import { SuccessFeeSettlementService } from './success-fee-settlement.service';
 
 describe('SuccessFeeSettlementService', () => {
@@ -22,8 +23,8 @@ describe('SuccessFeeSettlementService', () => {
       invalidateBalanceCache: jest.fn(),
       spendCredits: jest.fn(),
     };
-    const configService = {
-      get: jest.fn().mockReturnValue(undefined),
+    const systemConfig = {
+      resolvePricingConfig: jest.fn().mockResolvedValue(DEFAULT_PRICING_CONFIG),
     };
 
     return {
@@ -32,7 +33,7 @@ describe('SuccessFeeSettlementService', () => {
       service: new SuccessFeeSettlementService(
         prismaService as never,
         creditService as never,
-        configService as never,
+        systemConfig as never,
       ),
     };
   };

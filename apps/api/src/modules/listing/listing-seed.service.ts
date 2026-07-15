@@ -13,7 +13,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { ConfirmationSide } from '@prisma/client';
 import {
   PosterRole,
@@ -22,22 +21,17 @@ import {
 import { PrismaService } from '../../common/database/prisma.service';
 import {
   computeSuccessFeeKes,
-  DEFAULT_PRICING_CONFIG,
   posterShareKes,
   PricingConfig,
 } from './domain/pricing.policy';
+import { SystemConfigService } from '../system-config/system-config.service';
 
 @Injectable()
 export class ListingSeedService {
-  private readonly pricingConfig: PricingConfig;
-
   constructor(
     private readonly prismaService: PrismaService,
-    configService: ConfigService,
-  ) {
-    this.pricingConfig =
-      configService.get<PricingConfig>('pricing') ?? DEFAULT_PRICING_CONFIG;
-  }
+    private readonly systemConfig: SystemConfigService,
+  ) {}
 
   async seedFromConfirmation(
     userId: string,
@@ -99,7 +93,11 @@ export class ListingSeedService {
       });
     }
 
-    const estimate = this.estimateEarnings(confirmation.unlock.listing.monthlyRent);
+    const pricingConfig = await this.systemConfig.resolvePricingConfig();
+    const estimate = this.estimateEarnings(
+      confirmation.unlock.listing.monthlyRent,
+      pricingConfig,
+    );
 
     return {
       seededFromConfirmationId: confirmation.id,
@@ -113,12 +111,12 @@ export class ListingSeedService {
   // Rent-history profiles do not exist yet, so the new home's rent is the
   // estimate basis (people move within similar rent bands); the client
   // collects the real figures before capture.
-  estimateEarnings(basisRentKes: number) {
+  estimateEarnings(basisRentKes: number, pricingConfig: PricingConfig) {
     return {
       basisRentKes,
       earningsKes: posterShareKes(
-        computeSuccessFeeKes(basisRentKes, this.pricingConfig),
-        this.pricingConfig,
+        computeSuccessFeeKes(basisRentKes, pricingConfig),
+        pricingConfig,
       ),
     };
   }

@@ -86,3 +86,19 @@ export async function clientFetch<T>(
   });
   return handleResponse<T>(res);
 }
+
+/** Client-side fetch that returns the raw response body as text (e.g. CSV export). */
+export async function clientFetchText(
+  path: string,
+  getToken: () => Promise<string | null>,
+): Promise<string> {
+  const token = await getToken();
+  const res = await fetch(`${API_BASE}${path}`, {
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    throw new ApiRequestError(res.status, 'EXPORT_FAILED', `Export failed: ${res.status}`);
+  }
+  return res.text();
+}

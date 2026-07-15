@@ -7,6 +7,7 @@
  */
 import { Module } from '@nestjs/common';
 import { CreditModule } from '../credit/credit.module';
+import { SystemConfigModule } from '../system-config/system-config.module';
 import { UnlockModule } from '../unlock/unlock.module';
 import { UserModule } from '../user/user.module';
 import { ConfirmationController } from './confirmation.controller';
@@ -16,7 +17,7 @@ import { SuccessFeeSettlementService } from './success-fee-settlement.service';
 import { SuccessFeeService } from './success-fee.service';
 
 @Module({
-  imports: [CreditModule, UnlockModule, UserModule],
+  imports: [CreditModule, SystemConfigModule, UnlockModule, UserModule],
   controllers: [ConfirmationController],
   providers: [
     ConfirmationService,

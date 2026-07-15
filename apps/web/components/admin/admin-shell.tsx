@@ -22,6 +22,8 @@ const sections = [
   { label: 'Finance', href: '/admin/finance' },
   { label: 'Support', href: '/admin/support' },
   { label: 'Disputes', href: '/admin/disputes' },
+  { label: 'Audit logs', href: '/admin/audit-logs' },
+  { label: 'Config', href: '/admin/config' },
 ] as const;
 
 export function AdminShell({
