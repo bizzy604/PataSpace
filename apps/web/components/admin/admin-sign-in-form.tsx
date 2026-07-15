@@ -12,7 +12,7 @@
 import { useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
-import { Loader2 } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { linkButtonClass } from '@/lib/link-button';
 import { cn } from '@/lib/utils';
@@ -37,6 +37,7 @@ export function AdminSignInForm() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,41 +65,75 @@ export function AdminSignInForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full max-w-sm flex-col gap-4" noValidate>
+    <form onSubmit={handleSubmit} className="flex w-full flex-col gap-5" noValidate>
       <div className="flex flex-col gap-1.5">
         <label htmlFor="email" className="text-sm font-medium text-foreground">
           Email
         </label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="username"
-          required
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          disabled={submitting}
-        />
+        <div className="relative">
+          <Mail
+            aria-hidden
+            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+          />
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="username"
+            placeholder="you@pataspace.com"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            disabled={submitting}
+            className="h-12 pl-10"
+          />
+        </div>
       </div>
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="password" className="text-sm font-medium text-foreground">
           Password
         </label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          disabled={submitting}
-        />
+        <div className="relative">
+          <Lock
+            aria-hidden
+            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+          />
+          <Input
+            id="password"
+            name="password"
+            type={showPassword ? 'text' : 'password'}
+            autoComplete="current-password"
+            placeholder="Enter your password"
+            required
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            disabled={submitting}
+            className="h-12 pl-10 pr-10"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+            tabIndex={-1}
+            className="absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          </button>
+        </div>
       </div>
 
       {error ? (
-        <p role="alert" className="text-sm text-destructive">
+        <p
+          role="alert"
+          className="flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2.5 text-sm text-destructive"
+        >
+          <span
+            aria-hidden
+            className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-destructive/15 text-[10px] font-bold"
+          >
+            !
+          </span>
           {error}
         </p>
       ) : null}
@@ -106,10 +141,16 @@ export function AdminSignInForm() {
       <button
         type="submit"
         disabled={submitting}
-        className={cn(linkButtonClass({ fullWidth: true }), 'justify-center')}
+        className={cn(linkButtonClass({ fullWidth: true }), 'mt-1 h-12 justify-center')}
       >
-        {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
-        Sign in
+        {submitting ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <>
+            Sign in
+            <ArrowRight className="size-4" />
+          </>
+        )}
       </button>
     </form>
   );
