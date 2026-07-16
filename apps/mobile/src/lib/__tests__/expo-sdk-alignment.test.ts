@@ -69,6 +69,25 @@ const declared: Record<string, string> = {
 };
 const shared = Object.keys(declared).filter((name) => expected[name]);
 
+describe("styling pipeline", () => {
+  // The app must declare react-native-css-interop (nativewind/babel emits
+  // direct jsx-runtime imports from app code, and pnpm's strict isolation
+  // requires the declaration) at EXACTLY the version nativewind pins. When
+  // the two drifted (app ^0.2.3 vs nativewind 0.2.6), Metro bundled both
+  // copies, the style registry split between them, and every className
+  // rendered unstyled (found 2026-07-16).
+  it("pins react-native-css-interop to nativewind's exact version", () => {
+    const nativewindPkg = require(
+      require.resolve("nativewind/package.json", {
+        paths: [path.resolve(__dirname, "../../..")],
+      }),
+    ) as { dependencies: Record<string, string> };
+    expect(declared["react-native-css-interop"]).toBe(
+      nativewindPkg.dependencies["react-native-css-interop"],
+    );
+  });
+});
+
 describe("Expo SDK dependency alignment", () => {
   it("covers the packages that broke Expo Go before", () => {
     expect(shared).toEqual(
