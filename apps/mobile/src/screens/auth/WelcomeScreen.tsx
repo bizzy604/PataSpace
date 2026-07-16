@@ -32,8 +32,13 @@ export function WelcomeScreen() {
       }
     >
       <View className="items-center gap-6">
-        <View className="h-[120px] w-[120px] items-center justify-center rounded-[28px] border border-white/10 bg-white/[0.06]">
-          <Image className="h-16 w-16" resizeMode="contain" source={pataspaceLogo} />
+        {/* Dimensions via style, not className: css-interop drops class sizing
+            on Image on web, rendering the 1024px source at natural size. */}
+        <View
+          style={{ height: 120, width: 120 }}
+          className="items-center justify-center overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.06]"
+        >
+          <Image style={{ height: 72, width: 72 }} resizeMode="contain" source={pataspaceLogo} />
         </View>
         <View className="items-center gap-2">
           <Text className="font-display text-headline-lg text-white">PataSpace</Text>

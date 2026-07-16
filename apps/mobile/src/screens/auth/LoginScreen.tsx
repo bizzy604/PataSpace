@@ -71,7 +71,8 @@ export function LoginScreen() {
       <View className="gap-6">
         <View className="items-center gap-4 pt-2">
           <Text className="font-body text-body-md text-muted-foreground">Welcome Back</Text>
-          <Image className="h-16 w-16" resizeMode="contain" source={pataspaceLogo} />
+          {/* Sized via style: className sizing is dropped on Image on web. */}
+          <Image style={{ height: 64, width: 64 }} resizeMode="contain" source={pataspaceLogo} />
           <Text className="font-display text-display-02 text-foreground">Sign In</Text>
         </View>
 

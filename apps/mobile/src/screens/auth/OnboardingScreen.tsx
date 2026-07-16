@@ -14,13 +14,9 @@ import { cn } from '@/lib/cn';
 import { appRoutes } from '@/lib/routes';
 import { AuthScreen } from './auth-shared';
 
-// Hero images per slide. Optional by design so real photography can be swapped
-// in later without touching this screen.
-const slideImages = [
-  require('../../../assets/photo1.jpg'),
-  require('../../../assets/photo2.jpg'),
-  require('../../../assets/photo3.jpg'),
-];
+// Logo-only hero: the stock photos never fit the frame across screen sizes,
+// so the carousel leads with the brand mark instead (2026-07-16 decision).
+const pataspaceLogo = require('../../../assets/PataSpace Logo.png');
 
 export function OnboardingScreen() {
   const [slideIndex, setSlideIndex] = useState(0);
@@ -28,7 +24,6 @@ export function OnboardingScreen() {
   const router = useRouter();
   const slide = onboardingSlides[slideIndex];
   const lastSlide = slideIndex === onboardingSlides.length - 1;
-  const heroImage = slideImages[slideIndex % slideImages.length];
 
   function goNext() {
     if (lastSlide) {
@@ -70,12 +65,16 @@ export function OnboardingScreen() {
 
         {/*
           The hero flexes to whatever height is left between the Skip row and
-          the text block (min 200dp so it never collapses), instead of a fixed
-          portrait aspect that overflowed short screens and cropped the
-          landscape source photos. `cover` fills the frame at any size.
+          the text block (min 200dp so it never collapses) and centers the
+          logo. Dimensions via style, not className: css-interop drops class
+          sizing on Image on web, rendering the source at natural size.
         */}
-        <View className="mt-2 min-h-[200px] flex-1 overflow-hidden rounded-[16px] bg-surface-subtle">
-          <Image className="h-full w-full" resizeMode="cover" source={heroImage} />
+        <View className="mt-2 min-h-[200px] flex-1 items-center justify-center rounded-[16px] bg-surface-subtle">
+          <Image
+            style={{ height: 112, width: 112 }}
+            resizeMode="contain"
+            source={pataspaceLogo}
+          />
         </View>
 
         <View className="mt-6 gap-3">
