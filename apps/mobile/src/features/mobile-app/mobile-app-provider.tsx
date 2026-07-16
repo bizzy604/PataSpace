@@ -58,6 +58,7 @@ import {
   seedListingFromConfirmation as seedListingFromConfirmationApi,
 } from '@/lib/api/listings';
 import { fetchCreditBalance, fetchTransactions, purchaseCredits } from '@/lib/api/credits';
+import { newIdempotencyKey } from '@/lib/payments/idempotency';
 import { hasTopUpCleared } from '@/lib/payments/top-up-status';
 import { createDispute as createDisputeApi } from '@/lib/api/disputes';
 import { createSupportTicket as createSupportTicketApi } from '@/lib/api/support';
@@ -85,6 +86,8 @@ type PendingTopUp = {
   balanceBefore: number;
   /** Purchase transaction id returned by /credits/purchase. */
   transactionId?: string;
+  /** Reused when the same top-up intent is retried, so the API replays. */
+  idempotencyKey?: string;
 };
 
 type MobileAppContextValue = {
@@ -488,16 +491,29 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
     } catch {
       // Fall back to the last-synced balance if the pre-check fetch fails.
     }
-    const response = await purchaseCredits(getToken, {
-      package: packageId as CreditPurchasePackage,
-      paymentMethod: 'mpesa',
-      phoneNumber: normalizedPhone,
-    });
+    // Retrying the same intent reuses the key: the API replays the stored
+    // purchase instead of firing a second STK push.
+    const idempotencyKey =
+      pendingTopUp?.packageId === packageId &&
+      pendingTopUp.phone === normalizedPhone &&
+      pendingTopUp.idempotencyKey
+        ? pendingTopUp.idempotencyKey
+        : newIdempotencyKey();
+    const response = await purchaseCredits(
+      getToken,
+      {
+        package: packageId as CreditPurchasePackage,
+        paymentMethod: 'mpesa',
+        phoneNumber: normalizedPhone,
+      },
+      idempotencyKey,
+    );
     setPendingTopUp({
       packageId,
       phone: normalizedPhone,
       balanceBefore,
       transactionId: response.transactionId,
+      idempotencyKey,
     });
   }
 

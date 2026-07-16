@@ -31,9 +31,11 @@ export async function fetchTransactions(
 export async function purchaseCredits(
   getToken: () => Promise<string | null>,
   payload: PurchaseCreditsRequest,
+  idempotencyKey: string,
 ): Promise<PurchaseCreditsResponse> {
   return apiFetch<PurchaseCreditsResponse>('/credits/purchase', getToken, {
     method: 'POST',
+    headers: { 'Idempotency-Key': idempotencyKey },
     body: JSON.stringify(payload),
   });
 }

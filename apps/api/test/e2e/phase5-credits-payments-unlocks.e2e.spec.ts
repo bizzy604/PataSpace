@@ -406,6 +406,7 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
     const firstPurchaseResponse = await request(app.getHttpServer())
       .post('/api/v1/credits/purchase')
       .set('Authorization', `Bearer ${buyer.accessToken}`)
+      .set('Idempotency-Key', `phase5-dup-a-${Date.now()}`)
       .set('X-Forwarded-For', createForwardedFor())
       .send({
         package: '5_credits',
@@ -417,6 +418,7 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
     const duplicatePendingResponse = await request(app.getHttpServer())
       .post('/api/v1/credits/purchase')
       .set('Authorization', `Bearer ${buyer.accessToken}`)
+      .set('Idempotency-Key', `phase5-dup-b-${Date.now()}`)
       .set('X-Forwarded-For', createForwardedFor())
       .send({
         package: '5_credits',
@@ -470,6 +472,7 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
     const secondPurchaseResponse = await request(app.getHttpServer())
       .post('/api/v1/credits/purchase')
       .set('Authorization', `Bearer ${buyer.accessToken}`)
+      .set('Idempotency-Key', `phase5-second-${Date.now()}`)
       .set('X-Forwarded-For', createForwardedFor())
       .send({
         package: '5_credits',
