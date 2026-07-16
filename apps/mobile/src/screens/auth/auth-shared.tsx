@@ -127,9 +127,14 @@ export function AuthScreen({
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 16, paddingVertical: 24 }}
         >
-          <View className={cn('flex-1', contentClassName)}>{children}</View>
+          {/* max-w keeps forms readable on tablets/landscape; no-op on phones. */}
+          <View className={cn('w-full max-w-[480px] flex-1 self-center', contentClassName)}>
+            {children}
+          </View>
         </ScrollView>
-        {footer ? <View className="px-4 pb-2 pt-3">{footer}</View> : null}
+        {footer ? (
+          <View className="w-full max-w-[512px] self-center px-4 pb-2 pt-3">{footer}</View>
+        ) : null}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

@@ -135,15 +135,17 @@ export function OtpInput({
   const digits = value.split('').slice(0, length);
 
   return (
-    <Pressable className="flex-row justify-between" onPress={() => inputRef.current?.focus()}>
+    <Pressable className="flex-row justify-center gap-2" onPress={() => inputRef.current?.focus()}>
       {Array.from({ length }).map((_, index) => {
         const active = focused && index === Math.min(digits.length, length - 1);
         const filled = index < digits.length;
         return (
           <View
             key={index}
+            // flex-1 + max-w keeps 48dp boxes on normal screens but lets them
+            // shrink on narrow devices instead of overflowing the padding.
             className={cn(
-              'h-14 w-12 items-center justify-center rounded-[12px] border-2 bg-surface-subtle',
+              'h-14 max-w-[48px] flex-1 items-center justify-center rounded-[12px] border-2 bg-surface-subtle',
               active ? 'border-primary' : filled ? 'border-outline-variant' : 'border-transparent',
             )}
           >

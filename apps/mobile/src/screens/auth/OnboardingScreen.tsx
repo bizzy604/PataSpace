@@ -68,11 +68,17 @@ export function OnboardingScreen() {
           </Pressable>
         </View>
 
-        <View className="mt-2 overflow-hidden rounded-[16px] bg-surface-subtle">
-          <Image className="aspect-[3/4] w-full" resizeMode="cover" source={heroImage} />
+        {/*
+          The hero flexes to whatever height is left between the Skip row and
+          the text block (min 200dp so it never collapses), instead of a fixed
+          portrait aspect that overflowed short screens and cropped the
+          landscape source photos. `cover` fills the frame at any size.
+        */}
+        <View className="mt-2 min-h-[200px] flex-1 overflow-hidden rounded-[16px] bg-surface-subtle">
+          <Image className="h-full w-full" resizeMode="cover" source={heroImage} />
         </View>
 
-        <View className="mt-8 gap-3">
+        <View className="mt-6 gap-3">
           <Text className="font-display text-headline-lg text-foreground">{slide.title}</Text>
           <Text className="font-body text-body-lg text-muted-foreground">{slide.description}</Text>
         </View>
