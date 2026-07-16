@@ -1,3 +1,10 @@
+/**
+ * Purpose: HTTP transport for the credit wallet reads: balance summary and
+ * transaction history.
+ * Why important: read-only surface for the mobile wallet screens; delegates
+ * to CreditQueryService, never to the movement engine.
+ * Used by: mobile wallet screens via the global auth guard.
+ */
 import { Controller, Get, Query } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -18,13 +25,13 @@ import {
   CreditBalanceResponseDto,
   CreditTransactionsResponseDto,
 } from './credit.docs';
-import { CreditService } from './credit.service';
+import { CreditQueryService } from './credit-query.service';
 
 @ApiTags('Credits')
 @ApiBearerAuth('bearer')
 @Controller('credits')
 export class CreditController {
-  constructor(private readonly creditService: CreditService) {}
+  constructor(private readonly creditQueryService: CreditQueryService) {}
 
   @ApiOperation({ summary: 'Get the authenticated user credit balance summary' })
   @ApiOkResponse({
@@ -33,7 +40,7 @@ export class CreditController {
   })
   @Get('balance')
   getBalance(@CurrentUser('id') userId: string): Promise<CreditBalance> {
-    return this.creditService.getBalance(userId);
+    return this.creditQueryService.getBalance(userId);
   }
 
   @ApiOperation({ summary: 'Get credit transaction history for the authenticated user' })
@@ -55,6 +62,6 @@ export class CreditController {
     @Query(new ZodValidationPipe(creditTransactionFiltersSchema))
     filters: CreditTransactionFilters,
   ): Promise<PaginatedCreditTransactionsResponse> {
-    return this.creditService.getTransactionHistory(userId, filters);
+    return this.creditQueryService.getTransactionHistory(userId, filters);
   }
 }

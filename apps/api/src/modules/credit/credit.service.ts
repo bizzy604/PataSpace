@@ -1,19 +1,22 @@
+/**
+ * Purpose: The credit wallet's movement engine: atomic balance increments and
+ * guarded decrements, movement-row creation (spend, refund, bonus), and
+ * balance-cache invalidation. Read models live in CreditQueryService.
+ * Why important: every credit that enters or leaves a wallet goes through
+ * these methods; the conditional decrement is the spend check that prevents
+ * overdrafts, and movement rows are the audit trail.
+ * Used by: payment, unlock, confirmation, referral, and job modules.
+ */
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import {
-  CommissionStatus,
+  PaymentMethod,
   Prisma,
   TransactionStatus,
   TransactionType,
 } from '@prisma/client';
-import {
-  CreditBalance,
-  CreditTransactionFilters,
-  PaginatedCreditTransactionsResponse,
-  TransactionStatus as ContractTransactionStatus,
-  TransactionType as ContractTransactionType,
-} from '@pataspace/contracts';
 import { PrismaService } from '../../common/database/prisma.service';
 import { CacheService } from '../../infrastructure/cache/cache.service';
+import { creditBalanceCacheKey } from './credit-cache.util';
 
 type CreditDbClient = PrismaService | Prisma.TransactionClient;
 
@@ -31,6 +34,13 @@ type CreateTransactionInput = {
   balanceBefore: number;
   balanceAfter: number;
   status?: TransactionStatus;
+  paymentMethod?: PaymentMethod;
+  /**
+   * Client-supplied dedupe key for money-creating requests, unique per
+   * (userId, idempotencyKey) at the DB level. A same-key retry collides on
+   * the constraint and must replay the stored result, never re-process.
+   */
+  idempotencyKey?: string | null;
   description?: string;
   phoneNumberHash?: string | null;
   unlockId?: string;
@@ -39,114 +49,12 @@ type CreateTransactionInput = {
   metadata?: Prisma.InputJsonValue | null;
 };
 
-const BALANCE_CACHE_TTL_SECONDS = 300;
-const PENDING_COMMISSION_STATUSES = [
-  CommissionStatus.PENDING,
-  CommissionStatus.DUE,
-  CommissionStatus.PROCESSING,
-] as const;
-
 @Injectable()
 export class CreditService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly cacheService: CacheService,
   ) {}
-
-  async getBalance(userId: string): Promise<CreditBalance> {
-    const cacheKey = this.balanceCacheKey(userId);
-    const cached = await this.cacheService.get<CreditBalance>(cacheKey);
-
-    if (cached) {
-      return cached;
-    }
-
-    const [credit, pendingCommissions] = await this.prismaService.$transaction([
-      this.ensureCreditAccount(userId),
-      this.prismaService.commission.aggregate({
-        where: {
-          outgoingTenantId: userId,
-          status: {
-            in: [...PENDING_COMMISSION_STATUSES],
-          },
-        },
-        _sum: {
-          amountKES: true,
-        },
-      }),
-    ]);
-
-    const balance: CreditBalance = {
-      balance: credit.balance,
-      lifetimeEarned: credit.lifetimeEarned,
-      lifetimeSpent: credit.lifetimeSpent,
-      pendingCommissions: pendingCommissions._sum.amountKES ?? 0,
-    };
-
-    await this.cacheService.set(cacheKey, balance, BALANCE_CACHE_TTL_SECONDS);
-
-    return balance;
-  }
-
-  async getTransactionHistory(
-    userId: string,
-    filters: CreditTransactionFilters,
-  ): Promise<PaginatedCreditTransactionsResponse> {
-    const page = filters.page ?? 1;
-    const limit = filters.limit ?? 20;
-    const skip = (page - 1) * limit;
-    const where: Prisma.CreditTransactionWhereInput = {
-      userId,
-    };
-
-    if (filters.type) {
-      where.type = filters.type as unknown as TransactionType;
-    }
-
-    if (filters.status) {
-      where.status = filters.status as unknown as TransactionStatus;
-    }
-
-    const [total, transactions] = await this.prismaService.$transaction([
-      this.prismaService.creditTransaction.count({ where }),
-      this.prismaService.creditTransaction.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: {
-          createdAt: 'desc',
-        },
-        select: {
-          id: true,
-          type: true,
-          amount: true,
-          balanceBefore: true,
-          balanceAfter: true,
-          status: true,
-          description: true,
-          mpesaReceiptNumber: true,
-          unlockId: true,
-          createdAt: true,
-        },
-      }),
-    ]);
-
-    return {
-      data: transactions.map((transaction) => ({
-        id: transaction.id,
-        type: transaction.type as unknown as ContractTransactionType,
-        amount: transaction.amount,
-        balanceBefore: transaction.balanceBefore,
-        balanceAfter: transaction.balanceAfter,
-        status: transaction.status as unknown as ContractTransactionStatus,
-        description: transaction.description ?? undefined,
-        mpesaReceiptNumber: transaction.mpesaReceiptNumber ?? undefined,
-        unlockId: transaction.unlockId ?? undefined,
-        createdAt: transaction.createdAt.toISOString(),
-      })),
-      pagination: this.buildPagination(total, page, limit),
-    };
-  }
 
   ensureCreditAccount(userId: string, client: CreditDbClient = this.prismaService) {
     return client.credit.upsert({
@@ -280,6 +188,8 @@ export class CreditService {
         balanceBefore: input.balanceBefore,
         balanceAfter: input.balanceAfter,
         status: input.status ?? TransactionStatus.COMPLETED,
+        paymentMethod: input.paymentMethod ?? undefined,
+        idempotencyKey: input.idempotencyKey ?? undefined,
         description: input.description,
         phoneNumberHash: input.phoneNumberHash ?? undefined,
         unlockId: input.unlockId,
@@ -390,23 +300,6 @@ export class CreditService {
   }
 
   async invalidateBalanceCache(userId: string) {
-    await this.cacheService.del(this.balanceCacheKey(userId));
-  }
-
-  private balanceCacheKey(userId: string) {
-    return `credit:balance:${userId}`;
-  }
-
-  private buildPagination(total: number, page: number, limit: number) {
-    const totalPages = total === 0 ? 0 : Math.ceil(total / limit);
-
-    return {
-      page,
-      limit,
-      total,
-      totalPages,
-      hasNext: totalPages > 0 && page < totalPages,
-      hasPrev: totalPages > 0 && page > 1,
-    };
+    await this.cacheService.del(creditBalanceCacheKey(userId));
   }
 }

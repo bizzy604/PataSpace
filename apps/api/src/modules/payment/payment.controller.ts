@@ -37,6 +37,7 @@ import {
   PurchaseCreditsResponse,
 } from '@pataspace/contracts';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { requireIdempotencyKey } from '../../common/idempotency/idempotency-key.util';
 import { Public } from '../../common/decorators/public.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { ApiRateLimit } from '../../common/throttling/rate-limit.decorator';
@@ -58,7 +59,13 @@ export class CreditPurchaseController {
 
   @ApiOperation({
     summary: 'Initiate a credit purchase via M-Pesa STK push or Stellar payment request',
-    description: 'For mpesa: triggers STK push to the provided phone number. For stellar: returns a treasury address and memo — the client sends XLM from their own wallet.',
+    description: 'For mpesa: triggers STK push to the provided phone number. For stellar: returns a treasury address and memo — the client sends XLM from their own wallet. Retries with the same Idempotency-Key replay the stored result instead of charging again.',
+  })
+  @ApiHeader({
+    name: 'Idempotency-Key',
+    required: true,
+    description:
+      'Client-generated key (8-128 chars), unique per purchase attempt and reused verbatim on retries of that attempt.',
   })
   @ApiBody({ type: PurchaseCreditsRequestDto })
   @ApiAcceptedResponse({ type: PurchaseCreditsResponseDto, description: 'Purchase request accepted.' })
@@ -67,9 +74,10 @@ export class CreditPurchaseController {
   @Post('purchase')
   createPurchase(
     @CurrentUser('id') userId: string,
+    @Headers('idempotency-key') idempotencyKey: string | undefined,
     @Body(new ZodValidationPipe(purchaseCreditsSchema)) input: PurchaseCreditsRequest,
   ): Promise<PurchaseCreditsResponse> {
-    return this.paymentService.createPurchase(userId, input);
+    return this.paymentService.createPurchase(userId, input, requireIdempotencyKey(idempotencyKey));
   }
 }
 

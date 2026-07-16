@@ -1,22 +1,24 @@
 /**
- * Purpose: All M-Pesa-specific purchase logic: STK push execution, callback parsing, reconciliation.
- * Why important: Isolates Daraja API complexity from the payment orchestrator and Stellar code.
+ * Purpose: M-Pesa STK push execution and callback settlement for credit
+ * purchases. Reconciliation of stale rows lives in MpesaReconcileService.
+ * Why important: once the STK prompt is on the user's phone, the money may
+ * move regardless of what our process does next — so a provider failure and
+ * a local bookkeeping failure must be recorded differently (FAILED vs
+ * stay-PENDING).
  * Used by: payment.service.ts (orchestrator)
  */
-
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { TransactionStatus } from '@prisma/client';
 import { MpesaCallbackRequest } from '@pataspace/contracts';
-import { hashLookupValue } from '../../common/security/encryption.util';
 import { PrismaService } from '../../common/database/prisma.service';
 import { MpesaClient } from '../../infrastructure/payment/mpesa.client';
 import { parseStkCallback } from './mpesa-callback.util';
-import { mergeMetadata, readNumberMetadata, readStringMetadata } from './payment-metadata.util';
+import { mergeMetadata } from './payment-metadata.util';
 import { PaymentFulfillmentService, PaymentSettlementRecord } from './payment-fulfillment.service';
 
 type PurchasePackageConfig = { amountKES: number; credits: number; label: string };
 
-const PENDING_TIMEOUT_MS = 5 * 60 * 1000;
+type StkPushResult = { checkoutRequestId: string; merchantRequestId: string };
 
 @Injectable()
 export class MpesaPurchaseService {
@@ -29,26 +31,17 @@ export class MpesaPurchaseService {
   ) {}
 
   async executeStkPush(transactionId: string, phoneNumber: string, packageConfig: PurchasePackageConfig) {
+    let response: StkPushResult;
+
     try {
-      const response = await this.mpesaClient.stkPush({
+      response = await this.mpesaClient.stkPush({
         phoneNumber,
         amount: packageConfig.amountKES,
         accountReference: transactionId,
       });
-
-      await this.prismaService.creditTransaction.update({
-        where: { id: transactionId },
-        data: {
-          mpesaTransactionId: response.checkoutRequestId,
-          metadata: mergeMetadata(
-            (await this.prismaService.creditTransaction.findUnique({ where: { id: transactionId }, select: { metadata: true } }))?.metadata,
-            { checkoutRequestId: response.checkoutRequestId, merchantRequestId: response.merchantRequestId },
-          ),
-        },
-      });
-
-      return { checkoutRequestId: response.checkoutRequestId };
     } catch (error) {
+      // The provider call itself failed: no prompt reached the user, so
+      // FAILED is the truthful terminal state.
       const reason = error instanceof Error ? error.message : 'STK push failed';
       this.logger.error('STK push failed', JSON.stringify({ reason, transactionId }));
 
@@ -56,34 +49,10 @@ export class MpesaPurchaseService {
 
       throw new ServiceUnavailableException({ code: 'MPESA_UNAVAILABLE', message: 'M-Pesa service is currently unavailable' });
     }
-  }
 
-  // The failure note must merge into the existing metadata — replacing it
-  // would destroy paymentAmountKES and the phone fields that reconciliation
-  // and support depend on.
-  private async markStkPushFailed(transactionId: string, reason: string) {
-    try {
-      const existing = await this.prismaService.creditTransaction.findUnique({
-        where: { id: transactionId },
-        select: { metadata: true },
-      });
+    await this.recordStkSubmission(transactionId, response);
 
-      await this.prismaService.creditTransaction.update({
-        where: { id: transactionId },
-        data: {
-          status: TransactionStatus.FAILED,
-          metadata: mergeMetadata(existing?.metadata ?? null, { failureReason: reason }),
-        },
-      });
-    } catch (markError) {
-      this.logger.error(
-        'Failed to mark STK transaction as FAILED; row stays PENDING for reconciliation',
-        JSON.stringify({
-          transactionId,
-          reason: markError instanceof Error ? markError.message : 'unknown',
-        }),
-      );
-    }
+    return { checkoutRequestId: response.checkoutRequestId };
   }
 
   async handleCallback(input: MpesaCallbackRequest) {
@@ -113,74 +82,74 @@ export class MpesaPurchaseService {
     return { ResultCode: 0 as const, ResultDesc: 'Accepted' as const };
   }
 
-  async reconcilePending(now: Date, userId?: string) {
-    const staleBefore = new Date(now.getTime() - PENDING_TIMEOUT_MS);
-    const pending = await this.prismaService.creditTransaction.findMany({
-      where: {
-        ...(userId ? { userId } : {}),
-        paymentMethod: 'MPESA',
-        status: TransactionStatus.PENDING,
-        createdAt: { lt: staleBefore },
-      },
-      select: { id: true, metadata: true, mpesaTransactionId: true },
-      orderBy: { createdAt: 'asc' },
-      take: userId ? undefined : 100,
-    });
+  /**
+   * The prompt is already on the user's phone once stkPush resolves, so a
+   * bookkeeping failure here must NOT mark the row FAILED — the user may
+   * pay. Retry the write; if it still fails, leave the row PENDING and let
+   * reconciliation expire it (the callback cannot match without the id).
+   */
+  private async recordStkSubmission(transactionId: string, response: StkPushResult) {
+    let lastError: unknown;
 
-    let count = 0;
-
-    for (const tx of pending) {
-      if (!tx.mpesaTransactionId) continue;
-
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
       try {
-        const query = await this.mpesaClient.queryStkPush({ checkoutRequestId: tx.mpesaTransactionId });
+        const existing = await this.prismaService.creditTransaction.findUnique({
+          where: { id: transactionId },
+          select: { metadata: true },
+        });
 
-        // No decision from Daraja (still processing, or the response shape
-        // dropped ResultCode). Settling on a guessed code is how credits get
-        // granted for payments that never happened — leave the row PENDING.
-        if (query.resultCode === null) {
-          this.logger.warn('STK query indeterminate; leaving pending', JSON.stringify({ transactionId: tx.id }));
-          continue;
-        }
+        await this.prismaService.creditTransaction.update({
+          where: { id: transactionId },
+          data: {
+            mpesaTransactionId: response.checkoutRequestId,
+            metadata: mergeMetadata(existing?.metadata ?? null, {
+              checkoutRequestId: response.checkoutRequestId,
+              merchantRequestId: response.merchantRequestId,
+            }),
+          },
+        });
 
-        const fallbackAmount = readNumberMetadata(tx.metadata, 'paymentAmountKES');
-
-        if (query.resultCode === 0 && fallbackAmount === null) {
-          this.logger.warn('STK query succeeded but expected amount is unknown; leaving pending', JSON.stringify({ transactionId: tx.id }));
-          continue;
-        }
-
-        const resolvedPhone = query.phoneNumber ?? readStringMetadata(tx.metadata, 'callbackPhoneNumber') ?? readStringMetadata(tx.metadata, 'requestedPhoneNumber');
-
-        const record: PaymentSettlementRecord = {
-          amountPaid: fallbackAmount,
-          phoneNumber: resolvedPhone,
-          phoneNumberHash: resolvedPhone ? hashLookupValue(resolvedPhone) : null,
-          mpesaReceiptNumber: query.mpesaReceiptNumber ?? null,
-          mpesaCheckoutRequestId: query.checkoutRequestId,
-          merchantRequestId: readStringMetadata(tx.metadata, 'merchantRequestId'),
-          resultDesc: query.resultDesc,
-        };
-
-        if (query.resultCode === 0) {
-          await this.fulfillment.processSuccessfulPayment(tx.id, record);
-        } else {
-          await this.fulfillment.processFailedPayment(tx.id, query.resultCode, query.resultDesc, record);
-        }
-
-        count += 1;
+        return;
       } catch (error) {
-        this.logger.warn(
-          'STK reconcile query failed; will retry next tick',
-          JSON.stringify({
-            transactionId: tx.id,
-            reason: error instanceof Error ? error.message : 'unknown',
-          }),
-        );
-        continue;
+        lastError = error;
       }
     }
 
-    return count;
+    this.logger.error(
+      'Failed to record STK submission; row stays PENDING for reconciliation to expire',
+      JSON.stringify({
+        transactionId,
+        checkoutRequestId: response.checkoutRequestId,
+        reason: lastError instanceof Error ? lastError.message : 'unknown',
+      }),
+    );
+  }
+
+  // The failure note must merge into the existing metadata — replacing it
+  // would destroy paymentAmountKES and the phone fields that reconciliation
+  // and support depend on.
+  private async markStkPushFailed(transactionId: string, reason: string) {
+    try {
+      const existing = await this.prismaService.creditTransaction.findUnique({
+        where: { id: transactionId },
+        select: { metadata: true },
+      });
+
+      await this.prismaService.creditTransaction.update({
+        where: { id: transactionId },
+        data: {
+          status: TransactionStatus.FAILED,
+          metadata: mergeMetadata(existing?.metadata ?? null, { failureReason: reason }),
+        },
+      });
+    } catch (markError) {
+      this.logger.error(
+        'Failed to mark STK transaction as FAILED; row stays PENDING for reconciliation',
+        JSON.stringify({
+          transactionId,
+          reason: markError instanceof Error ? markError.message : 'unknown',
+        }),
+      );
+    }
   }
 }

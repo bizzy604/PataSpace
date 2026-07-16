@@ -217,6 +217,7 @@ model CreditTransaction {
   balanceAfter           Int
   status                 TransactionStatus @default(PENDING)
   paymentMethod          PaymentMethod     @default(MPESA)
+  idempotencyKey         String?
   mpesaReceiptNumber     String?           @unique
   mpesaTransactionId     String?           @unique
   stellarTransactionHash String?           @unique
@@ -229,6 +230,7 @@ model CreditTransaction {
   user                   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   unlock                 Unlock?           @relation(fields: [unlockId], references: [id])
 
+  @@unique([userId, idempotencyKey])
   @@index([userId, createdAt])
   @@index([status])
   @@index([paymentMethod, status])
