@@ -5,72 +5,20 @@
  *   proceed; restyled onto the redesign kit with no data-flow changes.
  * Used by: app/my-listing.tsx.
  */
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Link, useLocalSearchParams } from 'expo-router';
 import { Image, Text, View } from 'react-native';
-import type { ReceivedUnlockRecord } from '@pataspace/contracts';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
 import { ScreenHeader } from '@/components/ui/screen-header';
+import { OutgoingUnlockRow } from '@/components/listing/outgoing-unlock-row';
 import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
+import { useListingDetails } from '@/features/mobile-app/use-listing-details';
+import { mergeListingDetails } from '@/lib/listings/listing-details-view';
 import { appRoutes, listingGalleryHref, listingStatsHref } from '@/lib/routes';
-
-function OutgoingUnlockRow({
-  unlock,
-  onConfirm,
-}: {
-  unlock: ReceivedUnlockRecord;
-  onConfirm: (unlockId: string) => Promise<'success' | 'already_confirmed' | 'error'>;
-}) {
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const blocked = unlock.isRefunded || unlock.status === 'disputed';
-
-  return (
-    <View className="gap-2 rounded-[12px] bg-surface-subtle p-4">
-      <View className="flex-row items-center justify-between gap-3">
-        <Text className="font-body-medium text-body-md text-foreground">
-          Unlock · {unlock.incomingConfirmed ? 'tenant confirmed' : 'tenant pending'}
-        </Text>
-        <Badge variant={unlock.outgoingConfirmed ? 'success' : 'warning'}>
-          {unlock.outgoingConfirmed ? 'You confirmed' : 'Action needed'}
-        </Badge>
-      </View>
-      {error ? <Text className="font-body text-label-md text-danger">{error}</Text> : null}
-      {unlock.outgoingConfirmed ? (
-        <Text className="font-body text-label-md text-muted-foreground">
-          Your move-out is confirmed. Commission unlocks once both sides agree.
-        </Text>
-      ) : blocked ? (
-        <Text className="font-body text-label-md text-muted-foreground">
-          {unlock.isRefunded
-            ? 'This unlock was refunded; no confirmation needed.'
-            : 'This unlock is under dispute. Resolve it before confirming.'}
-        </Text>
-      ) : (
-        <Button
-          size="sm"
-          label={submitting ? 'Recording…' : 'Confirm I am moving out'}
-          disabled={submitting}
-          onPress={() => {
-            setError(null);
-            setSubmitting(true);
-            void onConfirm(unlock.unlockId)
-              .then((result) => {
-                if (result === 'error') {
-                  setError('We could not record your confirmation. Try again.');
-                }
-              })
-              .finally(() => setSubmitting(false));
-          }}
-        />
-      )}
-    </View>
-  );
-}
 
 export function MyListingDetailsScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
@@ -81,7 +29,10 @@ export function MyListingDetailsScreen() {
     confirmReceivedUnlock,
     refreshReceivedUnlocks,
   } = useMobileApp();
-  const listing = getListingById(params.id);
+  // The public feed may not carry this listing (pending review, or feed not
+  // loaded); the detail fetch is authoritative for an owner's own listing.
+  const { details, loading } = useListingDetails(params.id);
+  const listing = mergeListingDetails(getListingById(params.id), details);
   const listingRow = myListings.find(
     (item) => item.id === (Array.isArray(params.id) ? params.id[0] : params.id),
   );
@@ -102,9 +53,11 @@ export function MyListingDetailsScreen() {
     return (
       <Screen header={<ScreenHeader title="Listing" />}>
         <Card>
-          <CardTitle>Listing not found</CardTitle>
+          <CardTitle>{loading ? 'Loading listing…' : 'Listing not found'}</CardTitle>
           <CardDescription>
-            That owner listing is no longer available in the current demo data.
+            {loading
+              ? 'Fetching the latest details for your listing.'
+              : 'We could not load this listing. Check your connection and try again.'}
           </CardDescription>
         </Card>
       </Screen>

@@ -15,30 +15,30 @@ import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
 import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
+import { useListingDetails } from '@/features/mobile-app/use-listing-details';
+import { mergeListingDetails, specChips } from '@/lib/listings/listing-details-view';
 import { contactRevealedHref, listingGalleryHref, unlockHref } from '@/lib/routes';
 
 const AMENITY_PREVIEW = 6;
-
-function specChips(meta: string): string[] {
-  return meta
-    .split('|')
-    .map((part) => part.trim())
-    .filter((part) => !/unlock/i.test(part));
-}
 
 export function ListingDetailsScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
   const router = useRouter();
   const { getListingById, toggleSaved, isListingSaved, isListingUnlocked } = useMobileApp();
+  const { details, loading } = useListingDetails(params.id);
   const [showAllAmenities, setShowAllAmenities] = useState(false);
-  const listing = getListingById(params.id);
+  const listing = mergeListingDetails(getListingById(params.id), details);
 
   if (!listing) {
     return (
       <Screen>
         <Card>
-          <CardTitle>Listing not found</CardTitle>
-          <CardDescription>This property is no longer available.</CardDescription>
+          <CardTitle>{loading ? 'Loading listing…' : 'Listing not found'}</CardTitle>
+          <CardDescription>
+            {loading
+              ? 'Fetching the latest details for this property.'
+              : 'This property is no longer available.'}
+          </CardDescription>
         </Card>
       </Screen>
     );
@@ -176,17 +176,19 @@ export function ListingDetailsScreen() {
           ) : null}
         </View>
 
-        <View className="gap-4">
-          <Text className="font-display text-headline-sm text-foreground">From Current Tenant</Text>
-          <View className="flex-row gap-3 rounded-[16px] border-l-4 border-primary bg-surface-subtle p-4">
-            <View className="flex-1 gap-3">
-              <Text className="font-body italic leading-6 text-foreground">“{listing.quote}”</Text>
-              <Text className="font-body-medium text-label-md text-muted-foreground">
-                {listing.quoteAuthor}
-              </Text>
+        {listing.quote ? (
+          <View className="gap-4">
+            <Text className="font-display text-headline-sm text-foreground">From Current Tenant</Text>
+            <View className="flex-row gap-3 rounded-[16px] border-l-4 border-primary bg-surface-subtle p-4">
+              <View className="flex-1 gap-3">
+                <Text className="font-body italic leading-6 text-foreground">“{listing.quote}”</Text>
+                <Text className="font-body-medium text-label-md text-muted-foreground">
+                  {listing.quoteAuthor}
+                </Text>
+              </View>
             </View>
           </View>
-        </View>
+        ) : null}
 
         <View className="gap-3">
           <Text className="font-display text-headline-sm text-foreground">Location</Text>

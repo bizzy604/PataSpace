@@ -81,6 +81,11 @@ pnpm --filter @pataspace/mobile build:ios
 - `src/lib/listing-rules.ts` — the client-side photo-count contract.
 - `src/lib/listings/amenities-field.ts` — toggling preset amenities over the
   comma-separated draft string.
+- `src/lib/listings/listing-details-view.ts` — folding a fetched
+  `ListingDetails` payload (real S3 photos, video, amenities, description)
+  into the `ListingPreview` view model; `listing-preview.ts` holds the
+  feed-card mapping both the sync hook and this merge share. Screens fetch
+  via `features/mobile-app/use-listing-details.ts`.
 - `src/lib/payments/*` — unlock summary (balance/percent), transaction view
   (filter/group/sign), and top-up status (the M-Pesa balance-poll completion
   rule).

@@ -1,6 +1,7 @@
 import type { ImageSourcePropType } from 'react-native';
 import { ListingHouseType, type ListingMapLocation, type UnlockContactInfo } from '@pataspace/contracts';
 import type { AppColorScheme } from '@/lib/theme';
+import { formatCredits } from '@/lib/listings/format';
 import { draftCameraSequence, listingGallerySets, type LocalMedia } from '@/data/media-library';
 
 export type ListingStatus = 'Verified' | 'Hot' | 'New' | 'Live' | 'Review' | 'Closed';
@@ -265,9 +266,7 @@ function formatCurrency(amount: number) {
   return `KES ${amount.toLocaleString()}`;
 }
 
-export function formatCredits(amount: number) {
-  return `${amount.toLocaleString()} credits`;
-}
+export { formatCredits };
 
 const listingHouseTypeLabels: Record<ListingHouseType, string> = {
   [ListingHouseType.STUDIO]: 'Studio',

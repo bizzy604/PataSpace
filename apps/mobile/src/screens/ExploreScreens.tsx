@@ -1,15 +1,6 @@
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import {
-  Image,
-  Pressable,
-  ScrollView,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
+import { useEffect, useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
 import {
   type ListingPreview,
   type NotificationRecord,
@@ -269,104 +260,6 @@ export function FiltersScreen() {
         />
       </FilterSection>
     </Screen>
-  );
-}
-
-export function ListingGalleryScreen() {
-  const params = useLocalSearchParams<{ id?: string }>();
-  const router = useRouter();
-  const { width } = useWindowDimensions();
-  const { getListingById } = useMobileApp();
-  const [slideIndex, setSlideIndex] = useState(0);
-  const galleryRef = useRef<ScrollView | null>(null);
-  const listing = getListingById(params.id);
-
-  if (!listing) {
-    return (
-      <Screen>
-        <Card>
-          <CardTitle>Listing not found</CardTitle>
-          <CardDescription>That gallery no longer has a listing attached.</CardDescription>
-        </Card>
-      </Screen>
-    );
-  }
-
-  const totalSlides = listing.galleryMedia.length;
-  const coords = listing.mapLocation
-    ? `${Math.abs(listing.mapLocation.approxLatitude).toFixed(4)}° ${listing.mapLocation.approxLatitude < 0 ? 'S' : 'N'}, ${Math.abs(listing.mapLocation.approxLongitude).toFixed(4)}° ${listing.mapLocation.approxLongitude < 0 ? 'W' : 'E'}`
-    : null;
-
-  function goToSlide(nextIndex: number) {
-    const boundedIndex = Math.max(0, Math.min(totalSlides - 1, nextIndex));
-    setSlideIndex(boundedIndex);
-    galleryRef.current?.scrollTo({ x: boundedIndex * width, animated: true });
-  }
-
-  return (
-    <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-black">
-      <StatusBar style="light" />
-      <View className="flex-row items-center justify-between px-4 py-3">
-        <Pressable
-          className="h-10 w-10 items-center justify-center active:opacity-70"
-          hitSlop={8}
-          onPress={() => router.back()}
-          accessibilityLabel="Close gallery"
-        >
-          <AppIcon name="close" size={26} color="#FFFFFF" />
-        </Pressable>
-        <Text className="font-body-medium text-body-lg text-white">
-          {slideIndex + 1} of {totalSlides}
-        </Text>
-        <View className="h-10 w-10 items-center justify-center">
-          <AppIcon name="share-outline" size={22} color="#FFFFFF" />
-        </View>
-      </View>
-
-      <ScrollView
-        ref={galleryRef}
-        className="flex-1"
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={(event) => {
-          if (!width) return;
-          setSlideIndex(Math.round(event.nativeEvent.contentOffset.x / width));
-        }}
-      >
-        {listing.galleryMedia.map((photo) => (
-          <View key={photo.id} className="items-center justify-center" style={{ width }}>
-            <Image source={photo.source} resizeMode="contain" style={{ width, height: '100%' }} />
-          </View>
-        ))}
-      </ScrollView>
-
-      {coords ? (
-        <View className="items-center py-3">
-          <View className="flex-row items-center gap-2 rounded-full bg-white/10 px-4 py-2">
-            <AppIcon name="shield-checkmark" size={16} color="#34C759" />
-            <Text className="font-body-medium text-label-md text-white">GPS Verified ({coords})</Text>
-          </View>
-        </View>
-      ) : null}
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 12, gap: 8 }}
-        className="max-h-24 py-2"
-      >
-        {listing.galleryMedia.map((photo, index) => (
-          <Pressable
-            key={photo.id}
-            onPress={() => goToSlide(index)}
-            className={`overflow-hidden rounded-[10px] border-2 ${slideIndex === index ? 'border-primary' : 'border-transparent'}`}
-          >
-            <Image source={photo.source} resizeMode="cover" className="h-16 w-20 bg-white/10" />
-          </Pressable>
-        ))}
-      </ScrollView>
-    </SafeAreaView>
   );
 }
 
