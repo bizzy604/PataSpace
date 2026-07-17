@@ -875,6 +875,7 @@ export class ListingService {
           width: photo.width ?? undefined,
           height: photo.height ?? undefined,
         })),
+        videoUrl: listing.videoUrl ?? undefined,
         createdAt: listing.createdAt.toISOString(),
         daysWaiting: Math.max(
           0,

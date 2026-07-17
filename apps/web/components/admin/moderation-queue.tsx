@@ -1,5 +1,7 @@
 /**
- * Purpose: Pending-listing moderation queue — approve or reject with reason.
+ * Purpose: Pending-listing moderation queue — approve or reject with reason,
+ *   with the uploaded photos and walkthrough video rendered inline so the
+ *   admin verifies the actual media before approving.
  * Why important: Listings only go live through this queue; it is the console's
  *   highest-frequency workflow.
  * Used by: components/admin/listings-panel.tsx.
@@ -7,12 +9,56 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import type { AdminPendingListing } from '@pataspace/contracts';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAdminData } from '@/components/admin/use-admin-data';
 import { approveListing, fetchPendingListings, rejectListing } from '@/lib/api/admin';
 import { formatKes } from '@/lib/format';
+
+// Plain <img> on purpose: media lives on S3/CDN outside next/image's
+// configured remote patterns, and the queue needs the exact stored URL to
+// fail visibly (broken image) when the media pipeline is misconfigured.
+function ListingMediaGrid({ listing }: { listing: AdminPendingListing }) {
+  const photos = [...listing.photos].sort((a, b) => a.order - b.order);
+
+  if (photos.length === 0 && !listing.videoUrl) {
+    return <p className="text-sm text-destructive">No media on this listing.</p>;
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-2">
+        {photos.map((photo) => (
+          <a
+            key={photo.order}
+            href={photo.url}
+            target="_blank"
+            rel="noreferrer"
+            title={`Photo ${photo.order} — open full size`}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={photo.url}
+              alt={`Listing photo ${photo.order}`}
+              loading="lazy"
+              className="h-24 w-32 rounded-md border border-border object-cover"
+            />
+          </a>
+        ))}
+      </div>
+      {listing.videoUrl ? (
+        <video
+          src={listing.videoUrl}
+          controls
+          preload="metadata"
+          className="h-40 max-w-full rounded-md border border-border"
+        />
+      ) : null}
+    </div>
+  );
+}
 
 export function ModerationQueue() {
   const fetcher = useCallback(
@@ -84,22 +130,25 @@ export function ModerationQueue() {
               {listing.photos.length} photos · waiting {listing.daysWaiting}d
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex gap-3">
-            <Button
-              size="sm"
-              disabled={actioningId === listing.id}
-              onClick={() => void act(listing.id, 'approve')}
-            >
-              Approve
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={actioningId === listing.id}
-              onClick={() => void act(listing.id, 'reject')}
-            >
-              Reject
-            </Button>
+          <CardContent className="space-y-4">
+            <ListingMediaGrid listing={listing} />
+            <div className="flex gap-3">
+              <Button
+                size="sm"
+                disabled={actioningId === listing.id}
+                onClick={() => void act(listing.id, 'approve')}
+              >
+                Approve
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={actioningId === listing.id}
+                onClick={() => void act(listing.id, 'reject')}
+              >
+                Reject
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ))}
