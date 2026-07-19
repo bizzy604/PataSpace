@@ -15,9 +15,16 @@ import { randomBytes } from 'crypto';
 import { hashSecretValue } from '../../../common/security/encryption.util';
 import { StoredUser, UserService } from '../../user/user.service';
 
+type MagicLinkTokenPayload = {
+  sub: string;
+  email: string;
+  purpose: 'magic-link';
+};
+
 @Injectable()
 export class AuthTokenService {
   private readonly accessTokenTtl: string;
+  private readonly magicLinkTokenTtl: string;
   private readonly refreshTokenSecret: string;
   private readonly refreshTokenTtlDays: number;
 
@@ -27,6 +34,7 @@ export class AuthTokenService {
     private readonly userService: UserService,
   ) {
     this.accessTokenTtl = this.configService.get<string>('security.accessTokenTtl') ?? '15m';
+    this.magicLinkTokenTtl = '10m';
     this.refreshTokenSecret =
       this.configService.get<string>('security.jwtRefreshSecret') ?? 'refresh-secret';
     this.refreshTokenTtlDays =
@@ -68,6 +76,27 @@ export class AuthTokenService {
         expiresIn: this.accessTokenTtl,
       } as never,
     );
+  }
+
+  async createMagicLinkToken(user: StoredUser): Promise<string> {
+    if (!user.email) {
+      throw new Error('Cannot create a magic-link token for a user without an email address.');
+    }
+
+    return this.jwtService.signAsync(
+      {
+        sub: user.id,
+        email: user.email,
+        purpose: 'magic-link',
+      } satisfies MagicLinkTokenPayload,
+      {
+        expiresIn: this.magicLinkTokenTtl,
+      } as never,
+    );
+  }
+
+  async verifyMagicLinkToken(token: string): Promise<MagicLinkTokenPayload> {
+    return this.jwtService.verifyAsync<MagicLinkTokenPayload>(token);
   }
 
   async createRefreshToken(tx: Prisma.TransactionClient, userId: string) {

@@ -7,8 +7,9 @@
  *   registered (anti-enumeration).
  * Used by: AuthController.
  */
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import {
+  AuthSessionResponse,
   ForgotPasswordRequest,
   ForgotPasswordResponse,
   ResetPasswordRequest,
@@ -17,6 +18,8 @@ import bcrypt from 'bcryptjs';
 import { PrismaService } from '../../../common/database/prisma.service';
 import { hashLookupValue } from '../../../common/security/encryption.util';
 import { SmsService } from '../../../infrastructure/sms/sms.service';
+import { EmailService } from '../../../infrastructure/email/email.service';
+import { buildMagicLinkEmail, buildPasswordResetEmail } from '../../../infrastructure/email/email-templates';
 import { UserService } from '../../user/user.service';
 import { assertUserCanAuthenticate } from '../domain/auth-eligibility.policy';
 import { AuthOtpService } from './auth-otp.service';
@@ -30,6 +33,7 @@ export class PasswordRecoveryService {
     private readonly userService: UserService,
     private readonly authTokenService: AuthTokenService,
     private readonly authOtpService: AuthOtpService,
+    private readonly emailService: EmailService,
   ) {}
 
   async forgotPassword(input: ForgotPasswordRequest): Promise<ForgotPasswordResponse> {
@@ -43,6 +47,13 @@ export class PasswordRecoveryService {
       );
 
       await this.smsService.sendOtp(normalizedPhoneNumber, otp.code).catch(() => undefined);
+      const passwordResetEmail = buildPasswordResetEmail(otp.code);
+      await this.emailService.sendMail({
+        to: input.email,
+        subject: passwordResetEmail.subject,
+        text: passwordResetEmail.text,
+        html: passwordResetEmail.html,
+      }).catch(() => undefined);
     }
 
     // Anti-enumeration: identical response whether or not the account exists.
@@ -50,6 +61,66 @@ export class PasswordRecoveryService {
       message: 'If an account exists for this email, an OTP has been sent to the phone on file.',
       expiresIn: this.authOtpService.ttlSeconds,
     };
+  }
+
+  async requestMagicLink(input: { email: string }): Promise<void> {
+    const user = await this.userService.findStoredByEmail(input.email);
+
+    if (!user || user.isBanned) {
+      return;
+    }
+
+    const token = await this.authTokenService.createMagicLinkToken(user);
+    const signInLink = `${process.env.APP_BASE_URL ?? 'http://localhost:3000'}/auth/magic-link?email=${encodeURIComponent(input.email)}&token=${encodeURIComponent(token)}`;
+    const magicLinkEmail = buildMagicLinkEmail(signInLink);
+
+    await this.emailService.sendMail({
+      to: input.email,
+      subject: magicLinkEmail.subject,
+      text: magicLinkEmail.text,
+      html: magicLinkEmail.html,
+    }).catch(() => undefined);
+  }
+
+  async signInWithMagicLink(input: { email: string; token: string }): Promise<AuthSessionResponse> {
+    const user = await this.userService.findStoredByEmail(input.email);
+
+    if (!user) {
+      throw new UnauthorizedException({ code: 'INVALID_MAGIC_LINK', message: 'Magic link is invalid or expired' });
+    }
+
+    const payload = await this.authTokenService.verifyMagicLinkToken(input.token);
+
+    if (payload.email !== input.email || payload.sub !== user.id || payload.purpose !== 'magic-link') {
+      throw new UnauthorizedException({ code: 'INVALID_MAGIC_LINK', message: 'Magic link is invalid or expired' });
+    }
+
+    assertUserCanAuthenticate(user);
+
+    return this.prismaService.$transaction(async (tx) => {
+      const updatedUser = await tx.user.update({
+        where: { id: user.id },
+        data: { lastLoginAt: new Date() },
+        select: {
+          id: true,
+          phoneNumberEncrypted: true,
+          phoneVerified: true,
+          email: true,
+          passwordHash: true,
+          firstName: true,
+          lastName: true,
+          role: true,
+          isActive: true,
+          isBanned: true,
+          banReason: true,
+          createdAt: true,
+          updatedAt: true,
+          lastLoginAt: true,
+        },
+      });
+
+      return this.authTokenService.issueAuthSession(tx, updatedUser);
+    });
   }
 
   async resetPassword(input: ResetPasswordRequest): Promise<void> {

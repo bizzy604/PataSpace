@@ -24,6 +24,7 @@ export type AdminPendingListing = {
     width?: number;
     height?: number;
   }>;
+  videoUrl?: string;
   createdAt: string;
   daysWaiting: number;
 };

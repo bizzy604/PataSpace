@@ -1,4 +1,4 @@
-import { ListingGalleryScreen } from '@/screens/ExploreScreens';
+import { ListingGalleryScreen } from '@/screens/ListingGalleryScreen';
 
 export default function ListingGalleryRoute() {
   return <ListingGalleryScreen />;

@@ -279,10 +279,12 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
 
   it('processes sandbox purchases and ignores duplicate callbacks', async () => {
     const buyer = await createVerifiedUser(Role.USER);
+    const idempotencyKey = `phase5-purchase-${Date.now()}`;
 
     const purchaseResponse = await request(app.getHttpServer())
       .post('/api/v1/credits/purchase')
       .set('Authorization', `Bearer ${buyer.accessToken}`)
+      .set('Idempotency-Key', idempotencyKey)
       .set('X-Forwarded-For', createForwardedFor())
       .send({
         package: '10_credits',
@@ -294,6 +296,34 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
     expect(purchaseResponse.body.status).toBe('PENDING');
     expect(purchaseResponse.body.amount).toBe(10000);
     expect(purchaseResponse.body.credits).toBe(10500);
+
+    // A same-key retry replays the stored purchase instead of charging again.
+    const replayResponse = await request(app.getHttpServer())
+      .post('/api/v1/credits/purchase')
+      .set('Authorization', `Bearer ${buyer.accessToken}`)
+      .set('Idempotency-Key', idempotencyKey)
+      .set('X-Forwarded-For', createForwardedFor())
+      .send({
+        package: '10_credits',
+        paymentMethod: 'mpesa',
+        phoneNumber: buyer.phoneNumber,
+      })
+      .expect(202);
+
+    expect(replayResponse.body.transactionId).toBe(purchaseResponse.body.transactionId);
+    expect(replayResponse.body.message).toContain('already processed');
+
+    // A missing key is rejected before any money work starts.
+    await request(app.getHttpServer())
+      .post('/api/v1/credits/purchase')
+      .set('Authorization', `Bearer ${buyer.accessToken}`)
+      .set('X-Forwarded-For', createForwardedFor())
+      .send({
+        package: '10_credits',
+        paymentMethod: 'mpesa',
+        phoneNumber: buyer.phoneNumber,
+      })
+      .expect(400);
 
     const pendingTransaction = await prismaService.creditTransaction.findUnique({
       where: {
@@ -376,6 +406,7 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
     const firstPurchaseResponse = await request(app.getHttpServer())
       .post('/api/v1/credits/purchase')
       .set('Authorization', `Bearer ${buyer.accessToken}`)
+      .set('Idempotency-Key', `phase5-dup-a-${Date.now()}`)
       .set('X-Forwarded-For', createForwardedFor())
       .send({
         package: '5_credits',
@@ -387,6 +418,7 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
     const duplicatePendingResponse = await request(app.getHttpServer())
       .post('/api/v1/credits/purchase')
       .set('Authorization', `Bearer ${buyer.accessToken}`)
+      .set('Idempotency-Key', `phase5-dup-b-${Date.now()}`)
       .set('X-Forwarded-For', createForwardedFor())
       .send({
         package: '5_credits',
@@ -440,6 +472,7 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
     const secondPurchaseResponse = await request(app.getHttpServer())
       .post('/api/v1/credits/purchase')
       .set('Authorization', `Bearer ${buyer.accessToken}`)
+      .set('Idempotency-Key', `phase5-second-${Date.now()}`)
       .set('X-Forwarded-For', createForwardedFor())
       .send({
         package: '5_credits',

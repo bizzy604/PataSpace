@@ -39,6 +39,12 @@ export class AdminPendingListingDto {
   @ApiProperty({ type: [ListingPhotoDto] })
   photos!: ListingPhotoDto[];
 
+  @ApiProperty({
+    required: false,
+    example: 'https://cdn.example.com/listings/user_1/videos/walkthrough.mp4',
+  })
+  videoUrl?: string;
+
   @ApiProperty({ example: '2026-03-20T10:00:00.000Z' })
   createdAt!: string;
 

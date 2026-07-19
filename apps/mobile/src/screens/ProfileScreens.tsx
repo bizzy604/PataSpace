@@ -329,8 +329,8 @@ export function HelpCenterScreen() {
   );
 }
 
-const SUPPORT_WHATSAPP = '+254 700 123 456';
-const SUPPORT_EMAIL = 'support@pataspace.co.ke';
+const SUPPORT_WHATSAPP = '0796861525';
+const SUPPORT_EMAIL = 'info@dalakenya.com';
 
 function SupportChannel({
   icon,

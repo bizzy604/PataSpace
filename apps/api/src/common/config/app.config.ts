@@ -129,6 +129,13 @@ export default () => ({
         failOtp: process.env.SANDBOX_SMS_FAIL_OTP === 'true',
       },
     },
+    email: {
+      provider: process.env.EMAIL_PROVIDER ?? 'sandbox',
+      resend: {
+        apiKey: process.env.RESEND_API_KEY,
+        from: process.env.EMAIL_FROM ?? 'PataSpace <no-reply@send.dalakenya.com>',
+      },
+    },
     storage: {
       provider: process.env.STORAGE_PROVIDER ?? 'sandbox',
       bucket: process.env.AWS_S3_BUCKET,

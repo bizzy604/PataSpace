@@ -51,6 +51,15 @@ export type ForgotPasswordRequest = {
   email: string;
 };
 
+export type MagicLinkRequest = {
+  email: string;
+};
+
+export type MagicLinkSignInRequest = {
+  email: string;
+  token: string;
+};
+
 export type ForgotPasswordResponse = {
   message: string;
   expiresIn: number;

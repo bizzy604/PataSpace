@@ -2,6 +2,7 @@ export type CreateUploadUrlRequest = {
   filename: string;
   contentType: 'image/jpeg' | 'image/png' | 'video/mp4';
   fileSize: number;
+  uploadKind?: 'listing' | 'evidence';
 };
 
 export type CreateUploadUrlResponse = {

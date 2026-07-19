@@ -1,6 +1,7 @@
 import type { ImageSourcePropType } from 'react-native';
 import { ListingHouseType, type ListingMapLocation, type UnlockContactInfo } from '@pataspace/contracts';
 import type { AppColorScheme } from '@/lib/theme';
+import { formatCredits } from '@/lib/listings/format';
 import { draftCameraSequence, listingGallerySets, type LocalMedia } from '@/data/media-library';
 
 export type ListingStatus = 'Verified' | 'Hot' | 'New' | 'Live' | 'Review' | 'Closed';
@@ -265,9 +266,7 @@ function formatCurrency(amount: number) {
   return `KES ${amount.toLocaleString()}`;
 }
 
-export function formatCredits(amount: number) {
-  return `${amount.toLocaleString()} credits`;
-}
+export { formatCredits };
 
 const listingHouseTypeLabels: Record<ListingHouseType, string> = {
   [ListingHouseType.STUDIO]: 'Studio',
@@ -588,7 +587,31 @@ export const confirmationStages = [
 
 export const walletPackages: WalletPackage[] = [
   {
-    id: '5_credits',
+    id: '500_credits',
+    label: 'Starter',
+    credits: 500,
+    price: 'KES 500',
+    bonus: '+0 bonus credits',
+    description: 'Perfect for trying out the platform with one unlock.',
+  },
+  {
+    id: '1000_credits',
+    label: 'Basic',
+    credits: 1000,
+    price: 'KES 1,000',
+    bonus: '+0 bonus credits',
+    description: 'Good for a couple of property unlocks.',
+  },
+  {
+    id: '2500_credits',
+    label: 'Standard',
+    credits: 2500,
+    price: 'KES 2,500',
+    bonus: '+0 bonus credits',
+    description: 'Ideal for regular browsing and multiple unlocks.',
+  },
+  {
+    id: '5000_credits',
     label: 'Value',
     credits: 5000,
     price: 'KES 5,000',
@@ -596,7 +619,7 @@ export const walletPackages: WalletPackage[] = [
     description: 'Best for one verified unlock in the KES 20k to 50k range.',
   },
   {
-    id: '10_credits',
+    id: '10000_credits',
     label: 'Popular',
     credits: 10000,
     price: 'KES 10,000',
@@ -604,7 +627,7 @@ export const walletPackages: WalletPackage[] = [
     description: 'Good if you want enough balance for two unlocks and confirmation follow-up.',
   },
   {
-    id: '20_credits',
+    id: '20000_credits',
     label: 'Power',
     credits: 20000,
     price: 'KES 20,000',

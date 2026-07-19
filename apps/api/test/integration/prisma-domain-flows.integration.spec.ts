@@ -5,7 +5,7 @@ import {
   TransactionType,
 } from '@prisma/client';
 import { ConfirmationSide } from '@pataspace/contracts';
-import { CreditService } from '../../src/modules/credit/credit.service';
+import { CreditQueryService } from '../../src/modules/credit/credit-query.service';
 import { PaymentService } from '../../src/modules/payment/payment.service';
 import { UnlockRefundService } from '../../src/modules/unlock/unlock-refund.service';
 import { UnlockService } from '../../src/modules/unlock/unlock.service';
@@ -18,7 +18,7 @@ jest.setTimeout(60_000);
 
 describe('Prisma-backed domain service flows', () => {
   let context: ApiTestContext;
-  let creditService: CreditService;
+  let creditQueryService: CreditQueryService;
   let paymentService: PaymentService;
   let unlockService: UnlockService;
   let unlockRefundService: UnlockRefundService;
@@ -29,7 +29,7 @@ describe('Prisma-backed domain service flows', () => {
     context = await createApiTestContext({
       ipRangePrefix: 64,
     });
-    creditService = context.get(CreditService);
+    creditQueryService = context.get(CreditQueryService);
     paymentService = context.get(PaymentService);
     unlockService = context.get(UnlockService);
     unlockRefundService = context.get(UnlockRefundService);
@@ -47,7 +47,7 @@ describe('Prisma-backed domain service flows', () => {
       package: '5_credits',
       paymentMethod: 'mpesa',
       phoneNumber: buyer.phoneNumber,
-    });
+    }, `it-key-1-${Date.now()}`);
 
     const pendingTransaction = await context.prismaService.creditTransaction.findUniqueOrThrow({
       where: {
@@ -78,7 +78,7 @@ describe('Prisma-backed domain service flows', () => {
       },
     });
 
-    await expect(creditService.getBalance(buyer.userId)).resolves.toMatchObject({
+    await expect(creditQueryService.getBalance(buyer.userId)).resolves.toMatchObject({
       balance: 5000,
       lifetimeEarned: 5000,
     });
@@ -206,7 +206,7 @@ describe('Prisma-backed domain service flows', () => {
       'Listing invalidated during review follow-up.',
     );
 
-    await expect(creditService.getBalance(buyer.userId)).resolves.toMatchObject({
+    await expect(creditQueryService.getBalance(buyer.userId)).resolves.toMatchObject({
       balance: 5000,
     });
 
@@ -340,7 +340,7 @@ describe('Prisma-backed domain service flows', () => {
           balanceAfter: true,
         },
       }),
-      creditService.getBalance(buyer.userId),
+      creditQueryService.getBalance(buyer.userId),
     ]);
 
     expect(unlockRecords).toHaveLength(1);

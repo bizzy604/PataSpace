@@ -2,7 +2,17 @@ import { z } from 'zod';
 import { TransactionStatus, TransactionType } from '../enums';
 import { isoDateStringSchema, paginationMetaSchema, paginationQuerySchema, phoneNumberSchema } from './common';
 
-export const creditPurchasePackageSchema = z.enum(['5_credits', '10_credits', '20_credits']);
+export const creditPurchasePackageSchema = z.enum([
+  '500_credits',
+  '1000_credits',
+  '2500_credits',
+  '5000_credits',
+  '10000_credits',
+  '20000_credits',
+  '5_credits',
+  '10_credits',
+  '20_credits',
+]);
 
 export const creditBalanceSchema = z.object({
   balance: z.number().int().nonnegative(),

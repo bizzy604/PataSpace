@@ -25,7 +25,14 @@ describe('AuthTokenService', () => {
         deleteMany: jest.fn().mockResolvedValue({ count: 2 }),
       },
     };
-    const jwtService = { signAsync: jest.fn().mockResolvedValue('access-token') };
+    const jwtService = {
+      signAsync: jest.fn().mockResolvedValue('access-token'),
+      verifyAsync: jest.fn().mockResolvedValue({
+        sub: 'user_1',
+        email: 'user@example.com',
+        purpose: 'magic-link',
+      }),
+    };
     const configService = {
       get: jest.fn((key: string) => {
         const values: Record<string, unknown> = {
@@ -86,6 +93,32 @@ describe('AuthTokenService', () => {
         userId: 'user_1',
       }),
     });
+  });
+
+  it('creates a short-lived magic-link token scoped to the requested user', async () => {
+    const { service, jwtService } = createService();
+
+    await service.createMagicLinkToken(storedUser);
+
+    expect(jwtService.signAsync).toHaveBeenCalledWith(
+      {
+        sub: 'user_1',
+        email: 'user@example.com',
+        purpose: 'magic-link',
+      },
+      { expiresIn: '10m' },
+    );
+  });
+
+  it('verifies a magic-link token', async () => {
+    const { service, jwtService } = createService();
+
+    await expect(service.verifyMagicLinkToken('magic-link-token')).resolves.toEqual({
+      sub: 'user_1',
+      email: 'user@example.com',
+      purpose: 'magic-link',
+    });
+    expect(jwtService.verifyAsync).toHaveBeenCalledWith('magic-link-token');
   });
 
   it('hashRefreshToken is deterministic for the same token', () => {

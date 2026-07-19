@@ -11,6 +11,7 @@ import { CommissionCallbackModule } from '../commission-callback/commission-call
 import { CreditPurchaseController, PaymentWebhookController } from './payment.controller';
 import { PaymentService } from './payment.service';
 import { MpesaPurchaseService } from './mpesa-purchase.service';
+import { MpesaReconcileService } from './mpesa-reconcile.service';
 import { StellarPurchaseService } from './stellar-purchase.service';
 import { PaymentFulfillmentService } from './payment-fulfillment.service';
 
@@ -20,6 +21,7 @@ import { PaymentFulfillmentService } from './payment-fulfillment.service';
   providers: [
     PaymentService,
     MpesaPurchaseService,
+    MpesaReconcileService,
     StellarPurchaseService,
     PaymentFulfillmentService,
   ],

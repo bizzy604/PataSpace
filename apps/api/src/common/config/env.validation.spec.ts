@@ -25,6 +25,20 @@ describe('envSchema', () => {
     expect(result.success).toBe(true);
   });
 
+  it('accepts Resend credentials and sender details when Resend is enabled', () => {
+    const result = envSchema.safeParse({
+      ...baseEnv,
+      EMAIL_PROVIDER: 'resend',
+      RESEND_API_KEY: 're_test_key',
+      EMAIL_FROM: 'PataSpace <no-reply@send.dalakenya.com>',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.EMAIL_FROM).toBe('PataSpace <no-reply@send.dalakenya.com>');
+    }
+  });
+
   it('requires ALLOWED_ORIGINS in production', () => {
     const result = envSchema.safeParse({
       ...baseEnv,

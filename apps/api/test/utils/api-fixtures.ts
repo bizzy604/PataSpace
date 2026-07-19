@@ -308,6 +308,7 @@ export async function createCreditPurchase(
   return request(context.app.getHttpServer())
     .post('/api/v1/credits/purchase')
     .set('Authorization', `Bearer ${accessToken}`)
+    .set('Idempotency-Key', `fixture-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`)
     .set('X-Forwarded-For', context.createForwardedFor())
     .send({
       package: packageKey,

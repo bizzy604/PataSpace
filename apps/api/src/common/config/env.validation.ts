@@ -45,6 +45,9 @@ export const envSchema = z.object({
   RATE_LIMIT_DEFAULT_TTL_SECONDS: z.coerce.number().int().positive().default(60),
   QUEUE_PREFIX: z.string().min(1).default('pataspace'),
   SMS_PROVIDER: z.enum(['sandbox', 'africastalking']).default('sandbox'),
+  EMAIL_PROVIDER: z.enum(['sandbox', 'resend']).default('sandbox'),
+  RESEND_API_KEY: z.string().min(1).optional(),
+  EMAIL_FROM: z.string().min(1).optional(),
   STORAGE_PROVIDER: z.enum(['sandbox', 's3']).default('sandbox'),
   MPESA_MODE: z.enum(['sandbox', 'live']).default('sandbox'),
   AT_BASE_URL: z.string().url().default('https://api.africastalking.com'),
@@ -131,6 +134,10 @@ export const envSchema = z.object({
 
   if (value.SMS_PROVIDER === 'africastalking') {
     requireFields(context, value, ['AT_USERNAME', 'AT_API_KEY']);
+  }
+
+  if (value.EMAIL_PROVIDER === 'resend') {
+    requireFields(context, value, ['RESEND_API_KEY']);
   }
 
   if (value.STORAGE_PROVIDER === 's3') {

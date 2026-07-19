@@ -5,6 +5,7 @@
  */
 import type {
   CreditBalance,
+  CreditPurchasePackage,
   PaginatedCreditTransactionsResponse,
   PurchaseCreditsRequest,
   PurchaseCreditsResponse,
@@ -31,9 +32,17 @@ export async function fetchTransactions(
 export async function purchaseCredits(
   getToken: () => Promise<string | null>,
   payload: PurchaseCreditsRequest,
+  idempotencyKey: string,
 ): Promise<PurchaseCreditsResponse> {
   return apiFetch<PurchaseCreditsResponse>('/credits/purchase', getToken, {
     method: 'POST',
+    headers: { 'Idempotency-Key': idempotencyKey },
     body: JSON.stringify(payload),
   });
+}
+
+export async function fetchCreditPackages(
+  getToken: () => Promise<string | null>,
+): Promise<Record<CreditPurchasePackage, { amountKES: number; credits: number; label: string }>> {
+  return apiFetch<Record<CreditPurchasePackage, { amountKES: number; credits: number; label: string }>>('/credits/packages', getToken);
 }

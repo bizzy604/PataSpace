@@ -20,6 +20,9 @@
     },
     "production": {
       "environment": "production",
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://api.dalakenya.com/api/v1"
+      },
       "android": {
         "buildType": "app-bundle"
       },

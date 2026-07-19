@@ -77,6 +77,7 @@ export class AdminDisputeService {
       status: dispute.status as unknown as ContractDisputeStatus,
       reason: dispute.reason,
       evidenceCount: dispute.evidence.length,
+      evidence: dispute.evidence,
       reportedBy: {
         id: dispute.user.id,
         firstName: dispute.user.firstName,
