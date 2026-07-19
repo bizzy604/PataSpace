@@ -1,9 +1,12 @@
 /**
- * Purpose: Syncs real API data into the MobileAppProvider state on mount and sign-in.
- * Why important: Separates API-fetch side effects from the main provider component.
- * Used by: MobileAppProvider.
+ * Purpose: Syncs real API data into the MobileAppProvider state and exposes
+ *   visible loading/error state plus explicit refresh actions.
+ * Why important: Remote failures must leave the app empty and retryable, never
+ *   silently fall back to demo listings, balances, or saved homes.
+ * Used by: MobileAppProvider and the Home, My Listings, and Saved screens.
  */
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { AppState } from 'react-native';
 import { ListingStatus, TransactionStatus, TransactionType } from '@pataspace/contracts';
 import type {
   CreditTransaction,
@@ -11,12 +14,13 @@ import type {
   MyUnlockRecord,
   ReceivedUnlockRecord,
   ReferralRecord,
+  SavedListingRecord,
 } from '@pataspace/contracts';
-import {
-  type ListingPreview,
-  type MyListingRow,
-  type TransactionRecord,
-  type UnlockRecord,
+import type {
+  ListingPreview,
+  MyListingRow,
+  TransactionRecord,
+  UnlockRecord,
 } from '@/data/mock-listings';
 import { listingCardToPreview } from '@/lib/listings/listing-preview';
 import { fetchListings, fetchMyListings } from '@/lib/api/listings';
@@ -24,6 +28,13 @@ import { fetchCreditBalance, fetchTransactions } from '@/lib/api/credits';
 import { fetchMyUnlocks, fetchAllReceivedUnlocks } from '@/lib/api/unlocks';
 import { fetchMyReferrals } from '@/lib/api/referrals';
 import { fetchMySavedListings } from '@/lib/api/saved-listings';
+import {
+  beginRemoteRequest,
+  completeRemoteRequest,
+  failRemoteRequest,
+  initialRemoteResourceState,
+  type RemoteResourceState,
+} from '@/lib/remote-data-state';
 
 function transactionTypeLabel(type: TransactionType): string {
   if (type === TransactionType.SPEND) return 'Listing unlock';
@@ -114,6 +125,10 @@ function apiMyListingToRow(listing: MyListing): MyListingRow {
   };
 }
 
+export function savedRecordsToPreviews(records: SavedListingRecord[]): ListingPreview[] {
+  return records.map((record) => listingCardToPreview(record.listing));
+}
+
 export function useMobileApiSync(
   isAuthenticated: boolean,
   getToken: () => Promise<string | null>,
@@ -125,37 +140,109 @@ export function useMobileApiSync(
   setMyListings: (rows: MyListingRow[]) => void,
   setReferrals: (records: ReferralRecord[]) => void,
   setSavedListingIds: (ids: string[]) => void,
+  setSavedListings: (listings: ListingPreview[]) => void,
 ) {
-  useEffect(() => {
-    fetchListings()
-      .then((response) => setListings(response.data.map(listingCardToPreview)))
-      .catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const [feedState, setFeedState] = useState<RemoteResourceState>(initialRemoteResourceState);
+  const [myListingsState, setMyListingsState] = useState<RemoteResourceState>(initialRemoteResourceState);
+  const [savedListingsState, setSavedListingsState] = useState<RemoteResourceState>(initialRemoteResourceState);
+
+  const refreshListings = useCallback(async () => {
+    setFeedState(beginRemoteRequest);
+    try {
+      const response = await fetchListings();
+      setListings(response.data.map(listingCardToPreview));
+      setFeedState(completeRemoteRequest());
+    } catch (error) {
+      setFeedState((current) => failRemoteRequest(current, error));
+    }
+  }, [setListings]);
+
+  const refreshMyListings = useCallback(async () => {
+    if (!isAuthenticated) return;
+
+    setMyListingsState(beginRemoteRequest);
+    try {
+      const listings = await fetchMyListings(getToken);
+      setMyListings(listings.map(apiMyListingToRow));
+      setMyListingsState(completeRemoteRequest());
+    } catch (error) {
+      setMyListingsState((current) => failRemoteRequest(current, error));
+    }
+  }, [getToken, isAuthenticated, setMyListings]);
+
+  const refreshSavedListings = useCallback(async () => {
+    if (!isAuthenticated) return;
+
+    setSavedListingsState(beginRemoteRequest);
+    try {
+      const response = await fetchMySavedListings(getToken);
+      setSavedListingIds(response.data.map((entry) => entry.listing.id));
+      setSavedListings(savedRecordsToPreviews(response.data));
+      setSavedListingsState(completeRemoteRequest());
+    } catch (error) {
+      setSavedListingsState((current) => failRemoteRequest(current, error));
+    }
+  }, [getToken, isAuthenticated, setSavedListingIds, setSavedListings]);
+
+  const refreshAuthenticatedData = useCallback(async () => {
+    if (!isAuthenticated) return;
+
+    await Promise.all([
+      fetchCreditBalance(getToken)
+        .then((balance) => setWalletBalance(balance.balance))
+        .catch(() => undefined),
+      fetchTransactions(getToken)
+        .then((response) => setTransactions(response.data.map(creditTransactionToRecord)))
+        .catch(() => undefined),
+      fetchMyUnlocks(getToken)
+        .then((response) => setUnlocks(response.data.map(apiUnlockToRecord)))
+        .catch(() => undefined),
+      fetchAllReceivedUnlocks(getToken)
+        .then((records) => setReceivedUnlocks(records))
+        .catch(() => undefined),
+      fetchMyReferrals(getToken)
+        .then((response) => setReferrals(response.data))
+        .catch(() => undefined),
+      refreshMyListings(),
+      refreshSavedListings(),
+    ]);
+  }, [
+    getToken,
+    isAuthenticated,
+    refreshMyListings,
+    refreshSavedListings,
+    setReceivedUnlocks,
+    setReferrals,
+    setTransactions,
+    setUnlocks,
+    setWalletBalance,
+  ]);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
-    fetchCreditBalance(getToken)
-      .then((balance) => setWalletBalance(balance.balance))
-      .catch(() => {});
-    fetchTransactions(getToken)
-      .then((response) => setTransactions(response.data.map(creditTransactionToRecord)))
-      .catch(() => {});
-    fetchMyUnlocks(getToken)
-      .then((response) => setUnlocks(response.data.map(apiUnlockToRecord)))
-      .catch(() => {});
-    fetchAllReceivedUnlocks(getToken)
-      .then((records) => setReceivedUnlocks(records))
-      .catch(() => {});
-    fetchMyListings(getToken)
-      .then((listings) => setMyListings(listings.map(apiMyListingToRow)))
-      .catch(() => {});
-    fetchMyReferrals(getToken)
-      .then((response) => setReferrals(response.data))
-      .catch(() => {});
-    fetchMySavedListings(getToken)
-      .then((response) => setSavedListingIds(response.data.map((entry) => entry.listing.id)))
-      .catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
+    void refreshListings();
+  }, [refreshListings]);
+
+  useEffect(() => {
+    void refreshAuthenticatedData();
+  }, [refreshAuthenticatedData]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState !== 'active') return;
+
+      void refreshListings();
+      void refreshAuthenticatedData();
+    });
+
+    return () => subscription.remove();
+  }, [refreshAuthenticatedData, refreshListings]);
+
+  return {
+    feedState,
+    myListingsState,
+    savedListingsState,
+    refreshListings,
+    refreshMyListings,
+    refreshSavedListings,
+  };
 }

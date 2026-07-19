@@ -5,6 +5,7 @@
  */
 import type {
   CreditBalance,
+  CreditPurchasePackage,
   PaginatedCreditTransactionsResponse,
   PurchaseCreditsRequest,
   PurchaseCreditsResponse,
@@ -38,4 +39,10 @@ export async function purchaseCredits(
     headers: { 'Idempotency-Key': idempotencyKey },
     body: JSON.stringify(payload),
   });
+}
+
+export async function fetchCreditPackages(
+  getToken: () => Promise<string | null>,
+): Promise<Record<CreditPurchasePackage, { amountKES: number; credits: number; label: string }>> {
+  return apiFetch<Record<CreditPurchasePackage, { amountKES: number; credits: number; label: string }>>('/credits/packages', getToken);
 }

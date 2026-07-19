@@ -7,7 +7,11 @@
  * Used by: Domain API modules (listings, credits, unlocks) and
  *   features/auth/auth-provider.tsx (registers the token source).
  */
-const API_BASE = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api/v1';
+// Store builds always target the public API. Local development can still
+// override this through apps/mobile/.env without risking a LAN-only fallback
+// in a release binary.
+export const apiBaseUrl =
+  process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://api.dalakenya.com/api/v1';
 
 /**
  * Registered once by features/auth/auth-provider.tsx on mount. Lets apiFetch
@@ -114,7 +118,7 @@ export async function apiFetch<T>(
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(init?.headers as Record<string, string> | undefined),
   };
-  const res = await fetch(`${API_BASE}${path}`, { ...init, headers });
+  const res = await fetch(`${apiBaseUrl}${path}`, { ...init, headers });
 
   if (res.status === 401 && !_isRetryAfterRefresh && authTokenSource) {
     const refreshedToken = await authTokenSource.refreshAccessToken();
@@ -128,7 +132,7 @@ export async function apiFetch<T>(
 
 /** Unauthenticated fetch — for public endpoints (listing browse, auth entry points). */
 export async function publicFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(`${apiBaseUrl}${path}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',

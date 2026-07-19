@@ -21,6 +21,12 @@ export type PurchasePackageConfig = { amountKES: number; credits: number; label:
 // A regression here reprices every liability in the ledger and the mobile
 // wallet packages.
 export const CREDIT_PACKAGES: Record<CreditPurchasePackage, PurchasePackageConfig> = {
+  '500_credits': { amountKES: 500, credits: 500, label: '500 credits package' },
+  '1000_credits': { amountKES: 1000, credits: 1000, label: '1,000 credits package' },
+  '2500_credits': { amountKES: 2500, credits: 2500, label: '2,500 credits package' },
+  '5000_credits': { amountKES: 5000, credits: 5000, label: '5,000 credits package' },
+  '10000_credits': { amountKES: 10000, credits: 10500, label: '10,500 credits package' },
+  '20000_credits': { amountKES: 20000, credits: 22000, label: '22,000 credits package' },
   '5_credits': { amountKES: 5000, credits: 5000, label: '5,000 credits package' },
   '10_credits': { amountKES: 10000, credits: 10500, label: '10,500 credits package' },
   '20_credits': { amountKES: 20000, credits: 22000, label: '22,000 credits package' },

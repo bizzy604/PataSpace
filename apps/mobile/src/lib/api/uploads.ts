@@ -16,10 +16,11 @@ export async function requestUploadUrl(
   filename: string,
   contentType: 'image/jpeg' | 'image/png' | 'video/mp4',
   fileSize: number,
+  uploadKind?: 'listing' | 'evidence',
 ): Promise<CreateUploadUrlResponse> {
   return apiFetch<CreateUploadUrlResponse>('/uploads/presigned-url', getToken, {
     method: 'POST',
-    body: JSON.stringify({ filename, contentType, fileSize }),
+    body: JSON.stringify({ filename, contentType, fileSize, uploadKind }),
   });
 }
 
@@ -54,11 +55,12 @@ async function uploadAndConfirmAsset(
   uri: string,
   filename: string,
   contentType: 'image/jpeg' | 'video/mp4',
+  uploadKind?: 'listing' | 'evidence',
 ): Promise<ConfirmUploadResponse> {
   const info = await FileSystem.getInfoAsync(uri);
   const fileSize = info.exists ? info.size : 0;
 
-  const { uploadUrl, s3Key } = await requestUploadUrl(getToken, filename, contentType, fileSize);
+  const { uploadUrl, s3Key } = await requestUploadUrl(getToken, filename, contentType, fileSize, uploadKind);
 
   await putToS3(uploadUrl, uri, contentType);
 
@@ -81,4 +83,12 @@ export async function uploadAndConfirmVideo(
   uri: string,
 ): Promise<ConfirmUploadResponse> {
   return uploadAndConfirmAsset(getToken, uri, 'walkthrough.mp4', 'video/mp4');
+}
+
+export async function uploadAndConfirmEvidence(
+  getToken: () => Promise<string | null>,
+  uri: string,
+  index: number,
+): Promise<ConfirmUploadResponse> {
+  return uploadAndConfirmAsset(getToken, uri, `evidence-${index + 1}.jpg`, 'image/jpeg', 'evidence');
 }

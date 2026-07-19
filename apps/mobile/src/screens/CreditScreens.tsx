@@ -1,4 +1,5 @@
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Image, Linking, Pressable, Share, Text, View } from 'react-native';
 import { formatCredits } from '@/data/mock-listings';
@@ -11,6 +12,7 @@ import { Dialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Screen } from '@/components/ui/screen';
 import { ScreenHeader, ScreenHeaderAction } from '@/components/ui/screen-header';
+import { useAuthSession } from '@/features/auth/auth-provider';
 import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
 import {
   filterTransactions,
@@ -182,12 +184,35 @@ export function CreditsScreen() {
 
 export function BuyCreditsScreen() {
   const { walletPackages, pendingTopUp, initiatePurchase, user } = useMobileApp();
+  const { getToken } = useAuthSession();
+  const [apiPackages, setApiPackages] = useState(walletPackages);
   const [selectedPackageId, setSelectedPackageId] = useState(pendingTopUp?.packageId ?? walletPackages[0]?.id);
   const [method, setMethod] = useState<'mpesa' | 'card'>('mpesa');
   const [phone, setPhone] = useState(pendingTopUp?.phone ?? user.phone);
   const [isLoading, setIsLoading] = useState(false);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    async function loadPackages() {
+      try {
+        const { fetchCreditPackages } = await import('@/lib/api/credits');
+        const packages = await fetchCreditPackages(getToken);
+        const formattedPackages = Object.entries(packages).map(([id, config]) => ({
+          id,
+          label: config.label.split(' ')[0], // Extract first word as label
+          credits: config.credits,
+          price: `KES ${config.amountKES.toLocaleString()}`,
+          bonus: config.credits > config.amountKES ? `+${(config.credits - config.amountKES).toLocaleString()} bonus credits` : '+0 bonus credits',
+          description: `KES ${config.amountKES.toLocaleString()} package`,
+        }));
+        setApiPackages(formattedPackages);
+      } catch (error) {
+        console.error('Failed to load credit packages:', error);
+      }
+    }
+    loadPackages();
+  }, [getToken]);
 
   return (
     <Screen
@@ -218,7 +243,7 @@ export function BuyCreditsScreen() {
 
       <Text className="font-display text-headline-sm text-foreground">Choose amount</Text>
       <View className="gap-3">
-        {walletPackages.map((item) => (
+        {apiPackages.map((item) => (
           <PackageRow
             key={item.id}
             selected={selectedPackageId === item.id}
@@ -668,9 +693,38 @@ export function DisputeScreen() {
   const unlockId = Array.isArray(params.unlockId) ? params.unlockId[0] : params.unlockId;
   const [subject, setSubject] = useState('Unlock issue');
   const [detail, setDetail] = useState('');
+  const [evidencePhotos, setEvidencePhotos] = useState<string[]>([]);
+  const [uploadingEvidence, setUploadingEvidence] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { supportTopics, submitDispute, submitDisputeForUnlock } = useMobileApp();
+  const { getToken } = useAuthSession();
+
+  const pickEvidencePhoto = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setUploadingEvidence(true);
+        const { uploadAndConfirmEvidence } = await import('@/lib/api/uploads');
+        const confirmed = await uploadAndConfirmEvidence(getToken, result.assets[0].uri, evidencePhotos.length);
+        setEvidencePhotos([...evidencePhotos, confirmed.url]);
+      }
+    } catch (error) {
+      console.error('Error picking evidence photo:', error);
+    } finally {
+      setUploadingEvidence(false);
+    }
+  };
+
+  const removeEvidencePhoto = (index: number) => {
+    setEvidencePhotos(evidencePhotos.filter((_, i) => i !== index));
+  };
 
   return (
     <Screen
@@ -683,11 +737,11 @@ export function DisputeScreen() {
           onPress={async () => {
             setErrorMessage(null);
             if (!unlockId) {
-              submitDispute(subject, detail);
+              submitDispute(subject, detail, evidencePhotos);
               setSubmitted(true);
               return;
             }
-            const outcome = await submitDisputeForUnlock(unlockId, subject, detail);
+            const outcome = await submitDisputeForUnlock(unlockId, subject, detail, evidencePhotos);
             if (outcome === 'success') {
               setSubmitted(true);
             } else if (outcome === 'already_filed') {
@@ -724,19 +778,29 @@ export function DisputeScreen() {
       <View className="gap-2">
         <Text className="font-body-bold text-label-md text-muted-foreground">Evidence (Optional)</Text>
         <View className="flex-row gap-3">
-          <View className="aspect-square flex-1 items-center justify-center gap-1 rounded-[12px] border border-dashed border-outline">
-            <AppIcon name="image-outline" size={22} active />
-            <Text className="font-body text-label-md text-primary">Upload</Text>
-          </View>
-          <View className="aspect-square flex-1 items-center justify-center rounded-[12px] bg-surface-subtle">
-            <AppIcon name="image-outline" size={22} />
-          </View>
-          <View className="aspect-square flex-1 items-center justify-center rounded-[12px] bg-surface-subtle">
-            <AppIcon name="image-outline" size={22} />
-          </View>
+          {evidencePhotos.map((photo, index) => (
+            <View key={index} className="aspect-square flex-1 items-center justify-center rounded-[12px] bg-surface-subtle">
+              <Image source={{ uri: photo }} className="h-full w-full rounded-[12px]" resizeMode="cover" />
+              <Pressable
+                className="absolute right-1 top-1 h-6 w-6 items-center justify-center rounded-full bg-destructive"
+                onPress={() => removeEvidencePhoto(index)}
+              >
+                <Text className="font-body-bold text-caption text-white">×</Text>
+              </Pressable>
+            </View>
+          ))}
+          {evidencePhotos.length < 3 && (
+            <Pressable
+              className="aspect-square flex-1 items-center justify-center gap-1 rounded-[12px] border border-dashed border-outline"
+              onPress={pickEvidencePhoto}
+            >
+              <AppIcon name="image-outline" size={22} active />
+              <Text className="font-body text-label-md text-primary">Upload</Text>
+            </Pressable>
+          )}
         </View>
         <Text className="font-body text-label-md text-muted-foreground">
-          Photo evidence upload is coming soon.
+          Upload up to 3 photos as evidence (screenshots, photos, etc.)
         </Text>
       </View>
 

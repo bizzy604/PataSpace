@@ -4,6 +4,7 @@ export const createUploadUrlSchema = z.object({
   filename: z.string().min(1),
   contentType: z.enum(['image/jpeg', 'image/png', 'video/mp4']),
   fileSize: z.number().int().positive(),
+  uploadKind: z.enum(['listing', 'evidence']).default('listing'),
 });
 
 export const createUploadUrlResponseSchema = z.object({

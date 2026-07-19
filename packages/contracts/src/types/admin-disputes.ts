@@ -13,6 +13,7 @@ export type AdminDisputeSummary = {
   status: DisputeStatus;
   reason: string;
   evidenceCount: number;
+  evidence: string[];
   reportedBy: {
     id: string;
     firstName: string;

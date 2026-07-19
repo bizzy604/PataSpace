@@ -51,6 +51,15 @@ export const forgotPasswordSchema = z.object({
   email: emailSchema,
 });
 
+export const magicLinkRequestSchema = z.object({
+  email: emailSchema,
+});
+
+export const magicLinkSignInSchema = z.object({
+  email: emailSchema,
+  token: z.string().min(1),
+});
+
 // Response is identical whether or not the account exists (anti-enumeration);
 // no userId, and expiresIn is the constant OTP window.
 export const forgotPasswordResponseSchema = z.object({

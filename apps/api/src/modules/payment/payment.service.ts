@@ -136,6 +136,10 @@ export class PaymentService {
     return this.mpesaPurchaseService.handleCallback(input);
   }
 
+  getCreditPackages() {
+    return CREDIT_PACKAGES;
+  }
+
   async reconcilePendingPurchases(now = new Date(), userId?: string) {
     const [mpesaCount, stellarCount] = await Promise.all([
       this.mpesaReconcileService.reconcilePending(now, userId),

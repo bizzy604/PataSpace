@@ -45,7 +45,9 @@ export class UploadService {
     const mediaType = this.resolveMediaType(input.contentType, input.fileSize);
     const sanitizedFilename = this.sanitizeFilename(input.filename);
     const folder = mediaType === UploadMediaType.IMAGE ? 'images' : 'videos';
-    const storageKey = `listings/${userId}/${folder}/${Date.now()}-${randomUUID()}-${sanitizedFilename}`;
+    const uploadKind = input.uploadKind ?? 'listing';
+    const prefix = uploadKind === 'evidence' ? 'evidence' : `listings/${userId}`;
+    const storageKey = `${prefix}/${folder}/${Date.now()}-${randomUUID()}-${sanitizedFilename}`;
     const upload = await this.storageService.createUploadUrl({
       key: storageKey,
       contentType: input.contentType,
@@ -179,7 +181,8 @@ export class UploadService {
   }
 
   private belongsToUser(userId: string, storageKey: string) {
-    return storageKey.startsWith(`listings/${userId}/`);
+    const normalized = storageKey.replace(/^\/+/, '');
+    return normalized.startsWith(`listings/${userId}/`) || normalized.startsWith('evidence/');
   }
 
   private buildUrl(baseUrl: string, storageKey: string) {

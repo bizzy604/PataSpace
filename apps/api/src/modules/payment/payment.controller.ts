@@ -7,6 +7,7 @@
 import {
   Body,
   Controller,
+  Get,
   Headers,
   HttpCode,
   Post,
@@ -78,6 +79,13 @@ export class CreditPurchaseController {
     @Body(new ZodValidationPipe(purchaseCreditsSchema)) input: PurchaseCreditsRequest,
   ): Promise<PurchaseCreditsResponse> {
     return this.paymentService.createPurchase(userId, input, requireIdempotencyKey(idempotencyKey));
+  }
+
+  @ApiOperation({ summary: 'Get available credit packages' })
+  @ApiOkResponse({ description: 'Credit packages retrieved successfully.' })
+  @Get('packages')
+  getPackages() {
+    return this.paymentService.getCreditPackages();
   }
 }
 

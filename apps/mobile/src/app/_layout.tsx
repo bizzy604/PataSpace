@@ -4,10 +4,12 @@ import { useFonts } from 'expo-font';
 import { Poppins_600SemiBold, Poppins_700Bold } from '@expo-google-fonts/poppins';
 import { DMSans_400Regular, DMSans_500Medium, DMSans_700Bold } from '@expo-google-fonts/dm-sans';
 import { Stack, usePathname, useRouter } from 'expo-router';
+import { Text, View } from 'react-native';
 import { AppLaunchScreen } from '@/components/ui/app-launch-screen';
 import { AuthSessionProvider, useAuthSession } from '@/features/auth/auth-provider';
 import { MobileAppProvider, useMobileApp } from '@/features/mobile-app/mobile-app-provider';
 import { appRoutes } from '@/lib/routes';
+import { apiBaseUrl } from '@/lib/api-client';
 
 const publicPaths = new Set<string>([
   appRoutes.home,
@@ -66,14 +68,24 @@ function RootNavigator() {
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        contentStyle: {
-          backgroundColor: theme.background,
-        },
-      }}
-    />
+    <View className="flex-1">
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: {
+            backgroundColor: theme.background,
+          },
+        }}
+      />
+      {__DEV__ ? (
+        <View
+          pointerEvents="none"
+          className="absolute inset-x-3 bottom-3 rounded-full bg-black/80 px-3 py-1.5"
+        >
+          <Text className="font-body text-caption text-white">DEV API: {apiBaseUrl}</Text>
+        </View>
+      ) : null}
+    </View>
   );
 }
 

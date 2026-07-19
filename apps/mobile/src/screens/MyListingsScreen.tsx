@@ -6,7 +6,7 @@
  * Used by: app/my-listings.tsx.
  */
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Pressable, RefreshControl, Text, View } from 'react-native';
 import { AppIcon } from '@/components/ui/app-icon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,7 @@ function statusBadgeVariant(status: string): 'success' | 'warning' | 'secondary'
 export function MyListingsScreen() {
   const params = useLocalSearchParams<{ filter?: MyListingsFilter | MyListingsFilter[] }>();
   const router = useRouter();
-  const { getListingById, myListings } = useMobileApp();
+  const { getListingById, myListings, myListingsState, refreshMyListings } = useMobileApp();
 
   const filterParam = Array.isArray(params.filter) ? params.filter[0] : params.filter;
   const activeFilter: MyListingsFilter | undefined =
@@ -51,7 +51,14 @@ export function MyListingsScreen() {
   ];
 
   return (
-    <Screen>
+    <Screen
+      refreshControl={
+        <RefreshControl
+          refreshing={myListingsState.isRefreshing}
+          onRefresh={() => void refreshMyListings()}
+        />
+      }
+    >
       <View className="flex-row items-center justify-between">
         <Text className="font-display text-display-02 text-foreground">My Listings</Text>
         <Link href={appRoutes.createListing} asChild>
@@ -77,7 +84,35 @@ export function MyListingsScreen() {
         ))}
       </View>
 
-      {filteredListings.length === 0 ? (
+      {myListings.length === 0 && myListingsState.status === 'loading' ? (
+        <View className="items-center gap-3 rounded-[16px] bg-surface-subtle py-12">
+          <AppIcon name="reload-outline" size={28} />
+          <Text className="font-body text-body-md text-muted-foreground">
+            Loading your listings…
+          </Text>
+        </View>
+      ) : null}
+
+      {myListings.length === 0 && myListingsState.status === 'error' ? (
+        <View className="items-center gap-3 rounded-[16px] border border-border bg-surface-subtle px-6 py-12">
+          <AppIcon name="cloud-offline-outline" size={28} />
+          <Text className="text-center font-body text-body-md text-muted-foreground">
+            {myListingsState.error ?? 'We could not load your listings.'}
+          </Text>
+          <Button size="sm" label="Try again" onPress={() => void refreshMyListings()} />
+        </View>
+      ) : null}
+
+      {myListings.length > 0 && myListingsState.error ? (
+        <View className="gap-3 rounded-[16px] border border-border bg-surface-subtle p-4">
+          <Text className="font-body text-body-md text-muted-foreground">
+            {myListingsState.error}
+          </Text>
+          <Button size="sm" variant="outline" label="Retry" onPress={() => void refreshMyListings()} />
+        </View>
+      ) : null}
+
+      {filteredListings.length === 0 && myListingsState.status === 'ready' ? (
         <View className="items-center gap-3 rounded-[16px] bg-surface-subtle py-12">
           <AppIcon name="home-outline" size={28} />
           <Text className="font-body text-body-md text-muted-foreground">

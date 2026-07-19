@@ -14,6 +14,8 @@ import {
   forgotPasswordSchema,
   ForgotPasswordResponse,
   loginSchema,
+  magicLinkRequestSchema,
+  magicLinkSignInSchema,
   LoginRequest,
   LogoutRequest,
   logoutSchema,
@@ -153,6 +155,30 @@ export class AuthController {
     @Body(new ZodValidationPipe(resetPasswordSchema)) input: ResetPasswordRequest,
   ) {
     await this.passwordRecoveryService.resetPassword(input);
+  }
+
+  @Public()
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Request a sign-in magic link for an existing account' })
+  @ApiBody({ type: ForgotPasswordRequestDto })
+  @ApiOkResponse({ description: 'Magic-link email sent if the account exists.' })
+  @ApiRateLimit('authForgotPassword')
+  @Post('magic-link/request')
+  async requestMagicLink(@Body(new ZodValidationPipe(magicLinkRequestSchema)) input: ForgotPasswordRequest) {
+    await this.passwordRecoveryService.requestMagicLink(input);
+  }
+
+  @Public()
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Sign in with a magic-link token' })
+  @ApiBody({ type: ForgotPasswordRequestDto })
+  @ApiOkResponse({ type: AuthSessionResponseDto, description: 'Authenticated session response.' })
+  @ApiRateLimit('authLogin')
+  @Post('magic-link/sign-in')
+  async signInWithMagicLink(
+    @Body(new ZodValidationPipe(magicLinkSignInSchema)) input: { email: string; token: string },
+  ): Promise<AuthSessionResponse> {
+    return this.passwordRecoveryService.signInWithMagicLink(input);
   }
 
   @Public()

@@ -1,6 +1,6 @@
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, RefreshControl, Text, View } from 'react-native';
 import {
   type ListingPreview,
   type NotificationRecord,
@@ -385,10 +385,23 @@ export function MapViewScreen() {
 }
 
 export function SavedListingsScreen() {
-  const { savedListings, isListingUnlocked } = useMobileApp();
+  const {
+    savedListings,
+    savedListingsState,
+    isListingUnlocked,
+    refreshSavedListings,
+  } = useMobileApp();
 
   return (
-    <Screen withTabBar>
+    <Screen
+      withTabBar
+      refreshControl={
+        <RefreshControl
+          refreshing={savedListingsState.isRefreshing}
+          onRefresh={() => void refreshSavedListings()}
+        />
+      }
+    >
       <View className="gap-1">
         <Text className="font-display text-display-02 text-foreground">Saved</Text>
         <Text className="font-body text-body-md text-muted-foreground">
@@ -396,7 +409,31 @@ export function SavedListingsScreen() {
         </Text>
       </View>
 
-      {savedListings.length === 0 ? (
+      {savedListings.length === 0 && savedListingsState.status === 'loading' ? (
+        <View className="items-center gap-3 rounded-[16px] border border-border bg-surface-subtle px-6 py-12">
+          <AppIcon name="reload-outline" size={28} />
+          <Text className="font-body text-body-md text-muted-foreground">Loading saved homes…</Text>
+        </View>
+      ) : null}
+
+      {savedListings.length === 0 && savedListingsState.status === 'error' ? (
+        <View className="items-center gap-3 rounded-[16px] border border-border bg-surface-subtle px-6 py-12">
+          <AppIcon name="cloud-offline-outline" size={28} />
+          <Text className="text-center font-body text-body-md text-muted-foreground">
+            {savedListingsState.error ?? 'We could not load your saved homes.'}
+          </Text>
+          <Button size="sm" label="Try again" onPress={() => void refreshSavedListings()} />
+        </View>
+      ) : null}
+
+      {savedListings.length > 0 && savedListingsState.error ? (
+        <View className="gap-3 rounded-[16px] border border-border bg-surface-subtle p-4">
+          <Text className="font-body text-body-md text-muted-foreground">{savedListingsState.error}</Text>
+          <Button size="sm" variant="outline" label="Retry" onPress={() => void refreshSavedListings()} />
+        </View>
+      ) : null}
+
+      {savedListings.length === 0 && savedListingsState.status === 'ready' ? (
         <View className="items-center gap-3 rounded-[16px] border border-border bg-surface-subtle px-6 py-12">
           <View className="h-14 w-14 items-center justify-center rounded-full bg-accent-soft">
             <AppIcon name="heart-outline" size={26} active />

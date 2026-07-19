@@ -7,8 +7,10 @@
  */
 import { Link } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, RefreshControl, Text, View } from 'react-native';
 import { AppIcon } from '@/components/ui/app-icon';
+import { Button } from '@/components/ui/button';
+import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { ListingCard } from '@/components/ui/listing-card';
 import { MotionView } from '@/components/ui/motion-view';
@@ -18,7 +20,14 @@ import { appRoutes, contactRevealedHref, listingHref } from '@/lib/routes';
 
 export function HomeScreen() {
   const [selectedFilter, setSelectedFilter] = useState('For you');
-  const { walletBalance, listingFilters, browseListings, isListingUnlocked } = useMobileApp();
+  const {
+    walletBalance,
+    listingFilters,
+    browseListings,
+    feedState,
+    isListingUnlocked,
+    refreshListings,
+  } = useMobileApp();
 
   const filteredListings = browseListings.filter((listing) => {
     if (selectedFilter === 'Verified') return listing.status === 'Verified';
@@ -30,7 +39,15 @@ export function HomeScreen() {
   });
 
   return (
-    <Screen withTabBar>
+    <Screen
+      withTabBar
+      refreshControl={
+        <RefreshControl
+          refreshing={feedState.isRefreshing}
+          onRefresh={() => void refreshListings()}
+        />
+      }
+    >
       <View className="flex-row items-center justify-between">
         <Text className="font-display text-display-02 text-foreground">Find Your Home</Text>
         <Link href={appRoutes.filters} asChild>
@@ -79,6 +96,43 @@ export function HomeScreen() {
           />
         ))}
       </View>
+
+      {browseListings.length === 0 && feedState.status === 'loading' ? (
+        <Card>
+          <CardTitle>Loading homes</CardTitle>
+          <CardDescription>Fetching the latest verified listings for you.</CardDescription>
+        </Card>
+      ) : null}
+
+      {browseListings.length === 0 && feedState.status === 'error' ? (
+        <Card>
+          <CardTitle>Could not load homes</CardTitle>
+          <CardDescription>{feedState.error ?? 'Check your connection and try again.'}</CardDescription>
+          <Button className="mt-2" label="Try again" onPress={() => void refreshListings()} />
+        </Card>
+      ) : null}
+
+      {browseListings.length === 0 && feedState.status === 'ready' ? (
+        <Card>
+          <CardTitle>No homes available yet</CardTitle>
+          <CardDescription>New verified listings will appear here as soon as they are published.</CardDescription>
+        </Card>
+      ) : null}
+
+      {browseListings.length > 0 && feedState.error ? (
+        <Card>
+          <CardTitle>Could not refresh homes</CardTitle>
+          <CardDescription>{feedState.error}</CardDescription>
+          <Button className="mt-2" variant="outline" label="Retry" onPress={() => void refreshListings()} />
+        </Card>
+      ) : null}
+
+      {browseListings.length > 0 && filteredListings.length === 0 ? (
+        <Card>
+          <CardTitle>No homes match this filter</CardTitle>
+          <CardDescription>Choose another filter or pull down to refresh the latest listings.</CardDescription>
+        </Card>
+      ) : null}
 
       {filteredListings.map((listing) => (
         <ListingCard

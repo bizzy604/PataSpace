@@ -115,6 +115,8 @@ SEVERITY: MEDIUM
 
 **Root cause:** it was never built. `apps/mobile/src/screens/CreditScreens.tsx:725-739` renders
 "Photo evidence upload is coming soon." The upload module only presigns listing photos/videos.
+- ImageAvatar should also be working, fix it too.
+- The admin  can see the evidence.
 
 **Fix:** add an `evidence` upload kind in the upload module on a private prefix (never
 public-read), accept confirmed keys on dispute create, extend the dispute contract with
@@ -140,11 +142,10 @@ mobile mock `walletPackages` at `apps/mobile/src/data/mock-listings.ts:589-614`.
 ## ISSUE 8 — Resend email verification (6-digit code + magic link), claude.ai-style
 SEVERITY: PRIORITY (new feature)
 
-**Current state:** no email infrastructure exists anywhere in the API. Registration is
-email-identified but phone-OTP verified, with sandbox OTP 123456 (`app.config.ts:64-66`).
+**Current state:** no email infrastructure exists anywhere in the API. Registration is email-identified but phone-OTP verified, with sandbox OTP 123456 (`app.config.ts:64-66`).
 
 **Build plan:**
-1. `apps/api/src/infrastructure/email/` following the exact sms/storage provider pattern: `EMAIL_PROVIDER=sandbox|resend`, sandbox logs the mail, resend provider calls the Resend REST API (`RESEND_API_KEY`, `EMAIL_FROM=PataSpace <no-reply@dalakenya.com>`). dalakenya.com domain must be verified in Resend (SPF/DKIM) before go-live.
+1. `apps/api/src/infrastructure/email/` following the exact sms/storage provider pattern: `EMAIL_PROVIDER=sandbox|resend`, sandbox logs the mail, resend provider calls the Resend REST API (`RESEND_API_KEY`, `EMAIL_FROM=PataSpace <no-reply@dalakenya.com>`). send.dalakenya.com domain must be verified in Resend (SPF/DKIM) before go-live. (Its already verified)
 2. Email verification flow in the auth module: issue a 6-digit code (reuse OTP hashing/TTL/attempt rules) plus a signed magic-link token in the same mail; either path verifies. Endpoints: request-email-verification, verify-email-code, verify-email-link. Rate-limited like the phone OTP.
 3. Template: single branded HTML template, code displayed large, one button for the magic link, both expiring together (10 min).
 4. Mobile: verification screen accepts the 6-digit code; magic link deep-links into the app (`https://dalakenya.com/verify-email?...` universal link with a web fallback page).

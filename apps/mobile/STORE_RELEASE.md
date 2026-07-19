@@ -44,7 +44,7 @@ each environment (`development`, `preview`, `production`) once:
 
 ```bash
 cd apps/mobile
-eas env:create --environment production --name EXPO_PUBLIC_API_BASE_URL --value "https://api.<domain>/api/v1" --visibility plaintext
+eas env:create --environment production --name EXPO_PUBLIC_API_BASE_URL --value "https://api.dalakenya.com/api/v1" --visibility plaintext
 eas env:create --environment production --name GOOGLE_MAPS_API_KEY --value "<android-maps-key>" --visibility sensitive
 ```
 

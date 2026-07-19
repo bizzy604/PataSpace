@@ -5,7 +5,6 @@ import { useAuthSession } from '@/features/auth/auth-provider';
 import {
   confirmationStages,
   defaultReferralCode,
-  featuredListings,
   filterBudgetOptions,
   filterSizeOptions,
   formatListingHouseType,
@@ -13,14 +12,8 @@ import {
   getListingById,
   helpArticles,
   initialDraft,
-  initialMyListingRows,
-  initialNotifications,
-  initialSavedListingIds,
   initialSearchFilters,
   initialSettings,
-  initialTransactions,
-  initialUnlockContactInfoByListingId,
-  initialUnlocks,
   initialUserProfile,
   listingFilters,
   neighborhoodSuggestions,
@@ -65,7 +58,6 @@ import { createSupportTicket as createSupportTicketApi } from '@/lib/api/support
 import { createReview as createReviewApi } from '@/lib/api/reviews';
 import { createReferral as createReferralApi, fetchMyReferrals } from '@/lib/api/referrals';
 import {
-  fetchMySavedListings,
   saveListing as saveListingApi,
   unsaveListing as unsaveListingApi,
 } from '@/lib/api/saved-listings';
@@ -77,7 +69,12 @@ import {
   type ReferralRecord,
   type UnlockDeadReason,
 } from '@pataspace/contracts';
-import { creditTransactionToRecord, useMobileApiSync } from './use-mobile-api-sync';
+import {
+  creditTransactionToRecord,
+  useMobileApiSync,
+} from './use-mobile-api-sync';
+import { listingCardToPreview } from '@/lib/listings/listing-preview';
+import type { RemoteResourceState } from '@/lib/remote-data-state';
 
 type PendingTopUp = {
   packageId: string;
@@ -101,6 +98,9 @@ type MobileAppContextValue = {
   myListings: MyListingRow[];
   savedListings: ListingPreview[];
   savedListingIds: string[];
+  feedState: RemoteResourceState;
+  myListingsState: RemoteResourceState;
+  savedListingsState: RemoteResourceState;
   walletBalance: number;
   transactions: TransactionRecord[];
   unlocks: UnlockRecord[];
@@ -136,6 +136,9 @@ type MobileAppContextValue = {
   updateSettings: (settings: Partial<AppSettings>) => void;
   setColorSchemePreference: (scheme: AppColorScheme) => void;
   toggleSaved: (listingId: string) => Promise<void>;
+  refreshListings: () => Promise<void>;
+  refreshMyListings: () => Promise<void>;
+  refreshSavedListings: () => Promise<void>;
   updateSearchFilters: (filters: Partial<SearchFilters>) => void;
   resetSearchFilters: () => void;
   addDraftPhoto: (photo: ListingDraftPhoto) => void;
@@ -165,8 +168,8 @@ type MobileAppContextValue = {
   submitSupportMessage: (topic: string, message: string) => Promise<'success' | 'error'>;
   submitReview: (rating: number, comment: string) => void;
   submitReviewForUnlock: (unlockId: string, rating: number, comment: string) => Promise<'success' | 'already_reviewed' | 'not_confirmed' | 'forbidden' | 'error'>;
-  submitDispute: (subject: string, detail: string) => void;
-  submitDisputeForUnlock: (unlockId: string, subject: string, detail: string) => Promise<'success' | 'already_filed' | 'error'>;
+  submitDispute: (subject: string, detail: string, evidence?: string[]) => void;
+  submitDisputeForUnlock: (unlockId: string, subject: string, detail: string, evidence?: string[]) => Promise<'success' | 'already_filed' | 'error'>;
   sendReferralInvite: (phone: string) => Promise<'success' | 'already_invited' | 'self' | 'error'>;
   refreshReferrals: () => Promise<void>;
 };
@@ -226,16 +229,17 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
     useNativeWindColorScheme();
   const [user, setUser] = useState(initialUserProfile);
   const [settings, setSettings] = useState(initialSettings);
-  const [listings, setListings] = useState(featuredListings);
-  const [myListings, setMyListings] = useState(initialMyListingRows);
-  const [savedListingIds, setSavedListingIds] = useState(initialSavedListingIds);
-  const [walletBalance, setWalletBalance] = useState(5000);
-  const [transactions, setTransactions] = useState(initialTransactions);
-  const [unlocks, setUnlocks] = useState(initialUnlocks);
+  const [listings, setListings] = useState<ListingPreview[]>([]);
+  const [myListings, setMyListings] = useState<MyListingRow[]>([]);
+  const [savedListings, setSavedListings] = useState<ListingPreview[]>([]);
+  const [savedListingIds, setSavedListingIds] = useState<string[]>([]);
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
+  const [unlocks, setUnlocks] = useState<UnlockRecord[]>([]);
   const [receivedUnlocks, setReceivedUnlocks] = useState<ReceivedUnlockRecord[]>([]);
   const [listingContactInfoById, setListingContactInfoById] =
-    useState<Record<string, UnlockContactInfo>>(initialUnlockContactInfoByListingId);
-  const [notifications, setNotifications] = useState(initialNotifications);
+    useState<Record<string, UnlockContactInfo>>({});
+  const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
   const [pendingTopUp, setPendingTopUp] = useState<PendingTopUp | null>(null);
   const [draft, setDraft] = useState(initialDraft);
   const [referrals, setReferrals] = useState<ReferralRecord[]>([]);
@@ -244,7 +248,14 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
   const theme = mobileThemes[colorScheme];
   const isAuthenticated = isAuthLoaded && !!isSignedIn;
 
-  useMobileApiSync(
+  const {
+    feedState,
+    myListingsState,
+    savedListingsState,
+    refreshListings,
+    refreshMyListings,
+    refreshSavedListings,
+  } = useMobileApiSync(
     isAuthenticated,
     getToken,
     setListings,
@@ -255,10 +266,10 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
     setMyListings,
     setReferrals,
     setSavedListingIds,
+    setSavedListings,
   );
 
   const browseListings = listings.filter((listing) => listing.status !== 'Review' && listing.status !== 'Closed');
-  const savedListings = browseListings.filter((listing) => savedListingIds.includes(listing.id));
   const latestUnlock = unlocks[0];
   const latestTopUp = transactions.find((transaction) => transaction.type === 'topup');
   const latestSubmittedListing = myListings[0];
@@ -285,6 +296,23 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
       phone: authUser.phoneNumber ?? current.phone ?? initialUserProfile.phone,
     }));
   }, [authUser, isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated) return;
+
+    // Remote account data must never survive into a signed-out session or be
+    // mistaken for demo data while the next session hydrates.
+    setMyListings([]);
+    setSavedListings([]);
+    setSavedListingIds([]);
+    setWalletBalance(0);
+    setTransactions([]);
+    setUnlocks([]);
+    setReceivedUnlocks([]);
+    setListingContactInfoById({});
+    setNotifications([]);
+    setReferrals([]);
+  }, [isAuthenticated]);
 
   function pushNotification(notification: NotificationRecord) {
     setNotifications((current) => [notification, ...current]);
@@ -325,15 +353,31 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
 
   async function toggleSaved(listingId: string) {
     const wasSaved = savedListingIds.includes(listingId);
+    const previousPreview =
+      savedListings.find((listing) => listing.id === listingId) ?? getListing(listingId);
     // Optimistically flip — restore on failure
     setSavedListingIds((current) =>
       wasSaved ? current.filter((id) => id !== listingId) : [listingId, ...current],
     );
+    setSavedListings((current) => {
+      if (wasSaved) {
+        return current.filter((listing) => listing.id !== listingId);
+      }
+
+      return previousPreview
+        ? [previousPreview, ...current.filter((listing) => listing.id !== listingId)]
+        : current;
+    });
     try {
       if (wasSaved) {
         await unsaveListingApi(getToken, listingId);
       } else {
-        await saveListingApi(getToken, listingId);
+        const saved = await saveListingApi(getToken, listingId);
+        const preview = listingCardToPreview(saved.listing);
+        setSavedListings((current) => [
+          preview,
+          ...current.filter((listing) => listing.id !== listingId),
+        ]);
       }
     } catch {
       setSavedListingIds((current) =>
@@ -341,6 +385,17 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
           ? [listingId, ...current]
           : current.filter((id) => id !== listingId),
       );
+      setSavedListings((current) => {
+        if (
+          !wasSaved ||
+          !previousPreview ||
+          current.some((listing) => listing.id === listingId)
+        ) {
+          return current.filter((listing) => listing.id !== listingId);
+        }
+
+        return [previousPreview, ...current];
+      });
     }
   }
 
@@ -860,7 +915,7 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  function submitDispute(subject: string, detail: string) {
+  function submitDispute(subject: string, detail: string, evidence?: string[]) {
     pushNotification({
       id: `notif-dispute-${Date.now()}`,
       title: 'Dispute submitted',
@@ -868,16 +923,24 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
       time: 'Just now',
       target: { route: 'credits' },
     });
+    if (evidence?.length) {
+      console.info('Dispute evidence captured locally', { evidenceCount: evidence.length });
+    }
   }
 
   async function submitDisputeForUnlock(
     unlockId: string,
     subject: string,
     detail: string,
+    evidence?: string[],
   ): Promise<'success' | 'already_filed' | 'error'> {
     const reason = `${subject}: ${detail.trim()}`;
     try {
-      await createDisputeApi(getToken, { unlockId, reason });
+      await createDisputeApi(getToken, {
+        unlockId,
+        reason,
+        evidence: evidence?.length ? evidence : undefined,
+      });
       pushNotification({
         id: `notif-dispute-${Date.now()}`,
         title: 'Dispute filed',
@@ -940,6 +1003,9 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
         myListings,
         savedListings,
         savedListingIds,
+        feedState,
+        myListingsState,
+        savedListingsState,
         walletBalance,
         transactions,
         unlocks,
@@ -976,6 +1042,9 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
         updateSettings,
         setColorSchemePreference,
         toggleSaved,
+        refreshListings,
+        refreshMyListings,
+        refreshSavedListings,
         updateSearchFilters,
         resetSearchFilters,
         addDraftPhoto,

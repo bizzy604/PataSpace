@@ -129,6 +129,24 @@ export function DisputesPanel() {
                   {new Date(dispute.createdAt).toLocaleDateString('en-KE')} ·{' '}
                   {dispute.evidenceCount} evidence items · unlock {dispute.unlockId}
                 </CardDescription>
+                {dispute.evidenceCount > 0 ? (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <span className="rounded-full border border-border bg-muted px-2 py-1 text-xs text-muted-foreground">
+                      Evidence attached
+                    </span>
+                    {dispute.evidence.map((item) => (
+                      <a
+                        key={item}
+                        href={item}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-full border border-primary/30 bg-primary/10 px-2 py-1 text-xs font-medium text-primary"
+                      >
+                        Open attachment
+                      </a>
+                    ))}
+                  </div>
+                ) : null}
                 <CardDescription className="text-sm text-foreground/80">
                   “{dispute.reason}”
                 </CardDescription>
