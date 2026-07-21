@@ -24,7 +24,9 @@ export type SessionAction =
   /** A silent 401 refresh minted a new access token for the existing session. */
   | { type: 'TOKEN_REFRESHED'; accessToken: string }
   /** Explicit logout, or a refresh that failed (the refresh token is dead). */
-  | { type: 'SIGNED_OUT' };
+  | { type: 'SIGNED_OUT' }
+  /** Email verification updated the current user profile. */
+  | { type: 'USER_UPDATED'; user: AuthUser };
 
 export const initialSessionState: SessionState = { status: 'loading' };
 
@@ -42,6 +44,8 @@ export function sessionReducer(state: SessionState, action: SessionAction): Sess
         : state;
     case 'SIGNED_OUT':
       return { status: 'signed_out' };
+    case 'USER_UPDATED':
+      return state.status === 'signed_in' ? { ...state, user: action.user } : state;
     default:
       return state;
   }
@@ -62,3 +66,4 @@ export function currentAccessToken(state: SessionState): string | null {
 export function currentUser(state: SessionState): AuthUser | null {
   return state.status === 'signed_in' ? state.user : null;
 }
+

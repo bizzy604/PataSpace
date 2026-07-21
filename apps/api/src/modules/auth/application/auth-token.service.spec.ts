@@ -5,6 +5,7 @@ describe('AuthTokenService', () => {
     id: 'user_1',
     phoneNumberEncrypted: 'encrypted-phone',
     phoneVerified: true,
+    emailVerified: false,
     email: 'user@example.com',
     passwordHash: 'hash',
     firstName: 'John',
@@ -52,6 +53,7 @@ describe('AuthTokenService', () => {
         lastName: 'Doe',
         role: 'USER',
         phoneVerified: true,
+    emailVerified: false,
         email: 'user@example.com',
       }),
     };
@@ -76,6 +78,7 @@ describe('AuthTokenService', () => {
         role: 'USER',
         phoneNumber: '+254712345678',
         phoneVerified: true,
+        emailVerified: false,
       }),
       { expiresIn: '15m' },
     );
@@ -149,3 +152,4 @@ describe('AuthTokenService', () => {
     expect(txClient.refreshToken.deleteMany).toHaveBeenCalledWith({ where: { userId: 'user_1' } });
   });
 });
+

@@ -74,7 +74,7 @@ describe('MpesaPurchaseService', () => {
       metadata: {
         paymentAmountKES: 5000,
         requestedPhoneNumber: '+254712345678',
-        packageKey: '5_credits',
+        packageKey: '5000_credits',
       },
     });
 
@@ -89,7 +89,7 @@ describe('MpesaPurchaseService', () => {
         metadata: expect.objectContaining({
           paymentAmountKES: 5000,
           requestedPhoneNumber: '+254712345678',
-          packageKey: '5_credits',
+          packageKey: '5000_credits',
           failureReason: 'daraja down',
         }),
       },

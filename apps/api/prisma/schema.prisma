@@ -135,6 +135,7 @@ model User {
   phoneNumberEncrypted String?
   phoneVerified        Boolean             @default(false)
   email                String?             @unique
+  emailVerified        Boolean             @default(false)
   passwordHash         String?
   firstName            String
   lastName             String
@@ -589,3 +590,17 @@ model SystemConfig {
 
   @@map("system_config")
 }
+
+model EmailVerificationCode {
+  id        String   @id @default(cuid())
+  emailHash String
+  codeHash  String
+  attempts  Int      @default(0)
+  verified  Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([emailHash])
+  @@map("email_verification_codes")
+}
+

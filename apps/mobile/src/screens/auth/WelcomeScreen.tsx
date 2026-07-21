@@ -38,7 +38,7 @@ export function WelcomeScreen() {
           style={{ height: 120, width: 120 }}
           className="items-center justify-center overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.06]"
         >
-          <Image style={{ height: 72, width: 72 }} resizeMode="contain" source={pataspaceLogo} />
+          <Image style={{ height: "100%", width: "100%" }} resizeMode="contain" source={pataspaceLogo} />
         </View>
         <View className="items-center gap-2">
           <Text className="font-display text-headline-lg text-white">PataSpace</Text>

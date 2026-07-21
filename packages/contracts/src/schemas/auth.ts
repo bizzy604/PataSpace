@@ -88,6 +88,7 @@ export const authUserSchema = z.object({
   lastName: z.string().min(2),
   role: z.nativeEnum(Role),
   phoneVerified: z.boolean(),
+  emailVerified: z.boolean(),
   // Nullable, not optional-but-absent: every account has an email post
   // Clerk-removal, but accounts created before this migration (or via the
   // orphaned Clerk path) may still have none.
@@ -97,6 +98,19 @@ export const authUserSchema = z.object({
 export const authTokensSchema = z.object({
   accessToken: z.string().min(1),
   refreshToken: z.string().min(1),
+});
+
+export const requestEmailVerificationResponseSchema = z.object({
+  expiresIn: z.number().int().nonnegative(),
+});
+
+export const verifyEmailCodeSchema = z.object({
+  code: z.string().regex(/^\\d{4,6}$/),
+});
+
+export const verifyEmailLinkSchema = z.object({
+  email: emailSchema,
+  token: z.string().min(1),
 });
 
 export const authSessionSchema = z.object({

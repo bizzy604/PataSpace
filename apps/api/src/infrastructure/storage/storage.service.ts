@@ -17,6 +17,11 @@ export class StorageService {
     return this.provider.confirmUpload(input);
   }
 
+  /** Short-TTL read URL for private-prefix objects (dispute evidence). */
+  async createReadUrl(key: string) {
+    return this.provider.createReadUrl(key);
+  }
+
   async deleteObject(key: string) {
     return this.provider.deleteObject(key);
   }

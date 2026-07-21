@@ -91,7 +91,7 @@ describe('PaymentService (orchestrator)', () => {
   };
 
   const mpesaInput = {
-    package: '5_credits' as const,
+    package: '5000_credits' as const,
     paymentMethod: 'mpesa' as const,
     phoneNumber: '+254712345678',
   };
@@ -136,7 +136,7 @@ describe('PaymentService (orchestrator)', () => {
       prismaService.creditTransaction.findFirst.mockResolvedValue({ id: 'txn_pending' });
 
       await expect(
-        service.createPurchase('user_1', { ...mpesaInput, package: '10_credits' }, IDEMPOTENCY_KEY),
+        service.createPurchase('user_1', { ...mpesaInput, package: '10000_credits' }, IDEMPOTENCY_KEY),
       ).rejects.toBeInstanceOf(HttpException);
 
       expect(creditService.createTransaction).not.toHaveBeenCalled();
@@ -264,7 +264,7 @@ describe('PaymentService (orchestrator)', () => {
 
       const result = await service.createPurchase(
         'user_1',
-        { package: '5_credits', paymentMethod: 'stellar' },
+        { package: '5000_credits', paymentMethod: 'stellar' },
         IDEMPOTENCY_KEY,
       );
 
@@ -276,7 +276,7 @@ describe('PaymentService (orchestrator)', () => {
 
       const result = await service.createPurchase(
         'user_1',
-        { package: '5_credits', paymentMethod: 'stellar' },
+        { package: '5000_credits', paymentMethod: 'stellar' },
         IDEMPOTENCY_KEY,
       );
 

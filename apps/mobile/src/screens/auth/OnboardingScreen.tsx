@@ -16,7 +16,7 @@ import { AuthScreen } from './auth-shared';
 
 // Logo-only hero: the stock photos never fit the frame across screen sizes,
 // so the carousel leads with the brand mark instead (2026-07-16 decision).
-const pataspaceLogo = require('../../../assets/PataSpace Logo.png');
+const pataspaceLogo = require('../../../assets/photo5.jpg');
 
 export function OnboardingScreen() {
   const [slideIndex, setSlideIndex] = useState(0);
@@ -71,8 +71,10 @@ export function OnboardingScreen() {
         */}
         <View className="mt-2 min-h-[200px] flex-1 items-center justify-center rounded-[16px] bg-surface-subtle">
           <Image
-            style={{ height: 112, width: 112 }}
-            resizeMode="contain"
+            style={{ 
+              height: "100%", 
+              width: "100%"}}
+            resizeMode="cover"
             source={pataspaceLogo}
           />
         </View>

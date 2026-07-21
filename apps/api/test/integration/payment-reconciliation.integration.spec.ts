@@ -73,7 +73,7 @@ describe('Prisma-backed payment reconciliation flows', () => {
     }));
 
     const purchase = await paymentService.createPurchase(buyer.userId, {
-      package: '5_credits',
+      package: '5000_credits',
       paymentMethod: 'mpesa',
       phoneNumber: buyer.phoneNumber,
     }, `it-key-1-${Date.now()}`);
@@ -126,7 +126,7 @@ describe('Prisma-backed payment reconciliation flows', () => {
     }));
 
     const purchase = await paymentService.createPurchase(buyer.userId, {
-      package: '5_credits',
+      package: '5000_credits',
       paymentMethod: 'mpesa',
       phoneNumber: buyer.phoneNumber,
     }, `it-key-2-${Date.now()}`);
@@ -175,7 +175,7 @@ describe('Prisma-backed payment reconciliation flows', () => {
     );
 
     const purchase = await paymentService.createPurchase(buyer.userId, {
-      package: '5_credits',
+      package: '5000_credits',
       paymentMethod: 'mpesa',
       phoneNumber: buyer.phoneNumber,
     }, `it-key-3-${Date.now()}`);
@@ -211,7 +211,7 @@ describe('Prisma-backed payment reconciliation flows', () => {
     const buyer = await createVerifiedUser(context);
     const idempotencyKey = `parallel-${Date.now()}`;
     const input = {
-      package: '5_credits' as const,
+      package: '5000_credits' as const,
       paymentMethod: 'mpesa' as const,
       phoneNumber: buyer.phoneNumber,
     };
@@ -260,7 +260,7 @@ describe('Prisma-backed payment reconciliation flows', () => {
 
     const response = await paymentService.createPurchase(
       buyer.userId,
-      { package: '5_credits', paymentMethod: 'mpesa', phoneNumber: buyer.phoneNumber },
+      { package: '5000_credits', paymentMethod: 'mpesa', phoneNumber: buyer.phoneNumber },
       `fresh-${Date.now()}`,
     );
 

@@ -77,7 +77,7 @@ describe('Main public and admin API surface', () => {
       context,
       buyer.accessToken,
       buyer.phoneNumber,
-      '10_credits',
+      '10000_credits',
     );
 
     await completeSandboxPurchase(context, {
@@ -236,7 +236,7 @@ describe('Main public and admin API surface', () => {
     });
     await approveListing(context, admin.accessToken, listing.body.id);
 
-    const purchase = await createCreditPurchase(context, buyer.accessToken, buyer.phoneNumber, '10_credits');
+    const purchase = await createCreditPurchase(context, buyer.accessToken, buyer.phoneNumber, '10000_credits');
     await completeSandboxPurchase(context, {
       phoneNumber: buyer.phoneNumber,
       transactionId: purchase.body.transactionId,

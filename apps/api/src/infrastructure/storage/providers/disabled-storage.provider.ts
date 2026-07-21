@@ -18,6 +18,10 @@ export class DisabledStorageProvider implements StorageProvider {
     throw new Error(`${this.provider} storage provider is not implemented yet.`);
   }
 
+  async createReadUrl(_key: string): Promise<string> {
+    throw new Error(`${this.provider} storage provider is not implemented yet.`);
+  }
+
   async deleteObject(_key: string): Promise<DeleteObjectResult> {
     throw new Error(`${this.provider} storage provider is not implemented yet.`);
   }
@@ -30,3 +34,4 @@ export class DisabledStorageProvider implements StorageProvider {
     };
   }
 }
+

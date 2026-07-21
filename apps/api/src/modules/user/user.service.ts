@@ -19,6 +19,7 @@ export const userSelect = {
   id: true,
   phoneNumberEncrypted: true,
   phoneVerified: true,
+  emailVerified: true,
   email: true,
   passwordHash: true,
   firstName: true,
@@ -36,6 +37,7 @@ export type StoredUser = {
   id: string;
   phoneNumberEncrypted: string | null;
   phoneVerified: boolean;
+  emailVerified: boolean;
   email: string | null;
   passwordHash: string | null;
   firstName: string;
@@ -104,6 +106,7 @@ export class UserService {
       lastName: user.lastName,
       role: user.role as unknown as ContractRole,
       phoneVerified: user.phoneVerified,
+      emailVerified: user.emailVerified,
       email: user.email,
     };
   }

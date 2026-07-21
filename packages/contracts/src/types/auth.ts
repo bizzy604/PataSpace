@@ -7,6 +7,7 @@ export type AuthUser = {
   lastName: string;
   role: Role;
   phoneVerified: boolean;
+  emailVerified: boolean;
   // Nullable: every account has an email post Clerk-removal, but accounts
   // created before this migration may still have none.
   email: string | null;
@@ -77,6 +78,19 @@ export type RefreshRequest = {
 
 export type LogoutRequest = {
   refreshToken: string;
+};
+
+export type RequestEmailVerificationResponse = {
+  expiresIn: number;
+};
+
+export type VerifyEmailCodeRequest = {
+  code: string;
+};
+
+export type VerifyEmailLinkRequest = {
+  email: string;
+  token: string;
 };
 
 export type AuthSessionResponse = {

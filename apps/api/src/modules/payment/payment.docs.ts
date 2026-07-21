@@ -8,8 +8,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { TransactionStatus } from '@prisma/client';
 
 export class PurchaseCreditsRequestDto {
-  @ApiProperty({ enum: ['5_credits', '10_credits', '20_credits'], example: '5_credits' })
-  package!: '5_credits' | '10_credits' | '20_credits';
+  @ApiProperty({ enum: ['500_credits', '1000_credits', '2500_credits', '5000_credits', '10000_credits', '20000_credits'], example: '5000_credits' })
+  package!: '500_credits' | '1000_credits' | '2500_credits' | '5000_credits' | '10000_credits' | '20000_credits';
 
   @ApiProperty({ enum: ['mpesa', 'stellar'], example: 'mpesa', description: 'Payment method. Use mpesa for M-Pesa STK push; use stellar to receive a Stellar payment address.' })
   paymentMethod!: 'mpesa' | 'stellar';

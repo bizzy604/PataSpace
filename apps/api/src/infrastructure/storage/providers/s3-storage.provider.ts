@@ -1,5 +1,6 @@
 import {
   DeleteObjectCommand,
+  GetObjectCommand,
   HeadBucketCommand,
   HeadObjectCommand,
   PutObjectCommand,
@@ -92,6 +93,24 @@ export class S3StorageProvider implements StorageProvider {
     }
   }
 
+  /**
+   * Presigned GET for private-prefix objects (dispute evidence). Listing media
+   * stays on the plain public URL path; this exists so private objects can be
+   * read server-authorized without opening the bucket.
+   */
+  async createReadUrl(key: string) {
+    return getSignedUrl(
+      this.client,
+      new GetObjectCommand({
+        Bucket: this.config.bucket,
+        Key: key,
+      }),
+      {
+        expiresIn: this.config.presignTtlSeconds,
+      },
+    );
+  }
+
   async deleteObject(key: string) {
     await this.client.send(
       new DeleteObjectCommand({
@@ -132,3 +151,4 @@ export class S3StorageProvider implements StorageProvider {
     return `${baseUrl.replace(/\/$/, '')}/${key.split('/').map(encodeURIComponent).join('/')}`;
   }
 }
+

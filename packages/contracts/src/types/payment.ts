@@ -6,10 +6,7 @@ export type CreditPurchasePackage =
   | '2500_credits'
   | '5000_credits'
   | '10000_credits'
-  | '20000_credits'
-  | '5_credits'
-  | '10_credits'
-  | '20_credits';
+  | '20000_credits';
 
 export type PaymentMethod = 'mpesa' | 'stellar';
 
@@ -131,3 +128,4 @@ export type MpesaB2CTimeoutRequest = {
   };
   [key: string]: unknown;
 };
+

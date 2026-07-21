@@ -114,6 +114,9 @@ export class AuthUserResponseDto {
   @ApiProperty({ example: true })
   phoneVerified!: boolean;
 
+  @ApiProperty({ example: false })
+  emailVerified!: boolean;
+
   @ApiProperty({ example: 'john@example.com', nullable: true })
   email!: string | null;
 }
@@ -136,3 +139,4 @@ export class RefreshResponseDto {
   @ApiProperty({ example: 'refresh_token_here' })
   refreshToken!: string;
 }
+

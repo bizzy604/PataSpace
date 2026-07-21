@@ -25,6 +25,7 @@ const user: AuthUser = {
   lastName: 'Kevin',
   role: Role.USER,
   phoneVerified: true,
+  emailVerified: true,
   email: 'amoni@example.com',
 };
 
@@ -80,4 +81,18 @@ describe('sessionReducer', () => {
     const next = sessionReducer(initialSessionState, { type: 'SIGNED_OUT' });
     expect(next).toEqual({ status: 'signed_out' });
   });
+
+  it('USER_UPDATED swaps the user while staying signed in (email verification)', () => {
+    const signedIn: SessionState = { status: 'signed_in', accessToken: 'access-1', user };
+    const verified = { ...user, emailVerified: true };
+    const next = sessionReducer(signedIn, { type: 'USER_UPDATED', user: verified });
+    expect(next).toEqual({ status: 'signed_in', accessToken: 'access-1', user: verified });
+  });
+
+  it('USER_UPDATED is a no-op when not signed in', () => {
+    const signedOut: SessionState = { status: 'signed_out' };
+    const next = sessionReducer(signedOut, { type: 'USER_UPDATED', user });
+    expect(next).toBe(signedOut);
+  });
 });
+

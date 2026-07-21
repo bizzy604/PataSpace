@@ -12,6 +12,7 @@
  * `expo install --check` uses), so this test keeps working across SDK
  * upgrades without edits.
  */
+import * as fs from "fs";
 import * as path from "path";
 
 type Triple = [number, number, number];
@@ -85,6 +86,28 @@ describe("styling pipeline", () => {
     expect(declared["react-native-css-interop"]).toBe(
       nativewindPkg.dependencies["react-native-css-interop"],
     );
+  });
+});
+
+describe("navigation module dedupe", () => {
+  // When react/react-native peer contexts split, pnpm installs multiple
+  // physical copies of @react-navigation/native. Wrapped navigation
+  // components then read context from a different copy than the running
+  // Stack, causing "Could not find a navigation context" on theme switch
+  // (found 2026-07-16).
+  it("resolves one physical @react-navigation/native from both the app and expo-router", () => {
+    const appRoot = path.resolve(__dirname, "../../..");
+    const fromApp = require.resolve("@react-navigation/native", {
+      paths: [appRoot],
+    });
+    const routerRoot = path.dirname(
+      require.resolve("expo-router/package.json", { paths: [appRoot] }),
+    );
+    const fromRouter = require.resolve("@react-navigation/native", {
+      paths: [routerRoot],
+    });
+
+    expect(fs.realpathSync(fromApp)).toBe(fs.realpathSync(fromRouter));
   });
 });
 

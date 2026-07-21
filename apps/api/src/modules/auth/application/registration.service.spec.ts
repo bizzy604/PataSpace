@@ -12,6 +12,7 @@ describe('RegistrationService', () => {
     id: 'user_1',
     phoneNumberEncrypted: 'encrypted-phone',
     phoneVerified: true,
+    emailVerified: false,
     email: 'user@example.com',
     passwordHash: 'hashed-password',
     firstName: 'John',
@@ -110,6 +111,7 @@ describe('RegistrationService', () => {
       const { service } = createRegistrationService({
         existingByEmail: createStoredUser({
           phoneVerified: false,
+    emailVerified: false,
           isBanned: true,
           banReason: 'Terms violation',
         }),

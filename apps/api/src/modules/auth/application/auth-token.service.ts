@@ -18,7 +18,7 @@ import { StoredUser, UserService } from '../../user/user.service';
 type MagicLinkTokenPayload = {
   sub: string;
   email: string;
-  purpose: 'magic-link';
+  purpose: 'magic-link' | 'email-verification';
 };
 
 @Injectable()
@@ -56,6 +56,7 @@ export class AuthTokenService {
       user: {
         ...this.userService.toAuthUser(user),
         role: user.role as unknown as ContractRole,
+      emailVerified: user.emailVerified,
       },
     };
   }
@@ -69,6 +70,7 @@ export class AuthTokenService {
           ? this.userService.decryptPhoneNumber(user.phoneNumberEncrypted)
           : null,
         phoneVerified: user.phoneVerified,
+        emailVerified: user.emailVerified,
         firstName: user.firstName,
         lastName: user.lastName,
       },
@@ -99,6 +101,27 @@ export class AuthTokenService {
     return this.jwtService.verifyAsync<MagicLinkTokenPayload>(token);
   }
 
+  async createEmailVerificationToken(user: StoredUser): Promise<string> {
+    if (!user.email) {
+      throw new Error(`Cannot create an email-verification token for a user without an email address.`);
+    }
+
+    return this.jwtService.signAsync(
+      {
+        sub: user.id,
+        email: user.email,
+        purpose: `email-verification`,
+      } satisfies MagicLinkTokenPayload,
+      {
+        expiresIn: this.magicLinkTokenTtl,
+      } as never,
+    );
+  }
+
+  async verifyEmailVerificationToken(token: string): Promise<MagicLinkTokenPayload> {
+    return this.jwtService.verifyAsync<MagicLinkTokenPayload>(token);
+  }
+
   async createRefreshToken(tx: Prisma.TransactionClient, userId: string) {
     const refreshToken = randomBytes(48).toString('base64url');
     const expiresAt = new Date(Date.now() + this.refreshTokenTtlDays * 24 * 60 * 60 * 1000);
@@ -123,3 +146,4 @@ export class AuthTokenService {
     return hashSecretValue(`${token}:${this.refreshTokenSecret}`);
   }
 }
+

@@ -27,9 +27,6 @@ export const CREDIT_PACKAGES: Record<CreditPurchasePackage, PurchasePackageConfi
   '5000_credits': { amountKES: 5000, credits: 5000, label: '5,000 credits package' },
   '10000_credits': { amountKES: 10000, credits: 10500, label: '10,500 credits package' },
   '20000_credits': { amountKES: 20000, credits: 22000, label: '22,000 credits package' },
-  '5_credits': { amountKES: 5000, credits: 5000, label: '5,000 credits package' },
-  '10_credits': { amountKES: 10000, credits: 10500, label: '10,500 credits package' },
-  '20_credits': { amountKES: 20000, credits: 22000, label: '22,000 credits package' },
 };
 
 export function buildMpesaPurchaseResponse(

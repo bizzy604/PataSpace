@@ -8,6 +8,7 @@ describe('AuthService (session: login, refresh, logout)', () => {
     id: 'user_1',
     phoneNumberEncrypted: 'encrypted-phone',
     phoneVerified: true,
+    emailVerified: false,
     email: 'user@example.com',
     passwordHash: await bcrypt.hash('SecurePassword123!', 12),
     firstName: 'John',

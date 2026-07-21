@@ -24,6 +24,9 @@ import type {
   ResetPasswordRequest,
   UserProfile,
   VerifyOtpRequest,
+  RequestEmailVerificationResponse,
+  VerifyEmailCodeRequest,
+  VerifyEmailLinkRequest,
 } from '@pataspace/contracts';
 import { apiFetch, publicFetch } from '../api-client';
 
@@ -99,6 +102,31 @@ export async function logout(
 }
 
 /** Hydrates the session's user on a cold start (refresh returns tokens only, no user). */
+export async function requestEmailVerification(
+  getToken: () => Promise<string | null>,
+): Promise<RequestEmailVerificationResponse> {
+  return apiFetch<RequestEmailVerificationResponse>('/auth/email-verification/request', getToken, {
+    method: 'POST',
+  });
+}
+
+export async function verifyEmailCode(
+  getToken: () => Promise<string | null>,
+  payload: VerifyEmailCodeRequest,
+): Promise<UserProfile> {
+  return apiFetch<UserProfile>('/auth/email-verification/verify-code', getToken, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function verifyEmailLink(payload: VerifyEmailLinkRequest): Promise<UserProfile> {
+  return publicFetch<UserProfile>('/auth/email-verification/verify-link', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function fetchMe(getToken: () => Promise<string | null>): Promise<UserProfile> {
   return apiFetch<UserProfile>('/users/me', getToken);
 }

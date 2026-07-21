@@ -10,6 +10,7 @@ import { ListRow } from '@/components/ui/list-row';
 import { Screen } from '@/components/ui/screen';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
+import { useAuthSession } from '@/features/auth/auth-provider';
 import { appRoutes } from '@/lib/routes';
 
 const pataspaceLogo = require('../../assets/PataSpace Logo.png');
@@ -24,6 +25,8 @@ function SectionLabel({ children }: { children: string }) {
 
 export function ProfileScreen() {
   const { user, myListings, unlocks, savedListings, logout } = useMobileApp();
+  const { user: authUser } = useAuthSession();
+  const emailVerified = authUser?.emailVerified ?? false;
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showLogout, setShowLogout] = useState(false);
 
@@ -101,8 +104,8 @@ export function ProfileScreen() {
         <Link href={appRoutes.editProfile} asChild>
           <ListRow icon="person-outline" title="Edit Profile" chevron />
         </Link>
-        <Link href={appRoutes.editProfile} asChild>
-          <ListRow icon="shield-checkmark-outline" title="Verification Status" value="Verify" chevron />
+        <Link href={emailVerified ? appRoutes.editProfile : appRoutes.verifyEmail} asChild>
+          <ListRow icon="shield-checkmark-outline" title="Verification Status" value={emailVerified ? "Verified" : "Verify"} chevron />
         </Link>
       </View>
 

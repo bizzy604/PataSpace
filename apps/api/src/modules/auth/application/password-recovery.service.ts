@@ -105,6 +105,7 @@ export class PasswordRecoveryService {
           id: true,
           phoneNumberEncrypted: true,
           phoneVerified: true,
+          emailVerified: true,
           email: true,
           passwordHash: true,
           firstName: true,

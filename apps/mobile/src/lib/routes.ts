@@ -7,6 +7,7 @@ export const appRoutes = {
   onboarding: '/onboarding',
   register: '/register',
   verifyOtp: '/verify-otp',
+  verifyEmail: '/verify-email',
   login: '/login',
   forgotPassword: '/forgot-password',
   resetPassword: '/reset-password',
@@ -131,3 +132,4 @@ export function resetPasswordHref(email: string): Href {
     params: { email },
   };
 }
+

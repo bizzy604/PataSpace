@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "174b5ff9-37ae-4ba1-a311-d552dbc9ae96"
+      }
+    },
+    "android": {
+      "package": "com.amoni1234.pataspace"
+    }
+  }
+}

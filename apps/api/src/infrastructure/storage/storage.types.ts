@@ -39,6 +39,7 @@ export type DeleteObjectResult = {
 export interface StorageProvider {
   createUploadUrl(input: CreateUploadUrlInput): Promise<UploadUrlResult>;
   confirmUpload(input: ConfirmUploadInput): Promise<ConfirmUploadResult>;
+  createReadUrl(key: string): Promise<string>;
   deleteObject(key: string): Promise<DeleteObjectResult>;
   healthCheck(): Promise<ProviderHealth>;
 }

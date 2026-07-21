@@ -13,8 +13,15 @@ const createService = () => {
   const prismaService = {
     dispute: { count: jest.fn(), findMany: jest.fn() },
   };
+  const storageService = {
+    createReadUrl: jest.fn(async (key: string) => `presigned:` + key),
+  };
 
-  return { prismaService, service: new AdminDisputeService(prismaService as never) };
+  return {
+    prismaService,
+    storageService,
+    service: new AdminDisputeService(prismaService as never, storageService as never),
+  };
 };
 
 describe('AdminDisputeService', () => {
@@ -46,6 +53,7 @@ describe('AdminDisputeService', () => {
       status: DisputeStatus.OPEN,
       reason: 'Photos did not match',
       evidenceCount: 2,
+      evidence: ['a.jpg', 'b.jpg'],
       reportedBy: { id: 'user_1', firstName: 'John', lastName: 'Mwangi' },
       listing: { id: 'listing_1', county: 'Nairobi', neighborhood: 'Kilimani' },
       resolution: null,
@@ -71,5 +79,37 @@ describe('AdminDisputeService', () => {
     expect(prismaService.dispute.count).toHaveBeenCalledWith({
       where: { status: DisputeStatus.INVESTIGATING },
     });
+  });
+
+  it('presigns evidence-prefix URLs so private attachments render in the console', async () => {
+    const { prismaService, storageService, service } = createService();
+    prismaService.dispute.count.mockResolvedValue(1);
+    prismaService.dispute.findMany.mockResolvedValue([
+      {
+        id: 'dispute_1',
+        unlockId: 'unlock_1',
+        status: DisputeStatus.OPEN,
+        reason: 'Photos did not match',
+        evidence: [
+          'https://bucket.s3.eu-west-1.amazonaws.com/evidence/images/evidence-1.jpg',
+          'https://example.com/external-note.png',
+        ],
+        resolution: null,
+        resolvedAt: null,
+        createdAt: new Date('2026-06-28T10:00:00.000Z'),
+        user: { id: 'user_1', firstName: 'John', lastName: 'Mwangi' },
+        unlock: {
+          listing: { id: 'listing_1', county: 'Nairobi', neighborhood: 'Kilimani' },
+        },
+      },
+    ]);
+
+    const result = await service.listDisputes({ page: 1, limit: 20 });
+
+    expect(storageService.createReadUrl).toHaveBeenCalledWith('evidence/images/evidence-1.jpg');
+    expect(result.data[0].evidence).toEqual([
+      'presigned:evidence/images/evidence-1.jpg',
+      'https://example.com/external-note.png',
+    ]);
   });
 });

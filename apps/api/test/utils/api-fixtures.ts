@@ -303,7 +303,7 @@ export async function createCreditPurchase(
   context: ApiTestContext,
   accessToken: string,
   phoneNumber: string,
-  packageKey: '5_credits' | '10_credits' | '20_credits' = '10_credits',
+  packageKey: '5000_credits' | '10000_credits' | '20000_credits' = '10000_credits',
 ): Promise<Response> {
   return request(context.app.getHttpServer())
     .post('/api/v1/credits/purchase')

@@ -52,6 +52,7 @@ type StaticRoute =
   | `/transactions`
   | `/unlock`
   | `/verify-otp`
+  | `/verify-email`
   | `/app-update`
   | `/_sitemap`;
 
@@ -172,3 +173,4 @@ declare module 'expo-router' {
     }
   }
 }
+

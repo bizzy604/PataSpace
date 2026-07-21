@@ -15,11 +15,13 @@ import { UserModule } from '../user/user.module';
 import { ReferralModule } from '../referral/referral.module';
 import { AuthCleanupService } from './auth.cleanup.service';
 import { AuthController } from './auth.controller';
+import { EmailVerificationController } from './email-verification.controller';
 import { AuthService } from './auth.service';
 import { AuthOtpService } from './application/auth-otp.service';
 import { AuthTokenService } from './application/auth-token.service';
 import { PasswordRecoveryService } from './application/password-recovery.service';
 import { RegistrationService } from './application/registration.service';
+import { EmailVerificationService } from './application/email-verification.service';
 
 @Module({
   imports: [
@@ -36,7 +38,7 @@ import { RegistrationService } from './application/registration.service';
       }),
     }),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, EmailVerificationController],
   providers: [
     JwtStrategy,
     AuthService,
@@ -44,6 +46,7 @@ import { RegistrationService } from './application/registration.service';
     PasswordRecoveryService,
     AuthTokenService,
     AuthOtpService,
+    EmailVerificationService,
     AuthCleanupService,
   ],
   exports: [JwtModule, PassportModule, AuthService],

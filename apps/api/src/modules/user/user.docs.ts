@@ -19,6 +19,7 @@ export class UserProfileResponseDto {
 
   @ApiProperty({ example: true })
   phoneVerified!: boolean;
+  emailVerified!: boolean;
 
   @ApiPropertyOptional({ example: 'john@example.com' })
   email?: string;

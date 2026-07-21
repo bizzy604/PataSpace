@@ -287,7 +287,7 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
       .set('Idempotency-Key', idempotencyKey)
       .set('X-Forwarded-For', createForwardedFor())
       .send({
-        package: '10_credits',
+        package: '10000_credits',
         paymentMethod: 'mpesa',
         phoneNumber: buyer.phoneNumber,
       })
@@ -304,7 +304,7 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
       .set('Idempotency-Key', idempotencyKey)
       .set('X-Forwarded-For', createForwardedFor())
       .send({
-        package: '10_credits',
+        package: '10000_credits',
         paymentMethod: 'mpesa',
         phoneNumber: buyer.phoneNumber,
       })
@@ -319,7 +319,7 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
       .set('Authorization', `Bearer ${buyer.accessToken}`)
       .set('X-Forwarded-For', createForwardedFor())
       .send({
-        package: '10_credits',
+        package: '10000_credits',
         paymentMethod: 'mpesa',
         phoneNumber: buyer.phoneNumber,
       })
@@ -409,7 +409,7 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
       .set('Idempotency-Key', `phase5-dup-a-${Date.now()}`)
       .set('X-Forwarded-For', createForwardedFor())
       .send({
-        package: '5_credits',
+        package: '5000_credits',
         paymentMethod: 'mpesa',
         phoneNumber: buyer.phoneNumber,
       })
@@ -421,7 +421,7 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
       .set('Idempotency-Key', `phase5-dup-b-${Date.now()}`)
       .set('X-Forwarded-For', createForwardedFor())
       .send({
-        package: '5_credits',
+        package: '5000_credits',
         paymentMethod: 'mpesa',
         phoneNumber: buyer.phoneNumber,
       })
@@ -475,7 +475,7 @@ describe('Phase 5 credits, payments, and unlock flows', () => {
       .set('Idempotency-Key', `phase5-second-${Date.now()}`)
       .set('X-Forwarded-For', createForwardedFor())
       .send({
-        package: '5_credits',
+        package: '5000_credits',
         paymentMethod: 'mpesa',
         phoneNumber: buyer.phoneNumber,
       })

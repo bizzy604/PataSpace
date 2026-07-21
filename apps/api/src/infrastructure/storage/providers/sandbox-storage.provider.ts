@@ -47,6 +47,11 @@ export class SandboxStorageProvider implements StorageProvider {
     };
   }
 
+  /** Sandbox has no signed reads; return the plain stored URL. */
+  async createReadUrl(key: string) {
+    return this.buildUrl(this.config.publicBaseUrl, key);
+  }
+
   async deleteObject(key: string) {
     if (this.config.failDeleteObject) {
       throw new Error('Sandbox storage delete failure requested by configuration.');
@@ -78,3 +83,4 @@ export class SandboxStorageProvider implements StorageProvider {
     return `${baseUrl.replace(/\/$/, '')}/${key.split('/').map(encodeURIComponent).join('/')}`;
   }
 }
+

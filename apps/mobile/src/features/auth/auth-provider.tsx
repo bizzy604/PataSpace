@@ -37,6 +37,9 @@ import type {
   ResetPasswordRequest,
   UserProfile,
   VerifyOtpRequest,
+  RequestEmailVerificationResponse,
+  VerifyEmailCodeRequest,
+  VerifyEmailLinkRequest,
 } from '@pataspace/contracts';
 import { setAuthTokenSource } from '@/lib/api-client';
 import * as authApi from '@/lib/api/auth';
@@ -61,6 +64,7 @@ function profileToAuthUser(profile: UserProfile): AuthUser {
     lastName: profile.lastName,
     role: profile.role,
     phoneVerified: profile.phoneVerified,
+    emailVerified: profile.emailVerified,
     email: profile.email,
   };
 }
@@ -79,6 +83,9 @@ type AuthSessionContextValue = {
   forgotPassword: (payload: ForgotPasswordRequest) => Promise<ForgotPasswordResponse>;
   resetPassword: (payload: ResetPasswordRequest) => Promise<void>;
   logout: () => Promise<void>;
+  requestEmailVerification: () => Promise<RequestEmailVerificationResponse>;
+  verifyEmailCode: (payload: VerifyEmailCodeRequest) => Promise<void>;
+  verifyEmailLink: (payload: VerifyEmailLinkRequest) => Promise<void>;
 };
 
 const AuthSessionContext = createContext<AuthSessionContextValue | null>(null);
@@ -243,6 +250,23 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
     [persistRefreshToken],
   );
 
+
+  const requestEmailVerification = useCallback(async () => {
+    return authApi.requestEmailVerification(getToken);
+  }, [getToken]);
+
+  const verifyEmailCode = useCallback(
+    async (payload: VerifyEmailCodeRequest) => {
+      const profile = await authApi.verifyEmailCode(getToken, payload);
+      dispatch({ type: 'USER_UPDATED', user: profileToAuthUser(profile) });
+    },
+    [getToken],
+  );
+
+  const verifyEmailLink = useCallback(async (payload: VerifyEmailLinkRequest) => {
+    const profile = await authApi.verifyEmailLink(payload);
+    dispatch({ type: 'USER_UPDATED', user: profileToAuthUser(profile) });
+  }, []);
   const logout = useCallback(async () => {
     const accessToken = currentAccessToken(stateRef.current);
     const refreshToken = refreshTokenRef.current;
@@ -275,8 +299,11 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
       forgotPassword,
       resetPassword,
       logout,
+      requestEmailVerification,
+      verifyEmailCode,
+      verifyEmailLink,
     }),
-    [state, getToken, register, verifyOtp, resendOtp, login, forgotPassword, resetPassword, logout],
+    [state, getToken, register, verifyOtp, resendOtp, login, forgotPassword, resetPassword, logout, requestEmailVerification, verifyEmailCode, verifyEmailLink],
   );
 
   return <AuthSessionContext.Provider value={value}>{children}</AuthSessionContext.Provider>;
@@ -291,3 +318,9 @@ export function useAuthSession(): AuthSessionContextValue {
 
   return context;
 }
+
+
+
+
+
+

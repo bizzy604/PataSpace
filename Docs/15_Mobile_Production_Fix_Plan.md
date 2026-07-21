@@ -2,6 +2,20 @@
 
 Root-cause audit of the field-test failures reported on 2026-07-16, plus the fix plan.
 Every issue below was traced to specific lines. Statuses: IDENTIFIED, not fixed yet.
+## Status update (2026-07-20)
+
+- ISSUE 1: mobile detail-fetch and admin moderation grid shipped (05aa0ec, acab015). S3 bucket policy is the remaining ops step — see `infra/docker/S3_MEDIA_ACCESS.md`.
+- ISSUE 2: shipped (33d5d13). Empty/error/retry states, foreground refetch, pull-to-refresh, dev API banner, EAS production API URL, `remote-data-state.test.ts` gate.
+- ISSUE 3: blocked on ops — set `MPESA_MODE=live` + Daraja credentials on the VPS and recreate the container.
+- ISSUE 4: `expo-image-picker` aligned to ~17.0.11; `@react-navigation/native` realpath gate added to `expo-sdk-alignment.test.ts`.
+- ISSUE 5: shipped (33d5d13) — Saved page reads `fetchMySavedListings` directly.
+- ISSUE 6: evidence upload shipped (33d5d13). Admin render now uses short-TTL presigned GETs (`StorageProvider.createReadUrl` + `admin-dispute.service.presignEvidence`).
+- ISSUE 7: shipped, plus stale `5/10/20_credits` keys removed from contract and API (2026-07-20).
+- ISSUE 8: shipped (2026-07-20) — `auth/email-verification` endpoints (request, verify-code, verify-link), code+link single email, mobile `VerifyEmailScreen`, web `/verify-email` fallback, unit + integration tests.
+- Contact support: shipped (33d5d13).
+
+---
+
 
 ## System snapshot
 
