@@ -63,8 +63,7 @@ services:
     image: ${API_IMAGE:-ghcr.io/bizzy604/pataspace-api:latest}
     env_file: [.env]
     environment:
-      PORT: 3001
-    expose: ["3001"]
+      PORT: "127.0.0.1:3002:3001"
     depends_on:
       postgres:
         condition: service_healthy
