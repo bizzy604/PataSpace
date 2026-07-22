@@ -196,9 +196,6 @@ export function validateEnv(config: Record<string, unknown>) {
       ? `Missing required environment variables: ${missingKeys.join(', ')}. Copy apps/api/.env.example to apps/api/.env and fill in the values.`
       : 'Environment validation failed. Check apps/api/.env against apps/api/.env.example.';
 
-  console.error(
-  JSON.stringify(result.error.format(), null, 2)
-);
-
+  console.error(JSON.stringify(result.error.issues, null, 2));
 throw new Error(helpMessage);
 }

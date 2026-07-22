@@ -56,28 +56,34 @@ services:
         condition: service_healthy
     restart: "no"
 
-  api:
-    build:
-      context: ../..
-      dockerfile: apps/api/Dockerfile
-    image: ${API_IMAGE:-ghcr.io/bizzy604/pataspace-api:latest}
-    env_file: [.env]
-    environment:
-      PORT: "127.0.0.1:3002:3001"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      api-migrate:
-        condition: service_completed_successfully
-    healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    restart: unless-stopped
+api:
+  build:
+    context: ../..
+    dockerfile: apps/api/Dockerfile
+
+  image: ${API_IMAGE:-ghcr.io/bizzy604/pataspace-api:latest}
+
+  env_file:
+    - .env
+
+  environment:
+    PORT: 3001
+
+  ports:
+    - "127.0.0.1:3002:3001"
+
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    api-migrate:
+      condition: service_completed_successfully
+
+  healthcheck:
+    test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+
+  restart: unless-stopped
 
   web:
     build:
