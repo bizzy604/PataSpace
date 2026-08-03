@@ -12,13 +12,20 @@ export const buttonVariants = cva(
   'items-center justify-center border px-5 active:opacity-90',
   {
     variants: {
+      // Every variant carries a shadow-* utility, and the no-shadow ones use
+      // `shadow-none` rather than omitting it. `shadow-*` compiles to
+      // --tw-shadow* CSS variable declarations, and css-interop 0.2.6 crashes
+      // a mounted component that only STARTS setting variables on a later
+      // render (see lib/__tests__/css-interop-upgrade.test.ts). A dynamic
+      // `variant` prop crossing a shadow boundary would trip exactly that, so
+      // shadow presence must be uniform across the map. Visually inert.
       variant: {
         default: 'border-transparent bg-primary shadow-card',
-        secondary: 'border-border bg-secondary',
-        outline: 'border-2 border-primary bg-transparent',
+        secondary: 'border-border bg-secondary shadow-none',
+        outline: 'border-2 border-primary bg-transparent shadow-none',
         dark: 'border-transparent bg-surface-inverse shadow-floating',
         danger: 'border-transparent bg-danger shadow-card',
-        ghost: 'border-transparent bg-transparent',
+        ghost: 'border-transparent bg-transparent shadow-none',
       },
       size: {
         sm: 'min-h-10 px-4 py-2.5',

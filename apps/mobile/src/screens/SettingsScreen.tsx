@@ -104,10 +104,18 @@ export function SettingsScreen() {
           <Pressable
             key={scheme}
             onPress={() => setColorSchemePreference(scheme)}
+            // `shadow-none` on the unselected branch is load-bearing, not dead
+            // code. `shadow-card` compiles to CSS variable declarations
+            // (--tw-shadow*), and css-interop flags a component that STARTS
+            // setting variables after its first render as SHOULD_UPGRADE. That
+            // fires a dev warning whose serializer walks props into React
+            // Navigation's throwing context getters and crashes the screen.
+            // `shadow-none` declares the same variables, so both branches set
+            // variables from render 1 and the upgrade never happens.
             className={
               colorScheme === scheme
                 ? 'flex-1 items-center rounded-full bg-card py-2.5 shadow-card'
-                : 'flex-1 items-center rounded-full py-2.5'
+                : 'flex-1 items-center rounded-full py-2.5 shadow-none'
             }
           >
             <Text

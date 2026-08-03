@@ -75,7 +75,7 @@ export function ConfirmationsScreen() {
 
   if (!latestUnlock || !listing) {
     return (
-      <Screen header={<ScreenHeader title="Confirm Connection" />}>
+      <Screen key="confirm-empty" header={<ScreenHeader title="Confirm Connection" />}>
         <View className="items-center gap-3 py-16">
           <View className="h-16 w-16 items-center justify-center rounded-full bg-surface-subtle">
             <AppIcon name="key-outline" size={28} active />
@@ -104,6 +104,7 @@ export function ConfirmationsScreen() {
   if (!latestUnlock.incomingConfirmed) {
     return (
       <Screen
+        key="confirm-checklist"
         header={<ScreenHeader title="Confirm Connection" />}
         bottomBar={
           <Button
@@ -189,8 +190,15 @@ export function ConfirmationsScreen() {
     { title: 'Commission Payment', detail: '7 days after both confirmations', state: 'pending' },
   ];
 
+  // Distinct `key` per branch. All three returns render a <Screen> at the same
+  // position, so without keys React reconciles them as one mounted tree and the
+  // inner Views keep their css-interop sharedState across a branch switch. A
+  // View that had no shadow then starts setting --tw-shadow* variables while
+  // already mounted, which css-interop flags SHOULD_UPGRADE -> dev warning ->
+  // serializer walks into React Navigation's throwing getters -> screen crash.
+  // Separate keys force a clean mount, so each tree sets variables from render 1.
   return (
-    <Screen header={<ScreenHeader title="Connection Status" />}>
+    <Screen key="connection-status" header={<ScreenHeader title="Connection Status" />}>
       <View className="flex-row items-center gap-3 rounded-[16px] bg-card p-3 shadow-card">
         <Image className="h-16 w-16 rounded-[12px] bg-surface-subtle" resizeMode="cover" source={listing.coverImage} />
         <View className="flex-1">
