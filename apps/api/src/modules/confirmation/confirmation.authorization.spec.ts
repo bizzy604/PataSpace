@@ -22,13 +22,13 @@ import { createConfirmationService, createUnlock } from './confirmation.spec-fix
 
 describe('ConfirmationService authorization', () => {
   const happyPathMocks = (mocks: ReturnType<typeof createConfirmationService>) => {
-    mocks.prismaService.unlock.findUnique.mockResolvedValue(createUnlock());
-    mocks.prismaService.confirmation.create.mockImplementation(
-      ({ data }: { data: { unlockId: string; side: PrismaConfirmationSide } }) =>
+    mocks.repository.findUnlock.mockResolvedValue(createUnlock());
+    mocks.repository.createConfirmation.mockImplementation(
+      (unlockId: string, _userId: string, side: PrismaConfirmationSide) =>
         Promise.resolve({
           id: 'confirmation_1',
-          unlockId: data.unlockId,
-          side: data.side,
+          unlockId,
+          side,
           confirmedAt: new Date('2026-03-24T10:00:00.000Z'),
         }),
     );
@@ -44,10 +44,12 @@ describe('ConfirmationService authorization', () => {
         unlockId: 'unlock_1',
       }),
     ).resolves.toMatchObject({ side: PrismaConfirmationSide.INCOMING_TENANT });
-    expect(mocks.prismaService.confirmation.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: { unlockId: 'unlock_1', userId: 'buyer_1', side: 'INCOMING_TENANT' },
-      }),
+    // The attributed user id is the authorization decision made durable: it is
+    // what an audit reads back to see who actually confirmed.
+    expect(mocks.repository.createConfirmation).toHaveBeenCalledWith(
+      'unlock_1',
+      'buyer_1',
+      'INCOMING_TENANT',
     );
   });
 
@@ -64,8 +66,8 @@ describe('ConfirmationService authorization', () => {
   });
 
   it('rejects the incoming tenant confirming the OUTGOING side', async () => {
-    const { prismaService, service } = createConfirmationService();
-    prismaService.unlock.findUnique.mockResolvedValue(createUnlock());
+    const { repository, service } = createConfirmationService();
+    repository.findUnlock.mockResolvedValue(createUnlock());
 
     await expect(
       service.createConfirmation('buyer_1', {
@@ -73,12 +75,12 @@ describe('ConfirmationService authorization', () => {
         unlockId: 'unlock_1',
       }),
     ).rejects.toBeInstanceOf(ForbiddenException);
-    expect(prismaService.confirmation.create).not.toHaveBeenCalled();
+    expect(repository.createConfirmation).not.toHaveBeenCalled();
   });
 
   it('rejects the listing owner confirming the INCOMING side', async () => {
-    const { prismaService, service } = createConfirmationService();
-    prismaService.unlock.findUnique.mockResolvedValue(createUnlock());
+    const { repository, service } = createConfirmationService();
+    repository.findUnlock.mockResolvedValue(createUnlock());
 
     await expect(
       service.createConfirmation('owner_1', {
@@ -86,12 +88,12 @@ describe('ConfirmationService authorization', () => {
         unlockId: 'unlock_1',
       }),
     ).rejects.toBeInstanceOf(ForbiddenException);
-    expect(prismaService.confirmation.create).not.toHaveBeenCalled();
+    expect(repository.createConfirmation).not.toHaveBeenCalled();
   });
 
   it('rejects confirmations from users unrelated to the unlock', async () => {
-    const { prismaService, service } = createConfirmationService();
-    prismaService.unlock.findUnique.mockResolvedValue(createUnlock());
+    const { repository, service } = createConfirmationService();
+    repository.findUnlock.mockResolvedValue(createUnlock());
 
     for (const side of ['INCOMING_TENANT', 'OUTGOING_TENANT']) {
       await expect(
@@ -101,12 +103,12 @@ describe('ConfirmationService authorization', () => {
         }),
       ).rejects.toBeInstanceOf(ForbiddenException);
     }
-    expect(prismaService.confirmation.create).not.toHaveBeenCalled();
+    expect(repository.createConfirmation).not.toHaveBeenCalled();
   });
 
   it('rejects duplicate confirmations from the same side', async () => {
-    const { prismaService, service } = createConfirmationService();
-    prismaService.unlock.findUnique.mockResolvedValue(
+    const { repository, service } = createConfirmationService();
+    repository.findUnlock.mockResolvedValue(
       createUnlock({
         confirmations: [
           {
@@ -123,12 +125,12 @@ describe('ConfirmationService authorization', () => {
         unlockId: 'unlock_1',
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
-    expect(prismaService.confirmation.create).not.toHaveBeenCalled();
+    expect(repository.createConfirmation).not.toHaveBeenCalled();
   });
 
   it('rejects confirmations for refunded unlocks', async () => {
-    const { prismaService, service } = createConfirmationService();
-    prismaService.unlock.findUnique.mockResolvedValue(
+    const { repository, service } = createConfirmationService();
+    repository.findUnlock.mockResolvedValue(
       createUnlock({
         isRefunded: true,
         refundReason: 'Listing removed',
@@ -145,8 +147,8 @@ describe('ConfirmationService authorization', () => {
   });
 
   it('blocks manual confirmations while a dispute is open', async () => {
-    const { prismaService, service } = createConfirmationService();
-    prismaService.unlock.findUnique.mockResolvedValue(
+    const { repository, service } = createConfirmationService();
+    repository.findUnlock.mockResolvedValue(
       createUnlock({
         dispute: {
           status: DisputeStatus.OPEN,

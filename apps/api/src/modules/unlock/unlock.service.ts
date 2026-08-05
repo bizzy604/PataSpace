@@ -18,7 +18,6 @@ import { ConfigService } from '@nestjs/config';
 import {
   ConfirmationSide,
   DisputeStatus,
-  ListingStatus,
   Prisma,
   SuccessFeeStatus,
 } from '@prisma/client';
@@ -32,11 +31,17 @@ import {
   UnlockHistoryStatus,
 } from '@pataspace/contracts';
 import { PrismaService } from '../../common/database/prisma.service';
+import { RequestContextService } from '../../common/request-context/request-context.service';
 import { decryptField } from '../../common/security/encryption.util';
 import { SmsService } from '../../infrastructure/sms/sms.service';
 import { CreditService } from '../credit/credit.service';
 import { ListingCacheService } from '../listing/listing-cache.service';
 import { ProxySessionService, ProxySessionSummary } from './contact/proxy-session.service';
+import {
+  isListingUnlockable,
+  listingUnavailableError,
+  UNLOCKABLE_LISTING_STATUSES,
+} from './domain/unlock-eligibility.policy';
 
 type CreateUnlockResult = {
   created: boolean;
@@ -82,11 +87,6 @@ type UnlockWithRelations = Prisma.UnlockGetPayload<{
 
 type UnlockConfirmation = UnlockWithRelations['confirmations'][number];
 
-const UNLOCKABLE_LISTING_STATUSES = [
-  ListingStatus.ACTIVE,
-  ListingStatus.UNLOCKED,
-  ListingStatus.CONFIRMED,
-] as const;
 const ACTIVE_DISPUTE_STATUSES: DisputeStatus[] = [
   DisputeStatus.OPEN,
   DisputeStatus.INVESTIGATING,
@@ -102,6 +102,7 @@ export class UnlockService {
     private readonly listingCacheService: ListingCacheService,
     private readonly smsService: SmsService,
     private readonly proxySessionService: ProxySessionService,
+    private readonly requestContext: RequestContextService,
     configService: ConfigService,
   ) {
     this.encryptionKey = configService.get<string>('security.encryptionKey') ?? '';
@@ -178,20 +179,8 @@ export class UnlockService {
 
     await this.assertNoUnsettledSuccessFee(userId);
 
-    if (
-      listing.isDeleted ||
-      !listing.isApproved ||
-      !UNLOCKABLE_LISTING_STATUSES.includes(
-        listing.status as (typeof UNLOCKABLE_LISTING_STATUSES)[number],
-      )
-    ) {
-      throw new HttpException(
-        {
-          code: 'LISTING_UNAVAILABLE',
-          message: 'Listing is no longer available for unlock',
-        },
-        HttpStatus.GONE,
-      );
+    if (!isListingUnlockable(listing)) {
+      throw listingUnavailableError();
     }
 
     let result: CreateUnlockResult;
@@ -229,13 +218,7 @@ export class UnlockService {
         });
 
         if (!lockedListing) {
-          throw new HttpException(
-            {
-              code: 'LISTING_UNAVAILABLE',
-              message: 'Listing is no longer available for unlock',
-            },
-            HttpStatus.GONE,
-          );
+          throw listingUnavailableError();
         }
 
         if (lockedListing.userId === userId) {
@@ -333,16 +316,9 @@ export class UnlockService {
 
         const proxySession = await this.proxySessionService.createForUnlock(db, unlock.id);
 
-        await db.listing.update({
-          where: {
-            id: lockedListing.id,
-          },
-          data: {
-            unlockCount: {
-              increment: 1,
-            },
-          },
-        });
+        // unlockCount is incremented post-commit with internal DB access:
+        // listings_update_policy only lets the owner or a privileged context
+        // write, and this transaction runs as the buyer (P2025 under RLS).
 
         notificationPhoneNumber = lockedListing.user.phoneNumberEncrypted
           ? this.decrypt(lockedListing.user.phoneNumberEncrypted)
@@ -390,6 +366,19 @@ export class UnlockService {
     }
 
     if (result.created) {
+      // Bookkeeping write that must not run under the buyer's RLS context.
+      // The transaction override reads the ALS context synchronously in
+      // this scope; delegate calls defer capture to the query extension,
+      // where the store is already gone (that is why the first attempt
+      // at this failed with P2025).
+      await this.requestContext.runInternal(() =>
+        this.prismaService.$transaction((tx) =>
+          tx.listing.update({
+            where: { id: input.listingId },
+            data: { unlockCount: { increment: 1 } },
+          }),
+        ),
+      );
       await this.creditService.invalidateBalanceCache(userId);
       await this.listingCacheService.invalidateListing(input.listingId);
       if (notificationPhoneNumber && notificationNeighborhood) {
@@ -782,3 +771,4 @@ export class UnlockService {
     }
   }
 }
+

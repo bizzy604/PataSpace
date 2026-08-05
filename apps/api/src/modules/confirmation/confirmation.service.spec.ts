@@ -1,148 +1,41 @@
 /**
- * Purpose: Gate tests for the confirmation lifecycle — stale-unlock
- *   auto-confirmation, success-fee capture on full confirmation, and the
+ * Purpose: Gate tests for the manual confirmation path — the settlement
+ *   delegation, the response shape the mobile client renders, and the
  *   mover-to-poster prompt (spec sections 4.4/4.6).
- * Why important: Auto-confirmation attributes the missing side after 14 days
- *   and triggers the money loop; a regression here pays or blocks real money.
- *   Side/authorization rules live in confirmation.authorization.spec.ts.
+ * Why important: this is the tenant-facing half of the payout trigger.
+ *   Auto-confirmation lives in application/stale-confirmation.service.spec.ts,
+ *   the lock in application/settlement.service.spec.ts, and side/authorization
+ *   rules in confirmation.authorization.spec.ts.
  * Used by: jest runner via apps/api jest config.
  */
-import { ConfirmationSide as PrismaConfirmationSide, DisputeStatus } from '@prisma/client';
-import { createConfirmationService, createUnlock } from './confirmation.spec-fixtures';
+import { ConfirmationSide as PrismaConfirmationSide } from '@prisma/client';
+import {
+  createConfirmationService,
+  createSettlementOutcome,
+  createUnlock,
+} from './confirmation.spec-fixtures';
 
 describe('ConfirmationService', () => {
-  it('auto-confirms stale one-sided unlocks and triggers fee capture + commission', async () => {
-    const { notifier, prismaService, proxySessionService, service, successFeeService } =
-      createConfirmationService();
-    const staleUnlock = createUnlock({
-      confirmations: [
-        {
-          side: PrismaConfirmationSide.INCOMING_TENANT,
-          confirmedAt: new Date('2026-03-01T10:00:00.000Z'),
-        },
-      ],
-    });
+  it('returns the success fee and commission when both sides confirm', async () => {
+    const { repository, service, settlementService } = createConfirmationService();
 
-    prismaService.unlock.findMany.mockResolvedValue([staleUnlock]);
-    prismaService.confirmation.create.mockResolvedValue({
+    repository.findUnlock.mockResolvedValue(
+      createUnlock({
+        confirmations: [
+          {
+            side: PrismaConfirmationSide.INCOMING_TENANT,
+            confirmedAt: new Date('2026-03-20T10:00:00.000Z'),
+          },
+        ],
+      }),
+    );
+    repository.createConfirmation.mockResolvedValue({
       id: 'confirmation_2',
       unlockId: 'unlock_1',
       side: PrismaConfirmationSide.OUTGOING_TENANT,
       confirmedAt: new Date('2026-03-24T09:00:00.000Z'),
     });
-    prismaService.unlock.findUnique.mockResolvedValue(
-      createUnlock({
-        confirmations: [
-          {
-            side: PrismaConfirmationSide.INCOMING_TENANT,
-            confirmedAt: new Date('2026-03-01T10:00:00.000Z'),
-          },
-          {
-            side: PrismaConfirmationSide.OUTGOING_TENANT,
-            confirmedAt: new Date('2026-03-24T09:00:00.000Z'),
-          },
-        ],
-      }),
-    );
-    prismaService.commission.findUnique.mockResolvedValue({
-      amountKES: 210,
-      status: 'PENDING',
-      eligibleAt: new Date('2026-03-31T09:00:00.000Z'),
-    });
-
-    await expect(
-      service.autoConfirmStaleUnlocks(new Date('2026-03-24T12:00:00.000Z')),
-    ).resolves.toBe(1);
-    expect(prismaService.confirmation.create).toHaveBeenCalledWith({
-      data: {
-        side: PrismaConfirmationSide.OUTGOING_TENANT,
-        unlockId: 'unlock_1',
-        userId: 'owner_1',
-      },
-      select: {
-        confirmedAt: true,
-        id: true,
-        side: true,
-        unlockId: true,
-      },
-    });
-    expect(successFeeService.ensureForConfirmedUnlock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'unlock_1',
-        buyerId: 'buyer_1',
-        creditsSpent: 300,
-      }),
-    );
-    expect(proxySessionService.extendForConfirmedUnlock).toHaveBeenCalledWith('unlock_1');
-    expect(notifier.sendConfirmationNotifications).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'unlock_1' }),
-      'OUTGOING_TENANT',
-      expect.objectContaining({ amountKES: 210 }),
-    );
-  });
-
-  it('skips stale auto-confirmation when a dispute is still open', async () => {
-    const { notifier, prismaService, service, successFeeService } = createConfirmationService();
-
-    prismaService.unlock.findMany.mockResolvedValue([
-      createUnlock({
-        confirmations: [
-          {
-            side: PrismaConfirmationSide.INCOMING_TENANT,
-            confirmedAt: new Date('2026-03-01T10:00:00.000Z'),
-          },
-        ],
-        dispute: {
-          status: DisputeStatus.OPEN,
-        },
-      }),
-    ]);
-
-    await expect(
-      service.autoConfirmStaleUnlocks(new Date('2026-03-24T12:00:00.000Z')),
-    ).resolves.toBe(0);
-    expect(prismaService.confirmation.create).not.toHaveBeenCalled();
-    expect(successFeeService.ensureForConfirmedUnlock).not.toHaveBeenCalled();
-    expect(notifier.sendConfirmationNotifications).not.toHaveBeenCalled();
-  });
-
-  it('returns the success fee and settles nothing extra when both sides confirm', async () => {
-    const { prismaService, service, successFeeService } = createConfirmationService();
-    const unlockBeforeConfirm = createUnlock({
-      confirmations: [
-        {
-          side: PrismaConfirmationSide.INCOMING_TENANT,
-          confirmedAt: new Date('2026-03-20T10:00:00.000Z'),
-        },
-      ],
-    });
-    const unlockAfterConfirm = createUnlock({
-      confirmations: [
-        {
-          side: PrismaConfirmationSide.INCOMING_TENANT,
-          confirmedAt: new Date('2026-03-20T10:00:00.000Z'),
-        },
-        {
-          side: PrismaConfirmationSide.OUTGOING_TENANT,
-          confirmedAt: new Date('2026-03-24T09:00:00.000Z'),
-        },
-      ],
-    });
-
-    prismaService.unlock.findUnique
-      .mockResolvedValueOnce(unlockBeforeConfirm)
-      .mockResolvedValueOnce(unlockAfterConfirm);
-    prismaService.confirmation.create.mockResolvedValue({
-      id: 'confirmation_2',
-      unlockId: 'unlock_1',
-      side: PrismaConfirmationSide.OUTGOING_TENANT,
-      confirmedAt: new Date('2026-03-24T09:00:00.000Z'),
-    });
-    prismaService.commission.findUnique.mockResolvedValue({
-      amountKES: 210,
-      status: 'PENDING',
-      eligibleAt: new Date('2026-03-31T09:00:00.000Z'),
-    });
+    settlementService.ensureSettlementIfEligible.mockResolvedValue(createSettlementOutcome());
 
     const result = await service.createConfirmation('owner_1', {
       side: 'OUTGOING_TENANT' as never,
@@ -158,14 +51,38 @@ describe('ConfirmationService', () => {
     });
     expect(result.commission).toMatchObject({ amount: 210 });
     expect(result.vacatedListingPrompt).toBeUndefined();
-    expect(successFeeService.ensureForConfirmedUnlock).toHaveBeenCalledTimes(1);
+    expect(settlementService.ensureSettlementIfEligible).toHaveBeenCalledWith('unlock_1');
+  });
+
+  // A one-sided confirmation must not advertise a payout. Settlement returning
+  // null is the signal, and bothConfirmed drives the whole client-side state.
+  it('reports a pending state when only one side has confirmed', async () => {
+    const { repository, service } = createConfirmationService();
+
+    repository.findUnlock.mockResolvedValue(createUnlock());
+    repository.createConfirmation.mockResolvedValue({
+      id: 'confirmation_1',
+      unlockId: 'unlock_1',
+      side: PrismaConfirmationSide.OUTGOING_TENANT,
+      confirmedAt: new Date('2026-03-24T09:00:00.000Z'),
+    });
+
+    const result = await service.createConfirmation('owner_1', {
+      side: 'OUTGOING_TENANT' as never,
+      unlockId: 'unlock_1',
+    });
+
+    expect(result.bothConfirmed).toBe(false);
+    expect(result.commission).toBeUndefined();
+    expect(result.successFee).toBeUndefined();
+    expect(result.message).toContain('Waiting for incoming tenant');
   });
 
   it('hands the mover the vacated-listing prompt when they confirm', async () => {
-    const { prismaService, service } = createConfirmationService();
+    const { repository, service } = createConfirmationService();
 
-    prismaService.unlock.findUnique.mockResolvedValue(createUnlock());
-    prismaService.confirmation.create.mockResolvedValue({
+    repository.findUnlock.mockResolvedValue(createUnlock());
+    repository.createConfirmation.mockResolvedValue({
       id: 'confirmation_1',
       unlockId: 'unlock_1',
       side: PrismaConfirmationSide.INCOMING_TENANT,
@@ -183,5 +100,34 @@ describe('ConfirmationService', () => {
       estimatedEarningsKes: 1750,
     });
     expect(result.vacatedListingPrompt?.message).toContain('1750');
+  });
+
+  it('surfaces the commission date to the confirming party', async () => {
+    const { repository, service, settlementService } = createConfirmationService();
+
+    repository.findUnlock.mockResolvedValue(
+      createUnlock({
+        confirmations: [
+          {
+            side: PrismaConfirmationSide.INCOMING_TENANT,
+            confirmedAt: new Date('2026-03-20T10:00:00.000Z'),
+          },
+        ],
+      }),
+    );
+    repository.createConfirmation.mockResolvedValue({
+      id: 'confirmation_2',
+      unlockId: 'unlock_1',
+      side: PrismaConfirmationSide.OUTGOING_TENANT,
+      confirmedAt: new Date('2026-03-24T09:00:00.000Z'),
+    });
+    settlementService.ensureSettlementIfEligible.mockResolvedValue(createSettlementOutcome());
+
+    const result = await service.createConfirmation('owner_1', {
+      side: 'OUTGOING_TENANT' as never,
+      unlockId: 'unlock_1',
+    });
+
+    expect(result.message).toContain('2026-03-31');
   });
 });

@@ -41,6 +41,19 @@ docker compose -f infra/docker/docker-compose.yml up -d
 - Implemented now: `auth`, `user`, `listing`, `upload`, `admin`
 - Present but still incomplete: `credit`, `unlock`, `payment`, `confirmation`, `dispute`
 
+### Confirmation module layout
+
+`src/modules/confirmation` follows the recommended internal split:
+
+- `confirmation.service.ts`: the manual confirmation a tenant submits, including the side-authorization gate
+- `application/settlement.service.ts`: the both-sides-confirmed step. Captures the success fee, extends masked contact, and triggers the listing handover. Both the manual path and the 14-day job route through here, so neither can settle without also locking the listing.
+- `application/stale-confirmation.service.ts`: the 14-day auto-confirmation sweep, called by `ConfirmationFollowupJob`
+- `listing-handover.service.ts`: locks the listing to `CONFIRMED`, refunds every rival unlocker except the winner, and drops the listing and browse caches. Runs under `RequestContextService.runInternal()` because it writes the owner's listing and other buyers' unlocks, which row-level security gates on `app.is_privileged()`.
+- `domain/confirmation-eligibility.policy.ts`: pure rules (settleable, blocking dispute states, one-sided auto-confirm filter, side attribution, 14-day cutoff)
+- `persistence/confirmation.repository.ts`: all Prisma access, including the canonical unlock projection shared by the three services
+
+A listing at `CONFIRMED` stays browsable but is no longer unlockable: `unlock/domain/unlock-eligibility.policy.ts` omits it from the unlockable statuses, so `POST /unlocks` answers 410 `LISTING_UNAVAILABLE` and charges nothing.
+
 ## Architecture Rules
 
 - The API must remain a modular monolith.

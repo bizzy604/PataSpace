@@ -251,4 +251,92 @@ describe('UnlockRefundService', () => {
     expect(creditService.refundCredits).not.toHaveBeenCalled();
     expect(notifier.afterRefund).not.toHaveBeenCalled();
   });
+
+  // The handover path (both tenants confirmed) refunds every rival unlocker but
+  // must leave the winner alone: their unlock is the one the commission hangs
+  // off, and refundUnlock cancels the commission it touches.
+  describe('refundUnlocksForListingInvalidation', () => {
+    it('excludes the winning unlock and still refunds the rest', async () => {
+      const { prismaService, service } = createRefundService();
+      const refunded: string[] = [];
+
+      prismaService.unlock.findMany.mockResolvedValue([{ id: 'unlock_2' }, { id: 'unlock_3' }]);
+      jest
+        .spyOn(service, 'refundUnlock')
+        .mockImplementation(async (id: string) => void refunded.push(id));
+
+      const result = await service.refundUnlocksForListingInvalidation(
+        'listing_1',
+        'Listing was taken by another tenant',
+        'unlock_1',
+      );
+
+      expect(prismaService.unlock.findMany).toHaveBeenCalledWith({
+        where: {
+          listingId: 'listing_1',
+          isRefunded: false,
+          id: { not: 'unlock_1' },
+        },
+        select: { id: true },
+      });
+      expect(refunded).toEqual(['unlock_2', 'unlock_3']);
+      expect(result).toEqual({ refunded: ['unlock_2', 'unlock_3'], failed: [] });
+    });
+
+    // The listing is already locked by the time this runs, so aborting the loop
+    // would strand later rivals paid-up on a dead listing with nothing to retry
+    // them. Failures are reported, not thrown.
+    it('keeps refunding after one unlock throws, and reports the failure', async () => {
+      const { prismaService, service } = createRefundService();
+      const refunded: string[] = [];
+
+      prismaService.unlock.findMany.mockResolvedValue([
+        { id: 'unlock_2' },
+        { id: 'unlock_3' },
+        { id: 'unlock_4' },
+      ]);
+      jest.spyOn(service, 'refundUnlock').mockImplementation(async (id: string) => {
+        if (id === 'unlock_3') {
+          throw new ConflictException({ code: 'COMMISSION_ALREADY_PAID' });
+        }
+        refunded.push(id);
+      });
+
+      const result = await service.refundUnlocksForListingInvalidation(
+        'listing_1',
+        'Listing was taken by another tenant',
+        'unlock_1',
+      );
+
+      expect(refunded).toEqual(['unlock_2', 'unlock_4']);
+      expect(result.refunded).toEqual(['unlock_2', 'unlock_4']);
+      expect(result.failed).toHaveLength(1);
+      expect(result.failed[0].unlockId).toBe('unlock_3');
+    });
+
+    it('refunds every unlock when no exclusion is given', async () => {
+      const { prismaService, service } = createRefundService();
+      const refunded: string[] = [];
+
+      prismaService.unlock.findMany.mockResolvedValue([{ id: 'unlock_1' }, { id: 'unlock_2' }]);
+      jest
+        .spyOn(service, 'refundUnlock')
+        .mockImplementation(async (id: string) => void refunded.push(id));
+
+      const result = await service.refundUnlocksForListingInvalidation(
+        'listing_1',
+        'Listing removed',
+      );
+
+      expect(prismaService.unlock.findMany).toHaveBeenCalledWith({
+        where: {
+          listingId: 'listing_1',
+          isRefunded: false,
+        },
+        select: { id: true },
+      });
+      expect(refunded).toEqual(['unlock_1', 'unlock_2']);
+      expect(result.failed).toEqual([]);
+    });
+  });
 });

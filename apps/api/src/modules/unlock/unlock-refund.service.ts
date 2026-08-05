@@ -25,6 +25,16 @@ export type DeadReport = {
   comment?: string;
 };
 
+export type RefundFailure = {
+  unlockId: string;
+  message: string;
+};
+
+export type ListingInvalidationRefundResult = {
+  refunded: string[];
+  failed: RefundFailure[];
+};
+
 @Injectable()
 export class UnlockRefundService {
   constructor(
@@ -34,20 +44,51 @@ export class UnlockRefundService {
     private readonly notifier: UnlockRefundNotifier,
   ) {}
 
-  async refundUnlocksForListingInvalidation(listingId: string, reason: string) {
+  /**
+   * Refund everyone still holding an unlock on a listing.
+   *
+   * `excludeUnlockId` is the handover case: when both tenants confirm, the
+   * winner keeps their unlock (and their commission) while every rival gets
+   * their credits back. Without the exclusion this would refund the winner too
+   * and cancel the commission that just became payable.
+   *
+   * Each unlock is refunded independently. A throw on one (refundUnlock raises
+   * COMMISSION_ALREADY_PAID) must not strand the rest with no retry, so
+   * failures are collected and returned rather than propagated. The caller
+   * decides how loudly to complain.
+   */
+  async refundUnlocksForListingInvalidation(
+    listingId: string,
+    reason: string,
+    excludeUnlockId?: string,
+  ): Promise<ListingInvalidationRefundResult> {
     const unlocks = await this.prismaService.unlock.findMany({
       where: {
         listingId,
         isRefunded: false,
+        ...(excludeUnlockId ? { id: { not: excludeUnlockId } } : {}),
       },
       select: {
         id: true,
       },
     });
 
+    const refunded: string[] = [];
+    const failed: RefundFailure[] = [];
+
     for (const unlock of unlocks) {
-      await this.refundUnlock(unlock.id, reason);
+      try {
+        await this.refundUnlock(unlock.id, reason);
+        refunded.push(unlock.id);
+      } catch (error) {
+        failed.push({
+          unlockId: unlock.id,
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
     }
+
+    return { refunded, failed };
   }
 
   async refundUnlockById(unlockId: string, reason: string) {

@@ -32,6 +32,7 @@ describe('UnlockService', () => {
       },
       listing: {
         findFirst: jest.fn(),
+        update: jest.fn().mockResolvedValue({}),
       },
       successFee: {
         findFirst: jest.fn().mockResolvedValue(null),
@@ -72,6 +73,7 @@ describe('UnlockService', () => {
         listingCacheService as never,
         smsService as never,
         proxySessionService as never,
+        { runInternal: (fn: () => unknown) => fn() } as never,
         configService as never,
       ),
     };
@@ -504,3 +506,5 @@ describe('UnlockService', () => {
     expect(result.payload.contactInfo.phoneNumber).toBe('+254712345678');
   });
 });
+
+
