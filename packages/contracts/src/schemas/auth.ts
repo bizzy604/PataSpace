@@ -105,7 +105,7 @@ export const requestEmailVerificationResponseSchema = z.object({
 });
 
 export const verifyEmailCodeSchema = z.object({
-  code: z.string().regex(/^\\d{4,6}$/),
+  code: z.string().regex(/^\d{4,6}$/),
 });
 
 export const verifyEmailLinkSchema = z.object({

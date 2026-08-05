@@ -30,6 +30,9 @@ class SavedListingCardDto {
   @ApiProperty({ example: 'cm8listing123' })
   id!: string;
 
+  @ApiProperty({ example: 'ACTIVE' })
+  status!: string;
+
   @ApiProperty({ example: 'Nairobi' })
   county!: string;
 

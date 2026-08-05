@@ -76,6 +76,7 @@ export type ListingMapLocation = {
 
 export type ListingCard = {
   id: string;
+  status: ListingStatus;
   county: string;
   neighborhood: string;
   monthlyRent: number;

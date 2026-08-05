@@ -54,6 +54,11 @@ docker compose -f infra/docker/docker-compose.yml up -d
 
 A listing at `CONFIRMED` stays browsable but is no longer unlockable: `unlock/domain/unlock-eligibility.policy.ts` omits it from the unlockable statuses, so `POST /unlocks` answers 410 `LISTING_UNAVAILABLE` and charges nothing.
 
+### Listing module layout
+
+- `domain/listing-card.mapper.ts`: the one Prisma-row to `ListingCard` projection. Browse, details, and saved listings all call it, so the ~20 card fields (including `status` and the two-decimal blurred `mapLocation`) cannot drift between surfaces. A surface missing `status` would render a taken house as Live with a live unlock CTA the API can only answer 410 on.
+- `listing.docs.ts`: a barrel re-exporting `docs/listing-request.docs.ts` (create/update/seed inputs), `docs/listing-card.docs.ts` (card, details, and their nested models), and `docs/listing-response.docs.ts` (pagination envelopes, write acknowledgements, My Listings rows). Split to stay under the 200-line ceiling; importers keep the single `./listing.docs` path.
+
 ## Architecture Rules
 
 - The API must remain a modular monolith.

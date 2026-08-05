@@ -154,6 +154,11 @@ export const listingTenantDetailsSchema = listingTenantPreviewSchema.extend({
 
 export const listingCardSchema = z.object({
   id: z.string().min(1),
+  // Clients need the lifecycle status to render a taken house as "Taken" and
+  // disable its unlock CTA. CONFIRMED listings stay browsable but the API
+  // answers 410 LISTING_UNAVAILABLE on unlock, so without this the UI would
+  // invite a spend that can only fail.
+  status: z.nativeEnum(ListingStatus),
   county: z.string().min(1),
   neighborhood: z.string().min(1),
   monthlyRent: z.number().int().positive(),

@@ -50,6 +50,7 @@ import {
   assertPhotoGpsMatchesListing,
   assertStoredPhotoGpsMatchesListing,
 } from './domain/listing-geo.util';
+import { toListingCardFields } from './domain/listing-card.mapper';
 import {
   computeSuccessFeeKes,
   posterShareKes,
@@ -60,7 +61,6 @@ import { ListingMediaResolver } from './persistence/listing-media.resolver';
 import { SystemConfigService } from '../system-config/system-config.service';
 
 const FIRST_LISTINGS_REVIEW_THRESHOLD = 3;
-const PUBLIC_MAP_COORDINATE_DECIMALS = 2;
 const VISIBLE_LISTING_STATUSES = [
   ListingStatus.ACTIVE,
   ListingStatus.UNLOCKED,
@@ -260,32 +260,9 @@ export class ListingService {
     );
 
     const response: PaginatedListingsResponse = {
-      data: listings.map((listing) => ({
-        id: listing.id,
-        county: listing.county,
-        neighborhood: listing.neighborhood,
-        monthlyRent: listing.monthlyRent,
-        bedrooms: listing.bedrooms,
-        bathrooms: listing.bathrooms,
-        houseType: listing.houseType as unknown as ContractListingHouseType,
-        propertyType: listing.propertyType,
-        furnished: listing.furnished,
-        availableFrom: listing.availableFrom.toISOString(),
-        unlockCostCredits: listing.unlockCostCredits,
-        successFeeKes: listing.successFeeKes,
-        landlordAware: listing.landlordAware,
-        posterRole: listing.posterRole as unknown as ContractPosterRole,
-        thumbnailUrl: listing.thumbnailUrl ?? undefined,
-        viewCount: listing.viewCount,
-        unlockCount: listing.unlockCount,
-        isUnlocked: unlockedListingIds.has(listing.id),
-        createdAt: listing.createdAt.toISOString(),
-        mapLocation: this.buildMapLocation(listing.latitude, listing.longitude),
-        tenant: {
-          firstName: listing.user.firstName,
-          joinedDate: listing.user.createdAt.toISOString(),
-        },
-      })),
+      data: listings.map((listing) =>
+        toListingCardFields(listing, unlockedListingIds.has(listing.id)),
+      ),
       pagination: this.buildPagination(total, page, limit),
     };
 
@@ -370,26 +347,7 @@ export class ListingService {
 
     const canViewContactInfo = viewerCanSeeHiddenListing || Boolean(hasUnlock && !hasUnlock.isRefunded);
     const response: ListingDetails = {
-      id: listing.id,
-      county: listing.county,
-      neighborhood: listing.neighborhood,
-      monthlyRent: listing.monthlyRent,
-      bedrooms: listing.bedrooms,
-      bathrooms: listing.bathrooms,
-      houseType: listing.houseType as unknown as ContractListingHouseType,
-      propertyType: listing.propertyType,
-      furnished: listing.furnished,
-      availableFrom: listing.availableFrom.toISOString(),
-      unlockCostCredits: listing.unlockCostCredits,
-      successFeeKes: listing.successFeeKes,
-      landlordAware: listing.landlordAware,
-      posterRole: listing.posterRole as unknown as ContractPosterRole,
-      thumbnailUrl: listing.thumbnailUrl ?? undefined,
-      viewCount: listing.viewCount,
-      unlockCount: listing.unlockCount,
-      isUnlocked: canViewContactInfo,
-      createdAt: listing.createdAt.toISOString(),
-      mapLocation: this.buildMapLocation(listing.latitude, listing.longitude),
+      ...toListingCardFields(listing, canViewContactInfo),
       description: listing.description,
       amenities: listing.amenities,
       propertyNotes: listing.propertyNotes ?? undefined,
@@ -1210,19 +1168,6 @@ export class ListingService {
         message: 'The referenced move-in confirmation does not belong to you',
       });
     }
-  }
-
-  private buildMapLocation(latitude: number, longitude: number) {
-    return {
-      approxLatitude: this.roundCoordinate(latitude, PUBLIC_MAP_COORDINATE_DECIMALS),
-      approxLongitude: this.roundCoordinate(longitude, PUBLIC_MAP_COORDINATE_DECIMALS),
-    };
-  }
-
-  private roundCoordinate(value: number, decimals: number) {
-    const precision = 10 ** decimals;
-
-    return Math.round(value * precision) / precision;
   }
 
   private async lockListingRow(

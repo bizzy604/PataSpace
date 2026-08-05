@@ -14,6 +14,8 @@ import {
   loginSchema,
   registerSchema,
   resetPasswordSchema,
+  verifyEmailCodeSchema,
+  verifyOtpSchema,
 } from '../auth';
 import { Role } from '../../enums';
 
@@ -88,6 +90,7 @@ describe('authUserSchema / authSessionSchema', () => {
     lastName: 'Kevin',
     role: Role.USER,
     phoneVerified: true,
+    emailVerified: false,
   };
 
   it('email is required in the shape but may be null (pre-migration accounts)', () => {
@@ -103,5 +106,30 @@ describe('authUserSchema / authSessionSchema', () => {
       user: { ...baseUser, email: 'a@b.co' },
     };
     expect(authSessionSchema.safeParse(session).success).toBe(true);
+  });
+});
+
+// Regression: this regex was written `/^\\d{4,6}$/`, which in a regex literal
+// matches a literal backslash followed by 4-6 letter d's. Every real code was
+// rejected, so POST /auth/email/verify-code could never verify an email.
+describe('verifyEmailCodeSchema', () => {
+  it.each(['1234', '12345', '123456'])('accepts the digit code %s', (code) => {
+    expect(verifyEmailCodeSchema.safeParse({ code }).success).toBe(true);
+  });
+
+  it.each([
+    ['a backslash-escaped literal', '\\dddd'],
+    ['letters', 'abcdef'],
+    ['too short', '123'],
+    ['too long', '1234567'],
+    ['empty', ''],
+  ])('rejects %s', (_label, code) => {
+    expect(verifyEmailCodeSchema.safeParse({ code }).success).toBe(false);
+  });
+
+  it('matches the phone OTP code shape exactly', () => {
+    expect(verifyEmailCodeSchema.safeParse({ code: '123456' }).success).toBe(
+      verifyOtpSchema.safeParse({ phoneNumber: '+254712345678', code: '123456' }).success,
+    );
   });
 });

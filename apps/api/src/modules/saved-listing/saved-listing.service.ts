@@ -10,16 +10,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
-  ListingHouseType as ContractListingHouseType,
-  PosterRole as ContractPosterRole,
-  ListingCard,
   PaginatedSavedListingsResponse,
   SavedListingRecord,
 } from '@pataspace/contracts';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/database/prisma.service';
-
-const PUBLIC_MAP_COORDINATE_DECIMALS = 2;
+import { toListingCardFields } from '../listing/domain/listing-card.mapper';
 
 type SavedListingWithListing = Prisma.SavedListingGetPayload<{
   include: {
@@ -137,46 +133,11 @@ export class SavedListingService {
     saved: SavedListingWithListing,
     unlockedIds: Set<string>,
   ): SavedListingRecord {
-    const card: ListingCard = {
-      id: saved.listing.id,
-      county: saved.listing.county,
-      neighborhood: saved.listing.neighborhood,
-      monthlyRent: saved.listing.monthlyRent,
-      bedrooms: saved.listing.bedrooms,
-      bathrooms: saved.listing.bathrooms,
-      houseType: saved.listing.houseType as unknown as ContractListingHouseType,
-      propertyType: saved.listing.propertyType,
-      furnished: saved.listing.furnished,
-      availableFrom: saved.listing.availableFrom.toISOString(),
-      unlockCostCredits: saved.listing.unlockCostCredits,
-      successFeeKes: saved.listing.successFeeKes,
-      landlordAware: saved.listing.landlordAware,
-      posterRole: saved.listing.posterRole as unknown as ContractPosterRole,
-      thumbnailUrl: saved.listing.thumbnailUrl ?? undefined,
-      viewCount: saved.listing.viewCount,
-      unlockCount: saved.listing.unlockCount,
-      isUnlocked: unlockedIds.has(saved.listing.id),
-      createdAt: saved.listing.createdAt.toISOString(),
-      mapLocation: {
-        approxLatitude: this.roundCoordinate(saved.listing.latitude),
-        approxLongitude: this.roundCoordinate(saved.listing.longitude),
-      },
-      tenant: {
-        firstName: saved.listing.user.firstName,
-        joinedDate: saved.listing.user.createdAt.toISOString(),
-      },
-    };
-
     return {
       id: saved.id,
-      listing: card,
+      listing: toListingCardFields(saved.listing, unlockedIds.has(saved.listing.id)),
       createdAt: saved.createdAt.toISOString(),
     };
-  }
-
-  private roundCoordinate(value: number): number {
-    const precision = 10 ** PUBLIC_MAP_COORDINATE_DECIMALS;
-    return Math.round(value * precision) / precision;
   }
 
   private async getUnlockedListingIds(userId: string, listingIds: string[]) {
