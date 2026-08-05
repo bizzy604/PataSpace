@@ -26,6 +26,7 @@ import {
 import { AppIcon } from '@/components/ui/app-icon';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
+import { DateField } from '@/components/ui/date-field';
 import { Input } from '@/components/ui/input';
 import { ProgressSteps } from '@/components/ui/progress-steps';
 import { Screen } from '@/components/ui/screen';
@@ -42,6 +43,7 @@ import {
   hasAmenity,
   toggleAmenity,
 } from '@/lib/listings/amenities-field';
+import { minimumAvailableFrom } from '@/lib/listings/available-from';
 import {
   MAX_LISTING_PHOTOS,
   MIN_LISTING_PHOTOS,
@@ -854,11 +856,14 @@ export function ListingDetailsFormScreen() {
 
       <View className="gap-4 rounded-[16px] bg-card p-5 shadow-card">
         <Text className="font-display text-headline-sm text-foreground">Availability & Contact</Text>
-        <Field
+        {/* Picker, not free text: every listing then carries the same
+            YYYY-MM-DD shape and a past move-in date cannot be entered. */}
+        <DateField
           label="Available from"
           value={draft.availableFrom}
-          onChangeText={(value) => updateDraft({ availableFrom: value })}
-          placeholder="April 15, 2026"
+          onChange={(value) => updateDraft({ availableFrom: value })}
+          placeholder="Pick a date"
+          minimumDate={minimumAvailableFrom(new Date())}
         />
         <Field
           label="Landlord / caretaker contact"

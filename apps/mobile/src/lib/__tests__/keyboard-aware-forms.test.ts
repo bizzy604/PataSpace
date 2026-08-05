@@ -82,16 +82,31 @@ describe('KeyboardAwareScrollView', () => {
     expect(scrollSource).not.toContain('measureLayout');
   });
 
-  it('re-reveals the field when the keyboard geometry changes', () => {
-    // Switching from a text to a numeric pad changes the keyboard height with
-    // no new focus event.
-    expect(scrollSource).toContain('keyboardWillShow');
-    expect(scrollSource).toContain('keyboardDidShow');
+  it('reads the keyboard height from the IME inset, not RN Keyboard events', () => {
+    // Under edge-to-edge (android/gradle.properties edgeToEdgeEnabled=true)
+    // Android stops honouring adjustResize, and ReactRootView then reports
+    // endCoordinates.screenY as the bottom of the visible area rather than the
+    // keyboard's top edge. Every overlap computed to 0 and nothing scrolled.
+    // Reanimated reads the real IME inset instead.
+    expect(scrollSource).toContain('useAnimatedKeyboard()');
+    expect(scrollSource).not.toContain('Keyboard.addListener');
   });
 
-  it('removes its keyboard listeners on unmount', () => {
-    expect(scrollSource).toContain('showSub.remove()');
-    expect(scrollSource).toContain('hideSub.remove()');
+  it('re-reveals the field when the keyboard geometry changes', () => {
+    // Switching from a text to a numeric pad changes the keyboard height with
+    // no new focus event, and RN emits no event at all when only the height
+    // moves. The inset updates on every frame, so reacting to the height covers
+    // both cases.
+    expect(scrollSource).toContain('reveal(focusedRef.current, keyboardHeight)');
+    expect(scrollSource).toContain('}, [keyboardHeight, reveal]);');
+  });
+
+  it('pads the scroll tail on both platforms', () => {
+    // The spacer used to be iOS-only, on the assumption that adjustResize had
+    // already shrunk the window on Android. Edge-to-edge means it has not, so
+    // without the spacer scrollTo clamps and the last field never clears.
+    expect(scrollSource).toContain('<KeyboardSpacer');
+    expect(scrollSource).not.toContain("Platform.OS === 'ios'");
   });
 
   it('delegates the scroll arithmetic to the tested pure module', () => {

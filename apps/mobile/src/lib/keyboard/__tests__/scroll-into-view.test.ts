@@ -16,37 +16,49 @@ import {
 } from '../scroll-into-view';
 
 /**
- * A 800pt-tall window with a viewport starting at y=100 and running 600pt, and
- * a keyboard whose top edge is at y=460 — so it eats the bottom 240pt of the
- * viewport and leaves 360pt visible. Mirrors iOS, where the keyboard overlays.
+ * An 800pt-tall window with a viewport starting at y=100 and running 600pt, and
+ * a 340pt keyboard — so its top edge lands at 800-340=460, it eats the bottom
+ * 240pt of the viewport, and leaves 360pt visible.
+ *
+ * Height rather than a top edge because that is what the platform reports
+ * reliably: Android under edge-to-edge gives a usable IME inset but a misleading
+ * screenY. See scroll-into-view.ts.
  */
 const base: ScrollIntoViewInput = {
   fieldScreenY: 200,
   fieldHeight: 48,
   viewportScreenY: 100,
   viewportHeight: 600,
-  keyboardScreenY: 460,
+  keyboardHeight: 340,
+  windowHeight: 800,
   scrollY: 0,
 };
 
 describe('keyboardOverlap', () => {
   it('is zero with no keyboard up', () => {
-    expect(keyboardOverlap(100, 600, null)).toBe(0);
+    expect(keyboardOverlap(100, 600, 0, 800)).toBe(0);
   });
 
   it('measures how much of the viewport bottom the keyboard covers', () => {
-    // Viewport ends at 700, keyboard starts at 460 -> 240 covered.
-    expect(keyboardOverlap(100, 600, 460)).toBe(240);
+    // Viewport ends at 700, keyboard top at 800-340=460 -> 240 covered.
+    expect(keyboardOverlap(100, 600, 340, 800)).toBe(240);
   });
 
-  it('is zero when the keyboard starts below the viewport', () => {
-    // This is the Android adjustResize case: the window already shrank, so the
-    // viewport ends above the keyboard and nothing is covered.
-    expect(keyboardOverlap(100, 360, 460)).toBe(0);
+  it('is zero when the keyboard sits entirely below the viewport', () => {
+    // Viewport ends at 460, keyboard top is also 460: nothing covered. This is
+    // what a genuinely resized window looks like.
+    expect(keyboardOverlap(100, 360, 340, 800)).toBe(0);
   });
 
   it('never reports a negative overlap', () => {
-    expect(keyboardOverlap(100, 100, 900)).toBe(0);
+    // Short viewport high up the window, tiny keyboard: no contact at all.
+    expect(keyboardOverlap(100, 100, 50, 800)).toBe(0);
+  });
+
+  it('covers the whole viewport when the keyboard is taller than the window below it', () => {
+    // 700pt keyboard in an 800pt window puts its top at 100, the viewport's own
+    // top edge, so all 600pt are hidden.
+    expect(keyboardOverlap(100, 600, 700, 800)).toBe(600);
   });
 });
 
@@ -88,7 +100,7 @@ describe('nextScrollOffset', () => {
 
   it('still reveals a field below the fold with no keyboard up', () => {
     // No keyboard, but the field is past the viewport bottom: reveal it anyway.
-    expect(nextScrollOffset({ ...base, keyboardScreenY: null, fieldScreenY: 720 })).toBe(84);
+    expect(nextScrollOffset({ ...base, keyboardHeight: 0, fieldScreenY: 720 })).toBe(84);
   });
 
   it('aligns the top edge of a field too tall to fit', () => {
@@ -114,22 +126,35 @@ describe('nextScrollOffset', () => {
   });
 
   it('leaves the offset alone when the keyboard swallows the viewport', () => {
-    // Landscape / small device: no usable space, so any scroll is guesswork.
+    // Landscape / small device: a 700pt keyboard leaves the 300pt viewport at
+    // y=100 with no usable space, so any scroll is guesswork.
     expect(
-      nextScrollOffset({ ...base, viewportHeight: 300, keyboardScreenY: 100 }),
+      nextScrollOffset({ ...base, viewportHeight: 300, keyboardHeight: 700 }),
     ).toBeNull();
   });
 
-  it('needs no scroll on Android where the window already resized', () => {
-    // adjustResize shrank the viewport to 360, so overlap is 0 and a field at
-    // the very bottom of that shrunken viewport is visible without scrolling.
+  it('needs no scroll once the field sits above the keyboard line', () => {
+    // Viewport shrunk to 360 so it ends at 460, exactly the keyboard top:
+    // overlap is 0 and a field at the bottom of it is visible already.
     expect(
       nextScrollOffset({
         ...base,
         viewportHeight: 360,
-        keyboardScreenY: 460,
         fieldScreenY: 380,
       }),
     ).toBeNull();
+  });
+
+  /**
+   * The regression this rewrite exists for. Android with edge-to-edge never
+   * resizes the window, so the viewport still runs the full 600pt underneath a
+   * 340pt keyboard and a field near the bottom really is covered. The old
+   * screenY-based version computed an overlap of 0 here and returned null,
+   * which is exactly the "nothing scrolls" bug reported on device.
+   */
+  it('scrolls on Android edge-to-edge, where the window never resized', () => {
+    expect(
+      nextScrollOffset({ ...base, fieldScreenY: 640, fieldHeight: 48 }),
+    ).toBe(244);
   });
 });

@@ -1,15 +1,22 @@
 /**
  * Purpose: The scroll arithmetic that lifts a focused field clear of the
- * keyboard — given where the field, the scroll viewport, and the keyboard sit
- * on screen, return the scroll offset that reveals the field, or null when it
- * is already visible.
+ * keyboard — given where the field and the scroll viewport sit on screen and how
+ * tall the keyboard is, return the scroll offset that reveals the field, or null
+ * when it is already visible.
  * Why important: a field at the bottom of a form is covered by the keyboard, so
  * the user types blind. This is same-input-same-output geometry, so it lives in
- * a pure module with tests instead of being eyeballed inside a component. Using
- * on-screen coordinates rather than content-relative ones makes it correct on
- * both platforms: Android resizes the window (adjustResize) so the measured
- * viewport already ends above the keyboard and the overlap comes out 0, while
- * iOS overlays the keyboard and the overlap is real.
+ * a pure module with tests instead of being eyeballed inside a component.
+ *
+ * Takes keyboard HEIGHT, not its top edge. The first version took
+ * `endCoordinates.screenY` from RN's Keyboard events and did not work on
+ * Android: this app enables edge-to-edge (android/gradle.properties
+ * edgeToEdgeEnabled=true), which stops the window honouring adjustResize, and
+ * RN's ReactRootView reports screenY as the bottom of the visible area rather
+ * than the keyboard's top edge unless softInputMode is ADJUST_NOTHING. That made
+ * the overlap compute to ~0 and nothing ever scrolled. Height comes from the IME
+ * inset via reanimated's useAnimatedKeyboard, which is correct on both
+ * platforms. See keyboard-aware-scroll.tsx.
+ *
  * Used by: components/ui/keyboard-aware-scroll.tsx, consumed by Screen and
  * AuthScreen through every Input / PhoneField / PasswordField on focus.
  */
@@ -26,28 +33,40 @@ export type ScrollIntoViewInput = {
   /** Scroll viewport's height, after any window resize the platform applied. */
   viewportHeight: number;
   /**
-   * Keyboard's top edge in window coordinates (`endCoordinates.screenY`), or
-   * null when no keyboard is up. A keyboard that starts below the viewport
-   * bottom covers nothing and yields an overlap of 0.
+   * How tall the keyboard is, measured up from the bottom of the window; 0 when
+   * no keyboard is up. A keyboard shorter than the gap between the viewport
+   * bottom and the window bottom covers nothing, giving an overlap of 0.
    */
-  keyboardScreenY: number | null;
+  keyboardHeight: number;
+  /** Full window height, the baseline keyboardHeight is measured against. */
+  windowHeight: number;
   /** Current vertical scroll offset. */
   scrollY: number;
   /** Extra room to leave below the field. Defaults to DEFAULT_FIELD_GAP. */
   gap?: number;
 };
 
-/** How much of the viewport's bottom the keyboard hides. Never negative. */
+/**
+ * How much of the viewport's bottom the keyboard hides. Never negative.
+ *
+ * The keyboard's top edge is the window bottom minus its height. Anything of the
+ * viewport below that line is covered. On Android the window does not resize
+ * (edge-to-edge disables adjustResize), so this is the whole correction; on iOS
+ * the keyboard always overlays, so it is too.
+ */
 export function keyboardOverlap(
   viewportScreenY: number,
   viewportHeight: number,
-  keyboardScreenY: number | null,
+  keyboardHeight: number,
+  windowHeight: number,
 ): number {
-  if (keyboardScreenY === null) {
+  if (keyboardHeight <= 0) {
     return 0;
   }
 
-  return Math.max(0, viewportScreenY + viewportHeight - keyboardScreenY);
+  const keyboardTop = windowHeight - keyboardHeight;
+
+  return Math.max(0, viewportScreenY + viewportHeight - keyboardTop);
 }
 
 /**
@@ -68,7 +87,8 @@ export function nextScrollOffset(input: ScrollIntoViewInput): number | null {
   const overlap = keyboardOverlap(
     input.viewportScreenY,
     input.viewportHeight,
-    input.keyboardScreenY,
+    input.keyboardHeight,
+    input.windowHeight,
   );
   const visibleHeight = input.viewportHeight - overlap;
 

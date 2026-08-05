@@ -73,6 +73,7 @@ import {
   creditTransactionToRecord,
   useMobileApiSync,
 } from './use-mobile-api-sync';
+import { formatAvailableFrom, toApiInstant } from '@/lib/listings/available-from';
 import { listingCardToPreview } from '@/lib/listings/listing-preview';
 import { isListingTaken } from '@/lib/listings/listing-status-style';
 import type { RemoteResourceState } from '@/lib/remote-data-state';
@@ -486,13 +487,16 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
 
     const monthlyRent = Number(draft.monthlyRent) || 0;
     const amenities = (draft.amenities || '').split(',').map((a) => a.trim()).filter(Boolean);
-    const parsedDate = draft.availableFrom ? new Date(draft.availableFrom) : null;
-    const availableFrom = parsedDate && !isNaN(parsedDate.getTime())
-      ? parsedDate.toISOString()
-      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    // The picker only ever writes a canonical YYYY-MM-DD, so an unparseable
+    // value here means the draft is genuinely incomplete. Refuse it instead of
+    // publishing today+30 days, which is what the old fallback did silently.
+    const availableFrom = toApiInstant(draft.availableFrom);
+    if (!availableFrom) {
+      throw new Error('Pick the date this home becomes available.');
+    }
     const description = draft.description.trim().length >= 20
       ? draft.description.trim()
-      : `${formatListingHouseType(draft.houseType)} in ${draft.area || 'Nairobi'}, available from ${draft.availableFrom || 'soon'}.`;
+      : `${formatListingHouseType(draft.houseType)} in ${draft.area || 'Nairobi'}, available from ${formatAvailableFrom(draft.availableFrom)}.`;
 
     const response = await createListingApi(getToken, {
       county: draft.county || 'Nairobi',
