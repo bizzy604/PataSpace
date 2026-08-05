@@ -2,6 +2,7 @@
  * Purpose: Browse listing card — clean photo with an availability badge, then a
  *   white body with teal price, location, a bed/bath/unlocks meta row, a
  *   truncated blurb, and a "View Details" link (Main Flow 1-5/home_browse).
+ *   The photo and body are one tap target, not just the action row.
  * Why important: The single card used across home, search, saved, and map;
  *   restyling it here updates every browse surface at once.
  * Used by: HomeScreen, BrowseListingsScreen, ExploreScreens (search/map/saved).
@@ -14,6 +15,7 @@ import { AppIcon } from '@/components/ui/app-icon';
 import { Card } from '@/components/ui/card';
 import { MotionView } from '@/components/ui/motion-view';
 import { cn } from '@/lib/cn';
+import { listingCardAccessibilityLabel } from '@/lib/listings/listing-card-a11y';
 
 type ListingCardProps = {
   listing: ListingPreview;
@@ -46,50 +48,78 @@ export function ListingCard({ listing, href, actionLabel, className, footer }: L
   return (
     <MotionView distance={16}>
       <Card className={cn('gap-0 overflow-hidden p-0', className)}>
-        <View className="relative">
-          <Image className="h-52 w-full bg-surface-subtle" resizeMode="cover" source={listing.coverImage} />
-          <View className="absolute right-3 top-3 rounded-full bg-success px-3 py-1.5">
-            <Text className="font-body-bold text-label-md text-white">{listing.status}</Text>
-          </View>
-        </View>
-
-        <View className="gap-3 p-4">
-          <Text className="font-display text-headline-sm text-primary">
-            {listing.price}
-            <Text className="font-body text-body-md text-muted-foreground">/mo</Text>
-          </Text>
-
-          <View className="flex-row items-center gap-1.5">
-            <AppIcon name="location-outline" size={16} active />
-            <Text className="font-body-medium text-body-md text-foreground">{listing.location}</Text>
-          </View>
-
-          <View className="flex-row flex-wrap items-center gap-x-3 gap-y-1">
-            {items.map((item, index) => (
-              <View key={item.label} className="flex-row items-center gap-3">
-                {index > 0 ? <View className="h-1 w-1 rounded-full bg-outline-variant" /> : null}
-                <View className="flex-row items-center gap-1.5">
-                  <AppIcon name={item.icon} size={16} />
-                  <Text className="font-body text-label-md text-muted-foreground">{item.label}</Text>
-                </View>
+        {/*
+          The photo and the whole body are one tap target. The action row below
+          stays as the visible affordance but is not the only way in — a card
+          that looks tappable everywhere should be tappable everywhere.
+          It ends above the footer on purpose: a caller-supplied `footer` can
+          hold its own buttons, and nesting those inside this Pressable would
+          make the outer and inner press targets fight over the touch.
+        */}
+        <Link href={href} asChild>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={listingCardAccessibilityLabel(listing, actionLabel)}
+            className="active:opacity-90"
+          >
+            <View className="relative">
+              <Image
+                className="h-52 w-full bg-surface-subtle"
+                resizeMode="cover"
+                source={listing.coverImage}
+              />
+              <View className="absolute right-3 top-3 rounded-full bg-success px-3 py-1.5">
+                <Text className="font-body-bold text-label-md text-white">{listing.status}</Text>
               </View>
-            ))}
-          </View>
+            </View>
 
-          <Text className="font-body text-body-md text-muted-foreground" numberOfLines={1}>
-            {listing.blurb}
-          </Text>
+            <View className="gap-3 p-4 pb-0">
+              <Text className="font-display text-headline-sm text-primary">
+                {listing.price}
+                <Text className="font-body text-body-md text-muted-foreground">/mo</Text>
+              </Text>
 
+              <View className="flex-row items-center gap-1.5">
+                <AppIcon name="location-outline" size={16} active />
+                <Text className="font-body-medium text-body-md text-foreground">
+                  {listing.location}
+                </Text>
+              </View>
+
+              <View className="flex-row flex-wrap items-center gap-x-3 gap-y-1">
+                {items.map((item, index) => (
+                  <View key={item.label} className="flex-row items-center gap-3">
+                    {index > 0 ? <View className="h-1 w-1 rounded-full bg-outline-variant" /> : null}
+                    <View className="flex-row items-center gap-1.5">
+                      <AppIcon name={item.icon} size={16} />
+                      <Text className="font-body text-label-md text-muted-foreground">
+                        {item.label}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+
+              <Text className="font-body text-body-md text-muted-foreground" numberOfLines={1}>
+                {listing.blurb}
+              </Text>
+            </View>
+          </Pressable>
+        </Link>
+
+        <View className="gap-3 p-4 pt-3">
           {footer ?? (
-            <>
+            // The card above already announces this destination, so the
+            // duplicate is hidden from screen readers rather than read twice.
+            <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
               <View className="h-px bg-border" />
               <Link href={href} asChild>
-                <Pressable className="flex-row items-center justify-end gap-1 active:opacity-70">
+                <Pressable className="mt-3 flex-row items-center justify-end gap-1 active:opacity-70">
                   <Text className="font-display text-body-md text-primary">{actionLabel}</Text>
                   <AppIcon name="chevron-forward" size={16} active />
                 </Pressable>
               </Link>
-            </>
+            </View>
           )}
         </View>
       </Card>

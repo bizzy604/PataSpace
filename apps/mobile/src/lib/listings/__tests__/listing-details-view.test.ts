@@ -13,6 +13,7 @@ import { listingCardToPreview } from '../listing-preview';
 function buildDetails(overrides: Partial<ListingDetails> = {}): ListingDetails {
   return {
     id: 'listing-1',
+    status: 'ACTIVE' as ListingDetails['status'],
     county: 'Nairobi',
     neighborhood: 'Kilimani',
     monthlyRent: 28000,
