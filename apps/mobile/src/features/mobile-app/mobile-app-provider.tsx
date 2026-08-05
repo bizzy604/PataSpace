@@ -74,6 +74,7 @@ import {
   useMobileApiSync,
 } from './use-mobile-api-sync';
 import { listingCardToPreview } from '@/lib/listings/listing-preview';
+import { isListingTaken } from '@/lib/listings/listing-status-style';
 import type { RemoteResourceState } from '@/lib/remote-data-state';
 
 type PendingTopUp = {
@@ -86,6 +87,21 @@ type PendingTopUp = {
   /** Reused when the same top-up intent is retried, so the API replays. */
   idempotencyKey?: string;
 };
+
+/**
+ * Every way an unlock attempt can end. `unavailable` is the 410
+ * LISTING_UNAVAILABLE case — the house was taken while the tenant sat on the
+ * sheet. It is deliberately distinct from `insufficient` and `error`: telling
+ * someone their balance is short when the real problem is that the house is
+ * gone sends them to top up credits they did not need.
+ */
+export type UnlockAttemptResult =
+  | 'success'
+  | 'already_unlocked'
+  | 'insufficient'
+  | 'fee_unsettled'
+  | 'unavailable'
+  | 'error';
 
 type MobileAppContextValue = {
   colorScheme: AppColorScheme;
@@ -150,9 +166,7 @@ type MobileAppContextValue = {
   initiatePurchase: (packageId: string, phone: string) => Promise<void>;
   pollTopUp: () => Promise<'completed' | 'pending'>;
   refreshWallet: () => Promise<void>;
-  unlockListing: (
-    listingId: string,
-  ) => Promise<'success' | 'already_unlocked' | 'insufficient' | 'fee_unsettled'>;
+  unlockListing: (listingId: string) => Promise<UnlockAttemptResult>;
   confirmIncoming: (listingId: string) => Promise<'success' | 'already_confirmed' | 'error'>;
   settleFee: (listingId: string) => Promise<'settled' | 'insufficient' | 'error'>;
   reportDeadUnlock: (
@@ -618,12 +632,13 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
     return 'completed';
   }
 
-  async function unlockListing(
-    listingId: string,
-  ): Promise<'success' | 'already_unlocked' | 'insufficient' | 'fee_unsettled'> {
+  async function unlockListing(listingId: string): Promise<UnlockAttemptResult> {
     const listing = getListing(listingId);
-    if (!listing) return 'insufficient';
+    if (!listing) return 'error';
     if (unlocks.some((unlock) => unlock.listingId === listingId)) return 'already_unlocked';
+    // Cheap local guards before spending a request: a taken house cannot be
+    // unlocked at all, and a short balance would come back 402 anyway.
+    if (isListingTaken(listing.status)) return 'unavailable';
     if (walletBalance < listing.unlockCostCredits) return 'insufficient';
 
     try {
@@ -656,7 +671,16 @@ export function MobileAppProvider({ children }: { children: ReactNode }) {
       if (error instanceof ApiRequestError && error.code === 'SUCCESS_FEE_UNSETTLED') {
         return 'fee_unsettled';
       }
-      return 'insufficient';
+      if (error instanceof ApiRequestError && error.code === 'INSUFFICIENT_CREDITS') {
+        return 'insufficient';
+      }
+      // 410 GONE: the house was taken between the feed render and the tap.
+      // Refresh so the card stops advertising an unlock that cannot succeed.
+      if (error instanceof ApiRequestError && error.code === 'LISTING_UNAVAILABLE') {
+        void refreshListings();
+        return 'unavailable';
+      }
+      return 'error';
     }
   }
 

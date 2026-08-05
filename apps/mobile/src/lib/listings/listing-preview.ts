@@ -8,12 +8,34 @@
  *   lib/listings/listing-details-view.ts.
  */
 import type { ListingCard } from '@pataspace/contracts';
-import type { ListingPreview } from '@/data/mock-listings';
+import { ListingStatus } from '@pataspace/contracts';
+import type { ListingPreview, ListingStatus as ListingStatusLabel } from '@/data/mock-listings';
 import { formatCredits } from './format';
 
 // Empty uri renders the card's neutral surface — never a placeholder photo of
 // a different property (that read as fake data in field testing).
 const EMPTY_COVER: ListingPreview['coverImage'] = { uri: '' };
+
+/**
+ * Maps the API's ListingStatus enum to the mobile status label shown on cards.
+ * CONFIRMED listings are Taken — the lifecycle state where both tenants have
+ * confirmed handover and the house is locked from further unlocks.
+ */
+export function statusLabel(status: ListingStatus): ListingStatusLabel {
+  switch (status) {
+    case ListingStatus.ACTIVE:
+    case ListingStatus.UNLOCKED:
+      return 'Live';
+    case ListingStatus.CONFIRMED:
+      return 'Taken';
+    case ListingStatus.PENDING:
+      return 'Review';
+    case ListingStatus.COMPLETED:
+    case ListingStatus.DELETED:
+    case ListingStatus.REJECTED:
+      return 'Closed';
+  }
+}
 
 export function listingCardToPreview(card: ListingCard): ListingPreview {
   const bedrooms = card.bedrooms;
@@ -25,7 +47,7 @@ export function listingCardToPreview(card: ListingCard): ListingPreview {
     id: card.id,
     title,
     monthlyRent: card.monthlyRent,
-    price: `KES ${card.monthlyRent.toLocaleString()}/mo`,
+    price: `KES ${card.monthlyRent.toLocaleString()}`,
     unlockCostCredits: card.unlockCostCredits,
     unlockCost: formatCredits(card.unlockCostCredits),
     successFeeKes: card.successFeeKes,
@@ -37,7 +59,7 @@ export function listingCardToPreview(card: ListingCard): ListingPreview {
     directions: 'Directions revealed after unlock.',
     meta: `${bedLabel}  |  ${card.county}  |  ${card.furnished ? 'Furnished' : card.propertyType}`,
     blurb: `${card.propertyType} in ${card.neighborhood}. Available from ${card.availableFrom}.`,
-    status: 'Live',
+    status: statusLabel(card.status),
     coverImage: card.thumbnailUrl ? { uri: card.thumbnailUrl } : EMPTY_COVER,
     photoCount: '— photos',
     imageHint: card.neighborhood,

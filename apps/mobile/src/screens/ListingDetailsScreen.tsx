@@ -17,6 +17,7 @@ import { Screen } from '@/components/ui/screen';
 import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
 import { useListingDetails } from '@/features/mobile-app/use-listing-details';
 import { mergeListingDetails, specChips } from '@/lib/listings/listing-details-view';
+import { isListingTaken } from '@/lib/listings/listing-status-style';
 import { contactRevealedHref, listingGalleryHref, unlockHref } from '@/lib/routes';
 
 const AMENITY_PREVIEW = 6;
@@ -45,6 +46,7 @@ export function ListingDetailsScreen() {
   }
 
   const unlocked = isListingUnlocked(listing.id);
+  const taken = isListingTaken(listing.status);
   const saved = isListingSaved(listing.id);
   const chips = specChips(listing.meta);
   const amenities = showAllAmenities ? listing.amenities : listing.amenities.slice(0, AMENITY_PREVIEW);
@@ -58,13 +60,29 @@ export function ListingDetailsScreen() {
             <Text className="font-body text-label-md text-muted-foreground">Unlock Cost</Text>
             <Text className="font-display text-headline-sm text-foreground">{listing.unlockCost}</Text>
           </View>
-          <Link href={unlocked ? contactRevealedHref(listing.id) : unlockHref(listing.id)} asChild>
-            <Button
-              className="flex-1"
-              shape="pill"
-              label={unlocked ? 'Open Contact' : 'Unlock Contact'}
-            />
-          </Link>
+          {/*
+            A taken house is still browsable, but its unlock answers 410. The
+            CTA is rendered outside the Link in that case so there is nothing to
+            navigate to — an enabled-looking button that routes to a paywall the
+            API will reject is how a tenant ends up topping up for nothing.
+            Someone who already unlocked keeps their contact access.
+          */}
+          {taken && !unlocked ? (
+            <View className="flex-1 gap-1">
+              <Button className="w-full" shape="pill" disabled label="House Taken" />
+              <Text className="text-center font-body text-caption text-muted-foreground">
+                Already rented out
+              </Text>
+            </View>
+          ) : (
+            <Link href={unlocked ? contactRevealedHref(listing.id) : unlockHref(listing.id)} asChild>
+              <Button
+                className="flex-1"
+                shape="pill"
+                label={unlocked ? 'Open Contact' : 'Unlock Contact'}
+              />
+            </Link>
+          )}
         </View>
       }
     >

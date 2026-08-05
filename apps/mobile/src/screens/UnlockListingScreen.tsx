@@ -24,6 +24,9 @@ import {
   unlockRentPercent,
 } from '@/lib/payments/unlock-summary';
 import { appRoutes, contactRevealedHref } from '@/lib/routes';
+import { isListingTaken } from '@/lib/listings/listing-status-style';
+
+const TAKEN_MESSAGE = 'This house is taken. You were not charged.';
 
 const UNLOCK_BENEFITS = [
   "Tenant's phone number",
@@ -52,6 +55,7 @@ export function UnlockListingScreen() {
   }
 
   const alreadyUnlocked = isListingUnlocked(listing.id);
+  const taken = isListingTaken(listing.status);
   const hasEnoughCredits = canAffordUnlock(walletBalance, listing.unlockCostCredits);
   const balanceAfter = balanceAfterUnlock(walletBalance, listing.unlockCostCredits);
   const rentPercent = unlockRentPercent(listing.unlockCostCredits, listing.monthlyRent);
@@ -61,6 +65,12 @@ export function UnlockListingScreen() {
 
     if (alreadyUnlocked) {
       router.push(contactRevealedHref(listing.id));
+      return;
+    }
+
+    // A taken house cannot be unlocked, so never charge for the attempt.
+    if (taken) {
+      setFeedback(TAKEN_MESSAGE);
       return;
     }
 
@@ -89,7 +99,14 @@ export function UnlockListingScreen() {
       return;
     }
 
-    setFeedback('Unlock failed. Check your balance and try again.');
+    // The house went while the sheet was open. Nothing was charged, and topping
+    // up would not help, so this must not read like a balance problem.
+    if (result === 'unavailable') {
+      setFeedback(TAKEN_MESSAGE);
+      return;
+    }
+
+    setFeedback('Unlock failed. Check your connection and try again.');
   }
 
   return (
@@ -98,7 +115,14 @@ export function UnlockListingScreen() {
         <View className="gap-1">
           <Button
             shape="pill"
-            label={alreadyUnlocked ? 'Open Contact' : `Unlock for ${listing.unlockCost}`}
+            disabled={taken && !alreadyUnlocked}
+            label={
+              alreadyUnlocked
+                ? 'Open Contact'
+                : taken
+                  ? 'House Taken'
+                  : `Unlock for ${listing.unlockCost}`
+            }
             onPress={handleUnlock}
           />
           {feedback ? (

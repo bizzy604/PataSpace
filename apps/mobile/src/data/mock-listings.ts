@@ -4,7 +4,7 @@ import type { AppColorScheme } from '@/lib/theme';
 import { formatCredits } from '@/lib/listings/format';
 import { draftCameraSequence, listingGallerySets, type LocalMedia } from '@/data/media-library';
 
-export type ListingStatus = 'Verified' | 'Hot' | 'New' | 'Live' | 'Review' | 'Closed';
+export type ListingStatus = 'Verified' | 'Hot' | 'New' | 'Live' | 'Review' | 'Taken' | 'Closed';
 
 export type ListingMedia = LocalMedia;
 
@@ -128,7 +128,7 @@ export type MyListingCommissionEntry = {
 export type MyListingRow = {
   id: string;
   title: string;
-  status: 'Live' | 'Review' | 'Closed';
+  status: 'Live' | 'Review' | 'Taken' | 'Closed';
   views: string;
   unlocks: string;
   payout: string;

@@ -16,6 +16,7 @@ import { Card } from '@/components/ui/card';
 import { MotionView } from '@/components/ui/motion-view';
 import { cn } from '@/lib/cn';
 import { listingCardAccessibilityLabel } from '@/lib/listings/listing-card-a11y';
+import { listingStatusPillClasses } from '@/lib/listings/listing-status-style';
 
 type ListingCardProps = {
   listing: ListingPreview;
@@ -44,6 +45,7 @@ function metaItems(meta: string): MetaItem[] {
 
 export function ListingCard({ listing, href, actionLabel, className, footer }: ListingCardProps) {
   const items = metaItems(listing.meta);
+  const statusPill = listingStatusPillClasses(listing.status);
 
   return (
     <MotionView distance={16}>
@@ -68,8 +70,10 @@ export function ListingCard({ listing, href, actionLabel, className, footer }: L
                 resizeMode="cover"
                 source={listing.coverImage}
               />
-              <View className="absolute right-3 top-3 rounded-full bg-success px-3 py-1.5">
-                <Text className="font-body-bold text-label-md text-white">{listing.status}</Text>
+              <View className={cn('absolute right-3 top-3 rounded-full px-3 py-1.5', statusPill.container)}>
+                <Text className={cn('font-body-bold text-label-md', statusPill.text)}>
+                  {listing.status}
+                </Text>
               </View>
             </View>
 
