@@ -15,11 +15,12 @@
  * 3). The sso-callback.tsx route is deleted alongside this.
  */
 import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { ApiRequestError } from '@/lib/api-client';
 import { AppIcon } from '@/components/ui/app-icon';
+import { KeyboardAwareScrollView } from '@/components/ui/keyboard-aware-scroll';
 import { useMobileApp } from '@/features/mobile-app/mobile-app-provider';
 import { cn } from '@/lib/cn';
 
@@ -94,8 +95,13 @@ export function AuthHeader({ title, onBack }: { title: string; onBack?: () => vo
 }
 
 /**
- * Full-screen auth layout: optional header, a scrollable body, and an optional
- * footer pinned above the home indicator. `dark` renders the splash hero.
+ * Full-screen auth layout: optional header, a keyboard-aware scrollable body,
+ * and an optional footer pinned above the home indicator. `dark` renders the
+ * splash hero.
+ *
+ * The body scrolls the focused field clear of the keyboard on both platforms.
+ * That replaces the old iOS-only KeyboardAvoidingView, which shrank the whole
+ * layout instead of moving to the field and did nothing at all on Android.
  */
 export function AuthScreen({
   header,
@@ -116,26 +122,22 @@ export function AuthScreen({
       className={cn('flex-1', dark ? 'bg-surface-inverse' : 'bg-background')}
     >
       <StatusBar style={dark ? 'light' : 'dark'} />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      {header}
+      {/* The footer is a sibling below this, so the measured scroll viewport
+          already ends above it. */}
+      <KeyboardAwareScrollView
         className="flex-1"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 16, paddingVertical: 24 }}
       >
-        {header}
-        <ScrollView
-          className="flex-1"
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 16, paddingVertical: 24 }}
-        >
-          {/* max-w keeps forms readable on tablets/landscape; no-op on phones. */}
-          <View className={cn('w-full max-w-[480px] flex-1 self-center', contentClassName)}>
-            {children}
-          </View>
-        </ScrollView>
-        {footer ? (
-          <View className="w-full max-w-[512px] self-center px-4 pb-2 pt-3">{footer}</View>
-        ) : null}
-      </KeyboardAvoidingView>
+        {/* max-w keeps forms readable on tablets/landscape; no-op on phones. */}
+        <View className={cn('w-full max-w-[480px] flex-1 self-center', contentClassName)}>
+          {children}
+        </View>
+      </KeyboardAwareScrollView>
+      {footer ? (
+        <View className="w-full max-w-[512px] self-center px-4 pb-2 pt-3">{footer}</View>
+      ) : null}
     </SafeAreaView>
   );
 }
