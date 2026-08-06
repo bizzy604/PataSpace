@@ -1,5 +1,11 @@
 version: "3.9"
 
+# Pinned so the project name never depends on the checkout directory. Without it
+# Compose derives the name from the parent folder ("docker"), which is why the
+# default volume names below are `docker_*` — they are kept verbatim so existing
+# local databases keep working after this file started setting `name`.
+name: docker
+
 services:
   postgres:
     image: postgres:16
@@ -24,6 +30,16 @@ services:
     volumes:
       - redis_data:/data
 
+# External for the same reason as the VPS stack: Compose cannot delete a volume
+# it does not own, so `docker compose down -v` can no longer wipe a local
+# database. Names match what this file produced before (project `docker` +
+# `_postgres_data`), so existing local data attaches with no migration.
+# Create them with `bash infra/deploy/bootstrap.sh --local`.
+# To wipe on purpose: `bash infra/deploy/reset-db.sh --local`.
 volumes:
   postgres_data:
+    external: true
+    name: ${POSTGRES_VOLUME:-docker_postgres_data}
   redis_data:
+    external: true
+    name: ${REDIS_VOLUME:-docker_redis_data}

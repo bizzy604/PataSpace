@@ -1,0 +1,29 @@
+# Purpose: Polls for new commits on main every 3 minutes and triggers a deploy.
+# Why important: The zero-config path to working CD. No inbound port, no webhook
+#   secret, no GitHub configuration — it works behind any firewall and survives
+#   the Actions billing lock entirely.
+# Used by: systemctl enable --now pataspace-deploy.timer
+#
+# Latency is at most the interval (3 min). For instant deploys, also run the
+# webhook receiver (infra/deploy/webhook.mjs); the two share a lock and are safe
+# to run together.
+
+[Unit]
+Description=PataSpace deploy poll (checks origin/main every 3 minutes)
+Requires=pataspace-deploy.service
+
+[Timer]
+# First check 2 minutes after boot, so the machine settles before a build.
+OnBootSec=2min
+OnUnitInactiveSec=3min
+
+# Spreads firing to avoid every timer on the box waking simultaneously.
+RandomizedDelaySec=30
+
+# Runs a missed check immediately after downtime instead of waiting a full cycle.
+Persistent=true
+
+Unit=pataspace-deploy.service
+
+[Install]
+WantedBy=timers.target

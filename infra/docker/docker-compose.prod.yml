@@ -56,39 +56,37 @@ services:
         condition: service_healthy
     restart: "no"
 
-api:
-  build:
-    context: ../..
-    dockerfile: apps/api/Dockerfile
-
-  image: ${API_IMAGE:-ghcr.io/bizzy604/pataspace-api:latest}
-
-  env_file:
-    - .env
-
-  environment:
-    PORT: 3001
-
-  ports:
-    - "127.0.0.1:3002:3001"
-
-  depends_on:
-    postgres:
-      condition: service_healthy
-    redis:
-      condition: service_healthy
-    api-migrate:
-      condition: service_completed_successfully
-
-  healthcheck:
-    test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
-
-  restart: unless-stopped
+  api:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+    image: ${API_IMAGE:-ghcr.io/bizzy604/pataspace-api:latest}
+    env_file: [.env]
+    environment:
+      PORT: 3001
+    ports:
+      - "127.0.0.1:3002:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
 
   web:
     build:
       context: ../..
       dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-https://api.dalakenya.com/api/v1}
     image: ${WEB_IMAGE:-ghcr.io/bizzy604/pataspace-web:latest}
     environment:
       PORT: 3000
@@ -103,6 +101,13 @@ api:
         condition: service_started
     restart: unless-stopped
 
+# See docker-compose.vps.yml for the full rationale: external volumes sit outside
+# Compose's lifecycle, so `down -v` cannot delete them and the pinned `name`
+# survives a project rename or a fresh clone in a different directory.
 volumes:
   postgres_data:
+    external: true
+    name: ${POSTGRES_VOLUME:-pataspace_postgres_data}
   redis_data:
+    external: true
+    name: ${REDIS_VOLUME:-pataspace_redis_data}

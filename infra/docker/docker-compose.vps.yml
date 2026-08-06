@@ -107,6 +107,17 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+# Declared `external` on purpose: Compose only ever creates and destroys volumes
+# it owns, so marking these external puts the data outside the stack's lifecycle.
+# `docker compose down -v` then physically cannot delete them, and the explicit
+# `name` pins the volume regardless of project name or checkout directory (an
+# inline volume is namespaced as <project>_<key>, so running a different compose
+# file or cloning to a new path silently attaches an empty database instead).
+# Create them once with `infra/deploy/bootstrap.sh`; deploy.sh re-ensures them.
 volumes:
   postgres_data:
+    external: true
+    name: ${POSTGRES_VOLUME:-pataspace_postgres_data}
   redis_data:
+    external: true
+    name: ${REDIS_VOLUME:-pataspace_redis_data}

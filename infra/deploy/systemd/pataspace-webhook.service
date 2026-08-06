@@ -1,0 +1,51 @@
+# Purpose: Runs the PataSpace webhook receiver for instant push-to-deploy.
+# Why important: Optional accelerator on top of pataspace-deploy.timer. The timer
+#   guarantees eventual delivery; this makes the common case immediate.
+# Used by: sudo systemctl enable --now pataspace-webhook.service
+#
+# Install:
+#   sudo mkdir -p /etc/pataspace
+#   printf 'PATA_WEBHOOK_SECRET=%s\n' "$(openssl rand -hex 32)" | sudo tee /etc/pataspace/webhook.env
+#   sudo chmod 600 /etc/pataspace/webhook.env
+#   sudo cp infra/deploy/systemd/pataspace-webhook.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now pataspace-webhook
+#
+# Then add the same secret to GitHub → Settings → Webhooks, with
+# Payload URL https://<your-domain>/webhook and content type application/json.
+
+[Unit]
+Description=PataSpace deploy webhook receiver
+Documentation=file:///opt/pataspace/infra/deploy/README.md
+After=docker.service network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+
+User=deploy
+Group=docker
+
+WorkingDirectory=/opt/pataspace
+
+# The secret lives in a 0600 file owned by root, never in this unit and never in
+# the repo. Without it webhook.mjs refuses to start.
+EnvironmentFile=/etc/pataspace/webhook.env
+Environment=PATA_WEBHOOK_HOST=127.0.0.1
+Environment=PATA_WEBHOOK_PORT=9000
+
+ExecStart=/usr/bin/node /opt/pataspace/infra/deploy/webhook.mjs
+
+Restart=always
+RestartSec=5
+
+StandardOutput=append:/var/log/pataspace/webhook.log
+StandardError=append:/var/log/pataspace/webhook.log
+
+# --- Hardening ---
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/opt/pataspace /var/log/pataspace /var/lib/pataspace /tmp
+
+[Install]
+WantedBy=multi-user.target

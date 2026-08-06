@@ -1,0 +1,48 @@
+# Purpose: Runs one PataSpace deploy check. Pulls main and deploys only if the
+#   remote moved, so firing this every few minutes is cheap.
+# Why important: This is the replacement for GitHub Actions' hosted runner. It
+#   costs nothing, runs on the VPS, and cannot be disabled by a billing lock.
+# Used by: pataspace-deploy.timer, and by the webhook receiver.
+#
+# Install:
+#   sudo cp infra/deploy/systemd/pataspace-deploy.* /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now pataspace-deploy.timer
+
+[Unit]
+Description=PataSpace deploy (pull main, rebuild, migrate, verify)
+Documentation=file:///opt/pataspace/infra/deploy/README.md
+After=docker.service network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+
+# Adjust User if the repo is owned by someone else. The user MUST be in the
+# docker group; running as root is not required and not recommended.
+User=deploy
+Group=docker
+
+WorkingDirectory=/opt/pataspace
+ExecStart=/usr/bin/env bash /opt/pataspace/infra/deploy/deploy.sh
+
+# A cold build (no layer cache) of both images can take a while; do not kill it
+# mid-build or the next run starts from a half-populated cache.
+TimeoutStartSec=3600
+
+# Never auto-retry. deploy.sh already rolls back on failure; retrying a broken
+# commit in a loop just burns CPU and spams logs. Fix forward instead.
+Restart=no
+
+StandardOutput=append:/var/log/pataspace/deploy.log
+StandardError=append:/var/log/pataspace/deploy.log
+
+# --- Hardening. Docker socket access is the one broad privilege needed. ---
+NoNewPrivileges=true
+PrivateTmp=false
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/opt/pataspace /var/log/pataspace /var/lib/pataspace /tmp
+
+[Install]
+WantedBy=multi-user.target

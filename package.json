@@ -11,12 +11,16 @@
     "lint": "pnpm -r --if-present lint",
     "test": "pnpm -r --if-present test",
     "standards:check": "node scripts/standards-check.mjs",
+    "test:deploy": "node --test infra/deploy/tests/gate.test.mjs",
+    "test:deploy:mutation": "node infra/deploy/tests/mutation.mjs",
+    "eval:deploy": "bash infra/deploy/tests/persistence.eval.sh",
     "stitch:export:pataspace-login": "node scripts/export-stitch-project.mjs scripts/stitch-projects/pataspace-login.json"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.38.0",
     "@typescript-eslint/parser": "^8.38.0",
-    "eslint": "^9.34.0"
+    "eslint": "^9.34.0",
+    "yaml": "^2.9.0"
   },
   "engines": {
     "node": ">=20.0.0",
