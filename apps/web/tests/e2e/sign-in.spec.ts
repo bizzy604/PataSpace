@@ -30,7 +30,9 @@ const NON_ADMIN_ACCOUNT = { email: 'tenant@e2e.pataspace.local', password: 'Batt
 async function submitSignIn(page: Page, email: string, password: string) {
   await page.goto('/admin/sign-in');
   await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password').fill(password);
+  // exact: the visibility toggle's aria-label "Show password" would otherwise
+  // substring-match "Password" and trip strict mode.
+  await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: /sign in/i }).click();
 }
 

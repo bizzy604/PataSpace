@@ -9,12 +9,12 @@
 
 import { useCallback, useState } from 'react';
 import type { AdminSupportTicketDetail } from '@pataspace/contracts';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { LifeBuoy, Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StatusBadge, type StatusTone } from '@/components/shared/status-badge';
 import { SupportTicketPane } from '@/components/admin/support-ticket-pane';
+import { AdminFilterTabs, AdminNotice, AdminPageHeader } from '@/components/admin/admin-chrome';
 import { useAdminData } from '@/components/admin/use-admin-data';
 import {
   fetchSupportTicket,
@@ -23,8 +23,17 @@ import {
   setSupportTicketPriority,
   setSupportTicketStatus,
 } from '@/lib/api/admin';
+import { cn } from '@/lib/utils';
 
-const STATUSES = ['ALL', 'OPEN', 'IN_REVIEW', 'RESOLVED', 'CLOSED'] as const;
+const STATUSES = [
+  { value: 'ALL', label: 'All' },
+  { value: 'OPEN', label: 'Open' },
+  { value: 'IN_REVIEW', label: 'In review' },
+  { value: 'RESOLVED', label: 'Resolved' },
+  { value: 'CLOSED', label: 'Closed' },
+] as const;
+
+type StatusFilter = (typeof STATUSES)[number]['value'];
 
 const priorityTone: Record<string, StatusTone> = {
   HIGH: 'danger',
@@ -33,7 +42,7 @@ const priorityTone: Record<string, StatusTone> = {
 };
 
 export function SupportWorkspace() {
-  const [statusFilter, setStatusFilter] = useState<(typeof STATUSES)[number]>('ALL');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -73,113 +82,160 @@ export function SupportWorkspace() {
   const tickets = queue.data?.data ?? [];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-          Support
-        </p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground">
-          Query workspace
-        </h1>
-      </div>
+    <div className="space-y-5">
+      <AdminPageHeader
+        eyebrow="Support"
+        title="Query workspace"
+        description="Work the ticket backlog: filter the queue, open a thread, reply, and move the ticket through its states."
+      />
 
-      <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-        <div className="space-y-3">
+      <div className="grid gap-4 lg:grid-cols-[340px_1fr]">
+        <aside className="flex min-h-0 flex-col gap-3">
           <form
+            role="search"
+            className="relative"
             onSubmit={(event) => {
               event.preventDefault();
               setSearch(searchInput.trim());
             }}
           >
+            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
               placeholder="Search subject or reporter"
+              aria-label="Search subject or reporter"
+              className="pl-8 pr-8"
             />
-          </form>
-          <div className="flex flex-wrap gap-1">
-            {STATUSES.map((status) => (
-              <Button
-                key={status}
-                size="sm"
-                variant={statusFilter === status ? 'default' : 'outline'}
-                onClick={() => setStatusFilter(status)}
+            {search || searchInput ? (
+              <button
+                type="button"
+                aria-label="Clear search"
+                onClick={() => {
+                  setSearchInput('');
+                  setSearch('');
+                }}
+                className="absolute top-1/2 right-2 flex size-5 -translate-y-1/2 items-center justify-center rounded text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
               >
-                {status === 'ALL' ? 'All' : status.toLowerCase().replace('_', ' ')}
-              </Button>
-            ))}
-          </div>
+                <X className="size-3.5" />
+              </button>
+            ) : null}
+            <button type="submit" className="sr-only">
+              Search
+            </button>
+          </form>
+
+          <AdminFilterTabs
+            label="Filter by ticket status"
+            options={STATUSES}
+            value={statusFilter}
+            onChange={setStatusFilter}
+            className="w-full"
+          />
+
+          {queue.error ? (
+            <AdminNotice message={queue.error} onRetry={() => void queue.reload()} />
+          ) : null}
 
           {queue.loading ? (
-            <Skeleton className="h-64 rounded-xl" />
-          ) : tickets.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">No tickets here.</p>
-          ) : (
             <div className="space-y-2">
-              {tickets.map((ticket) => (
-                <button
-                  key={ticket.id}
-                  onClick={() => setSelectedId(ticket.id)}
-                  className={`w-full rounded-lg border p-3 text-left transition ${
-                    selectedId === ticket.id
-                      ? 'border-primary/50 bg-primary/5'
-                      : 'border-border bg-card hover:border-primary/30'
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-sm font-medium text-foreground">
-                      {ticket.subject}
-                    </span>
-                    <StatusBadge
-                      label={ticket.priority}
-                      tone={priorityTone[ticket.priority] ?? 'neutral'}
-                    />
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {ticket.reporter.firstName} {ticket.reporter.lastName} · {ticket.status} ·{' '}
-                    {ticket.messageCount} msg
-                  </p>
-                </button>
+              {Array.from({ length: 5 }).map((_, index) => (
+                <Skeleton key={index} className="h-[4.5rem] rounded-lg" />
               ))}
             </div>
+          ) : tickets.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card px-4 py-12 text-center">
+              <div className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                <LifeBuoy className="size-5" />
+              </div>
+              <p className="text-sm font-medium text-foreground">No tickets here</p>
+              <p className="text-sm text-muted-foreground">
+                Nothing matches the current filter.
+              </p>
+            </div>
+          ) : (
+            <ul className="space-y-2">
+              {tickets.map((ticket) => {
+                const isSelected = selectedId === ticket.id;
+                return (
+                  <li key={ticket.id}>
+                    <button
+                      type="button"
+                      aria-current={isSelected ? 'true' : undefined}
+                      onClick={() => setSelectedId(ticket.id)}
+                      className={cn(
+                        'w-full rounded-lg border p-3 text-left transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+                        isSelected
+                          ? 'border-primary/50 bg-primary/5'
+                          : 'border-border bg-card hover:border-primary/30 hover:bg-muted/40',
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="line-clamp-2 text-sm font-medium text-foreground">
+                          {ticket.subject}
+                        </span>
+                        <StatusBadge
+                          label={ticket.priority}
+                          tone={priorityTone[ticket.priority] ?? 'neutral'}
+                        />
+                      </div>
+                      <p className="mt-1.5 truncate text-xs text-muted-foreground">
+                        {ticket.reporter.firstName} {ticket.reporter.lastName} · {ticket.status} ·{' '}
+                        {ticket.messageCount} msg
+                      </p>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           )}
+
           <p className="text-xs text-muted-foreground">
             {queue.data ? `${queue.data.meta.total} tickets` : ''}
           </p>
-        </div>
+        </aside>
 
-        <Card className="border border-border bg-card">
-          <CardContent className="p-5">
-            {note ? <p className="mb-3 text-sm text-destructive">{note}</p> : null}
-            {!selectedId ? (
-              <p className="py-16 text-center text-sm text-muted-foreground">
-                Select a ticket to view the conversation.
+        <section className="rounded-xl border border-border bg-card p-5">
+          {note ? <AdminNotice message={note} className="mb-3" /> : null}
+          {!selectedId ? (
+            <div className="flex flex-col items-center gap-2 py-16 text-center">
+              <div className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                <LifeBuoy className="size-5" />
+              </div>
+              <p className="text-sm font-medium text-foreground">No ticket selected</p>
+              <p className="max-w-sm text-sm text-muted-foreground">
+                Pick a ticket from the queue to read the conversation and reply.
               </p>
-            ) : detail.loading || !detail.data ? (
-              <Skeleton className="h-80 rounded-xl" />
-            ) : (
-              <SupportTicketPane
-                detail={detail.data}
-                busy={busy}
-                onReply={(body) =>
-                  void act(() => replySupportTicket(detail.getToken, detail.data!.id, body), 'Reply')
-                }
-                onStatus={(status) =>
-                  void act(
-                    () => setSupportTicketStatus(detail.getToken, detail.data!.id, status),
-                    'Status change',
-                  )
-                }
-                onPriority={(priority) =>
-                  void act(
-                    () => setSupportTicketPriority(detail.getToken, detail.data!.id, priority),
-                    'Priority change',
-                  )
-                }
-              />
-            )}
-          </CardContent>
-        </Card>
+            </div>
+          ) : detail.loading || !detail.data ? (
+            <div className="space-y-3">
+              <Skeleton className="h-8 w-2/3 rounded" />
+              <Skeleton className="h-24 rounded-lg" />
+              <Skeleton className="h-24 rounded-lg" />
+              <Skeleton className="h-20 rounded-lg" />
+            </div>
+          ) : (
+            <SupportTicketPane
+              detail={detail.data}
+              busy={busy}
+              onReply={(body) =>
+                void act(() => replySupportTicket(detail.getToken, detail.data!.id, body), 'Reply')
+              }
+              onStatus={(status) =>
+                void act(
+                  () => setSupportTicketStatus(detail.getToken, detail.data!.id, status),
+                  'Status change',
+                )
+              }
+              onPriority={(priority) =>
+                void act(
+                  () => setSupportTicketPriority(detail.getToken, detail.data!.id, priority),
+                  'Priority change',
+                )
+              }
+            />
+          )}
+        </section>
       </div>
     </div>
   );

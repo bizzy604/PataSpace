@@ -8,27 +8,35 @@
  */
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { AdminPayoutRecord } from '@pataspace/contracts';
+import type { ColumnDef } from '@tanstack/react-table';
+import { Banknote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table';
 import { StatusBadge, type StatusTone } from '@/components/shared/status-badge';
 import { FinanceSummaryCards } from '@/components/admin/finance-summary-cards';
+import {
+  AdminFilterTabs,
+  AdminNotice,
+  AdminPageHeader,
+  AdminSearchField,
+  AdminToolbar,
+} from '@/components/admin/admin-chrome';
 import { useAdminData } from '@/components/admin/use-admin-data';
 import { fetchFinanceSummary, fetchPayoutLedger, retryPayout } from '@/lib/api/admin';
 import { formatKes } from '@/lib/format';
 
-const STATUSES = ['ALL', 'PENDING', 'DUE', 'PROCESSING', 'PAID', 'FAILED'] as const;
+const STATUSES = [
+  { value: 'ALL', label: 'All' },
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'DUE', label: 'Due' },
+  { value: 'PROCESSING', label: 'Processing' },
+  { value: 'PAID', label: 'Paid' },
+  { value: 'FAILED', label: 'Failed' },
+] as const;
+
+type StatusFilter = (typeof STATUSES)[number]['value'];
 
 const statusTone: Record<string, StatusTone> = {
   PENDING: 'warning',
@@ -40,7 +48,7 @@ const statusTone: Record<string, StatusTone> = {
 };
 
 export function FinancePanel() {
-  const [statusFilter, setStatusFilter] = useState<(typeof STATUSES)[number]>('ALL');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [actioningId, setActioningId] = useState<string | null>(null);
@@ -62,143 +70,166 @@ export function FinancePanel() {
   const summary = useAdminData(summaryFetcher);
   const ledger = useAdminData(ledgerFetcher);
 
-  const runRetry = async (payout: AdminPayoutRecord) => {
-    setActionNote(null);
-    setActioningId(payout.id);
-    try {
-      const result = await retryPayout(ledger.getToken, payout.id);
-      setActionNote(`Payout ${payout.id}: ${result.outcome} (now ${result.status}).`);
-      await Promise.all([ledger.reload(), summary.reload()]);
-    } catch (caught) {
-      setActionNote(caught instanceof Error ? caught.message : 'Retry failed');
-    } finally {
-      setActioningId(null);
-    }
-  };
+  const { getToken: ledgerGetToken, reload: reloadLedger } = ledger;
+  const { reload: reloadSummary } = summary;
 
-  const rows = ledger.data?.data ?? [];
+  const runRetry = useCallback(
+    async (payout: AdminPayoutRecord) => {
+      setActionNote(null);
+      setActioningId(payout.id);
+      try {
+        const result = await retryPayout(ledgerGetToken, payout.id);
+        setActionNote(`Payout ${payout.id}: ${result.outcome} (now ${result.status}).`);
+        await Promise.all([reloadLedger(), reloadSummary()]);
+      } catch (caught) {
+        setActionNote(caught instanceof Error ? caught.message : 'Retry failed');
+      } finally {
+        setActioningId(null);
+      }
+    },
+    [ledgerGetToken, reloadLedger, reloadSummary],
+  );
+
+  const columns = useMemo<ColumnDef<AdminPayoutRecord, unknown>[]>(
+    () => [
+      {
+        id: 'id',
+        accessorFn: (row) => row.id,
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Transaction" />,
+        cell: ({ row }) => (
+          <span className="font-mono text-xs text-muted-foreground">{row.original.id}</span>
+        ),
+      },
+      {
+        id: 'payee',
+        accessorFn: (row) => `${row.payee.firstName} ${row.payee.lastName}`,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Partner / Property" />
+        ),
+        cell: ({ row }) => (
+          <div className="min-w-0">
+            <div className="truncate font-medium text-foreground">
+              {row.original.payee.firstName} {row.original.payee.lastName}
+            </div>
+            <div className="truncate text-xs text-muted-foreground">
+              {row.original.listing.neighborhood}, {row.original.listing.county}
+            </div>
+          </div>
+        ),
+      },
+      {
+        id: 'amountKES',
+        accessorFn: (row) => row.amountKES,
+        meta: { align: 'right' },
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Amount" />,
+        cell: ({ row }) => (
+          <span className="font-medium tabular-nums text-foreground">
+            {formatKes(row.original.amountKES)}
+          </span>
+        ),
+      },
+      {
+        id: 'status',
+        accessorFn: (row) => row.status,
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
+        cell: ({ row }) => (
+          <div className="space-y-1">
+            <StatusBadge
+              label={row.original.status}
+              tone={statusTone[row.original.status] ?? 'neutral'}
+            />
+            {row.original.lastAttemptError ? (
+              <div
+                className="max-w-[16rem] truncate text-xs text-destructive"
+                title={row.original.lastAttemptError}
+              >
+                {row.original.lastAttemptError}
+              </div>
+            ) : null}
+          </div>
+        ),
+      },
+      {
+        id: 'mpesaReceiptNumber',
+        accessorFn: (row) => row.mpesaReceiptNumber ?? '',
+        header: ({ column }) => <DataTableColumnHeader column={column} title="M-Pesa Ref" />,
+        cell: ({ row }) => (
+          <span className="font-mono text-xs text-muted-foreground">
+            {row.original.mpesaReceiptNumber ?? '—'}
+          </span>
+        ),
+      },
+      {
+        id: 'actions',
+        enableSorting: false,
+        meta: { align: 'right' },
+        header: () => <span className="block text-right">Action</span>,
+        cell: ({ row }) =>
+          row.original.status === 'FAILED' ? (
+            <Button
+              size="sm"
+              disabled={actioningId === row.original.id}
+              onClick={() => void runRetry(row.original)}
+            >
+              {actioningId === row.original.id ? 'Retrying…' : 'Retry'}
+            </Button>
+          ) : null,
+      },
+    ],
+    [actioningId, runRetry],
+  );
 
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-          Financial reconciliation
-        </p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground">
-          Payouts &amp; commissions
-        </h1>
-      </div>
+    <div className="space-y-5">
+      <AdminPageHeader
+        eyebrow="Financial reconciliation"
+        title="Payouts &amp; commissions"
+        description="Money owed to partners and the state of every B2C disbursement. Failed payouts can be requeued here."
+      />
 
       <FinanceSummaryCards summary={summary.data} loading={summary.loading} />
 
-      <Card className="border border-border bg-card">
-        <CardHeader className="gap-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <CardTitle className="text-lg">Payout ledger</CardTitle>
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                setSearch(searchInput.trim());
-              }}
-              className="flex gap-2"
-            >
-              <Input
-                value={searchInput}
-                onChange={(event) => setSearchInput(event.target.value)}
-                placeholder="Search ID, M-Pesa ref, neighborhood"
-                className="w-64"
-              />
-              <Button type="submit" variant="outline" size="sm">
-                Search
-              </Button>
-            </form>
-          </div>
-          <div className="flex flex-wrap gap-1">
-            {STATUSES.map((status) => (
-              <Button
-                key={status}
-                size="sm"
-                variant={statusFilter === status ? 'default' : 'outline'}
-                onClick={() => setStatusFilter(status)}
-              >
-                {status === 'ALL' ? 'All' : status.toLowerCase()}
-              </Button>
-            ))}
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {actionNote ? <p className="text-sm text-foreground/80">{actionNote}</p> : null}
-          {ledger.error ? <p className="text-sm text-destructive">{ledger.error}</p> : null}
-          {ledger.loading ? (
-            <Skeleton className="h-64 rounded-xl" />
-          ) : rows.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              No payouts match this filter.
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Transaction</TableHead>
-                    <TableHead>Partner / Property</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>M-Pesa Ref</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rows.map((payout) => (
-                    <TableRow key={payout.id}>
-                      <TableCell className="font-mono text-xs">{payout.id}</TableCell>
-                      <TableCell>
-                        <div className="font-medium text-foreground">
-                          {payout.payee.firstName} {payout.payee.lastName}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {payout.listing.neighborhood}, {payout.listing.county}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {formatKes(payout.amountKES)}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge
-                          label={payout.status}
-                          tone={statusTone[payout.status] ?? 'neutral'}
-                        />
-                        {payout.lastAttemptError ? (
-                          <div className="mt-1 max-w-[16rem] truncate text-xs text-destructive">
-                            {payout.lastAttemptError}
-                          </div>
-                        ) : null}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs">
-                        {payout.mpesaReceiptNumber ?? '—'}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {payout.status === 'FAILED' ? (
-                          <Button
-                            size="sm"
-                            disabled={actioningId === payout.id}
-                            onClick={() => void runRetry(payout)}
-                          >
-                            {actioningId === payout.id ? 'Retrying…' : 'Retry'}
-                          </Button>
-                        ) : null}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-          <p className="text-xs text-muted-foreground">
-            {ledger.data ? `${ledger.data.meta.total} payouts` : ''}
-          </p>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-foreground">Payout ledger</h2>
+          <AdminSearchField
+            value={searchInput}
+            onChange={setSearchInput}
+            onSubmit={() => setSearch(searchInput.trim())}
+            onClear={() => {
+              setSearchInput('');
+              setSearch('');
+            }}
+            applied={search}
+            placeholder="Search ID, M-Pesa ref, neighborhood"
+          />
+        </div>
+
+        <AdminToolbar>
+          <AdminFilterTabs
+            label="Filter by payout status"
+            options={STATUSES}
+            value={statusFilter}
+            onChange={setStatusFilter}
+          />
+        </AdminToolbar>
+
+        {actionNote ? <AdminNotice message={actionNote} tone="info" /> : null}
+        {ledger.error ? (
+          <AdminNotice message={ledger.error} onRetry={() => void reloadLedger()} />
+        ) : null}
+
+        <DataTable
+          columns={columns}
+          data={ledger.data?.data}
+          isLoading={ledger.loading}
+          getRowId={(row) => row.id}
+          emptyIcon={<Banknote className="size-5" />}
+          emptyTitle="No payouts match this filter"
+          emptyDescription="Adjust the status filter or search term to widen the ledger."
+          summary={ledger.data ? `${ledger.data.meta.total} payouts` : null}
+        />
+      </div>
     </div>
   );
 }

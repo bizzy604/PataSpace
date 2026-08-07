@@ -8,9 +8,10 @@
 'use client';
 
 import type { AdminFinanceSummaryResponse } from '@pataspace/contracts';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertTriangle, BadgeCheck, CalendarCheck, Hourglass, type LucideIcon } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCompactKes } from '@/lib/format';
+import { cn } from '@/lib/utils';
 
 export function FinanceSummaryCards({
   summary,
@@ -29,48 +30,80 @@ export function FinanceSummaryCards({
     );
   }
 
-  const tiles = [
+  const hasFailures = summary.failedPayouts.count > 0;
+
+  const tiles: {
+    title: string;
+    label: string;
+    detail: string;
+    icon: LucideIcon;
+    alert: boolean;
+  }[] = [
     {
       title: formatCompactKes(summary.pendingPayouts.amountKES),
       label: 'Pending payouts',
       detail: `${summary.pendingPayouts.count} in flight · ${summary.pendingPayouts.partners} partners`,
-      accent: 'text-foreground',
+      icon: Hourglass,
+      alert: false,
     },
     {
       title: formatCompactKes(summary.failedPayouts.amountKES),
       label: 'Failed — needs retry',
       detail: `${summary.failedPayouts.count} dead-lettered`,
-      accent: summary.failedPayouts.count > 0 ? 'text-destructive' : 'text-foreground',
+      icon: AlertTriangle,
+      alert: hasFailures,
     },
     {
       title: formatCompactKes(summary.paidThisMonth.amountKES),
       label: 'Paid this month',
       detail: `${summary.paidThisMonth.count} settlements`,
-      accent: 'text-foreground',
+      icon: CalendarCheck,
+      alert: false,
     },
     {
       title: formatCompactKes(summary.paidYearToDate.amountKES),
       label: 'Paid year to date',
       detail: `${summary.paidYearToDate.count} settlements`,
-      accent: 'text-foreground',
+      icon: BadgeCheck,
+      alert: false,
     },
-  ] as const;
+  ];
 
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      {tiles.map((tile) => (
-        <Card key={tile.label} className="h-full border border-border bg-card shadow-sm">
-          <CardHeader>
-            <CardTitle className={`text-3xl font-semibold tracking-tight ${tile.accent}`}>
+      {tiles.map((tile) => {
+        const Icon = tile.icon;
+        return (
+          <div
+            key={tile.label}
+            className={cn(
+              'rounded-xl border bg-card p-4',
+              tile.alert ? 'border-destructive/30' : 'border-border',
+            )}
+          >
+            <div
+              className={cn(
+                'flex size-8 items-center justify-center rounded-lg',
+                tile.alert
+                  ? 'bg-destructive/10 text-destructive'
+                  : 'bg-muted text-muted-foreground',
+              )}
+            >
+              <Icon className="size-4" />
+            </div>
+            <p
+              className={cn(
+                'mt-3 text-2xl font-semibold tracking-tight tabular-nums',
+                tile.alert ? 'text-destructive' : 'text-foreground',
+              )}
+            >
               {tile.title}
-            </CardTitle>
-            <CardDescription className="text-sm font-medium text-foreground/80">
-              {tile.label}
-            </CardDescription>
-            <CardDescription className="text-xs">{tile.detail}</CardDescription>
-          </CardHeader>
-        </Card>
-      ))}
+            </p>
+            <p className="mt-0.5 text-sm font-medium text-foreground/85">{tile.label}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{tile.detail}</p>
+          </div>
+        );
+      })}
     </div>
   );
 }

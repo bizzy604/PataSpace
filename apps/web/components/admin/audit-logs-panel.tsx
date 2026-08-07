@@ -7,25 +7,33 @@
  */
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { AdminAuditLogRecord } from '@pataspace/contracts';
+import type { ColumnDef } from '@tanstack/react-table';
+import { Download, ScrollText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table';
+import { AdminNotice, AdminPageHeader } from '@/components/admin/admin-chrome';
 import { useAdminData } from '@/components/admin/use-admin-data';
 import { exportAuditLogsCsv, fetchAuditLogs } from '@/lib/api/admin';
 
 type Filters = { action: string; entityType: string; entityId: string; from: string; to: string };
 
 const EMPTY: Filters = { action: '', entityType: '', entityId: '', from: '', to: '' };
+
+const FIELDS = [
+  { key: 'action', label: 'Action', placeholder: 'e.g. user.ban', type: 'text' },
+  { key: 'entityType', label: 'Entity type', placeholder: 'e.g. Listing', type: 'text' },
+  { key: 'entityId', label: 'Entity ID', placeholder: 'Exact ID', type: 'text' },
+  { key: 'from', label: 'From', placeholder: '', type: 'date' },
+  { key: 'to', label: 'To', placeholder: '', type: 'date' },
+] as const satisfies readonly {
+  key: keyof Filters;
+  label: string;
+  placeholder: string;
+  type: string;
+}[];
 
 function cleaned(filters: Filters) {
   return {
@@ -42,6 +50,10 @@ function payloadText(value: unknown): string {
   return typeof value === 'object' ? JSON.stringify(value) : String(value);
 }
 
+function isActive(filters: Filters) {
+  return Object.values(filters).some((value) => value !== '');
+}
+
 export function AuditLogsPanel() {
   const [draft, setDraft] = useState<Filters>(EMPTY);
   const [applied, setApplied] = useState<Filters>(EMPTY);
@@ -52,7 +64,7 @@ export function AuditLogsPanel() {
     (getToken: () => Promise<string | null>) => fetchAuditLogs(getToken, cleaned(applied)),
     [applied],
   );
-  const { data, loading, error, getToken } = useAdminData(fetcher);
+  const { data, loading, error, reload, getToken } = useAdminData(fetcher);
 
   const runExport = async () => {
     setNote(null);
@@ -72,62 +84,129 @@ export function AuditLogsPanel() {
     }
   };
 
-  const rows = data?.data ?? [];
+  const columns = useMemo<ColumnDef<AdminAuditLogRecord, unknown>[]>(
+    () => [
+      {
+        id: 'createdAt',
+        accessorFn: (row) => row.createdAt,
+        meta: { className: 'align-top whitespace-nowrap' },
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Timestamp" />,
+        cell: ({ row }) => (
+          <div className="text-xs">
+            <div className="text-foreground">
+              {new Date(row.original.createdAt).toLocaleString('en-KE')}
+            </div>
+            <div className="font-mono text-muted-foreground">
+              {row.original.ipAddress ?? 'no ip'}
+            </div>
+          </div>
+        ),
+      },
+      {
+        id: 'admin',
+        accessorFn: (row) =>
+          row.admin ? `${row.admin.firstName} ${row.admin.lastName}` : 'System',
+        meta: { className: 'align-top' },
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Admin" />,
+        cell: ({ row }) => (
+          <span className="text-sm text-foreground">
+            {row.original.admin
+              ? `${row.original.admin.firstName} ${row.original.admin.lastName}`
+              : 'System'}
+          </span>
+        ),
+      },
+      {
+        id: 'action',
+        accessorFn: (row) => row.action,
+        meta: { className: 'align-top' },
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Action / Target" />,
+        cell: ({ row }) => (
+          <div className="text-xs">
+            <div className="font-mono font-medium text-foreground">{row.original.action}</div>
+            <div className="text-muted-foreground">
+              {row.original.entityType} · {row.original.entityId}
+            </div>
+          </div>
+        ),
+      },
+      {
+        id: 'diff',
+        enableSorting: false,
+        meta: { className: 'align-top' },
+        header: () => <span className="block">Before → After</span>,
+        cell: ({ row }) => (
+          <div className="max-w-md space-y-1 font-mono text-[11px]">
+            <div className="truncate text-destructive" title={payloadText(row.original.oldValue)}>
+              − {payloadText(row.original.oldValue)}
+            </div>
+            <div
+              className="truncate text-emerald-600 dark:text-emerald-400"
+              title={payloadText(row.original.newValue)}
+            >
+              + {payloadText(row.original.newValue)}
+            </div>
+          </div>
+        ),
+      },
+    ],
+    [],
+  );
+
+  const appliedActive = isActive(applied);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-            Security
-          </p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground">Audit logs</h1>
-        </div>
-        <Button variant="outline" disabled={exporting} onClick={() => void runExport()}>
-          {exporting ? 'Exporting…' : 'Export CSV'}
-        </Button>
-      </div>
+    <div className="space-y-5">
+      <AdminPageHeader
+        eyebrow="Security"
+        title="Audit logs"
+        description="Every admin mutation, who made it, from which address, and exactly what changed."
+        actions={
+          <Button variant="outline" disabled={exporting} onClick={() => void runExport()}>
+            <Download />
+            {exporting ? 'Exporting…' : 'Export CSV'}
+          </Button>
+        }
+      />
 
       <form
-        className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5"
+        className="rounded-xl border border-border bg-card p-4"
         onSubmit={(event) => {
           event.preventDefault();
           setApplied(draft);
         }}
       >
-        <Input
-          placeholder="Action (e.g. user.ban)"
-          value={draft.action}
-          onChange={(e) => setDraft({ ...draft, action: e.target.value })}
-        />
-        <Input
-          placeholder="Entity type"
-          value={draft.entityType}
-          onChange={(e) => setDraft({ ...draft, entityType: e.target.value })}
-        />
-        <Input
-          placeholder="Entity ID"
-          value={draft.entityId}
-          onChange={(e) => setDraft({ ...draft, entityId: e.target.value })}
-        />
-        <Input
-          type="date"
-          value={draft.from}
-          onChange={(e) => setDraft({ ...draft, from: e.target.value })}
-        />
-        <Input
-          type="date"
-          value={draft.to}
-          onChange={(e) => setDraft({ ...draft, to: e.target.value })}
-        />
-        <div className="flex gap-2 sm:col-span-2 lg:col-span-5">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {FIELDS.map((field) => (
+            <label key={field.key} className="flex flex-col gap-1.5">
+              <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                {field.label}
+              </span>
+              <Input
+                type={field.type}
+                placeholder={field.placeholder || undefined}
+                value={draft[field.key]}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setDraft((prev) => {
+                    const next = { ...prev };
+                    next[field.key] = value;
+                    return next;
+                  });
+                }}
+              />
+            </label>
+          ))}
+        </div>
+        <div className="mt-3 flex items-center gap-2 border-t border-border pt-3">
           <Button type="submit" size="sm">
             Apply filters
           </Button>
           <Button
             type="button"
             size="sm"
-            variant="outline"
+            variant="ghost"
+            disabled={!appliedActive && !isActive(draft)}
             onClick={() => {
               setDraft(EMPTY);
               setApplied(EMPTY);
@@ -138,67 +217,27 @@ export function AuditLogsPanel() {
         </div>
       </form>
 
-      {note ? <p className="text-sm text-destructive">{note}</p> : null}
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {note ? <AdminNotice message={note} /> : null}
+      {error ? <AdminNotice message={error} onRetry={() => void reload()} /> : null}
 
-      {loading ? (
-        <Skeleton className="h-96 rounded-xl" />
-      ) : rows.length === 0 ? (
-        <p className="py-16 text-center text-sm text-muted-foreground">
-          No audit entries match these filters.
-        </p>
-      ) : (
-        <div className="overflow-x-auto rounded-xl border border-border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Timestamp / IP</TableHead>
-                <TableHead>Admin</TableHead>
-                <TableHead>Action / Target</TableHead>
-                <TableHead>Before → After</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((entry: AdminAuditLogRecord) => (
-                <TableRow key={entry.id}>
-                  <TableCell className="whitespace-nowrap align-top text-xs">
-                    <div>{new Date(entry.createdAt).toLocaleString('en-KE')}</div>
-                    <div className="text-muted-foreground">{entry.ipAddress ?? 'no ip'}</div>
-                  </TableCell>
-                  <TableCell className="align-top text-sm">
-                    {entry.admin
-                      ? `${entry.admin.firstName} ${entry.admin.lastName}`
-                      : 'System'}
-                  </TableCell>
-                  <TableCell className="align-top text-xs">
-                    <div className="font-mono font-medium text-foreground">{entry.action}</div>
-                    <div className="text-muted-foreground">
-                      {entry.entityType} · {entry.entityId}
-                    </div>
-                  </TableCell>
-                  <TableCell className="align-top">
-                    <div className="max-w-md space-y-1 font-mono text-[11px]">
-                      <div className="truncate text-destructive" title={payloadText(entry.oldValue)}>
-                        − {payloadText(entry.oldValue)}
-                      </div>
-                      <div
-                        className="truncate text-emerald-600 dark:text-emerald-400"
-                        title={payloadText(entry.newValue)}
-                      >
-                        + {payloadText(entry.newValue)}
-                      </div>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-
-      <p className="text-xs text-muted-foreground">
-        {data ? `${data.meta.total} entries · page ${data.meta.page} of ${data.meta.totalPages}` : ''}
-      </p>
+      <DataTable
+        columns={columns}
+        data={data?.data}
+        isLoading={loading}
+        getRowId={(row) => row.id}
+        emptyIcon={<ScrollText className="size-5" />}
+        emptyTitle="No audit entries"
+        emptyDescription={
+          appliedActive
+            ? 'Nothing matches these filters. Widen the date range or clear a field.'
+            : 'Admin actions will appear here as they happen.'
+        }
+        summary={
+          data
+            ? `${data.meta.total} entries · page ${data.meta.page} of ${data.meta.totalPages}`
+            : null
+        }
+      />
     </div>
   );
 }

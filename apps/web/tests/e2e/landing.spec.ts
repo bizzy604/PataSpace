@@ -24,6 +24,10 @@ test.describe('landing page', () => {
   test('the /admin/sign-in route serves the credentials sign-in form', async ({ page }) => {
     await page.goto('/admin/sign-in');
     await expect(page).toHaveURL(/\/admin\/sign-in/);
-    await expect(page.getByRole('heading', { name: /Admin sign in/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Welcome back/i })).toBeVisible();
+    // The heading alone does not prove the credentials form rendered — the
+    // form is behind a Suspense boundary, so assert its fields too.
+    await expect(page.getByLabel('Email')).toBeVisible();
+    await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
   });
 });

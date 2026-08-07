@@ -6,23 +6,23 @@
  */
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { AdminListingSummary, AdminUpdateListingRequest } from '@pataspace/contracts';
+import type { ColumnDef } from '@tanstack/react-table';
+import { Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
+import { DataTable, DataTableColumnHeader } from '@/components/ui/data-table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { StatusBadge, type StatusTone } from '@/components/shared/status-badge';
 import { ListingEditSheet } from '@/components/admin/listing-edit-sheet';
 import { ModerationQueue } from '@/components/admin/moderation-queue';
+import {
+  AdminNotice,
+  AdminPageHeader,
+  AdminSearchField,
+  AdminToolbar,
+} from '@/components/admin/admin-chrome';
+import { ReasonDialog } from '@/components/admin/reason-dialog';
 import { useAdminData } from '@/components/admin/use-admin-data';
 import { deleteAdminListing, fetchAdminListings, updateAdminListing } from '@/lib/api/admin';
 import { formatKes } from '@/lib/format';
@@ -41,6 +41,7 @@ export function ListingsPanel() {
   const [search, setSearch] = useState('');
   const [submittedSearch, setSubmittedSearch] = useState('');
   const [editing, setEditing] = useState<AdminListingSummary | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AdminListingSummary | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const fetcher = useCallback(
@@ -59,32 +60,113 @@ export function ListingsPanel() {
     await reload();
   };
 
-  const removeListing = async (listing: AdminListingSummary) => {
-    const reason = window.prompt(
-      `Soft-delete the ${listing.neighborhood} listing? Optional reason:`,
-    );
-    if (reason === null) {
-      return;
-    }
-    setActionError(null);
-    try {
-      await deleteAdminListing(getToken, listing.id, reason.trim() || undefined);
-      await reload();
-    } catch (caught) {
-      setActionError(caught instanceof Error ? caught.message : 'Delete failed');
-    }
-  };
+  const confirmDelete = useCallback(
+    async (reason: string) => {
+      if (!deleteTarget) return;
+      setActionError(null);
+      try {
+        await deleteAdminListing(getToken, deleteTarget.id, reason.trim() || undefined);
+        await reload();
+      } catch (caught) {
+        setActionError(caught instanceof Error ? caught.message : 'Delete failed');
+      } finally {
+        setDeleteTarget(null);
+      }
+    },
+    [deleteTarget, getToken, reload],
+  );
+
+  const columns = useMemo<ColumnDef<AdminListingSummary, unknown>[]>(
+    () => [
+      {
+        id: 'listing',
+        accessorFn: (row) => row.neighborhood,
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Listing" />,
+        cell: ({ row }) => (
+          <div className="min-w-0">
+            <div className="truncate font-medium text-foreground">{row.original.neighborhood}</div>
+            <div className="truncate text-xs text-muted-foreground">
+              {row.original.county} · {row.original.houseType.replaceAll('_', ' ').toLowerCase()}
+            </div>
+          </div>
+        ),
+      },
+      {
+        id: 'owner',
+        accessorFn: (row) => `${row.owner.firstName} ${row.owner.lastName}`,
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Owner" />,
+        cell: ({ row }) => (
+          <span className="text-foreground">
+            {row.original.owner.firstName} {row.original.owner.lastName}
+          </span>
+        ),
+      },
+      {
+        id: 'monthlyRent',
+        accessorFn: (row) => row.monthlyRent,
+        meta: { align: 'right' },
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Rent" />,
+        cell: ({ row }) => (
+          <span className="font-medium tabular-nums text-foreground">
+            {formatKes(row.original.monthlyRent)}
+          </span>
+        ),
+      },
+      {
+        id: 'status',
+        accessorFn: (row) => (row.isDeleted ? 'DELETED' : row.status),
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
+        cell: ({ row }) => {
+          const label = row.original.isDeleted ? 'DELETED' : row.original.status;
+          return <StatusBadge label={label} tone={statusTone[label] ?? 'neutral'} />;
+        },
+      },
+      {
+        id: 'unlockCount',
+        accessorFn: (row) => row.unlockCount,
+        meta: { align: 'right' },
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Unlocks" />,
+        cell: ({ row }) => (
+          <span className="tabular-nums text-foreground">{row.original.unlockCount}</span>
+        ),
+      },
+      {
+        id: 'actions',
+        enableSorting: false,
+        meta: { align: 'right' },
+        header: () => <span className="block text-right">Actions</span>,
+        cell: ({ row }) => (
+          <div className="flex justify-end gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={row.original.isDeleted}
+              onClick={() => setEditing(row.original)}
+            >
+              Edit
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              disabled={row.original.isDeleted}
+              onClick={() => setDeleteTarget(row.original)}
+            >
+              Delete
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [],
+  );
 
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-          Listings
-        </p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground">
-          Moderation and catalogue
-        </h1>
-      </div>
+    <div className="space-y-5">
+      <AdminPageHeader
+        eyebrow="Listings"
+        title="Moderation and catalogue"
+        description="Review pending submissions against their uploaded media, then manage the live catalogue."
+      />
 
       <Tabs defaultValue="queue">
         <TabsList>
@@ -97,91 +179,55 @@ export function ListingsPanel() {
         </TabsContent>
 
         <TabsContent value="catalogue" className="space-y-4 pt-4">
-          <form
-            className="flex max-w-md gap-2"
-            onSubmit={(event) => {
-              event.preventDefault();
-              setSubmittedSearch(search.trim());
-            }}
-          >
-            <Input
+          <AdminToolbar>
+            <AdminSearchField
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={setSearch}
+              onSubmit={() => setSubmittedSearch(search.trim())}
+              onClear={() => {
+                setSearch('');
+                setSubmittedSearch('');
+              }}
+              applied={submittedSearch}
               placeholder="Search county or neighborhood"
             />
-            <Button type="submit" size="sm" variant="outline">
-              Search
-            </Button>
-          </form>
+          </AdminToolbar>
 
-          {actionError ? <p className="text-sm text-destructive">{actionError}</p> : null}
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          {loading ? (
-            <Skeleton className="h-64 rounded-xl" />
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Listing</TableHead>
-                  <TableHead>Owner</TableHead>
-                  <TableHead>Rent</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Unlocks</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(data?.data ?? []).map((listing) => (
-                  <TableRow key={listing.id}>
-                    <TableCell>
-                      <span className="font-medium">{listing.neighborhood}</span>
-                      <span className="block text-xs text-muted-foreground">
-                        {listing.county} · {listing.houseType.replaceAll('_', ' ').toLowerCase()}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {listing.owner.firstName} {listing.owner.lastName}
-                    </TableCell>
-                    <TableCell>{formatKes(listing.monthlyRent)}</TableCell>
-                    <TableCell>
-                      <StatusBadge
-                        label={listing.isDeleted ? 'DELETED' : listing.status}
-                        tone={statusTone[listing.isDeleted ? 'DELETED' : listing.status] ?? 'neutral'}
-                      />
-                    </TableCell>
-                    <TableCell>{listing.unlockCount}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={listing.isDeleted}
-                          onClick={() => setEditing(listing)}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          disabled={listing.isDeleted}
-                          onClick={() => void removeListing(listing)}
-                        >
-                          Delete
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-          <p className="text-xs text-muted-foreground">
-            {data ? `${data.meta.total} listings` : ''}
-          </p>
+          {actionError ? <AdminNotice message={actionError} /> : null}
+          {error ? <AdminNotice message={error} onRetry={() => void reload()} /> : null}
+
+          <DataTable
+            columns={columns}
+            data={data?.data}
+            isLoading={loading}
+            getRowId={(row) => row.id}
+            emptyIcon={<Home className="size-5" />}
+            emptyTitle="No listings found"
+            emptyDescription={
+              submittedSearch
+                ? `Nothing matches “${submittedSearch}”.`
+                : 'The catalogue is empty.'
+            }
+            summary={data ? `${data.meta.total} listings` : null}
+          />
         </TabsContent>
       </Tabs>
 
       <ListingEditSheet listing={editing} onClose={() => setEditing(null)} onSave={saveEdit} />
+
+      <ReasonDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        title={deleteTarget ? `Soft-delete the ${deleteTarget.neighborhood} listing?` : 'Delete listing'}
+        description="The listing is hidden from the marketplace but kept on record. A reason is optional."
+        placeholder="Reason (optional)"
+        submitLabel="Delete listing"
+        minLength={0}
+        destructive
+        onSubmit={(reason) => void confirmDelete(reason)}
+      />
     </div>
   );
 }

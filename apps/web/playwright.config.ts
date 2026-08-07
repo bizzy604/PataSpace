@@ -10,9 +10,7 @@
  * Used by: `pnpm -F @pataspace/web test:e2e`.
  */
 import { defineConfig, devices } from '@playwright/test';
-
-const PORT = 4400;
-const MOCK_AUTH_PORT = 3999;
+import { E2E_PORT, MOCK_AUTH_PORT, E2E_BASE_URL } from './tests/e2e/fixtures/ports';
 
 // Export the real values (see apps/web/README.md's E2E Tests section) before
 // running `pnpm test:e2e` to point the whole suite at a live API instead of
@@ -37,7 +35,7 @@ export default defineConfig({
   expect: { timeout: 15_000 },
 
   use: {
-    baseURL: `http://localhost:${PORT}`,
+    baseURL: E2E_BASE_URL,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     actionTimeout: 30_000,
@@ -68,8 +66,8 @@ export default defineConfig({
         ]
       : []),
     {
-      command: `pnpm exec next dev --webpack --port ${PORT}`,
-      url: `http://localhost:${PORT}`,
+      command: `pnpm exec next dev --webpack --port ${E2E_PORT}`,
+      url: `http://localhost:${E2E_PORT}`,
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,
       stdout: 'ignore',
@@ -78,8 +76,11 @@ export default defineConfig({
       // throws MissingSecret otherwise), so the suite supplies one here
       // rather than depending on a local .env file existing.
       env: {
+        // Own build directory so Next's per-directory dev lock does not
+        // collide with a `next dev` the developer already has running.
+        NEXT_DIST_DIR: '.next-e2e',
         AUTH_SECRET: process.env.AUTH_SECRET ?? 'playwright-test-secret-do-not-use-in-production',
-        AUTH_URL: `http://localhost:${PORT}`,
+        AUTH_URL: `http://localhost:${E2E_PORT}`,
         NEXT_PUBLIC_API_BASE_URL: apiBaseUrl,
         API_INTERNAL_BASE_URL: apiInternalBaseUrl,
       },
